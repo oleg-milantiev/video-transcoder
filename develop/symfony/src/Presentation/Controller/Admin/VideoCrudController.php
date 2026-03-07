@@ -2,7 +2,8 @@
 
 namespace App\Presentation\Controller\Admin;
 
-use App\Domain\Video\Entity\Video;
+use App\Infrastructure\Persistence\Doctrine\Video\VideoEntity;
+use EasyCorp\Bundle\EasyAdminBundle\Config\Crud;
 use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractCrudController;
 use EasyCorp\Bundle\EasyAdminBundle\Field\AssociationField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\ChoiceField;
@@ -15,7 +16,12 @@ class VideoCrudController extends AbstractCrudController
 {
     public static function getEntityFqcn(): string
     {
-        return Video::class;
+        return VideoEntity::class;
+    }
+
+    public function configureCrud(Crud $crud): Crud
+    {
+        return $crud->showEntityActionsInlined();
     }
 
     public function configureFields(string $pageName): iterable

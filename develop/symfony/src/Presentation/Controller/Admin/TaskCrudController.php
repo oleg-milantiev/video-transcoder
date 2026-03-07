@@ -2,7 +2,8 @@
 
 namespace App\Presentation\Controller\Admin;
 
-use App\Domain\Video\Entity\Task;
+use App\Infrastructure\Persistence\Doctrine\Task\TaskEntity;
+use EasyCorp\Bundle\EasyAdminBundle\Config\Crud;
 use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractCrudController;
 use EasyCorp\Bundle\EasyAdminBundle\Field\AssociationField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\DateTimeField;
@@ -14,7 +15,12 @@ class TaskCrudController extends AbstractCrudController
 {
     public static function getEntityFqcn(): string
     {
-        return Task::class;
+        return TaskEntity::class;
+    }
+
+    public function configureCrud(Crud $crud): Crud
+    {
+        return $crud->showEntityActionsInlined();
     }
 
     public function configureFields(string $pageName): iterable

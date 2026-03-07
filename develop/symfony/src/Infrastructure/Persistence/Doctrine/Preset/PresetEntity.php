@@ -2,7 +2,7 @@
 
 namespace App\Infrastructure\Persistence\Doctrine\Preset;
 
-use App\Domain\Video\Entity\Task;
+use App\Infrastructure\Persistence\Doctrine\Task\TaskEntity;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
@@ -29,8 +29,8 @@ class PresetEntity
     #[ORM\Column]
     public int $bitrate;
 
-    /** @var Collection<int, Task> */
-    #[ORM\OneToMany(targetEntity: Task::class, mappedBy: 'preset')]
+    /** @var Collection<int, TaskEntity> */
+    #[ORM\OneToMany(targetEntity: TaskEntity::class, mappedBy: 'preset')]
     public Collection $tasks;
 
     public function __construct()

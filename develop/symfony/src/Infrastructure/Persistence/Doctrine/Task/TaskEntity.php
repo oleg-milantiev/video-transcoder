@@ -2,8 +2,8 @@
 
 namespace App\Infrastructure\Persistence\Doctrine\Task;
 
-use App\Domain\Video\Entity\Preset;
-use App\Domain\Video\Entity\Video;
+use App\Infrastructure\Persistence\Doctrine\Preset\PresetEntity;
+use App\Infrastructure\Persistence\Doctrine\Video\VideoEntity;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: TaskRepository::class)]
@@ -29,11 +29,11 @@ class TaskEntity
 
     #[ORM\ManyToOne(inversedBy: 'tasks')]
     #[ORM\JoinColumn(nullable: false)]
-    public ?Video $video = null;
+    public ?VideoEntity $video = null;
 
     #[ORM\ManyToOne(inversedBy: 'tasks')]
     #[ORM\JoinColumn(nullable: false)]
-    public ?Preset $preset = null;
+    public ?PresetEntity $preset = null;
 
     public function __construct()
     {

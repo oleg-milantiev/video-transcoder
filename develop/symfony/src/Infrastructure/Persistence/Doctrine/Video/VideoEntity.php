@@ -2,9 +2,8 @@
 
 namespace App\Infrastructure\Persistence\Doctrine\Video;
 
-use App\Domain\User\Entity\User;
-use App\Domain\Video\Entity\Task;
-use App\Infrastructure\Persistence\Doctrine\Video\VideoRepository;
+use App\Infrastructure\Persistence\Doctrine\Task\TaskEntity;
+use App\Infrastructure\Persistence\Doctrine\User\UserEntity;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
@@ -40,12 +39,12 @@ class VideoEntity
 
     #[ORM\ManyToOne(inversedBy: 'videos')]
     #[ORM\JoinColumn(nullable: false)]
-    public ?User $user = null;
+    public ?UserEntity $user = null;
 
     /**
-     * @var Collection<int, Task>
+     * @var Collection<int, TaskEntity>
      */
-    #[ORM\OneToMany(targetEntity: Task::class, mappedBy: 'video', orphanRemoval: true)]
+    #[ORM\OneToMany(targetEntity: TaskEntity::class, mappedBy: 'video', orphanRemoval: true)]
     public Collection $tasks;
 
     public function __construct()

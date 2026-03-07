@@ -2,7 +2,8 @@
 
 namespace App\Presentation\Controller\Admin;
 
-use App\Domain\User\Entity\User;
+use App\Infrastructure\Persistence\Doctrine\User\UserEntity;
+use EasyCorp\Bundle\EasyAdminBundle\Config\Crud;
 use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractCrudController;
 use EasyCorp\Bundle\EasyAdminBundle\Field\ArrayField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\IdField;
@@ -12,7 +13,12 @@ class UserCrudController extends AbstractCrudController
 {
     public static function getEntityFqcn(): string
     {
-        return User::class;
+        return UserEntity::class;
+    }
+
+    public function configureCrud(Crud $crud): Crud
+    {
+        return $crud->showEntityActionsInlined();
     }
 
     public function configureFields(string $pageName): iterable

@@ -3,6 +3,7 @@
 namespace App\Presentation\Controller\Admin;
 
 use App\Infrastructure\Persistence\Doctrine\Preset\PresetEntity;
+use EasyCorp\Bundle\EasyAdminBundle\Config\Crud;
 use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractCrudController;
 use EasyCorp\Bundle\EasyAdminBundle\Field\IdField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\IntegerField;
@@ -13,6 +14,11 @@ class PresetCrudController extends AbstractCrudController
     public static function getEntityFqcn(): string
     {
         return PresetEntity::class;
+    }
+
+    public function configureCrud(Crud $crud): Crud
+    {
+        return $crud->showEntityActionsInlined();
     }
 
     public function configureFields(string $pageName): iterable

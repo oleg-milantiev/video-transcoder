@@ -2,7 +2,7 @@
 
 namespace App\Infrastructure\Persistence\Doctrine\User;
 
-use App\Domain\Video\Entity\Video;
+use App\Infrastructure\Persistence\Doctrine\Video\VideoEntity;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
@@ -35,9 +35,9 @@ class UserEntity implements UserInterface, PasswordAuthenticatedUserInterface
     public ?string $password = null;
 
     /**
-     * @var Collection<int, Video>
+     * @var Collection<int, VideoEntity>
      */
-    #[ORM\OneToMany(targetEntity: Video::class, mappedBy: 'user', orphanRemoval: true)]
+    #[ORM\OneToMany(targetEntity: VideoEntity::class, mappedBy: 'user', orphanRemoval: true)]
     public Collection $videos;
 
     public function __construct()
