@@ -9,6 +9,7 @@ use EasyCorp\Bundle\EasyAdminBundle\Field\TextField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\AssociationField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\DateTimeField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\ImageField;
+use EasyCorp\Bundle\EasyAdminBundle\Field\ChoiceField;
 
 class VideoCrudController extends AbstractCrudController
 {
@@ -22,12 +23,20 @@ class VideoCrudController extends AbstractCrudController
         return [
             IdField::new('id')->hideOnForm(),
             TextField::new('title'),
-            TextField::new('filename'),
+            ImageField::new('srcFilename', 'Video File')
+                ->setBasePath('/uploads')
+                ->setUploadDir('public/uploads')
+                ->setRequired(true),
             ImageField::new('previewPath', 'Preview')
-                ->setBasePath('/uploads/previews') // Assuming a path
-                ->setUploadDir('public/uploads/previews')
-                ->setUploadedFileNamePattern('[slug]-[timestamp].[extension]'),
-            TextField::new('status'),
+                ->setBasePath('/uploads')
+                ->setUploadDir('public/uploads')
+                ->setUploadedFileNamePattern('[uuid]/preview.[extension]'),
+            ChoiceField::new('status')->setChoices([
+                'Pending' => 'pending',
+                'Processing' => 'processing',
+                'Completed' => 'completed',
+                'Failed' => 'failed',
+            ]),
             AssociationField::new('user'),
             DateTimeField::new('createdAt')->hideOnForm(),
             DateTimeField::new('updatedAt')->hideOnForm(),

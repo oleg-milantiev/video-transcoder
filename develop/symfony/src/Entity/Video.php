@@ -5,21 +5,23 @@ namespace App\Entity;
 use App\Repository\VideoRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
+use Symfony\Component\Uid\Uuid;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: VideoRepository::class)]
 class Video
 {
     #[ORM\Id]
-    #[ORM\GeneratedValue]
-    #[ORM\Column]
-    private ?int $id = null;
+    #[ORM\Column(type: 'uuid', unique: true)]
+    #[ORM\GeneratedValue(strategy: 'CUSTOM')]
+    #[ORM\CustomIdGenerator(class: 'doctrine.uuid_generator')]
+    private ?Uuid $id = null;
 
     #[ORM\Column(length: 255)]
     private ?string $title = null;
 
-    #[ORM\Column(length: 255)]
-    private ?string $filename = null;
+    #[ORM\Column(length: 10)]
+    private ?string $extension = null;
 
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $previewPath = null;
@@ -45,11 +47,12 @@ class Video
 
     public function __construct()
     {
+        $this->id = Uuid::v4();
         $this->createdAt = new \DateTimeImmutable();
         $this->tasks = new ArrayCollection();
     }
 
-    public function getId(): ?int
+    public function getId(): ?Uuid
     {
         return $this->id;
     }
@@ -66,16 +69,22 @@ class Video
         return $this;
     }
 
-    public function getFilename(): ?string
+
+    public function getExtension(): ?string
     {
-        return $this->filename;
+        return $this->extension;
     }
 
-    public function setFilename(string $filename): static
+    public function setExtension(string $extension): static
     {
-        $this->filename = $filename;
+        $this->extension = $extension;
 
         return $this;
+    }
+
+    public function getSrcFilename(): string
+    {
+        return $this->id->toString() . DIRECTORY_SEPARATOR . 'src.' . $this->extension;
     }
 
     public function getPreviewPath(): ?string

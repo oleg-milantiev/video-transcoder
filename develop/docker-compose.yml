@@ -11,6 +11,7 @@ services:
             - ./symfony:/var/www/yc
 #            - ./nginx/nginx.conf:/etc/nginx/nginx.conf
             - ./nginx/conf.d/:/etc/nginx/conf.d/
+            - symfony-uploads:/var/www/yc/public/uploads
 
     php:
         restart: always
@@ -26,6 +27,7 @@ services:
         volumes:
             - ./symfony:/var/www/yc
             - symfony-var:/var/www/yc/var
+            - symfony-uploads:/var/www/yc/public/uploads
 
     ffmpeg:
         restart: always
@@ -44,6 +46,7 @@ services:
         volumes:
             - ./symfony:/var/www/yc
             - symfony-var:/var/www/yc/var
+            - symfony-uploads:/var/www/yc/public/uploads
 
     redis:
         restart: always
@@ -89,6 +92,7 @@ volumes:
 
     symfony-vendor:
     symfony-var:
+    symfony-uploads:
 
 networks:
     appnet:
