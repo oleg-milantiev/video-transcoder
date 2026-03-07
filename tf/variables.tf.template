@@ -1,13 +1,13 @@
 variable "yc_token" {
-  default = "y0__xCDlpGFqveAAhjB3RMgj7uMzhaj_l0VTH3Mnx2IRoMKDEt09eA_Hg"
+  default = "y0__xxxxxxxxx_Hg"
 }
 
 variable "cloud_id" {
-  default = "b1ga87dgstflgqffu01k"
+  default = "byandexcloudidk"
 }
 
 variable "folder_id" {
-  default = "b1gn9234k0q6gnk69p3t"
+  default = "byandexfolderidt"
 }
 
 variable "zone" {
@@ -15,7 +15,7 @@ variable "zone" {
 }
 
 variable "db_password" {
-  default = "12345678"
+  default = "12345678910"
 }
 
 variable "deploy_bastion" {
@@ -24,11 +24,11 @@ variable "deploy_bastion" {
 }
 
 variable "k3s_token" {
-  default = "secret_token_123" # Нужен для подключения воркеров к мастеру
+  default = "super_secret_token_123" # Нужен для подключения воркеров к мастеру
 }
 
 variable "admin_ips" {
   type        = list(string)
   description = "Список ваших IP (в формате 1.2.3.4/32) для управления"
-  default     = ["212.237.218.136/32", "45.8.91.169/32"]
+  default     = ["1.2.3.4/32", "5.6.7.8/32"]
 }
