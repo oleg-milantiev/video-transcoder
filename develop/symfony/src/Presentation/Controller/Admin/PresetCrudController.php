@@ -2,7 +2,7 @@
 
 namespace App\Presentation\Controller\Admin;
 
-use App\Domain\Video\Entity\Preset;
+use App\Infrastructure\Persistence\Doctrine\Preset\PresetEntity;
 use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractCrudController;
 use EasyCorp\Bundle\EasyAdminBundle\Field\IdField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\IntegerField;
@@ -12,7 +12,7 @@ class PresetCrudController extends AbstractCrudController
 {
     public static function getEntityFqcn(): string
     {
-        return Preset::class;
+        return PresetEntity::class;
     }
 
     public function configureFields(string $pageName): iterable

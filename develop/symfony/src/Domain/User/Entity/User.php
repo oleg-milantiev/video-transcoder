@@ -2,140 +2,44 @@
 
 namespace App\Domain\User\Entity;
 
-use App\Domain\Video\Entity\Video;
-use App\Infrastructure\Persistence\Doctrine\Repository\UserRepository;
-use Doctrine\Common\Collections\ArrayCollection;
-use Doctrine\Common\Collections\Collection;
-use Doctrine\ORM\Mapping as ORM;
-use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
-use Symfony\Component\Security\Core\User\UserInterface;
-
-#[ORM\Entity(repositoryClass: UserRepository::class)]
-#[ORM\Table(name: '`user`')]
-#[ORM\UniqueConstraint(name: 'UNIQ_IDENTIFIER_EMAIL', fields: ['email'])]
-class User implements UserInterface, PasswordAuthenticatedUserInterface
+class User
 {
-    #[ORM\Id]
-    #[ORM\GeneratedValue]
-    #[ORM\Column]
-    public ?int $id = null;
+    private ?int $id;
+    private string $email;
+    private array $roles;
+    private ?string $password = null;
 
-    #[ORM\Column(length: 180)]
-    public ?string $email = null;
+    public function __construct(
+        string $email,
+        array $roles,
+        ?string $password = null,
+        ?int $id = null,
+    ) {
+        $this->id = $id;
 
-    /**
-     * @var list<string> The user roles
-     */
-    #[ORM\Column]
-    public array $roles = [];
-
-    /**
-     * @var string|null The hashed password
-     */
-    #[ORM\Column(nullable: true)]
-    public ?string $password = null;
-
-    /**
-     * @var Collection<int, Video>
-     */
-    #[ORM\OneToMany(targetEntity: Video::class, mappedBy: 'user', orphanRemoval: true)]
-    public Collection $videos;
-
-    public function __construct()
-    {
-        $this->videos = new ArrayCollection();
+        // TODO через бизнес-логику
+        $this->email = $email;
+        $this->roles = $roles;
+        $this->password = $password;
     }
 
-    public function getId(): ?int
+    public function id(): ?int
     {
         return $this->id;
     }
 
-    public function getEmail(): ?string
+    public function email(): string
     {
         return $this->email;
     }
 
-    /**
-     * A visual identifier that represents this user.
-     *
-     * @see UserInterface
-     */
-    public function getUserIdentifier(): string
+    public function roles(): array
     {
-        return (string) $this->email;
+        return $this->roles;
     }
 
-    /**
-     * @see UserInterface
-     *
-     * @return list<string>
-     */
-    public function getRoles(): array
-    {
-        $roles = $this->roles;
-        // guarantee every user at least has ROLE_USER
-        $roles[] = 'ROLE_USER';
-
-        return array_unique($roles);
-    }
-
-    /**
-     * @param list<string> $roles
-     */
-    public function setRoles(array $roles): static
-    {
-        $this->roles = $roles;
-
-        return $this;
-    }
-
-    /**
-     * @see PasswordAuthenticatedUserInterface
-     */
-    public function getPassword(): ?string
+    public function password(): ?string
     {
         return $this->password;
-    }
-
-    public function setPassword(?string $password): static
-    {
-        $this->password = $password;
-
-        return $this;
-    }
-
-    /**
-     * @return Collection<int, Video>
-     */
-    public function addVideo(Video $video): static
-    {
-        if (!$this->videos->contains($video)) {
-            $this->videos->add($video);
-            $video->user = $this;
-        }
-
-        return $this;
-    }
-
-    public function removeVideo(Video $video): static
-    {
-        if ($this->videos->removeElement($video)) {
-            // set the owning side to null (unless already changed)
-            if ($video->user === $this) {
-                $video->user = null;
-            }
-        }
-
-        return $this;
-    }
-
-    /**
-     * @see UserInterface
-     */
-    public function eraseCredentials(): void
-    {
-        // If you store any temporary, sensitive data on the user, clear it here
-        // $this->plainPassword = null;
     }
 }

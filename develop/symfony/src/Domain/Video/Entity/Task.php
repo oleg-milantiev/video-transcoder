@@ -2,45 +2,68 @@
 
 namespace App\Domain\Video\Entity;
 
-use App\Infrastructure\Persistence\Doctrine\Repository\TaskRepository;
-use Doctrine\ORM\Mapping as ORM;
-
-#[ORM\Entity(repositoryClass: TaskRepository::class)]
-#[ORM\Table(name: 'task')]
 class Task
 {
-    #[ORM\Id]
-    #[ORM\GeneratedValue]
-    #[ORM\Column]
-    public ?int $id = null;
+    private ?int $id = null;
+    private string $status;
+    private int $progress;
+    private \DateTimeImmutable $createdAt;
+    private ?\DateTimeImmutable $updatedAt = null;
+    private Video $video;
+    private Preset $preset;
 
-    #[ORM\Column(length: 50)]
-    public ?string $status = 'pending';
+    public function __construct(
+        string $status,
+        int $progress,
+        \DateTimeImmutable $createdAt,
+        Video $video,
+        Preset $preset,
+        ?\DateTimeImmutable $updatedAt = null,
+        ?int $id = null,
+    ) {
+        $this->id = $id;
 
-    #[ORM\Column]
-    public ?int $progress = 0;
-
-    #[ORM\Column]
-    public ?\DateTimeImmutable $createdAt = null;
-
-    #[ORM\Column(nullable: true)]
-    public ?\DateTimeImmutable $updatedAt = null;
-
-    #[ORM\ManyToOne(inversedBy: 'transcodingTasks')]
-    #[ORM\JoinColumn(nullable: false)]
-    public ?Video $video = null;
-
-    #[ORM\ManyToOne(inversedBy: 'transcodingTasks')]
-    #[ORM\JoinColumn(nullable: false)]
-    public ?Preset $preset = null;
-
-    public function __construct()
-    {
+        // TODO через бизнес логику
+        $this->status = $status;
+        $this->progress = $progress;
+        $this->video = $video;
+        $this->preset = $preset;
         $this->createdAt = new \DateTimeImmutable();
+        $this->updatedAt = $updatedAt;
     }
 
-    public function __toString(): string
+    public function id(): ?int
     {
-        return sprintf('Task #%d (%s)', $this->id, $this->status);
+        return $this->id;
+    }
+
+    public function status(): string
+    {
+        return $this->status;
+    }
+
+    public function progress(): int
+    {
+        return $this->progress;
+    }
+
+    public function createdAt(): \DateTimeImmutable
+    {
+        return $this->createdAt;
+    }
+
+    public function updatedAt(): ?\DateTimeImmutable
+    {
+        return $this->updatedAt;
+    }
+
+    public function video(): Video
+    {
+        return $this->video;
+    }
+
+    public function preset(): Preset
+    {
+        return $this->preset;
     }
 }

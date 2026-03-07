@@ -3,85 +3,88 @@
 namespace App\Domain\Video\Entity;
 
 use App\Domain\User\Entity\User;
-use App\Infrastructure\Persistence\Doctrine\Repository\VideoRepository;
-use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
-use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Uid\Uuid;
 
-#[ORM\Entity(repositoryClass: VideoRepository::class)]
 class Video
 {
-    #[ORM\Id]
-    #[ORM\Column(type: 'uuid', unique: true)]
-    #[ORM\GeneratedValue(strategy: 'CUSTOM')]
-    #[ORM\CustomIdGenerator(class: 'doctrine.uuid_generator')]
-    public ?Uuid $id = null;
+    private ?Uuid $id = null;
+    private string $title;
+    private string $extension;
+    private string $previewPath;
+    private string $status;
+    private \DateTimeImmutable $createdAt;
+    private ?\DateTimeImmutable $updatedAt = null;
+    private User $user;
+    private Collection $tasks;
 
-    #[ORM\Column(length: 255)]
-    public ?string $title = null;
+    public function __construct(
+        string $title,
+        string $extension,
+        string $previewPath,
+        string $status,
+        \DateTimeImmutable $createdAt,
+        User $user,
+        ?int $id = null,
+    ) {
+        $this->id = $id ? Uuid::fromString($id) : Uuid::v4();
 
-    #[ORM\Column(length: 10)]
-    public ?string $extension = null;
+        // TODO через бизнес-логику
+        $this->title = $title;
+        $this->extension = $extension;
+        $this->previewPath = $previewPath;
+        $this->status = $status;
+        $this->createdAt = $createdAt;
+        $this->user = $user;
+    }
 
-    #[ORM\Column(length: 255, nullable: true)]
-    public ?string $previewPath = null;
-
-    #[ORM\Column(length: 50)]
-    public ?string $status = 'pending';
-
-    #[ORM\Column]
-    public ?\DateTimeImmutable $createdAt = null;
-
-    #[ORM\Column(nullable: true)]
-    public ?\DateTimeImmutable $updatedAt = null;
-
-    #[ORM\ManyToOne(inversedBy: 'videos')]
-    #[ORM\JoinColumn(nullable: false)]
-    public ?User $user = null;
-
-    /**
-     * @var Collection<int, Task>
-     */
-    #[ORM\OneToMany(targetEntity: Task::class, mappedBy: 'video', orphanRemoval: true)]
-    public Collection $tasks;
-
-    public function __construct()
+    public function id(): ?Uuid
     {
-        $this->id = Uuid::v4();
-        $this->createdAt = new \DateTimeImmutable();
-        $this->tasks = new ArrayCollection();
+        return $this->id;
+    }
+
+    public function title(): string
+    {
+        return $this->title;
+    }
+
+    public function extension(): string
+    {
+        return $this->extension;
+    }
+
+    public function previewPath(): string
+    {
+        return $this->previewPath;
+    }
+
+    public function status(): string
+    {
+        return $this->status;
+    }
+
+    public function createdAt(): \DateTimeImmutable
+    {
+        return $this->createdAt;
+    }
+
+    public function updatedAt(): ?\DateTimeImmutable
+    {
+        return $this->updatedAt;
+    }
+
+    public function user(): User
+    {
+        return $this->user;
+    }
+
+    public function tasks(): Collection
+    {
+        return $this->tasks;
     }
 
     public function getSrcFilename(): string
     {
         return $this->id->toString() . DIRECTORY_SEPARATOR . 'src.' . $this->extension;
-    }
-
-    public function addTask(Task $task): static
-    {
-        if (!$this->tasks->contains($task)) {
-            $this->tasks->add($task);
-            $task->video = $this;
-        }
-
-        return $this;
-    }
-
-    public function removeTask(Task $task): static
-    {
-        if ($this->tasks->removeElement($task)) {
-            // set the owning side to null (unless already changed)
-            if ($task->video === $this) {
-                $task->video = null;
-            }
-        }
-
-        return $this;
-    }
-
-    public function __toString(): string
-    {
-        return $this->title;
     }
 }

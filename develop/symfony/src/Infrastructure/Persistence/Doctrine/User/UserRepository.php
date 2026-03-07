@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Infrastructure\Persistence\Doctrine\Repository;
+namespace App\Infrastructure\Persistence\Doctrine\User;
 
 use App\Domain\User\Entity\User;
 use App\Domain\User\Repository\UserRepositoryInterface;
@@ -11,13 +11,13 @@ use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\PasswordUpgraderInterface;
 
 /**
- * @extends ServiceEntityRepository<User>
+ * @extends ServiceEntityRepository<UserEntity>
  */
 class UserRepository extends ServiceEntityRepository implements PasswordUpgraderInterface, UserRepositoryInterface
 {
     public function __construct(ManagerRegistry $registry)
     {
-        parent::__construct($registry, User::class);
+        parent::__construct($registry, UserEntity::class);
     }
 
     /**
@@ -35,12 +35,12 @@ class UserRepository extends ServiceEntityRepository implements PasswordUpgrader
 
     public function save(User $user): void
     {
-        $this->getEntityManager()->persist($user);
+        $this->getEntityManager()->persist(UserMapper::toDoctrine($user));
         $this->getEntityManager()->flush();
     }
 
     public function findById(int $id): ?User
     {
-        return $this->find($id);
+        return UserMapper::toDomain($this->find($id));
     }
 }

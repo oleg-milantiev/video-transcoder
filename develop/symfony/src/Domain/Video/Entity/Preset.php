@@ -2,39 +2,102 @@
 
 namespace App\Domain\Video\Entity;
 
-use App\Infrastructure\Persistence\Doctrine\Repository\PresetRepository;
-use Doctrine\Common\Collections\ArrayCollection;
-use Doctrine\Common\Collections\Collection;
-use Doctrine\ORM\Mapping as ORM;
+use InvalidArgumentException;
 
-#[ORM\Entity(repositoryClass: PresetRepository::class)]
 class Preset
 {
-    #[ORM\Id]
-    #[ORM\GeneratedValue]
-    #[ORM\Column]
-    public ?int $id = null;
+    private ?int $id;
+    private string $name;
+    private string $resolution;
+    private string $codec;
+    private int $bitrate;
 
-    #[ORM\Column(length: 255)]
-    public string $name;
+    public function __construct(
+        string $name,
+        string $resolution,
+        string $codec,
+        int $bitrate,
+        ?int $id = null,
+    ) {
+        $this->id = $id;
 
-    // В идеале resolution, codec и bitrate стоит вынести в Value Objects
-    #[ORM\Column(length: 20)]
-    public string $resolution;
+        $this->rename($name);
+        $this->changeOutput($resolution, $codec, $bitrate);
+    }
 
-    #[ORM\Column(length: 50)]
-    public string $codec;
-
-    #[ORM\Column]
-    public int $bitrate;
-
-    /** @var Collection<int, Task> */
-    #[ORM\OneToMany(targetEntity: Task::class, mappedBy: 'preset')]
-    public Collection $tasks;
-
-    public function __construct()
+    public function id(): ?int
     {
-        $this->tasks = new ArrayCollection();
+        return $this->id;
+    }
+
+    public function name(): string
+    {
+        return $this->name;
+    }
+
+    public function resolution(): string
+    {
+        return $this->resolution;
+    }
+
+    public function codec(): string
+    {
+        return $this->codec;
+    }
+
+    public function bitrate(): int
+    {
+        return $this->bitrate;
+    }
+
+    public function rename(string $name): void
+    {
+        $name = trim($name);
+
+        if ($name === '') {
+            throw new InvalidArgumentException('PresetEntity name cannot be empty.');
+        }
+
+        if (mb_strlen($name) > 255) {
+            throw new InvalidArgumentException('PresetEntity name is too long.');
+        }
+
+        $this->name = $name;
+    }
+
+    public function changeOutput(string $resolution, string $codec, int $bitrate): void
+    {
+        $resolution = trim($resolution);
+        $codec = mb_strtolower(trim($codec));
+
+        if ($resolution === '') {
+            throw new InvalidArgumentException('Resolution cannot be empty.');
+        }
+
+        if (!in_array($codec, ['h264', 'h265', 'vp9', 'av1'], true)) {
+            throw new InvalidArgumentException(sprintf('Unsupported codec: %s', $codec));
+        }
+
+        if ($bitrate <= 0) {
+            throw new InvalidArgumentException('Bitrate must be greater than zero.');
+        }
+
+        $this->assertCompatible($resolution, $codec, $bitrate);
+
+        $this->resolution = $resolution;
+        $this->codec = $codec;
+        $this->bitrate = $bitrate;
+    }
+
+    private function assertCompatible(string $resolution, string $codec, int $bitrate): void
+    {
+        if ($resolution === '3840x2160' && $bitrate < 8_000) {
+            throw new InvalidArgumentException('Bitrate is too low for 4K resolution.');
+        }
+
+        if ($codec === 'av1' && $bitrate < 1_000) {
+            throw new InvalidArgumentException('Bitrate is too low for AV1 preset.');
+        }
     }
 
     public function __toString(): string
