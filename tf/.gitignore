@@ -1,3 +1,4 @@
 variables.tf
 .terraform
 terraform.tfstate*
+k3s_config.yaml
