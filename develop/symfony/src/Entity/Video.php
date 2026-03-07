@@ -15,35 +15,35 @@ class Video
     #[ORM\Column(type: 'uuid', unique: true)]
     #[ORM\GeneratedValue(strategy: 'CUSTOM')]
     #[ORM\CustomIdGenerator(class: 'doctrine.uuid_generator')]
-    private ?Uuid $id = null;
+    public ?Uuid $id = null;
 
     #[ORM\Column(length: 255)]
-    private ?string $title = null;
+    public ?string $title = null;
 
     #[ORM\Column(length: 10)]
-    private ?string $extension = null;
+    public ?string $extension = null;
 
     #[ORM\Column(length: 255, nullable: true)]
-    private ?string $previewPath = null;
+    public ?string $previewPath = null;
 
     #[ORM\Column(length: 50)]
-    private ?string $status = 'pending';
+    public ?string $status = 'pending';
 
     #[ORM\Column]
-    private ?\DateTimeImmutable $createdAt = null;
+    public ?\DateTimeImmutable $createdAt = null;
 
     #[ORM\Column(nullable: true)]
-    private ?\DateTimeImmutable $updatedAt = null;
+    public ?\DateTimeImmutable $updatedAt = null;
 
     #[ORM\ManyToOne(inversedBy: 'videos')]
     #[ORM\JoinColumn(nullable: false)]
-    private ?User $user = null;
+    public ?User $user = null;
 
     /**
      * @var Collection<int, Task>
      */
     #[ORM\OneToMany(targetEntity: Task::class, mappedBy: 'video', orphanRemoval: true)]
-    private Collection $tasks;
+    public Collection $tasks;
 
     public function __construct()
     {
@@ -52,114 +52,16 @@ class Video
         $this->tasks = new ArrayCollection();
     }
 
-    public function getId(): ?Uuid
-    {
-        return $this->id;
-    }
-
-    public function getTitle(): ?string
-    {
-        return $this->title;
-    }
-
-    public function setTitle(string $title): static
-    {
-        $this->title = $title;
-
-        return $this;
-    }
-
-
-    public function getExtension(): ?string
-    {
-        return $this->extension;
-    }
-
-    public function setExtension(string $extension): static
-    {
-        $this->extension = $extension;
-
-        return $this;
-    }
-
     public function getSrcFilename(): string
     {
         return $this->id->toString() . DIRECTORY_SEPARATOR . 'src.' . $this->extension;
-    }
-
-    public function getPreviewPath(): ?string
-    {
-        return $this->previewPath;
-    }
-
-    public function setPreviewPath(?string $previewPath): static
-    {
-        $this->previewPath = $previewPath;
-
-        return $this;
-    }
-
-    public function getStatus(): ?string
-    {
-        return $this->status;
-    }
-
-    public function setStatus(string $status): static
-    {
-        $this->status = $status;
-
-        return $this;
-    }
-
-    public function getCreatedAt(): ?\DateTimeImmutable
-    {
-        return $this->createdAt;
-    }
-
-    public function setCreatedAt(\DateTimeImmutable $createdAt): static
-    {
-        $this->createdAt = $createdAt;
-
-        return $this;
-    }
-
-    public function getUpdatedAt(): ?\DateTimeImmutable
-    {
-        return $this->updatedAt;
-    }
-
-    public function setUpdatedAt(?\DateTimeImmutable $updatedAt): static
-    {
-        $this->updatedAt = $updatedAt;
-
-        return $this;
-    }
-
-    public function getUser(): ?User
-    {
-        return $this->user;
-    }
-
-    public function setUser(?User $user): static
-    {
-        $this->user = $user;
-
-        return $this;
-    }
-
-    /**
-     * @return Collection<int, Task>
-     */
-    public function getTasks(): Collection
-    {
-        return $this->tasks;
     }
 
     public function addTask(Task $task): static
     {
         if (!$this->tasks->contains($task)) {
             $this->tasks->add($task);
-            $task->setVideo($this);
+            $task->video = $this;
         }
 
         return $this;
@@ -169,8 +71,8 @@ class Video
     {
         if ($this->tasks->removeElement($task)) {
             // set the owning side to null (unless already changed)
-            if ($task->getVideo() === $this) {
-                $task->setVideo(null);
+            if ($task->video === $this) {
+                $task->video = null;
             }
         }
 

@@ -17,28 +17,28 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    private ?int $id = null;
+    public ?int $id = null;
 
     #[ORM\Column(length: 180)]
-    private ?string $email = null;
+    public ?string $email = null;
 
     /**
      * @var list<string> The user roles
      */
     #[ORM\Column]
-    private array $roles = [];
+    public array $roles = [];
 
     /**
      * @var string|null The hashed password
      */
     #[ORM\Column(nullable: true)]
-    private ?string $password = null;
+    public ?string $password = null;
 
     /**
      * @var Collection<int, Video>
      */
     #[ORM\OneToMany(targetEntity: Video::class, mappedBy: 'user', orphanRemoval: true)]
-    private Collection $videos;
+    public Collection $videos;
 
     public function __construct()
     {
@@ -53,13 +53,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function getEmail(): ?string
     {
         return $this->email;
-    }
-
-    public function setEmail(string $email): static
-    {
-        $this->email = $email;
-
-        return $this;
     }
 
     /**
@@ -114,16 +107,11 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     /**
      * @return Collection<int, Video>
      */
-    public function getVideos(): Collection
-    {
-        return $this->videos;
-    }
-
     public function addVideo(Video $video): static
     {
         if (!$this->videos->contains($video)) {
             $this->videos->add($video);
-            $video->setUser($this);
+            $video->user = $this;
         }
 
         return $this;
@@ -133,8 +121,8 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     {
         if ($this->videos->removeElement($video)) {
             // set the owning side to null (unless already changed)
-            if ($video->getUser() === $this) {
-                $video->setUser(null);
+            if ($video->user === $this) {
+                $video->user = null;
             }
         }
 

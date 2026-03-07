@@ -19,12 +19,12 @@ class VideoUploadService
     public function upload(File $file, string $title, User $user): Video
     {
         $video = new Video();
-        $video->setTitle($title);
-        $video->setUser($user);
-        $video->setStatus('pending');
+        $video->title = $title;
+        $video->user = $user;
+        $video->status = 'pending';
 
         $extension = $file->guessExtension();
-        $video->setExtension($extension);
+        $video->extension = $extension;
 
         $this->storage->upload($file, $video->getSrcFilename());
 
