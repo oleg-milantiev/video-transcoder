@@ -2,10 +2,9 @@
 
 namespace App\Infrastructure\Storage;
 
-use App\Domain\Storage\StorageInterface;
+use App\Domain\Video\Service\Storage\StorageInterface;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\HttpFoundation\File\File;
-use Symfony\Component\String\Slugger\SluggerInterface;
 
 class LocalStorage implements StorageInterface
 {

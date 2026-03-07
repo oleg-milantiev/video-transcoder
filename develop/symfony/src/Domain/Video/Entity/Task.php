@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Entity;
+namespace App\Domain\Video\Entity;
 
-use App\Repository\TaskRepository;
+use App\Infrastructure\Persistence\Doctrine\Repository\TaskRepository;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: TaskRepository::class)]

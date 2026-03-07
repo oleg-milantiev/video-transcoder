@@ -1,12 +1,12 @@
 <?php
 
-namespace App\Controller\Admin;
+namespace App\Presentation\Controller\Admin;
 
-use App\Entity\Preset;
+use App\Domain\Video\Entity\Preset;
 use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractCrudController;
 use EasyCorp\Bundle\EasyAdminBundle\Field\IdField;
-use EasyCorp\Bundle\EasyAdminBundle\Field\TextField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\IntegerField;
+use EasyCorp\Bundle\EasyAdminBundle\Field\TextField;
 
 class PresetCrudController extends AbstractCrudController
 {

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Domain\Storage;
+namespace App\Domain\Video\Service\Storage;
 
 use Symfony\Component\HttpFoundation\File\File;
 

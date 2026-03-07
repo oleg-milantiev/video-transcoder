@@ -1,12 +1,13 @@
 <?php
 
-namespace App\Entity;
+namespace App\Domain\Video\Entity;
 
-use App\Repository\VideoRepository;
+use App\Domain\User\Entity\User;
+use App\Infrastructure\Persistence\Doctrine\Repository\VideoRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
-use Symfony\Component\Uid\Uuid;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Uid\Uuid;
 
 #[ORM\Entity(repositoryClass: VideoRepository::class)]
 class Video

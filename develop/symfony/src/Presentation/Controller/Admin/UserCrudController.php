@@ -1,12 +1,12 @@
 <?php
 
-namespace App\Controller\Admin;
+namespace App\Presentation\Controller\Admin;
 
-use App\Entity\User;
+use App\Domain\User\Entity\User;
 use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractCrudController;
+use EasyCorp\Bundle\EasyAdminBundle\Field\ArrayField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\IdField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\TextField;
-use EasyCorp\Bundle\EasyAdminBundle\Field\ArrayField;
 
 class UserCrudController extends AbstractCrudController
 {

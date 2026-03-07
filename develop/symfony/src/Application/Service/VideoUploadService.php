@@ -2,10 +2,10 @@
 
 namespace App\Application\Service;
 
-use App\Domain\Repository\VideoRepositoryInterface;
-use App\Domain\Storage\StorageInterface;
-use App\Entity\Video;
-use App\Entity\User;
+use App\Domain\User\Entity\User;
+use App\Domain\Video\Entity\Video;
+use App\Domain\Video\Repository\VideoRepositoryInterface;
+use App\Domain\Video\Service\Storage\StorageInterface;
 use Symfony\Component\HttpFoundation\File\File;
 
 class VideoUploadService

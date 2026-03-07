@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Domain\Repository;
+namespace App\Domain\Video\Repository;
 
-use App\Entity\Video;
+use App\Domain\Video\Entity\Video;
 
 interface VideoRepositoryInterface
 {

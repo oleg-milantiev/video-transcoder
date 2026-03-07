@@ -1,8 +1,9 @@
 <?php
 
-namespace App\Entity;
+namespace App\Domain\User\Entity;
 
-use App\Repository\UserRepository;
+use App\Domain\Video\Entity\Video;
+use App\Infrastructure\Persistence\Doctrine\Repository\UserRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
