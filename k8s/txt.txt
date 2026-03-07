@@ -1,0 +1,24 @@
+export KUBECONFIG=/root/yc/k3s_config.yaml
+
+# Применить. Запустить
+kubectl apply -k .
+
+# Что там крутится?
+kubectl get pods -w
+
+# Для пода с одним контейнером (RabbitMQ, Postgres)
+kubectl logs -f <имя_пода>
+
+# Для вашего API (так как там два контейнера: nginx и php)
+kubectl logs -f <имя_пода> -c php-fpm
+kubectl logs -f <имя_пода> -c nginx
+
+# наружа завелась?
+kubectl get ingress
+
+# остановить
+kubectl scale deployment php-api --replicas=0
+kubectl scale deployment ffmpeg-worker --replicas=0
+
+# Эта команда откроет порт 5432 на вашем локальном компьютере
+kubectl port-forward deployment/postgres 5432:5432

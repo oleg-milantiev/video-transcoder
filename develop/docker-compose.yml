@@ -1,0 +1,94 @@
+services:
+    nginx:
+        restart: always
+        image: nginx:stable-alpine
+        ports:
+            - "80:80"
+            - "443:443"
+        depends_on:
+            - php
+        volumes:
+            - ./php:/var/www/yc
+#            - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+            - ./nginx/conf.d/:/etc/nginx/conf.d/
+
+    php:
+        restart: always
+        image: olegmilantiev/yc-php:${PROJECT_VERSION}
+        env_file:
+            - .env
+        depends_on:
+            - redis
+            - postgres
+            - rabbitmq
+        expose:
+            - 9000
+        volumes:
+            - ./symfony:/var/www/yc
+            - symfony-var:/var/www/yc/var
+
+    ffmpeg:
+        restart: always
+        image: olegmilantiev/yc-ffmpeg:${PROJECT_VERSION}
+        env_file:
+            - .env
+        environment:
+            - POSTGRES_PORT=5432
+            - RABBITMQ_HOST_PORT=5672
+        depends_on:
+            - redis
+            - postgres
+            - rabbitmq
+        command: sh -c '/var/www/cutwise/bin/console messenger:consume async'
+        volumes:
+            - ./symfony:/var/www/yc
+            - symfony-var:/var/www/yc/var
+
+    redis:
+        restart: always
+        image: redis:7
+        ports:
+            - "6379:6379"
+        expose:
+            - 6379
+
+    postgres:
+        restart: always
+        image: docker.io/postgres:16.2
+        shm_size: 1g
+        ports:
+            - "${POSTGRES_PORT}:5432"
+        expose:
+            - 5432
+        environment:
+            - POSTGRES_USER=${POSTGRES_USER}
+            - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+        volumes:
+            - ./postgresql:/host
+            - db-data:/var/lib/postgresql/data
+
+    rabbitmq:
+        restart: always
+        hostname: "cutwise-rabbit"
+        image: docker.io/rabbitmq:3.13-management-alpine
+        environment:
+            - RABBITMQ_NODENAME=yc
+            - RABBITMQ_DEFAULT_USER=${RABBITMQ_DEFAULT_USER}
+            - RABBITMQ_DEFAULT_PASS=${RABBITMQ_DEFAULT_PASS}
+            - RABBITMQ_DEFAULT_VHOST=${RABBITMQ_VHOST}
+        expose:
+            - 5672
+        ports:
+            - "${RABBITMQ_MANAGER_HOST_PORT}:15672"
+            - "${RABBITMQ_HOST_PORT}:5672"
+
+volumes:
+    # PostgreSQL data volume
+    db-data:
+
+    symfony-vendor:
+    symfony-var:
+
+networks:
+    appnet:
+        driver: bridge

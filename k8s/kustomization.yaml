@@ -1,0 +1,33 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Общие ресурсы
+resources:
+  - postgres.yaml
+  - rabbitmq.yaml
+  - app-stack.yaml
+
+generatorOptions:
+  disableNameSuffixHash: true
+
+# Здесь мы "подменяем" версии образов для всех манифестов сразу
+images:
+  - name: olegmilantiev/yc-php
+    newTag: 0.0.1
+  - name: olegmilantiev/yc-ffmpeg
+    newTag: 0.0.1
+  - name: postgres
+    newTag: "16.2"
+  - name: rabbitmq
+    newTag: "3.13-management-alpine"
+
+# Общие переменные окружения (ConfigMap)
+configMapGenerator:
+  - name: nginx-config
+    files:
+      - default.conf
+  - name: app-config
+    literals:
+      - DB_HOST=postgres
+      - RABBIT_HOST=rabbitmq
+      - DB_NAME=yc

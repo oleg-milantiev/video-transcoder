@@ -1,0 +1,11 @@
+#cloud-config
+runcmd:
+  - |
+    bash -c '
+    PUBLIC_IP=$(curl -s --max-time 10 ifconfig.me)
+    curl -sfL https://get.k3s.io | K3S_TOKEN=${k3s_token} sh -s - server \
+      --node-ip=10.5.0.10 \
+      --tls-san=$PUBLIC_IP \
+      --flannel-backend=vxlan \
+      --write-kubeconfig-mode 644
+    '
