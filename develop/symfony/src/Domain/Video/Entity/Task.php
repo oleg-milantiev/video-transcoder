@@ -2,47 +2,78 @@
 
 namespace App\Domain\Video\Entity;
 
+use App\Domain\Video\ValueObject\Progress;
+use App\Domain\Video\ValueObject\TaskStatus;
+
 class Task
 {
     private ?int $id = null;
-    private string $status;
-    private int $progress;
+    private TaskStatus $status;
+    private Progress $progress;
     private \DateTimeImmutable $createdAt;
     private ?\DateTimeImmutable $updatedAt = null;
     private Video $video;
     private Preset $preset;
 
     public function __construct(
-        string $status,
-        int $progress,
-        \DateTimeImmutable $createdAt,
         Video $video,
         Preset $preset,
+        ?TaskStatus $status = null,
+        ?Progress $progress = null,
+        ?\DateTimeImmutable $createdAt = null,
         ?\DateTimeImmutable $updatedAt = null,
         ?int $id = null,
     ) {
         $this->id = $id;
-
-        // TODO через бизнес логику
-        $this->status = $status;
-        $this->progress = $progress;
         $this->video = $video;
         $this->preset = $preset;
-        $this->createdAt = new \DateTimeImmutable();
+        $this->status = $status ?? TaskStatus::pending();
+        $this->progress = $progress ?? new Progress(0);
+        $this->createdAt = $createdAt ?? new \DateTimeImmutable();
         $this->updatedAt = $updatedAt;
     }
 
-    public function id(): ?int
+    public static function create(Video $video, Preset $preset): self
     {
-        return $this->id;
+        return new self($video, $preset);
     }
 
-    public function status(): string
+    public function start(): void
     {
-        return $this->status;
+        if (!$this->status->canBeStarted()) {
+            throw new \DomainException('Task cannot be started.');
+        }
+
+        $this->status = TaskStatus::processing();
+        $this->touch();
     }
 
-    public function progress(): int
+    public function updateProgress(Progress $progress): void
+    {
+        if ($this->status->isFinished()) {
+            throw new \DomainException('Cannot update progress of finished task.');
+        }
+
+        $this->progress = $progress;
+
+        if ($progress->isComplete()) {
+            $this->status = TaskStatus::completed();
+        }
+
+        $this->touch();
+    }
+
+    public function fail(): void
+    {
+        if ($this->status->isFinished()) {
+            throw new \DomainException('Finished task cannot fail.');
+        }
+
+        $this->status = TaskStatus::failed();
+        $this->touch();
+    }
+
+    public function progress(): Progress
     {
         return $this->progress;
     }
@@ -65,5 +96,20 @@ class Task
     public function preset(): Preset
     {
         return $this->preset;
+    }
+
+    public function status(): TaskStatus
+    {
+        return $this->status;
+    }
+
+    public function id(): ?int
+    {
+        return $this->id;
+    }
+
+    private function touch(): void
+    {
+        $this->updatedAt = new \DateTimeImmutable();
     }
 }

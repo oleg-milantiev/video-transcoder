@@ -3,19 +3,23 @@
 namespace App\Infrastructure\Persistence\Doctrine\Video;
 
 use App\Domain\Video\Entity\Video;
+use App\Domain\Video\ValueObject\FileExtension;
+use App\Domain\Video\ValueObject\VideoStatus;
+use App\Domain\Video\ValueObject\VideoTitle;
+use App\Infrastructure\Persistence\Doctrine\User\UserMapper;
 
 class VideoMapper
 {
     public static function toDomain(VideoEntity $entity): Video
     {
         return new Video(
-            title: $entity->title,
-            extension: $entity->extension,
+            title: new VideoTitle($entity->title),
+            extension: new FileExtension($entity->extension),
             previewPath: $entity->previewPath,
-            status: $entity->status,
+            status: VideoStatus::from($entity->status),
             createdAt: $entity->createdAt,
-            user: $entity->user,
-            id: $entity->id,
+            user: UserMapper::toDomain($entity->user),
+            id: $entity->id?->toString(),
         );
     }
 
@@ -23,10 +27,10 @@ class VideoMapper
     {
         $entity = new VideoEntity();
         $entity->id = $video->id();
-        $entity->title = $video->title();
-        $entity->extension = $video->extension();
-        $entity->user = $video->user();
-        $entity->status = $video->status();
+        $entity->title = $video->title()->value();
+        $entity->extension = $video->extension()->value();
+        $entity->user = UserMapper::toDoctrine($video->user());
+        $entity->status = $video->status()->value;
         $entity->createdAt = $video->createdAt();
         $entity->updatedAt = $video->updatedAt();
         $entity->previewPath = $video->previewPath();

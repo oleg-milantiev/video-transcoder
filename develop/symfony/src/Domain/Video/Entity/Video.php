@@ -3,33 +3,35 @@
 namespace App\Domain\Video\Entity;
 
 use App\Domain\User\Entity\User;
+use App\Domain\Video\ValueObject\FileExtension;
+use App\Domain\Video\ValueObject\VideoStatus;
+use App\Domain\Video\ValueObject\VideoTitle;
 use Doctrine\Common\Collections\Collection;
 use Symfony\Component\Uid\Uuid;
 
 class Video
 {
     private ?Uuid $id = null;
-    private string $title;
-    private string $extension;
+    private VideoTitle $title;
+    private FileExtension $extension;
     private string $previewPath;
-    private string $status;
+    private VideoStatus $status;
     private \DateTimeImmutable $createdAt;
     private ?\DateTimeImmutable $updatedAt = null;
     private User $user;
     private Collection $tasks;
 
     public function __construct(
-        string $title,
-        string $extension,
+        VideoTitle $title,
+        FileExtension $extension,
         string $previewPath,
-        string $status,
+        VideoStatus $status,
         \DateTimeImmutable $createdAt,
         User $user,
-        ?int $id = null,
+        ?string $id = null,
     ) {
         $this->id = $id ? Uuid::fromString($id) : Uuid::v4();
 
-        // TODO через бизнес-логику
         $this->title = $title;
         $this->extension = $extension;
         $this->previewPath = $previewPath;
@@ -43,12 +45,12 @@ class Video
         return $this->id;
     }
 
-    public function title(): string
+    public function title(): VideoTitle
     {
         return $this->title;
     }
 
-    public function extension(): string
+    public function extension(): FileExtension
     {
         return $this->extension;
     }
@@ -58,7 +60,7 @@ class Video
         return $this->previewPath;
     }
 
-    public function status(): string
+    public function status(): VideoStatus
     {
         return $this->status;
     }
@@ -85,6 +87,6 @@ class Video
 
     public function getSrcFilename(): string
     {
-        return $this->id->toString() . DIRECTORY_SEPARATOR . 'src.' . $this->extension;
+        return $this->id->toString() . DIRECTORY_SEPARATOR . 'src.' . $this->extension->value();
     }
 }

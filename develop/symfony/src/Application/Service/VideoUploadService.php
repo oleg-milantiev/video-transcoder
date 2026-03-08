@@ -6,6 +6,9 @@ use App\Domain\User\Entity\User;
 use App\Domain\Video\Entity\Video;
 use App\Domain\Video\Repository\VideoRepositoryInterface;
 use App\Domain\Video\Service\Storage\StorageInterface;
+use App\Domain\Video\ValueObject\FileExtension;
+use App\Domain\Video\ValueObject\VideoStatus;
+use App\Domain\Video\ValueObject\VideoTitle;
 use Symfony\Component\HttpFoundation\File\File;
 
 class VideoUploadService
@@ -18,13 +21,16 @@ class VideoUploadService
 
     public function upload(File $file, string $title, User $user): Video
     {
-        $video = new Video();
-        $video->title = $title;
-        $video->user = $user;
-        $video->status = 'pending';
+        $extension = $file->guessExtension() ?: 'mp4';
 
-        $extension = $file->guessExtension();
-        $video->extension = $extension;
+        $video = new Video(
+            title: new VideoTitle($title),
+            extension: new FileExtension($extension),
+            previewPath: '', // По умолчанию пусто
+            status: VideoStatus::PENDING,
+            createdAt: new \DateTimeImmutable(),
+            user: $user
+        );
 
         $this->storage->upload($file, $video->getSrcFilename());
 
@@ -33,10 +39,10 @@ class VideoUploadService
         return $video;
     }
 
-    public function delete(Video $video): void
-    {
-        $this->storage->delete($video->getSrcFilename());
-
-        $this->videoRepository->remove($video, true);
-    }
+//    public function delete(Video $video): void
+//    {
+//        $this->storage->delete($video->getSrcFilename());
+//
+//        $this->videoRepository->remove($video, true);
+//    }
 }
