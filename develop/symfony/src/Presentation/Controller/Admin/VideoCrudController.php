@@ -46,6 +46,7 @@ class VideoCrudController extends AbstractCrudController
     public function configureActions(Actions $actions): Actions
     {
         return $actions
+            ->add(Crud::PAGE_INDEX, Action::DETAIL)
             ->disable(Action::NEW)
             ->update(Crud::PAGE_INDEX, Action::DELETE, function (Action $action) {
                 return $action->displayIf(static function (VideoEntity $entity) {

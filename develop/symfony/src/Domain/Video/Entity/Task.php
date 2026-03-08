@@ -14,6 +14,7 @@ class Task
     private \DateTimeImmutable $createdAt;
     // TODO DDD
     private ?\DateTimeImmutable $updatedAt = null;
+    private array $meta;
     private Video $video;
     private Preset $preset;
     // TODO DDD PresetId, VideoId
@@ -29,6 +30,7 @@ class Task
         // TODO DDD
         ?\DateTimeImmutable $updatedAt = null,
         ?int $id = null,
+        array $meta = [],
     ) {
         $this->id = $id;
         $this->video = $video;
@@ -37,6 +39,7 @@ class Task
         $this->progress = $progress ?? new Progress(0);
         $this->createdAt = $createdAt ?? new \DateTimeImmutable();
         $this->updatedAt = $updatedAt;
+        $this->meta = $meta;
     }
 
     public static function create(Video $video, Preset $preset): self
@@ -112,6 +115,17 @@ class Task
     public function id(): ?int
     {
         return $this->id;
+    }
+
+    public function meta(): array
+    {
+        return $this->meta;
+    }
+
+    public function updateMeta(array $meta): void
+    {
+        $this->meta = array_merge($this->meta, $meta);
+        $this->touch();
     }
 
     private function touch(): void
