@@ -2,13 +2,15 @@
 
 namespace App\Domain\Video\ValueObject;
 
-enum VideoStatus: string
+enum VideoStatus: int
 {
-    // TODO move to int as TaskStatus
-    case PENDING = 'pending';
-    case UPLOADING = 'uploading';
-    case READY = 'ready';
-    case FAILED = 'failed';
+    case UPLOADING = 1;
+    case UPLOADED = 2;
+
+    public const array NAMES = [
+        self::UPLOADING->value => self::UPLOADING->name,
+        self::UPLOADED->value => self::UPLOADED->name,
+    ];
 
     public function value(): string
     {

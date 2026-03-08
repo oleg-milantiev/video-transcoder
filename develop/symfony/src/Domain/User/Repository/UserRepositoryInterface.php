@@ -7,4 +7,6 @@ use App\Domain\User\Entity\User;
 interface UserRepositoryInterface {
     public function save(User $user): void;
     public function findById(int $id): ?User;
+
+    public function countAdmins(?int $excludeId = null): int;
 }

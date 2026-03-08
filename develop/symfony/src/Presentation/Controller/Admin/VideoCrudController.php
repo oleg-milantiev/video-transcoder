@@ -2,6 +2,7 @@
 
 namespace App\Presentation\Controller\Admin;
 
+use App\Domain\Video\ValueObject\VideoStatus;
 use App\Infrastructure\Persistence\Doctrine\Video\VideoEntity;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Action;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Actions;
@@ -22,13 +23,26 @@ class VideoCrudController extends AbstractCrudController
 
     public function configureCrud(Crud $crud): Crud
     {
-        return $crud->showEntityActionsInlined();
+        return $crud
+            ->showEntityActionsInlined()
+            ->setEntityLabelInSingular('Video')
+            ->setEntityLabelInPlural('Videos');
     }
 
     public function configureActions(Actions $actions): Actions
     {
         return $actions
-            ->disable(Action::NEW);
+            ->disable(Action::NEW)
+            ->update(Crud::PAGE_INDEX, Action::DELETE, function (Action $action) {
+                return $action->displayIf(static function (VideoEntity $entity) {
+                    return $entity->tasks->isEmpty();
+                });
+            })
+            ->update(Crud::PAGE_DETAIL, Action::DELETE, function (Action $action) {
+                return $action->displayIf(static function (VideoEntity $entity) {
+                    return $entity->tasks->isEmpty();
+                });
+            });
     }
 
     public function configureFields(string $pageName): iterable
@@ -36,12 +50,8 @@ class VideoCrudController extends AbstractCrudController
         return [
             IdField::new('id')->hideOnForm(),
             TextField::new('title'),
-            ChoiceField::new('status')->setChoices([
-                'Pending' => 'pending',
-                'Processing' => 'processing',
-                'Completed' => 'completed',
-                'Failed' => 'failed',
-            ]),
+            ChoiceField::new('status')
+                ->setChoices(array_flip(VideoStatus::NAMES)),
             AssociationField::new('user'),
             DateTimeField::new('createdAt')->hideOnForm(),
             DateTimeField::new('updatedAt')->hideOnForm(),

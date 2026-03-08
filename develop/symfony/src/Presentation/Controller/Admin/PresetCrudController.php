@@ -18,7 +18,10 @@ class PresetCrudController extends AbstractCrudController
 
     public function configureCrud(Crud $crud): Crud
     {
-        return $crud->showEntityActionsInlined();
+        return $crud
+            ->showEntityActionsInlined()
+            ->setEntityLabelInSingular('Preset')
+            ->setEntityLabelInPlural('Presets');
     }
 
     public function configureFields(string $pageName): iterable
@@ -26,7 +29,8 @@ class PresetCrudController extends AbstractCrudController
         return [
             IdField::new('id')->hideOnForm(),
             TextField::new('name'),
-            TextField::new('resolution'),
+            IntegerField::new('width'),
+            IntegerField::new('height'),
             TextField::new('codec'),
             IntegerField::new('bitrate'),
         ];

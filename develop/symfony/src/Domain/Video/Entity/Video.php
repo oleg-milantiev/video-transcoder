@@ -6,7 +6,6 @@ use App\Domain\User\Entity\User;
 use App\Domain\Video\ValueObject\FileExtension;
 use App\Domain\Video\ValueObject\VideoStatus;
 use App\Domain\Video\ValueObject\VideoTitle;
-use Doctrine\Common\Collections\Collection;
 use Symfony\Component\Uid\Uuid;
 
 class Video

@@ -11,6 +11,13 @@ enum TaskStatus: int
     case COMPLETED = 3;
     case FAILED = 4;
 
+    public const array NAMES = [
+        self::PENDING->value => self::PENDING->name,
+        self::PROCESSING->value => self::PROCESSING->name,
+        self::COMPLETED->value => self::COMPLETED->name,
+        self::FAILED->value => self::FAILED->name,
+    ];
+
     public static function pending(): TaskStatus
     {
         return self::PENDING;

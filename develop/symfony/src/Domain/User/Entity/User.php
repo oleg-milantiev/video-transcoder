@@ -42,4 +42,9 @@ class User
     {
         return $this->password;
     }
+
+    public function __toString(): string
+    {
+        return $this->email;
+    }
 }

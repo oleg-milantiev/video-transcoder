@@ -3,6 +3,7 @@
 namespace App\Infrastructure\Persistence\Doctrine\User;
 
 use App\Infrastructure\Persistence\Doctrine\Video\VideoEntity;
+use App\Infrastructure\Validator\Constraints as AppAssert;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
@@ -26,6 +27,7 @@ class UserEntity implements UserInterface, PasswordAuthenticatedUserInterface
      * @var list<string> The user roles
      */
     #[ORM\Column]
+    #[AppAssert\AtLeastOneAdmin]
     public array $roles = [];
 
     /**
@@ -111,5 +113,10 @@ class UserEntity implements UserInterface, PasswordAuthenticatedUserInterface
     {
         // If you store any temporary, sensitive data on the user, clear it here
         // $this->plainPassword = null;
+    }
+
+    public function __toString(): string
+    {
+        return $this->email;
     }
 }

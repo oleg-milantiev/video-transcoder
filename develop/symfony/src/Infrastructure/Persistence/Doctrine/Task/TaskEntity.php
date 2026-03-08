@@ -2,6 +2,7 @@
 
 namespace App\Infrastructure\Persistence\Doctrine\Task;
 
+use App\Domain\Video\ValueObject\TaskStatus;
 use App\Infrastructure\Persistence\Doctrine\Preset\PresetEntity;
 use App\Infrastructure\Persistence\Doctrine\Video\VideoEntity;
 use Doctrine\ORM\Mapping as ORM;
@@ -16,7 +17,7 @@ class TaskEntity
     public ?int $id = null;
 
     #[ORM\Column(length: 50)]
-    public ?string $status = 'pending';
+    public int $status = TaskStatus::PENDING->value;
 
     #[ORM\Column]
     public ?int $progress = 0;
@@ -42,6 +43,6 @@ class TaskEntity
 
     public function __toString(): string
     {
-        return sprintf('Task #%d (%s)', $this->id, $this->status);
+        return sprintf('Task #%d (%s)', $this->id, TaskStatus::from($this->status)->name);
     }
 }

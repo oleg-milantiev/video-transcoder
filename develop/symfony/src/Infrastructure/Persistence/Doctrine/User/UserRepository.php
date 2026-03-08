@@ -5,6 +5,7 @@ namespace App\Infrastructure\Persistence\Doctrine\User;
 use App\Domain\User\Entity\User;
 use App\Domain\User\Repository\UserRepositoryInterface;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\DBAL\Exception;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Component\Security\Core\Exception\UnsupportedUserException;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
@@ -42,5 +43,28 @@ class UserRepository extends ServiceEntityRepository implements PasswordUpgrader
     public function findById(int $id): ?User
     {
         return UserMapper::toDomain($this->find($id));
+    }
+
+    /**
+     * @throws Exception
+     */
+    public function countAdmins(?int $excludeId = null): int
+    {
+        $sql = 'SELECT count(id) FROM "user" WHERE roles::jsonb @> :role';
+
+        if ($excludeId !== null) {
+            $sql .= ' AND id != :id';
+        }
+
+        $stmt = $this->getEntityManager()->getConnection()->prepare($sql);
+        $stmt->bindValue('role', json_encode(['ROLE_ADMIN']));
+
+        if ($excludeId !== null) {
+            $stmt->bindValue('id', $excludeId);
+        }
+
+        $result = $stmt->executeQuery();
+
+        return (int) $result->fetchOne();
     }
 }
