@@ -7,6 +7,7 @@ use EasyCorp\Bundle\EasyAdminBundle\Config\Dashboard;
 use EasyCorp\Bundle\EasyAdminBundle\Config\MenuItem;
 use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractDashboardController;
 use EasyCorp\Bundle\EasyAdminBundle\Router\AdminUrlGenerator;
+use App\Presentation\Controller\Admin\TarifCrudController;
 use Symfony\Component\HttpFoundation\Response;
 
 #[AdminDashboard(routePath: '/admin', routeName: 'admin')]
@@ -28,6 +29,7 @@ class DashboardController extends AbstractDashboardController
     {
         yield MenuItem::linkToDashboard('Dashboard', 'fa fa-home');
         yield MenuItem::linkTo(UserCrudController::class, 'Users', 'fas fa-users');
+        yield MenuItem::linkTo(TarifCrudController::class, 'Tarifs', 'fas fa-money-bill-wave');
         yield MenuItem::linkTo(VideoCrudController::class, 'Videos', 'fas fa-video');
         yield MenuItem::linkTo(PresetCrudController::class, 'Presets', 'fas fa-list');
         yield MenuItem::linkTo(TaskCrudController::class, 'Tasks', 'fas fa-tasks');

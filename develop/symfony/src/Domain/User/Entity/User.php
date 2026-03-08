@@ -8,11 +8,13 @@ class User
     private string $email;
     private array $roles;
     private ?string $password = null;
+    private ?Tarif $tarif = null;
 
     public function __construct(
         string $email,
         array $roles,
         ?string $password = null,
+        ?Tarif $tarif = null,
         ?int $id = null,
     ) {
         $this->id = $id;
@@ -21,6 +23,7 @@ class User
         $this->email = $email;
         $this->roles = $roles;
         $this->password = $password;
+        $this->tarif = $tarif;
     }
 
     public function id(): ?int
@@ -41,6 +44,16 @@ class User
     public function password(): ?string
     {
         return $this->password;
+    }
+
+    public function tarif(): ?Tarif
+    {
+        return $this->tarif;
+    }
+
+    public function updateTarif(?Tarif $tarif): void
+    {
+        $this->tarif = $tarif;
     }
 
     public function __toString(): string
