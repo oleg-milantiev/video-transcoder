@@ -10,17 +10,22 @@ class Task
     private ?int $id = null;
     private TaskStatus $status;
     private Progress $progress;
+    // TODO DDD
     private \DateTimeImmutable $createdAt;
+    // TODO DDD
     private ?\DateTimeImmutable $updatedAt = null;
     private Video $video;
     private Preset $preset;
 
+    // Constructor for mapping from Doctrine only. Use static::create() for domain
     public function __construct(
         Video $video,
         Preset $preset,
         ?TaskStatus $status = null,
         ?Progress $progress = null,
+        // TODO DDD
         ?\DateTimeImmutable $createdAt = null,
+        // TODO DDD
         ?\DateTimeImmutable $updatedAt = null,
         ?int $id = null,
     ) {

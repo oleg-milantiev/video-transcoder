@@ -23,20 +23,20 @@ final readonly class Resolution
         return $this->height;
     }
 
-    public function isVertical(): bool
-    {
-        return $this->height > $this->width;
-    }
-
-    public function isHorizontal(): bool
-    {
-        return $this->height < $this->width;
-    }
-
-    public function isSquare(): bool
-    {
-        return $this->height === $this->width;
-    }
+//    public function isVertical(): bool
+//    {
+//        return $this->height > $this->width;
+//    }
+//
+//    public function isHorizontal(): bool
+//    {
+//        return $this->height < $this->width;
+//    }
+//
+//    public function isSquare(): bool
+//    {
+//        return $this->height === $this->width;
+//    }
 
     public function is4k(): bool
     {

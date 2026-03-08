@@ -19,9 +19,11 @@ class PresetEntity
     #[ORM\Column(length: 255)]
     public string $name;
 
-    // В идеале resolution, codec и bitrate стоит вынести в Value Objects
-    #[ORM\Column(length: 20)]
-    public string $resolution;
+    #[ORM\Column]
+    public int $width;
+
+    #[ORM\Column]
+    public int $height;
 
     #[ORM\Column(length: 50)]
     public string $codec;

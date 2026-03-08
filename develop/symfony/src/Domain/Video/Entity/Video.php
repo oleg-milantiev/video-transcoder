@@ -14,18 +14,18 @@ class Video
     private ?Uuid $id = null;
     private VideoTitle $title;
     private FileExtension $extension;
-    private string $previewPath;
     private VideoStatus $status;
+    // TODO DDD
     private \DateTimeImmutable $createdAt;
+    // TODO DDD
     private ?\DateTimeImmutable $updatedAt = null;
     private User $user;
-    private Collection $tasks;
 
     public function __construct(
         VideoTitle $title,
         FileExtension $extension,
-        string $previewPath,
         VideoStatus $status,
+        // TODO DDD
         \DateTimeImmutable $createdAt,
         User $user,
         ?string $id = null,
@@ -34,10 +34,19 @@ class Video
 
         $this->title = $title;
         $this->extension = $extension;
-        $this->previewPath = $previewPath;
         $this->status = $status;
         $this->createdAt = $createdAt;
         $this->user = $user;
+    }
+
+    public static function create(
+        VideoTitle $title,
+        FileExtension $extension,
+        VideoStatus $status,
+        \DateTimeImmutable $createdAt,
+        User $user,
+    ): self {
+        return new self($title, $extension, $status, $createdAt, $user);
     }
 
     public function id(): ?Uuid
@@ -53,11 +62,6 @@ class Video
     public function extension(): FileExtension
     {
         return $this->extension;
-    }
-
-    public function previewPath(): string
-    {
-        return $this->previewPath;
     }
 
     public function status(): VideoStatus
@@ -78,11 +82,6 @@ class Video
     public function user(): User
     {
         return $this->user;
-    }
-
-    public function tasks(): Collection
-    {
-        return $this->tasks;
     }
 
     public function getSrcFilename(): string

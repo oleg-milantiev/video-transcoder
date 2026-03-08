@@ -25,9 +25,6 @@ class VideoEntity
     #[ORM\Column(length: 10)]
     public ?string $extension = null;
 
-    #[ORM\Column(length: 255, nullable: true)]
-    public ?string $previewPath = null;
-
     #[ORM\Column(length: 50)]
     public ?string $status = 'pending';
 

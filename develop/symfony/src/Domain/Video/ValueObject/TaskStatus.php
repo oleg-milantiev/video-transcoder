@@ -6,38 +6,38 @@ use InvalidArgumentException;
 
 enum TaskStatus: int
 {
-    case STATUS_PENDING = 1;
-    case STATUS_PROCESSING = 2;
-    case STATUS_COMPLETED = 3;
-    case STATUS_FAILED = 4;
+    case PENDING = 1;
+    case PROCESSING = 2;
+    case COMPLETED = 3;
+    case FAILED = 4;
 
     public static function pending(): TaskStatus
     {
-        return self::STATUS_PENDING;
+        return self::PENDING;
     }
 
     public static function processing(): TaskStatus
     {
-        return self::STATUS_PROCESSING;
+        return self::PROCESSING;
     }
 
     public static function completed(): TaskStatus
     {
-        return self::STATUS_COMPLETED;
+        return self::COMPLETED;
     }
 
     public static function failed(): TaskStatus
     {
-        return self::STATUS_FAILED;
+        return self::FAILED;
     }
 
     public function canBeStarted(): bool
     {
-        return $this === self::STATUS_PENDING;
+        return $this === self::PENDING;
     }
 
     public function isFinished(): bool
     {
-        return $this === self::STATUS_COMPLETED || $this === self::STATUS_FAILED;
+        return $this === self::COMPLETED || $this === self::FAILED;
     }
 }

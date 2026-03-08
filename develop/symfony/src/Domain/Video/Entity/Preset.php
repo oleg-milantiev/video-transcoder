@@ -15,7 +15,7 @@ class Preset
     private Codec $codec;
     private Bitrate $bitrate;
 
-    private function __construct(
+    public function __construct(
         PresetName $name,
         Resolution $resolution,
         Codec $codec,
@@ -23,8 +23,33 @@ class Preset
         ?int $id = null,
     ) {
         $this->id = $id;
-        $this->name = $name;
+        $this->rename($name);
         $this->changeOutput($resolution, $codec, $bitrate);
+    }
+
+    public function id(): ?int
+    {
+        return $this->id;
+    }
+
+    public function name(): PresetName
+    {
+        return $this->name;
+    }
+
+    public function resolution(): Resolution
+    {
+        return $this->resolution;
+    }
+
+    public function codec(): Codec
+    {
+        return $this->codec;
+    }
+
+    public function bitrate(): Bitrate
+    {
+        return $this->bitrate;
     }
 
     public static function create(

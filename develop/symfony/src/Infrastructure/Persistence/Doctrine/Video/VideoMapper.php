@@ -15,7 +15,6 @@ class VideoMapper
         return new Video(
             title: new VideoTitle($entity->title),
             extension: new FileExtension($entity->extension),
-            previewPath: $entity->previewPath,
             status: VideoStatus::from($entity->status),
             createdAt: $entity->createdAt,
             user: UserMapper::toDomain($entity->user),
@@ -33,8 +32,6 @@ class VideoMapper
         $entity->status = $video->status()->value;
         $entity->createdAt = $video->createdAt();
         $entity->updatedAt = $video->updatedAt();
-        $entity->previewPath = $video->previewPath();
-        $entity->tasks = $video->tasks();
 
         return $entity;
     }

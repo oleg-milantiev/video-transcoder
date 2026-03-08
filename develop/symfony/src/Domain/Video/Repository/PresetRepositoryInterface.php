@@ -4,7 +4,8 @@ namespace App\Domain\Video\Repository;
 
 use App\Domain\Video\Entity\Preset;
 
-interface PresetRepositoryInterface {
+interface PresetRepositoryInterface
+{
     public function save(Preset $preset): void;
     public function findById(int $id): ?Preset;
 }
