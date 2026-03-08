@@ -10,7 +10,8 @@ final readonly class Progress
         private int $value,
     ) {
         if ($this->value < 0 || $this->value > 100) {
-            throw new InvalidArgumentException('Progress must be between 0 and 100.');
+            // TODO DDD new exception
+            throw new \DomainException('Progress must be between 0 and 100.');
         }
     }
 

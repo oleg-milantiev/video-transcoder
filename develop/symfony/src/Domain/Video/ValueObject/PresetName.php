@@ -2,6 +2,8 @@
 
 namespace App\Domain\Video\ValueObject;
 
+use App\Domain\Video\Exception\InvalidPresetName;
+
 final readonly class PresetName
 {
     private string $value;
@@ -12,11 +14,11 @@ final readonly class PresetName
         $trimmed = trim($value);
 
         if (mb_strlen($trimmed) < 3) {
-            throw new \InvalidArgumentException('Preset name must be at least 3 characters long.');
+            throw InvalidPresetName::fromValue('Preset name must be at least 3 characters long.');
         }
 
         if (mb_strlen($trimmed) > 255) {
-            throw new \InvalidArgumentException('Preset name must be less than 255 characters long.');
+            throw InvalidPresetName::fromValue('Preset name must be less than 255 characters long.');
         }
 
         $this->value = $trimmed;

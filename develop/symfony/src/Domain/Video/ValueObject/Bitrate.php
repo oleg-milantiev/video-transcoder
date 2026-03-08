@@ -2,6 +2,8 @@
 
 namespace App\Domain\Video\ValueObject;
 
+use App\Domain\Video\Exception\IncompatibleVideoFormat;
+
 final readonly class Bitrate
 {
     private const int MAXIMUM_BITRATE = 200 * 1024 * 1024; // 200 Mbps
@@ -10,10 +12,10 @@ final readonly class Bitrate
         private int $value,
     ) {
         if ($this->value < 0) {
-            throw new \InvalidArgumentException('Bitrate cannot be negative.');
+            throw IncompatibleVideoFormat::fromValue('Bitrate cannot be negative.');
         }
         if ($this->value > self::MAXIMUM_BITRATE) {
-            throw new \InvalidArgumentException('Bitrate must be less 200 Mbpi.');
+            throw IncompatibleVideoFormat::fromValue('Bitrate must be less 200 Mbpi.');
         }
     }
 

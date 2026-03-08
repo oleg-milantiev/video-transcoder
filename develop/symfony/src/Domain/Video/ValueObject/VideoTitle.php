@@ -11,11 +11,13 @@ final readonly class VideoTitle
         $trimmed = trim($value);
 
         if (mb_strlen($trimmed) < 1) {
-            throw new \InvalidArgumentException('Video title cannot be empty.');
+            // TODO DDD new exception
+            throw new \DomainException('Video title cannot be empty.');
         }
 
         if (mb_strlen($trimmed) > 255) {
-            throw new \InvalidArgumentException('Video title must be less than 255 characters long.');
+            // TODO DDD new exception
+            throw new \DomainException('Video title must be less than 255 characters long.');
         }
 
         $this->value = $trimmed;

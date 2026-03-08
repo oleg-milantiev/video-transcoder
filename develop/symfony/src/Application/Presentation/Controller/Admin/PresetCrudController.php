@@ -1,19 +1,19 @@
 <?php
 
-namespace App\Presentation\Controller\Admin;
+namespace App\Application\Presentation\Controller\Admin;
 
-use App\Infrastructure\Persistence\Doctrine\User\UserEntity;
+use App\Infrastructure\Persistence\Doctrine\Preset\PresetEntity;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Crud;
 use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractCrudController;
-use EasyCorp\Bundle\EasyAdminBundle\Field\ArrayField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\IdField;
+use EasyCorp\Bundle\EasyAdminBundle\Field\IntegerField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\TextField;
 
-class UserCrudController extends AbstractCrudController
+class PresetCrudController extends AbstractCrudController
 {
     public static function getEntityFqcn(): string
     {
-        return UserEntity::class;
+        return PresetEntity::class;
     }
 
     public function configureCrud(Crud $crud): Crud
@@ -25,8 +25,10 @@ class UserCrudController extends AbstractCrudController
     {
         return [
             IdField::new('id')->hideOnForm(),
-            TextField::new('email'),
-            ArrayField::new('roles'),
+            TextField::new('name'),
+            TextField::new('resolution'),
+            TextField::new('codec'),
+            IntegerField::new('bitrate'),
         ];
     }
 }

@@ -2,6 +2,8 @@
 
 namespace App\Domain\Video\ValueObject;
 
+use App\Domain\Video\Exception\IncompatibleVideoFormat;
+
 final readonly class Resolution
 {
     public function __construct(
@@ -9,7 +11,7 @@ final readonly class Resolution
         private int $height,
     ) {
         if ($this->width <= 0 || $this->height <= 0) {
-            throw new \InvalidArgumentException('Resolution dimensions must be positive integers.');
+            throw IncompatibleVideoFormat::fromValue('Resolution dimensions must be positive integers.');
         }
     }
 

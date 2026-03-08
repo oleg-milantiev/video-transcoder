@@ -2,6 +2,8 @@
 
 namespace App\Domain\Video\ValueObject;
 
+use App\Domain\Video\Exception\IncompatibleVideoFormat;
+
 final readonly class FileExtension
 {
     private const array ALLOWED = ['mp4', 'mkv', 'avi', 'mov'];
@@ -12,7 +14,7 @@ final readonly class FileExtension
         $normalized = mb_strtolower(trim($value));
 
         if (!in_array($normalized, self::ALLOWED, true)) {
-            throw new \InvalidArgumentException(sprintf('Unsupported file extension: %s', $value));
+            throw IncompatibleVideoFormat::fromValue(sprintf('Unsupported file extension: %s', $value));
         }
 
         $this->value = $normalized;

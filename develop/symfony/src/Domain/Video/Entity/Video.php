@@ -20,6 +20,8 @@ class Video
     // TODO DDD
     private ?\DateTimeImmutable $updatedAt = null;
     private User $user;
+    // TODO DDD PresetId, UserId, TaskIds
+
 
     public function __construct(
         VideoTitle $title,

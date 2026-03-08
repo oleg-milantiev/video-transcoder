@@ -2,7 +2,7 @@
 
 namespace App\Domain\Video\ValueObject;
 
-use InvalidArgumentException;
+use App\Domain\Video\Exception\UnsupportedCodec;
 
 final class Codec
 {
@@ -14,7 +14,7 @@ final class Codec
         $normalized = mb_strtolower(trim($this->value));
 
         if (!in_array($normalized, self::ALLOWED, true)) {
-            throw new InvalidArgumentException(sprintf('Unsupported codec: %s', $this->value));
+            throw UnsupportedCodec::fromValue($this->value);
         }
 
         $this->value = $normalized;

@@ -16,6 +16,7 @@ class Task
     private ?\DateTimeImmutable $updatedAt = null;
     private Video $video;
     private Preset $preset;
+    // TODO DDD PresetId, VideoId
 
     // Constructor for mapping from Doctrine only. Use static::create() for domain
     public function __construct(
