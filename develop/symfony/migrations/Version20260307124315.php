@@ -31,7 +31,6 @@ final class Version20260307124315 extends AbstractMigration
 
     public function down(Schema $schema): void
     {
-        // this down() migration is auto-generated, please modify it to your needs
         $this->addSql('ALTER TABLE task DROP CONSTRAINT FK_527EDB2529C1004E');
         $this->addSql('ALTER TABLE task DROP CONSTRAINT FK_527EDB2580688E6F');
         $this->addSql('ALTER TABLE video DROP CONSTRAINT FK_7CC7DA2CA76ED395');
