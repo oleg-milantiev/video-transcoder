@@ -8,14 +8,14 @@ class User
     private string $email;
     private array $roles;
     private ?string $password = null;
-    private ?Tarif $tarif = null;
+    private ?Tariff $tariff = null;
 
     public function __construct(
-        string $email,
-        array $roles,
+        string  $email,
+        array   $roles,
         ?string $password = null,
-        ?Tarif $tarif = null,
-        ?int $id = null,
+        ?Tariff $tariff = null,
+        ?int    $id = null,
     ) {
         $this->id = $id;
 
@@ -23,7 +23,7 @@ class User
         $this->email = $email;
         $this->roles = $roles;
         $this->password = $password;
-        $this->tarif = $tarif;
+        $this->tariff = $tariff;
     }
 
     public function id(): ?int
@@ -46,14 +46,14 @@ class User
         return $this->password;
     }
 
-    public function tarif(): ?Tarif
+    public function tariff(): ?Tariff
     {
-        return $this->tarif;
+        return $this->tariff;
     }
 
-    public function updateTarif(?Tarif $tarif): void
+    public function updateTariff(?Tariff $tariff): void
     {
-        $this->tarif = $tarif;
+        $this->tariff = $tariff;
     }
 
     public function __toString(): string

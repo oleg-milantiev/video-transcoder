@@ -2,7 +2,7 @@
 
 namespace App\Presentation\Controller\Admin;
 
-use App\Infrastructure\Persistence\Doctrine\User\TarifEntity;
+use App\Infrastructure\Persistence\Doctrine\User\TariffEntity;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Crud;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Filters;
 use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractCrudController;
@@ -12,19 +12,19 @@ use EasyCorp\Bundle\EasyAdminBundle\Field\TextField;
 use EasyCorp\Bundle\EasyAdminBundle\Filter\NumericFilter;
 use EasyCorp\Bundle\EasyAdminBundle\Filter\TextFilter;
 
-class TarifCrudController extends AbstractCrudController
+class TariffCrudController extends AbstractCrudController
 {
     public static function getEntityFqcn(): string
     {
-        return TarifEntity::class;
+        return TariffEntity::class;
     }
 
     public function configureCrud(Crud $crud): Crud
     {
         return $crud
             ->showEntityActionsInlined()
-            ->setEntityLabelInSingular('Tarif')
-            ->setEntityLabelInPlural('Tarifs');
+            ->setEntityLabelInSingular('Tariff')
+            ->setEntityLabelInPlural('Tariffs');
     }
 
     public function configureFilters(Filters $filters): Filters

@@ -36,9 +36,9 @@ class UserEntity implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(nullable: true)]
     public ?string $password = null;
 
-    #[ORM\ManyToOne(targetEntity: TarifEntity::class)]
-    #[ORM\JoinColumn(name: "tarif_id", referencedColumnName: "id", nullable: true)]
-    public ?TarifEntity $tarif = null;
+    #[ORM\ManyToOne(targetEntity: TariffEntity::class)]
+    #[ORM\JoinColumn(name: "tariff_id", referencedColumnName: "id", nullable: true)]
+    public ?TariffEntity $tariff = null;
 
     /**
      * @var Collection<int, VideoEntity>

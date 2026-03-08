@@ -14,16 +14,16 @@ final class Version20260308230000 extends AbstractMigration
 {
     public function getDescription(): string
     {
-        return 'Add tarif table and user.tarif_id relation';
+        return 'Add tariff table and user.tariff_id relation';
     }
 
     public function up(Schema $schema): void
     {
         // this up() migration is auto-generated, please modify it to your needs
-        $this->addSql('CREATE TABLE tarif (id SERIAL NOT NULL, title VARCHAR(255) NOT NULL, time_delay INT NOT NULL, PRIMARY KEY(id))');
-        $this->addSql('ALTER TABLE "user" ADD tarif_id INT DEFAULT NULL');
-        $this->addSql('ALTER TABLE "user" ADD CONSTRAINT FK_8D93D649357C0A59 FOREIGN KEY (tarif_id) REFERENCES tarif (id) NOT DEFERRABLE INITIALLY IMMEDIATE');
-        $this->addSql('CREATE INDEX IDX_8D93D649357C0A59 ON "user" (tarif_id)');
+        $this->addSql('CREATE TABLE tariff (id SERIAL NOT NULL, title VARCHAR(255) NOT NULL, time_delay INT NOT NULL, PRIMARY KEY(id))');
+        $this->addSql('ALTER TABLE "user" ADD tariff_id INT DEFAULT NULL');
+        $this->addSql('ALTER TABLE "user" ADD CONSTRAINT FK_8D93D649357C0A59 FOREIGN KEY (tariff_id) REFERENCES tariff (id) NOT DEFERRABLE INITIALLY IMMEDIATE');
+        $this->addSql('CREATE INDEX IDX_8D93D649357C0A59 ON "user" (tariff_id)');
     }
 
     public function down(Schema $schema): void
@@ -31,7 +31,7 @@ final class Version20260308230000 extends AbstractMigration
         // this down() migration is auto-generated, please modify it to your needs
         $this->addSql('ALTER TABLE "user" DROP CONSTRAINT FK_8D93D649357C0A59');
         $this->addSql('DROP INDEX IDX_8D93D649357C0A59');
-        $this->addSql('ALTER TABLE "user" DROP tarif_id');
-        $this->addSql('DROP TABLE tarif');
+        $this->addSql('ALTER TABLE "user" DROP tariff_id');
+        $this->addSql('DROP TABLE tariff');
     }
 }

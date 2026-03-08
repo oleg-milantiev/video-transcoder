@@ -2,12 +2,11 @@
 
 namespace App\Infrastructure\Persistence\Doctrine\User;
 
-use App\Infrastructure\Persistence\Doctrine\User\UserRepository;
 use Doctrine\ORM\Mapping as ORM;
 
-#[ORM\Entity(repositoryClass: TarifRepository::class)]
-#[ORM\Table(name: 'tarif')]
-class TarifEntity
+#[ORM\Entity(repositoryClass: TariffRepository::class)]
+#[ORM\Table(name: 'tariff')]
+class TariffEntity
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]

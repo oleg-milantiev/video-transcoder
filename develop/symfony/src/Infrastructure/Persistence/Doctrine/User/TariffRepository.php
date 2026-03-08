@@ -1,0 +1,45 @@
+<?php
+
+namespace App\Infrastructure\Persistence\Doctrine\User;
+
+use App\Domain\User\Entity\Tariff;
+use App\Domain\User\Repository\TariffRepositoryInterface;
+use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\Persistence\ManagerRegistry;
+
+/**
+ * @extends ServiceEntityRepository<TariffEntity>
+ */
+class TariffRepository extends ServiceEntityRepository implements TariffRepositoryInterface
+{
+    public function __construct(ManagerRegistry $registry)
+    {
+        parent::__construct($registry, TariffEntity::class);
+    }
+
+    public function save(Tariff $tariff): void
+    {
+        $entity = TariffMapper::toDoctrine($tariff);
+        $this->getEntityManager()->persist($entity);
+        $this->getEntityManager()->flush();
+    }
+
+    public function findById(int $id): ?Tariff
+    {
+        $entity = $this->find($id);
+        return $entity ? TariffMapper::toDomain($entity) : null;
+    }
+
+    public function findAll(): array
+    {
+        $entities = parent::findAll();
+        return array_map(fn(TariffEntity $entity) => TariffMapper::toDomain($entity), $entities);
+    }
+
+    public function delete(Tariff $tariff): void
+    {
+        $entity = $this->getEntityManager()->getReference(TariffEntity::class, $tariff->id());
+        $this->getEntityManager()->remove($entity);
+        $this->getEntityManager()->flush();
+    }
+}

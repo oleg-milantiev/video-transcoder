@@ -59,7 +59,7 @@ class UserCrudController extends AbstractCrudController
     {
         return $filters
             ->add(TextFilter::new('email'))
-            ->add(EntityFilter::new('tarif'));
+            ->add(EntityFilter::new('tariff'));
     }
 
     public function configureFields(string $pageName): iterable
@@ -68,7 +68,7 @@ class UserCrudController extends AbstractCrudController
             IdField::new('id')->hideOnForm(),
             TextField::new('email'),
             ArrayField::new('roles'),
-            AssociationField::new('tarif'),
+            AssociationField::new('tariff'),
         ];
     }
 }

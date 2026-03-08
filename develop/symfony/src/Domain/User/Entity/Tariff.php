@@ -2,7 +2,7 @@
 
 namespace App\Domain\User\Entity;
 
-class Tarif
+class Tariff
 {
     private ?int $id;
     private string $title;

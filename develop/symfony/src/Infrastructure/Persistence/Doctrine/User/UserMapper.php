@@ -12,7 +12,7 @@ class UserMapper
             email: $entity->email,
             roles: $entity->roles,
             password: $entity->password,
-            tarif: $entity->tarif ? TarifMapper::toDomain($entity->tarif) : null,
+            tariff: $entity->tariff ? TariffMapper::toDomain($entity->tariff) : null,
             id: $entity->id,
         );
     }
@@ -24,7 +24,7 @@ class UserMapper
         $entity->email = $user->email();
         $entity->roles = $user->roles();
         $entity->password = $user->password();
-        $entity->tarif = $user->tarif() ? TarifMapper::toDoctrine($user->tarif()) : null;
+        $entity->tariff = $user->tariff() ? TariffMapper::toDoctrine($user->tariff()) : null;
 
         return $entity;
     }
