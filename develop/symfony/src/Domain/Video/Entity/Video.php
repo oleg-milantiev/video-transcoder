@@ -20,7 +20,7 @@ class Video
     // TODO DDD
     private ?\DateTimeImmutable $updatedAt = null;
     private User $user;
-    // TODO DDD PresetId, UserId, TaskIds
+    private array $meta = [];
 
 
     public function __construct(
@@ -30,6 +30,7 @@ class Video
         // TODO DDD
         \DateTimeImmutable $createdAt,
         User $user,
+        array $meta = [],
         ?string $id = null,
     ) {
         $this->id = $id ? Uuid::fromString($id) : Uuid::v4();
@@ -39,6 +40,7 @@ class Video
         $this->status = $status;
         $this->createdAt = $createdAt;
         $this->user = $user;
+        $this->meta = $meta;
     }
 
     public static function create(
@@ -47,8 +49,9 @@ class Video
         VideoStatus $status,
         \DateTimeImmutable $createdAt,
         User $user,
+        array $meta = [],
     ): self {
-        return new self($title, $extension, $status, $createdAt, $user);
+        return new self($title, $extension, $status, $createdAt, $user, $meta);
     }
 
     public function id(): ?Uuid
@@ -84,6 +87,22 @@ class Video
     public function user(): User
     {
         return $this->user;
+    }
+
+    public function meta(): array
+    {
+        return $this->meta;
+    }
+
+    public function updateMeta(array $meta): void
+    {
+        $this->meta = array_merge($this->meta, $meta);
+        $this->updatedAt = new \DateTimeImmutable();
+    }
+
+    public function duration(): ?float
+    {
+        return $this->meta['duration'] ?? null;
     }
 
     public function getSrcFilename(): string

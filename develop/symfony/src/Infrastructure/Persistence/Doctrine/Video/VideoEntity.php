@@ -38,6 +38,9 @@ class VideoEntity
     #[ORM\JoinColumn(nullable: false)]
     public ?UserEntity $user = null;
 
+    #[ORM\Column(type: 'json', options: ['jsonb' => true])]
+    public array $meta = [];
+
     /**
      * @var Collection<int, TaskEntity>
      */

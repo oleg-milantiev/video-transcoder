@@ -24,4 +24,10 @@ interface StorageInterface
      * @return string The public URL of the file
      */
     public function getUrl(string $path): string;
+
+    /**
+     * @param string $path
+     * @return string The absolute path to the file
+     */
+    public function getAbsolutePath(string $path): string;
 }

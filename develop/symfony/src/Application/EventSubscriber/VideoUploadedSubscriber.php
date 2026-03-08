@@ -2,7 +2,7 @@
 
 namespace App\Application\EventSubscriber;
 
-use App\Application\Command\Video\CreateVideoPreview;
+use App\Application\Command\Video\ExtractVideoMetadata;
 use App\Domain\Video\Event\VideoUploaded;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 use Symfony\Component\Messenger\Exception\ExceptionInterface;
@@ -25,7 +25,7 @@ final readonly class VideoUploadedSubscriber
         $videoId = $video->id();
 
         if ($videoId !== null) {
-            $this->messageBus->dispatch(new CreateVideoPreview($videoId));
+            $this->messageBus->dispatch(new ExtractVideoMetadata($videoId));
         }
     }
 }

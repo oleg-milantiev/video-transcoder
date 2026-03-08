@@ -18,6 +18,7 @@ class VideoMapper
             status: VideoStatus::from($entity->status),
             createdAt: $entity->createdAt,
             user: UserMapper::toDomain($entity->user),
+            meta: $entity->meta,
             id: $entity->id?->toString(),
         );
     }
@@ -30,6 +31,7 @@ class VideoMapper
         $entity->extension = $video->extension()->value();
         $entity->user = UserMapper::toDoctrine($video->user());
         $entity->status = $video->status()->value;
+        $entity->meta = $video->meta();
         $entity->createdAt = $video->createdAt();
         $entity->updatedAt = $video->updatedAt();
 

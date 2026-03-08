@@ -45,4 +45,9 @@ class LocalStorage implements StorageInterface
     {
         return $this->publicPath . DIRECTORY_SEPARATOR . $path;
     }
+
+    public function getAbsolutePath(string $path): string
+    {
+        return $this->storagePath . DIRECTORY_SEPARATOR . $path;
+    }
 }
