@@ -8,7 +8,7 @@ security:
         # used to reload user from session & read actually for manual actions
         app_user_provider:
             entity:
-                class: App\Domain\User\Entity\User
+                class: App\Infrastructure\Persistence\Doctrine\User\UserEntity
                 property: email
     firewalls:
         dev:

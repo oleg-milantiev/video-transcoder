@@ -1,6 +1,17 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Home - Video Transcoder{% endblock %}
+{% block title %}Video Transcoder{% endblock %}
+
+{% block stylesheets %}
+    <link href="https://releases.transloadit.com/uppy/v3.21.0/uppy.min.css" rel="stylesheet">
+    {{ parent() }}
+{% endblock %}
+
+{% block javascripts %}
+    <script src="https://releases.transloadit.com/uppy/v3.21.0/uppy.min.js"></script>
+    {{ parent() }}
+{% endblock %}
+
 
 {% block body %}
     <div class="p-5 mb-4 bg-light rounded-3">
@@ -10,6 +21,31 @@
             <hr class="my-4">
             {% if app.user %}
                 <p>You are logged in as <strong>{{ app.user.userIdentifier }}</strong>.</p>
+
+                <div id="drag-drop-area"></div>
+                <script>
+                    const uppy = new Uppy.Uppy({
+                        debug: true,
+                        autoProceed: false,
+                    })
+                        .use(Uppy.Dashboard, {
+                            inline: true,
+                            target: '#drag-drop-area',
+                            proudlyDisplayPoweredByUppy: false
+                        })
+                        .use(Uppy.Tus, {
+                            // TODO named route
+                            endpoint: '/upload', // Конечная точка нашего контроллера
+                            chunkSize: 5 * 1024 * 1024, // Размер чанка (например, 5МБ)
+                            retryDelays: [0, 1000, 3000, 5000], // Повторы при сбое сети
+                        });
+
+                    uppy.on('complete', (result) => {
+                        console.log('Загрузка завершена! Файл доступен на сервере.');
+                        // В result.successful[0].uploadURL будет ссылка на ресурс
+                        console.log(result.successful[0].uploadURL);
+                    });
+                </script>
             {% else %}
                 <p>Please <a href="{{ path('app_login') }}" class="btn btn-primary btn-lg">Sign in</a> to manage your videos.</p>
             {% endif %}

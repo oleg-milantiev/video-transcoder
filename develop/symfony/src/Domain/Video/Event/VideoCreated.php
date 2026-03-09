@@ -4,7 +4,7 @@ namespace App\Domain\Video\Event;
 
 use App\Domain\Video\Entity\Video;
 
-final readonly class VideoUploaded
+final readonly class VideoCreated
 {
     public function __construct(
         private Video $video

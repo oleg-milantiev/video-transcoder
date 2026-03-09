@@ -4,7 +4,7 @@ namespace App\Application\Service;
 
 use App\Domain\User\Entity\User;
 use App\Domain\Video\Entity\Video;
-use App\Domain\Video\Event\VideoUploaded;
+use App\Domain\Video\Event\VideoCreated;
 use App\Domain\Video\Repository\VideoRepositoryInterface;
 use App\Domain\Video\Service\Storage\StorageInterface;
 use App\Domain\Video\ValueObject\FileExtension;
@@ -33,7 +33,7 @@ readonly class VideoUploadService
         $video = new Video(
             title: new VideoTitle($title),
             extension: new FileExtension($extension),
-            status: VideoStatus::PENDING,
+            status: VideoStatus::UPLOADED,
             createdAt: new \DateTimeImmutable(),
             user: $user
         );
@@ -42,7 +42,7 @@ readonly class VideoUploadService
 
         $this->videoRepository->save($video, true);
 
-        $this->messageBus->dispatch(new VideoUploaded($video));
+        $this->messageBus->dispatch(new VideoCreated($video));
 
         return $video;
     }

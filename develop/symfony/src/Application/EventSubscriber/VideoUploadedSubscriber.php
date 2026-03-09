@@ -3,7 +3,7 @@
 namespace App\Application\EventSubscriber;
 
 use App\Application\Command\Video\ExtractVideoMetadata;
-use App\Domain\Video\Event\VideoUploaded;
+use App\Domain\Video\Event\VideoCreated;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 use Symfony\Component\Messenger\Exception\ExceptionInterface;
 use Symfony\Component\Messenger\MessageBusInterface;
@@ -19,7 +19,7 @@ final readonly class VideoUploadedSubscriber
      * @throws ExceptionInterface
      */
     #[AsMessageHandler]
-    public function __invoke(VideoUploaded $event): void
+    public function __invoke(VideoCreated $event): void
     {
         $video = $event->video();
         $videoId = $video->id();
