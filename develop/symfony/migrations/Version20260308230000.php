@@ -16,7 +16,7 @@ final class Version20260308230000 extends AbstractMigration
 
     public function up(Schema $schema): void
     {
-        $this->addSql('CREATE TABLE tariff (id SERIAL NOT NULL, title VARCHAR(255) NOT NULL, delay INT NOT NULL, PRIMARY KEY(id))');
+        $this->addSql('CREATE TABLE tariff (id SERIAL NOT NULL, title VARCHAR(255) NOT NULL, delay INT NOT NULL DEFAULT 0, instance INT NOT NULL DEFAULT 1, PRIMARY KEY(id))');
         $this->addSql('ALTER TABLE "user" ADD tariff_id INT DEFAULT NULL');
         $this->addSql('ALTER TABLE "user" ADD CONSTRAINT FK_8D93D649357C0A59 FOREIGN KEY (tariff_id) REFERENCES tariff (id) NOT DEFERRABLE INITIALLY IMMEDIATE');
         $this->addSql('CREATE INDEX IDX_8D93D649357C0A59 ON "user" (tariff_id)');

@@ -14,13 +14,16 @@ class TariffEntity
     public ?int $id = null;
 
     #[ORM\Column(length: 255)]
-    public ?string $title = null;
+    public string $title;
 
     #[ORM\Column]
-    public ?int $delay = null;
+    public int $delay;
+
+    #[ORM\Column]
+    public int $instance;
 
     public function __toString(): string
     {
-        return (string) $this->title;
+        return $this->title;
     }
 }

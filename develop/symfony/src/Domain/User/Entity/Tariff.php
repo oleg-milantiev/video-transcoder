@@ -7,14 +7,18 @@ class Tariff
     private ?int $id;
     private string $title;
     private int $delay;
+    private int $instance;
 
     public function __construct(
         string $title,
         int    $delay,
+        int    $instance,
         ?int   $id = null
     ) {
+        // TODO DDD
         $this->title = $title;
         $this->delay = $delay;
+        $this->instance = $instance;
         $this->id = $id;
     }
 
@@ -31,6 +35,11 @@ class Tariff
     public function delay(): int
     {
         return $this->delay;
+    }
+
+    public function instance(): int
+    {
+        return $this->instance;
     }
 
     public function __toString(): string
