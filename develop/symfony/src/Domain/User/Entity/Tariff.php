@@ -6,15 +6,15 @@ class Tariff
 {
     private ?int $id;
     private string $title;
-    private int $timeDelay;
+    private int $delay;
 
     public function __construct(
         string $title,
-        int $timeDelay,
-        ?int $id = null
+        int    $delay,
+        ?int   $id = null
     ) {
         $this->title = $title;
-        $this->timeDelay = $timeDelay;
+        $this->delay = $delay;
         $this->id = $id;
     }
 
@@ -28,9 +28,9 @@ class Tariff
         return $this->title;
     }
 
-    public function timeDelay(): int
+    public function delay(): int
     {
-        return $this->timeDelay;
+        return $this->delay;
     }
 
     public function __toString(): string

@@ -10,7 +10,7 @@ class TariffMapper
     {
         return new Tariff(
             title: $entity->title,
-            timeDelay: $entity->timeDelay,
+            delay: $entity->delay,
             id: $entity->id
         );
     }
@@ -20,7 +20,7 @@ class TariffMapper
         $entity = new TariffEntity();
         $entity->id = $tariff->id();
         $entity->title = $tariff->title();
-        $entity->timeDelay = $tariff->timeDelay();
+        $entity->delay = $tariff->delay();
 
         return $entity;
     }

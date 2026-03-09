@@ -17,7 +17,7 @@ class TariffEntity
     public ?string $title = null;
 
     #[ORM\Column]
-    public ?int $timeDelay = null;
+    public ?int $delay = null;
 
     public function __toString(): string
     {

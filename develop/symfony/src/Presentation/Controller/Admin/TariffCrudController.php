@@ -39,7 +39,7 @@ class TariffCrudController extends AbstractCrudController
     {
         return $filters
             ->add(TextFilter::new('title'))
-            ->add(NumericFilter::new('timeDelay'));
+            ->add(NumericFilter::new('delay'));
     }
 
     public function configureFields(string $pageName): iterable
@@ -47,7 +47,7 @@ class TariffCrudController extends AbstractCrudController
         return [
             IdField::new('id')->hideOnForm(),
             TextField::new('title'),
-            IntegerField::new('timeDelay'),
+            IntegerField::new('delay'),
         ];
     }
 }
