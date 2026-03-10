@@ -46,7 +46,7 @@ class Video
     public static function createFromCommand(CreateVideo $command): self
     {
         return new self(
-            title: new VideoTitle($command->file()->getName()),
+            title: new VideoTitle($command->file()->details()['metadata']['originalName'] ?? $command->file()->getName()),
             extension: new FileExtension(pathinfo($command->file()->getName(), PATHINFO_EXTENSION)),
             status: VideoStatus::UPLOADED,
             userId: $command->userId(),

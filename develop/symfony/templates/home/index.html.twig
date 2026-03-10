@@ -24,9 +24,22 @@
 
                 <div id="drag-drop-area"></div>
                 <script>
+                    function uuidv4() {
+                        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                            const r = crypto.getRandomValues(new Uint8Array(1))[0] & 15;
+                            const v = c === 'x' ? r : (r & 0x3 | 0x8);
+                            return v.toString(16);
+                        });
+                    }
+
+                    const allowedExtensions = ['mp4', 'mkv', 'avi', 'mov'];
+
                     const uppy = new Uppy.Uppy({
                         debug: true,
                         autoProceed: false,
+                        restrictions: {
+                            allowedFileTypes: allowedExtensions.map(ext => '.' + ext)
+                        }
                     })
                         .use(Uppy.Dashboard, {
                             inline: true,
@@ -40,10 +53,20 @@
                             retryDelays: [0, 1000, 3000, 5000], // Повторы при сбое сети
                         });
 
+                    uppy.on('file-added', (file) => {
+                        const uuid = uuidv4();
+                        const ext = file.name.split('.').pop().toLowerCase();
+
+                        uppy.setFileMeta(file.id, {
+                            name: uuid + '.' + ext,
+                            originalName: file.name
+                        });
+                    });
+
                     uppy.on('complete', (result) => {
-                        console.log('Загрузка завершена! Файл доступен на сервере.');
+                        console.log('Upload complete');
                         // В result.successful[0].uploadURL будет ссылка на ресурс
-                        console.log(result.successful[0].uploadURL);
+                        console.log(result);
                     });
                 </script>
             {% else %}

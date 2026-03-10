@@ -21,6 +21,7 @@ class UploadController extends AbstractController
         $server->setDispatcher($symfonyDispatcher);
 
         // TODO rename file to random uniq (by tus uuid?)
+        // TODO call TusPhp\Commands\ExpirationCommand (cron?)
         return $server->serve();
     }
 }
