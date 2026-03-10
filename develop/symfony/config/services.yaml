@@ -38,19 +38,22 @@ services:
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones
 
-    TusPhp\Cache\FileStore:
-        class: TusPhp\Cache\FileStore
+    TusPhp\Cache\RedisStore:
+        class: TusPhp\Cache\RedisStore
         arguments:
-            $cacheDir: '%kernel.project_dir%/var/cache/'
+            $options:
+                host: "%env(REDIS_HOST)%"
+                port: "%env(int:REDIS_PORT)%"
+                scheme: 'tcp'
 
     TusPhp\Tus\Server:
         class: TusPhp\Tus\Server
         arguments:
-            $cacheAdapter: '@TusPhp\Cache\FileStore'
+            $cacheAdapter: '@TusPhp\Cache\RedisStore'
         calls:
             - method: setUploadDir
               arguments:
-                  - '%kernel.project_dir%/public/uploads'
+                  - '%kernel.project_dir%/var/cache/uploads'
             - method: setApiPath
               arguments:
                   - '/upload'
