@@ -2,7 +2,7 @@
 
 namespace App\Domain\Video\Entity;
 
-use App\Domain\User\Entity\User;
+use App\Application\Command\Video\CreateVideo;
 use App\Domain\Video\ValueObject\FileExtension;
 use App\Domain\Video\ValueObject\VideoStatus;
 use App\Domain\Video\ValueObject\VideoTitle;
@@ -18,17 +18,18 @@ class Video
     private \DateTimeImmutable $createdAt;
     // TODO DDD
     private ?\DateTimeImmutable $updatedAt = null;
-    private User $user;
+    private int $userId;
     private array $meta = [];
-
 
     public function __construct(
         VideoTitle $title,
         FileExtension $extension,
         VideoStatus $status,
-        // TODO DDD
-        \DateTimeImmutable $createdAt,
-        User $user,
+        // TODO DDD VO
+        int $userId,
+        // TODO DDD VO
+        ?\DateTimeImmutable $createdAt = null,
+        // TODO DDD VO
         array $meta = [],
         ?string $id = null,
     ) {
@@ -37,20 +38,19 @@ class Video
         $this->title = $title;
         $this->extension = $extension;
         $this->status = $status;
-        $this->createdAt = $createdAt;
-        $this->user = $user;
+        $this->createdAt = $createdAt ?? new \DateTimeImmutable();
+        $this->userId = $userId;
         $this->meta = $meta;
     }
 
-    public static function create(
-        VideoTitle $title,
-        FileExtension $extension,
-        VideoStatus $status,
-        \DateTimeImmutable $createdAt,
-        User $user,
-        array $meta = [],
-    ): self {
-        return new self($title, $extension, $status, $createdAt, $user, $meta);
+    public static function createFromCommand(CreateVideo $command): self
+    {
+        return new self(
+            title: new VideoTitle($command->file()->getName()),
+            extension: new FileExtension(pathinfo($command->file()->getName(), PATHINFO_EXTENSION)),
+            status: VideoStatus::UPLOADED,
+            userId: $command->userId(),
+        );
     }
 
     public function id(): ?Uuid
@@ -83,9 +83,9 @@ class Video
         return $this->updatedAt;
     }
 
-    public function user(): User
+    public function userId(): int
     {
-        return $this->user;
+        return $this->userId;
     }
 
     public function meta(): array

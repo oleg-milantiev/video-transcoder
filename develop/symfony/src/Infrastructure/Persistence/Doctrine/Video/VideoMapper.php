@@ -6,7 +6,7 @@ use App\Domain\Video\Entity\Video;
 use App\Domain\Video\ValueObject\FileExtension;
 use App\Domain\Video\ValueObject\VideoStatus;
 use App\Domain\Video\ValueObject\VideoTitle;
-use App\Infrastructure\Persistence\Doctrine\User\UserMapper;
+use App\Infrastructure\Persistence\Doctrine\User\UserEntity;
 
 class VideoMapper
 {
@@ -16,20 +16,20 @@ class VideoMapper
             title: new VideoTitle($entity->title),
             extension: new FileExtension($entity->extension),
             status: VideoStatus::from($entity->status),
+            userId: $entity->user->id,
             createdAt: $entity->createdAt,
-            user: UserMapper::toDomain($entity->user),
             meta: $entity->meta,
             id: $entity->id?->toString(),
         );
     }
 
-    public static function toDoctrine(Video $video): VideoEntity
+    public static function toDoctrine(Video $video, UserEntity $user): VideoEntity
     {
         $entity = new VideoEntity();
         $entity->id = $video->id();
         $entity->title = $video->title()->value();
         $entity->extension = $video->extension()->value();
-        $entity->user = UserMapper::toDoctrine($video->user());
+        $entity->user = $user;
         $entity->status = $video->status()->value;
         $entity->meta = $video->meta();
         $entity->createdAt = $video->createdAt();

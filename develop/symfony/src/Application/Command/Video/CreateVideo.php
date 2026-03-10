@@ -8,11 +8,16 @@ final readonly class CreateVideo
 {
     public function __construct(
         private File $file,
+        private int $userId,
     ) {
     }
 
-    public function getFile(): File
+    public function file(): File
     {
         return $this->file;
+    }
+    public function userId(): int
+    {
+        return $this->userId;
     }
 }

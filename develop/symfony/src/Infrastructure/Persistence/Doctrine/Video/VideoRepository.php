@@ -4,7 +4,9 @@ namespace App\Infrastructure\Persistence\Doctrine\Video;
 
 use App\Domain\Video\Entity\Video;
 use App\Domain\Video\Repository\VideoRepositoryInterface;
+use App\Infrastructure\Persistence\Doctrine\User\UserEntity;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\ORM\Exception\ORMException;
 use Doctrine\Persistence\ManagerRegistry;
 
 /**
@@ -17,10 +19,15 @@ class VideoRepository extends ServiceEntityRepository implements VideoRepository
         parent::__construct($registry, VideoEntity::class);
     }
 
+    /**
+     * @throws ORMException
+     */
     public function save(Video $video): void
     {
-        $this->getEntityManager()->persist(VideoMapper::toDoctrine($video));
-        $this->getEntityManager()->flush();
+        $em = $this->getEntityManager();
+
+        $em->persist(VideoMapper::toDoctrine($video, $em->getReference(UserEntity::class, $video->userId())));
+        $em->flush();
     }
 
     public function findById(int $id): ?Video

@@ -3,6 +3,8 @@
 namespace App\Application\CommandHandler\Video;
 
 use App\Application\Command\Video\CreateVideo;
+use App\Domain\Video\Entity\Video;
+use App\Domain\Video\Repository\VideoRepositoryInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 use Symfony\Component\Messenger\MessageBusInterface;
@@ -13,6 +15,7 @@ final readonly class CreateVideoHandler
     public function __construct(
         private MessageBusInterface $messageBus,
         private LoggerInterface $logger,
+        private VideoRepositoryInterface $videoRepository,
     ) {
     }
 
@@ -20,13 +23,17 @@ final readonly class CreateVideoHandler
     {
         try {
             $this->logger->info('Create Video Handler start', [
-                'file' => $command->getFile()->details(),
+                'file' => $command->file()->details(),
             ]);
-            dd($command);
 
-            $this->messageBus->dispatch(new VideoCreationFinished($videoId));
+            $video = Video::createFromCommand($command);
+            $this->videoRepository->save($video);
+
+//            dd($command);
+//
+//            $this->messageBus->dispatch(new VideoCreationFinished($videoId));
         } catch (\Exception $e) {
-            throw VideoCreationFailed::fromVideoId($videoId->toString(), $e->getMessage());
+//            throw VideoCreationFailed::fromVideoId($videoId->toString(), $e->getMessage());
         }
     }
 }

@@ -3,6 +3,7 @@
 namespace App\Infrastructure\Upload\EventListener;
 
 use App\Application\Command\Video\CreateVideo;
+use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\EventDispatcher\Attribute\AsEventListener;
 use Symfony\Component\Messenger\Exception\ExceptionInterface;
 use Symfony\Component\Messenger\MessageBusInterface;
@@ -13,6 +14,7 @@ readonly class TusPostFinishListener
 {
     public function __construct(
         private MessageBusInterface $messageBus,
+        private Security $security,
     ) {}
 
     /**
@@ -21,6 +23,9 @@ readonly class TusPostFinishListener
     #[AsEventListener(event: UploadComplete::NAME)]
     public function __invoke(UploadComplete $event): void
     {
-        $this->messageBus->dispatch(new CreateVideo($event->getFile()));
+        $this->messageBus->dispatch(new CreateVideo(
+            file: $event->getFile(),
+            userId: $this->security->getUser()->getId(),
+        ));
     }
 }
