@@ -4,73 +4,216 @@
 
 {% block stylesheets %}
     <link href="https://releases.transloadit.com/uppy/v3.21.0/uppy.min.css" rel="stylesheet">
+    <link href="https://cdn.datatables.net/1.13.8/css/dataTables.bootstrap5.min.css" rel="stylesheet">
+
     {{ parent() }}
 {% endblock %}
 
 {% block javascripts %}
     <script src="https://releases.transloadit.com/uppy/v3.21.0/uppy.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.8/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.8/js/dataTables.bootstrap5.min.js"></script>
+
     {{ parent() }}
 {% endblock %}
 
-
 {% block body %}
-    <div class="p-5 mb-4 bg-light rounded-3">
-        <div class="container-fluid py-5">
-            <h1 class="display-5 fw-bold">Welcome to Video Transcoder!</h1>
-            <p class="col-md-8 fs-4">This is a simple video transcoding service.</p>
-            <hr class="my-4">
-            {% if app.user %}
-                <p>You are logged in as <strong>{{ app.user.userIdentifier }}</strong>.</p>
+    <div class="container py-5">
 
-                <div id="drag-drop-area"></div>
-                <script>
-                    function uuidv4() {
-                        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-                            const r = crypto.getRandomValues(new Uint8Array(1))[0] & 15;
-                            const v = c === 'x' ? r : (r & 0x3 | 0x8);
-                            return v.toString(16);
-                        });
-                    }
+        <h1 class="mb-4">Video Transcoder</h1>
 
-                    const allowedExtensions = ['mp4', 'mkv', 'avi', 'mov'];
+        {% if app.user %}
+            <p>You are logged in as <strong>{{ app.user.userIdentifier }}</strong>.</p>
 
-                    const uppy = new Uppy.Uppy({
-                        debug: true,
-                        autoProceed: true,
-                        restrictions: {
-                            allowedFileTypes: allowedExtensions.map(ext => '.' + ext)
+            <ul class="nav nav-tabs" id="mainTabs" role="tablist">
+                <li class="nav-item">
+                    <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#upload">
+                        Upload
+                    </button>
+                </li>
+                <li class="nav-item">
+                    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#videos">
+                        Videos
+                    </button>
+                </li>
+                <li class="nav-item">
+                    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tasks">
+                        Tasks
+                    </button>
+                </li>
+            </ul>
+
+            <div class="tab-content border border-top-0 p-4 bg-light">
+
+                {# ================= UPLOAD ================= #}
+                <div class="tab-pane fade show active" id="upload">
+
+                    <div id="drag-drop-area"></div>
+
+                    <script>
+                        function uuidv4() {
+                            return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                                const r = crypto.getRandomValues(new Uint8Array(1))[0] & 15;
+                                const v = c === 'x' ? r : (r & 0x3 | 0x8);
+                                return v.toString(16);
+                            });
                         }
-                    })
-                        .use(Uppy.Dashboard, {
-                            inline: true,
-                            target: '#drag-drop-area',
-                            proudlyDisplayPoweredByUppy: false
+
+                        const allowedExtensions = ['mp4','mkv','avi','mov'];
+
+                        const uppy = new Uppy.Uppy({
+                            autoProceed: true,
+                            restrictions: {
+                                allowedFileTypes: allowedExtensions.map(ext => '.'+ext)
+                            }
                         })
-                        .use(Uppy.Tus, {
-                            endpoint: '{{ path('tus') }}',
-                            chunkSize: 5 * 1024 * 1024,
-                            retryDelays: [0, 1000, 3000, 5000],
+                            .use(Uppy.Dashboard,{
+                                inline:true,
+                                target:'#drag-drop-area',
+                                proudlyDisplayPoweredByUppy:false
+                            })
+                            .use(Uppy.Tus,{
+                                endpoint:'{{ path('tus') }}',
+                                chunkSize:5*1024*1024
+                            });
+
+                        uppy.on('file-added',(file)=>{
+                            const uuid = uuidv4();
+                            const ext = file.name.split('.').pop().toLowerCase();
+
+                            uppy.setFileMeta(file.id,{
+                                name: uuid+'.'+ext,
+                                originalName:file.name
+                            });
                         });
+                    </script>
+                </div>
 
-                    uppy.on('file-added', (file) => {
-                        const uuid = uuidv4();
-                        const ext = file.name.split('.').pop().toLowerCase();
+                {# ================= VIDEOS ================= #}
+                <div class="tab-pane fade" id="videos">
 
-                        uppy.setFileMeta(file.id, {
-                            name: uuid + '.' + ext,
-                            originalName: file.name
-                        });
-                    });
+                    <table id="videosTable" class="table table-striped w-100">
+                        <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Name</th>
+                            <th>Status</th>
+                            <th>Created</th>
+                        </tr>
+                        </thead>
+                    </table>
+                </div>
 
-                    uppy.on('complete', (result) => {
-                        console.log('Upload complete');
-                        // В result.successful[0].uploadURL будет ссылка на ресурс
-                        console.log(result);
-                    });
-                </script>
-            {% else %}
-                <p>Please <a href="{{ path('app_login') }}" class="btn btn-primary btn-lg">Sign in</a> to manage your videos.</p>
-            {% endif %}
+                {# ================= TASKS ================= #}
+                <div class="tab-pane fade" id="tasks">
+
+                    <table id="tasksTable" class="table table-striped w-100">
+                        <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Type</th>
+                            <th>Status</th>
+                            <th>Created</th>
+                        </tr>
+                        </thead>
+                    </table>
+
+                </div>
+
+            </div>
+
+        {% else %}
+            <p>Please <a href="{{ path('app_login') }}" class="btn btn-primary">Sign in</a>.</p>
+        {% endif %}
+    </div>
+
+
+    {# ================= VIDEO MODAL ================= #}
+
+    <div class="modal fade" id="videoModal">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Video Details</h5>
+                    <button class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="videoModalBody"></div>
+            </div>
         </div>
     </div>
+
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+
+            /* ---------- VIDEOS TABLE ---------- */
+
+            const videosTable = new DataTable('#videosTable', {
+                ajax: {
+                    url: '{{ path('video') }}',
+                    dataSrc: ''
+                },
+                pageLength: 10,
+                columns: [
+                    {data:'id'},
+                    {data:'title'},
+                    {data:'status'},
+                    {data:'createdAt'}
+                ]
+            });
+
+            /* CLICK ROW -> MODAL */
+
+            document.querySelector('#videosTable tbody')
+                .addEventListener('click', function(e){
+
+                    const row = videosTable.row(e.target.closest('tr')).data();
+                    if (!row) return;
+
+                    let html = '<div class="container-fluid">';
+
+                    if (row.poster) {
+                        html += `
+                    <img src="${row.poster}"
+                         class="img-fluid mb-3 rounded">
+                `;
+                    }
+
+                    Object.entries(row).forEach(([k,v])=>{
+                        html += `
+                    <div class="row border-bottom py-1">
+                        <div class="col-4 fw-bold">${k}</div>
+                        <div class="col-8">${v}</div>
+                    </div>
+                `;
+                    });
+
+                    html += '</div>';
+
+                    document.getElementById('videoModalBody').innerHTML = html;
+
+                    new bootstrap.Modal('#videoModal').show();
+                });
+
+
+            /* ---------- TASKS TABLE ---------- */
+
+            new DataTable('#tasksTable', {
+                ajax: {
+                    url: '{{ path('task') }}',
+                    dataSrc: ''
+                },
+                pageLength: 10,
+                columns: [
+                    {data:'id'},
+                    {data:'type'},
+                    {data:'status'},
+                    {data:'createdAt'}
+                ]
+            });
+
+        });
+    </script>
+
 {% endblock %}

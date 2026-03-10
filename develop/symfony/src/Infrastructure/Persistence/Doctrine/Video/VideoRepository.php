@@ -2,6 +2,7 @@
 
 namespace App\Infrastructure\Persistence\Doctrine\Video;
 
+use App\Application\DTO\PaginatedResult;
 use App\Domain\Video\Entity\Video;
 use App\Domain\Video\Repository\VideoRepositoryInterface;
 use App\Infrastructure\Persistence\Doctrine\User\UserEntity;
@@ -33,5 +34,34 @@ class VideoRepository extends ServiceEntityRepository implements VideoRepository
     public function findById(int $id): ?Video
     {
         return VideoMapper::toDomain($this->find($id));
+    }
+
+    public function findAllPaginated(int $page, int $limit): PaginatedResult
+    {
+        $queryBuilder = $this
+            ->createQueryBuilder('v')
+            ->select('v');
+
+        // Get total count
+        $countQuery = clone $queryBuilder;
+        $total = (int) $countQuery
+            ->select('COUNT(v.id)')
+            ->getQuery()
+            ->getSingleScalarResult();
+
+        // Get paginated results
+        $entities = $queryBuilder
+            ->setFirstResult($limit * ($page - 1))
+            ->setMaxResults($limit)
+            ->orderBy('v.createdAt', 'DESC')
+            ->getQuery()
+            ->getResult();
+
+        $videos = array_map(
+            static fn($entity) => VideoMapper::toDomain($entity),
+            $entities
+        );
+
+        return new PaginatedResult($videos, $total);
     }
 }
