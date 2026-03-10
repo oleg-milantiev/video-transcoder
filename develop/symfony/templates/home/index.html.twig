@@ -36,7 +36,7 @@
 
                     const uppy = new Uppy.Uppy({
                         debug: true,
-                        autoProceed: false,
+                        autoProceed: true,
                         restrictions: {
                             allowedFileTypes: allowedExtensions.map(ext => '.' + ext)
                         }
@@ -47,10 +47,9 @@
                             proudlyDisplayPoweredByUppy: false
                         })
                         .use(Uppy.Tus, {
-                            // TODO named route
-                            endpoint: '/upload', // Конечная точка нашего контроллера
-                            chunkSize: 5 * 1024 * 1024, // Размер чанка (например, 5МБ)
-                            retryDelays: [0, 1000, 3000, 5000], // Повторы при сбое сети
+                            endpoint: '{{ path('tus') }}',
+                            chunkSize: 5 * 1024 * 1024,
+                            retryDelays: [0, 1000, 3000, 5000],
                         });
 
                     uppy.on('file-added', (file) => {
