@@ -96,7 +96,6 @@
                     <table id="videosTable" class="table table-striped w-100">
                         <thead>
                         <tr>
-                            <th>ID</th>
                             <th>Name</th>
                             <th>Status</th>
                             <th>Created</th>
@@ -156,12 +155,11 @@
                 },
                 pageLength: 10,
                 columns: [
-                    {data:'id'},
                     {data:'title'},
                     {data:'status'},
                     {data:'createdAt'}
                 ],
-                order: [[3, 'desc']]
+                order: [[2, 'desc']]
             });
 
             /* CLICK ROW -> MODAL */
@@ -177,7 +175,7 @@
                     if (row.poster) {
                         html += `
                     <img src="${row.poster}"
-                         class="img-fluid mb-3 rounded">
+                         class="img-fluid mb-3 rounded" alt="${row.title}">
                 `;
                     }
 
@@ -207,7 +205,6 @@
                 },
                 pageLength: 10,
                 columns: [
-                    {data:'id'},
                     {data:'type'},
                     {data:'status'},
                     {data:'createdAt'}
