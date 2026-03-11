@@ -3,6 +3,7 @@
 namespace App\Presentation\Controller;
 
 use App\Application\DTO\VideoListResponse;
+use App\Application\Exception\QueryException;
 use App\Application\Query\GetVideoListQuery;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -26,16 +27,16 @@ class VideoController extends AbstractController
     #[Route('/', name: 'video')]
     public function index(Request $request): Response
     {
-        $query = new GetVideoListQuery(
-            page: $request->query->getInt('page', 1),
-            // TODO use paged api calls in dataTable
-            limit: $request->query->getInt('limit', 10000),
-        );
+        try {
+            $query = new GetVideoListQuery($request);
+        } catch (QueryException $e) {
+            return new JsonResponse(['error' => $e->getMessage()], 400);
+        }
 
         /** @var VideoListResponse $videoList */
         $videoList = $this->handle($query);
 
-        // TODO use all video list data
+        // TODO use all video list data and paged api call in dataTable
         return new JsonResponse($videoList->items);
     }
 }
