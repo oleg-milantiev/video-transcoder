@@ -2,7 +2,7 @@
 
 namespace App\Application\Query;
 
-final readonly class GetVideoListQuery
+final readonly class GetTaskListQuery
 {
     use GetListQueryTrait;
 

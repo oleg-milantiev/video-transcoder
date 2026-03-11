@@ -5,6 +5,7 @@ namespace App\Infrastructure\Persistence\Doctrine\Video;
 use App\Application\DTO\PaginatedResult;
 use App\Domain\Video\Entity\Video;
 use App\Domain\Video\Repository\VideoRepositoryInterface;
+use App\Infrastructure\Persistence\Doctrine\Shared\Repository\PaginatedRepositoryTrait;
 use App\Infrastructure\Persistence\Doctrine\User\UserEntity;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\ORM\Exception\ORMException;
@@ -15,6 +16,8 @@ use Doctrine\Persistence\ManagerRegistry;
  */
 class VideoRepository extends ServiceEntityRepository implements VideoRepositoryInterface
 {
+    use PaginatedRepositoryTrait;
+
     public function __construct(ManagerRegistry $registry)
     {
         parent::__construct($registry, VideoEntity::class);
@@ -33,35 +36,11 @@ class VideoRepository extends ServiceEntityRepository implements VideoRepository
 
     public function findById(int $id): ?Video
     {
-        return VideoMapper::toDomain($this->find($id));
+        return self::mapToDomain($this->find($id));
     }
 
-    public function findAllPaginated(int $page, int $limit): PaginatedResult
+    protected static function mapToDomain(VideoEntity $entity): Video
     {
-        $queryBuilder = $this
-            ->createQueryBuilder('v')
-            ->select('v');
-
-        // Get total count
-        $countQuery = clone $queryBuilder;
-        $total = (int) $countQuery
-            ->select('COUNT(v.id)')
-            ->getQuery()
-            ->getSingleScalarResult();
-
-        // Get paginated results
-        $entities = $queryBuilder
-            ->setFirstResult($limit * ($page - 1))
-            ->setMaxResults($limit)
-            ->orderBy('v.createdAt', 'DESC')
-            ->getQuery()
-            ->getResult();
-
-        $videos = array_map(
-            static fn($entity) => VideoMapper::toDomain($entity),
-            $entities
-        );
-
-        return new PaginatedResult($videos, $total);
+        return VideoMapper::toDomain($entity);
     }
 }

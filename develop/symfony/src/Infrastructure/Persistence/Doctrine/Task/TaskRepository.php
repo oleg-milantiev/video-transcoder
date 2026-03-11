@@ -4,6 +4,7 @@ namespace App\Infrastructure\Persistence\Doctrine\Task;
 
 use App\Domain\Video\Entity\Task;
 use App\Domain\Video\Repository\TaskRepositoryInterface;
+use App\Infrastructure\Persistence\Doctrine\Shared\Repository\PaginatedRepositoryTrait;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
@@ -12,6 +13,8 @@ use Doctrine\Persistence\ManagerRegistry;
  */
 class TaskRepository extends ServiceEntityRepository implements TaskRepositoryInterface
 {
+    use PaginatedRepositoryTrait;
+
     public function __construct(ManagerRegistry $registry)
     {
         parent::__construct($registry, TaskEntity::class);
@@ -25,6 +28,11 @@ class TaskRepository extends ServiceEntityRepository implements TaskRepositoryIn
 
     public function findById(int $id): ?Task
     {
-        return TaskMapper::toDomain($this->find($id));
+        return self::mapToDomain($this->find($id));
+    }
+
+    protected static function mapToDomain(TaskEntity $entity): Task
+    {
+        return TaskMapper::toDomain($entity);
     }
 }

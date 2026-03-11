@@ -110,9 +110,10 @@
                     <table id="tasksTable" class="table table-striped w-100">
                         <thead>
                         <tr>
-                            <th>ID</th>
-                            <th>Type</th>
+                            <th>Video</th>
+                            <th>Preset</th>
                             <th>Status</th>
+                            <th>Progress</th>
                             <th>Created</th>
                         </tr>
                         </thead>
@@ -205,10 +206,13 @@
                 },
                 pageLength: 10,
                 columns: [
-                    {data:'type'},
+                    {data:'videoTitle'},
+                    {data:'presetTitle'},
                     {data:'status'},
+                    {data:'progress'},
                     {data:'createdAt'}
-                ]
+                ],
+                order: [[4, 'desc']]
             });
 
         });

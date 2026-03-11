@@ -4,7 +4,7 @@ namespace App\Tests\Application\Query;
 
 use App\Application\DTO\PaginatedResult;
 use App\Application\Query\GetVideoListHandler;
-use App\Application\Query\GetVideoListQuery;
+use App\Application\Query\GetVideoListQueryTrait;
 use App\Domain\Video\Repository\VideoRepositoryInterface;
 use App\Tests\Domain\Entity\VideoFake;
 use PHPUnit\Framework\TestCase;
@@ -29,7 +29,7 @@ class GetVideoListHandlerTest extends TestCase
             ->willReturn($paginatedResult);
 
         $request = new Request(['page' => $page, 'limit' => $limit]);
-        $query = new GetVideoListQuery($request);
+        $query = new GetVideoListQueryTrait($request);
         $handler = new GetVideoListHandler($repo);
         $response = $handler($query);
 

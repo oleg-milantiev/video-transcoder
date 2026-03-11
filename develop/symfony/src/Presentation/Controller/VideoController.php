@@ -9,19 +9,17 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\Messenger\HandleTrait;
 use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Messenger\Envelope;
+use Symfony\Component\Messenger\Stamp\HandledStamp;
 
 #[Route('/video')]
 class VideoController extends AbstractController
 {
-    use HandleTrait;
-
     public function __construct(
-        MessageBusInterface $messageBus,
+        private readonly MessageBusInterface $messageBus,
     ) {
-        $this->messageBus = $messageBus;
     }
 
     #[Route('/', name: 'video')]
@@ -33,10 +31,17 @@ class VideoController extends AbstractController
             return new JsonResponse(['error' => $e->getMessage()], 400);
         }
 
-        /** @var VideoListResponse $videoList */
-        $videoList = $this->handle($query);
+        // TODO simplify!
+        /** @var Envelope $envelope */
+        $envelope = $this->messageBus->dispatch($query);
+        $handledStamp = $envelope->last(HandledStamp::class);
+        if (!$handledStamp) {
+            throw new \RuntimeException('No handler processed this query');
+        }
+        /** @var VideoListResponse $result */
+        $result = $handledStamp->getResult();
 
         // TODO use all video list data and paged api call in dataTable
-        return new JsonResponse($videoList->items);
+        return new JsonResponse($result->items);
     }
 }
