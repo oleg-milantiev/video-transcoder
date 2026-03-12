@@ -3,19 +3,20 @@
 ## ЗАГРУЗКА
 
   - **Frontend**: Пользователь загружает видеофайл через веб-интерфейс (uppy+tus форма с chunk загрузкой);
-  - **Presentation + Infrastucture**: UploadController через Tus\Server грузит чанки, по готовности генерит TusPhp\Events\UploadComplete (@todo выделить Infrastructure);
+  - **Presentation + Infrastucture**: UploadController через Tus\Server грузит чанки, по готовности генерит TusPhp\Events\UploadComplete;
   - **Infrastructure Proxy**: инфраструктурное событие ловится TusPostFinishListener и проксируется в Application командой CreateVideo;
   - **Application Command Handler**: CreateVideoHandler:
     - создаёт Entity в Persistence;
-    - ? THINK ?
-      - тус уже положил файл куда надо
-      - нет нужды его двигать?
-      - или перемещу в /{User.id}/{Video.id}.{Video.ext}?
-      - нет, зачем мне uid в пути?
-      - я ж не буду разграничивать и давать читать исходники на фронте.
-      - или буду? Чтобы не проксировать через себя.
-      - но как же безопасность? Нельзя смотреть чужие видео
-    - ! THINK !
-      - пока что оставлю файл на тус-месте
-  - ? THINK ?
-  - ... 
+     - продолжает pipeline через отправку ExtractVideoMetadataCommand;
+  - **Application Command Handler**: ExtractVideoMetadataHandler
+    - зная src, натравливает на него ffmpeg
+    - читает результаты, складывает в Persistence:Video.meta
+  - **Application Command Handler**: CreateVideoThumbnailHandler
+    - зная src, натравливает на него ffmpeg 
+    - *да, можно было объединить, но мне интересно было организовать pipeline. Больше для самообучения.*
+    - постер, размером с кадр, в jpg формате, кладу в папку постеров;
+    - в Persistence:Video.meta кладу данные о наличии постера.
+    - в Video добавляю метод получения постера|null 
+ 
+Всё, видео есть. У него есть мета и превью.
+// Security: нельзя складывать постеры в public. Нужен механизм проксирования с auth.
