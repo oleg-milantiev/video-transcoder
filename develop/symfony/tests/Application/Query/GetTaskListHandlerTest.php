@@ -3,34 +3,34 @@
 namespace App\Tests\Application\Query;
 
 use App\Application\DTO\PaginatedResult;
-use App\Application\Query\GetVideoListHandler;
-use App\Application\Query\GetVideoListQuery;
-use App\Domain\Video\Repository\VideoRepositoryInterface;
-use App\Tests\Domain\Entity\VideoFake;
+use App\Application\Query\GetTaskListHandler;
+use App\Application\Query\GetTaskListQuery;
+use App\Domain\Video\Repository\TaskRepositoryInterface;
+use App\Tests\Domain\Entity\TaskFake;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\HttpFoundation\Request;
 
-class GetVideoListHandlerTest extends TestCase
+class GetTaskListHandlerTest extends TestCase
 {
     public function testHandleReturnsCorrectResponse()
     {
-        $video1 = new VideoFake();
-        $video2 = new VideoFake();
-        $videos = [$video1, $video2];
+        $task1 = new TaskFake();
+        $task2 = new TaskFake();
+        $tasks = [$task1, $task2];
         $total = 2;
         $page = 1;
         $limit = 10;
-        $paginatedResult = new PaginatedResult($videos, $total);
+        $paginatedResult = new PaginatedResult($tasks, $total);
 
-        $repo = $this->createMock(VideoRepositoryInterface::class);
+        $repo = $this->createMock(TaskRepositoryInterface::class);
         $repo->expects($this->once())
             ->method('findAllPaginated')
             ->with($page, $limit)
             ->willReturn($paginatedResult);
 
         $request = new Request(['page' => $page, 'limit' => $limit]);
-        $query = new GetVideoListQuery($request);
-        $handler = new GetVideoListHandler($repo);
+        $query = new GetTaskListQuery($request);
+        $handler = new GetTaskListHandler($repo);
         $response = $handler($query);
 
         $this->assertEquals($total, $response->total);
