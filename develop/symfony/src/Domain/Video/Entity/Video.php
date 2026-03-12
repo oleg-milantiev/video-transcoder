@@ -106,6 +106,6 @@ class Video
 
     public function getSrcFilename(): string
     {
-        return $this->id->toString() . DIRECTORY_SEPARATOR . 'src.' . $this->extension->value();
+        return $this->id->toString() . '.' . $this->extension->value();
     }
 }

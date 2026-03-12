@@ -9,6 +9,7 @@ use App\Domain\Video\Exception\VideoMetadataExtractionFailed;
 use App\Domain\Video\Repository\VideoRepositoryInterface;
 use App\Domain\Video\Service\Storage\StorageInterface;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
+use Symfony\Component\Messenger\Exception\ExceptionInterface;
 use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Process\Exception\ProcessFailedException;
 use Symfony\Component\Process\Process;
@@ -23,16 +24,14 @@ final readonly class ExtractVideoMetadataHandler
     ) {
     }
 
+    /**
+     * @throws ExceptionInterface
+     */
     public function __invoke(ExtractVideoMetadata $command): void
     {
-        $videoId = $command->getVideoId();
-        $video = $this->videoRepository->findById($videoId);
+        $video = $command->video();
 
-        if (!$video) {
-            return;
-        }
-
-        $this->messageBus->dispatch(new VideoMetadataExtractionStarted($videoId));
+        $this->messageBus->dispatch(new VideoMetadataExtractionStarted($video));
 
         try {
             $inputPath = $this->storage->getAbsolutePath($video->getSrcFilename());
@@ -41,9 +40,9 @@ final readonly class ExtractVideoMetadataHandler
             $video->updateMeta($metadata);
             $this->videoRepository->save($video);
 
-            $this->messageBus->dispatch(new VideoMetadataExtractionFinished($videoId));
+            $this->messageBus->dispatch(new VideoMetadataExtractionFinished($video));
         } catch (\Exception $e) {
-            throw VideoMetadataExtractionFailed::fromVideoId($videoId->toString(), $e->getMessage());
+            throw VideoMetadataExtractionFailed::fromVideoId($video->id()->toString(), $e->getMessage());
         }
     }
 
