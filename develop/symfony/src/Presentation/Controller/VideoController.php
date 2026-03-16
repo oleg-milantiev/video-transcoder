@@ -46,14 +46,9 @@ class VideoController extends AbstractController
     public function details(string $uuid): Response
     {
         try {
-            $uuidObj = UuidV4::fromString($uuid);
-        } catch (\Throwable $e) {
-            throw new InvalidParameterException('Invalid UUID');
-        }
-        try {
             /** @var VideoDetailsDTO $video */
             $video = $this->queryBus->query(
-                new GetVideoDetailsQuery($uuidObj)
+                new GetVideoDetailsQuery($uuid)
             );
             return $this->render('video/details.html.twig', [
                 'video' => $video,
