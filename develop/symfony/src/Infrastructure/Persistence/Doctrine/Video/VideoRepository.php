@@ -10,10 +10,13 @@ use App\Infrastructure\Persistence\Doctrine\User\UserEntity;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\ORM\Exception\ORMException;
 use Doctrine\Persistence\ManagerRegistry;
+use Symfony\Component\Uid\Uuid;
 
 /**
  * @extends ServiceEntityRepository<VideoEntity>
  */
+
+
 class VideoRepository extends ServiceEntityRepository implements VideoRepositoryInterface
 {
     use PaginatedRepositoryTrait;
@@ -42,5 +45,26 @@ class VideoRepository extends ServiceEntityRepository implements VideoRepository
     protected static function mapToDomain(VideoEntity $entity): Video
     {
         return VideoMapper::toDomain($entity);
+    }
+
+    // You should NOT log into Persistence in prod. Just for debug now
+    public function log(Uuid $id, string $level, string $text): void
+    {
+        $em = $this->getEntityManager();
+        /** @var VideoEntity|null $video */
+        $video = $this->find($id);
+        if (!$video) {
+            throw new \RuntimeException("Video with id $id not found");
+        }
+        $log = $video->log ?? [];
+        $log[] = [
+            'level' => $level,
+            'text' => $text,
+            'timestamp' => new \DateTimeImmutable()->format(DATE_ATOM),
+        ];
+        $video->log = $log;
+        $video->updatedAt = new \DateTimeImmutable();
+        $em->persist($video);
+        $em->flush();
     }
 }
