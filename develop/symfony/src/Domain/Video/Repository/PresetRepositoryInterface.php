@@ -8,4 +8,5 @@ interface PresetRepositoryInterface
 {
     public function save(Preset $preset): void;
     public function findById(int $id): ?Preset;
+    public function log(int $id, string $level, string $text): void;
 }

@@ -27,4 +27,24 @@ class PresetRepository extends ServiceEntityRepository implements PresetReposito
     {
         return PresetMapper::toDomain($this->find($id));
     }
+
+    // You should NOT log into Persistence in prod. Just for debug now
+    public function log(int $id, string $level, string $text): void
+    {
+        $em = $this->getEntityManager();
+        /** @var PresetEntity|null $preset */
+        $preset = $this->find($id);
+        if (!$preset) {
+            throw new \RuntimeException("Preset with id $id not found");
+        }
+        $log = $preset->log ?? [];
+        $log[] = [
+            'level' => $level,
+            'text' => $text,
+            'timestamp' => new \DateTimeImmutable()->format(DATE_ATOM),
+        ];
+        $preset->log = $log;
+        $em->persist($preset);
+        $em->flush();
+    }
 }

@@ -35,4 +35,24 @@ class TaskRepository extends ServiceEntityRepository implements TaskRepositoryIn
     {
         return TaskMapper::toDomain($entity);
     }
+
+    // You should NOT log into Persistence in prod. Just for debug now
+    public function log(int $id, string $level, string $text): void
+    {
+        $em = $this->getEntityManager();
+        /** @var TaskEntity|null $task */
+        $task = $this->find($id);
+        if (!$task) {
+            throw new \RuntimeException("Task with id $id not found");
+        }
+        $log = $task->log ?? [];
+        $log[] = [
+            'level' => $level,
+            'text' => $text,
+            'timestamp' => new \DateTimeImmutable()->format(DATE_ATOM),
+        ];
+        $task->log = $log;
+        $em->persist($task);
+        $em->flush();
+    }
 }
