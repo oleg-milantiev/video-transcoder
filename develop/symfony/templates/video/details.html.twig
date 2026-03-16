@@ -1,0 +1,42 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Video Details{% endblock %}
+
+{% block body %}
+    <div class="container py-5">
+        <h1 class="mb-4">Video Details</h1>
+        <div class="card">
+            <div class="card-body">
+                {% if video.poster %}
+                    <img src="/uploads/{{ video.poster }}" class="img-fluid mb-3 rounded" alt="{{ video.title }}">
+                {% endif %}
+                <dl class="row">
+                    <dt class="col-sm-3">UUID</dt>
+                    <dd class="col-sm-9">{{ video.uuid }}</dd>
+                    <dt class="col-sm-3">Title</dt>
+                    <dd class="col-sm-9">{{ video.title }}</dd>
+                    <dt class="col-sm-3">Extension</dt>
+                    <dd class="col-sm-9">{{ video.extension }}</dd>
+                    <dt class="col-sm-3">Status</dt>
+                    <dd class="col-sm-9">{{ video.status }}</dd>
+                    <dt class="col-sm-3">Created At</dt>
+                    <dd class="col-sm-9">{{ video.createdAt }}</dd>
+                    <dt class="col-sm-3">Updated At</dt>
+                    <dd class="col-sm-9">{{ video.updatedAt ?: '-' }}</dd>
+                    <dt class="col-sm-3">User ID</dt>
+                    <dd class="col-sm-9">{{ video.userId }}</dd>
+                </dl>
+                <h5 class="mt-4">Meta</h5>
+                <ul>
+                    {% for key, value in video.meta %}
+                        <li><strong>{{ key }}:</strong> {{ value }}</li>
+                    {% else %}
+                        <li><em>No meta data</em></li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+        <a href="{{ path('video') }}" class="btn btn-secondary mt-3">Back to list</a>
+    </div>
+{% endblock %}
+

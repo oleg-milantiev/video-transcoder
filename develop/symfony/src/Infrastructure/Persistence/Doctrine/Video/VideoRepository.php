@@ -53,7 +53,7 @@ class VideoRepository extends ServiceEntityRepository implements VideoRepository
         return VideoMapper::toDomain($entity);
     }
 
-    public function findById(int $id): ?Video
+    public function findById(Uuid $id): ?Video
     {
         return self::mapToDomain($this->find($id));
     }
