@@ -129,19 +129,6 @@
     </div>
 
 
-    {# ================= VIDEO MODAL ================= #}
-
-    <div class="modal fade" id="videoModal">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Video Details</h5>
-                    <button class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body" id="videoModalBody"></div>
-            </div>
-        </div>
-    </div>
 
 
     <script>
@@ -163,54 +150,14 @@
                 order: [[2, 'desc']]
             });
 
-            /* CLICK ROW -> MODAL */
-
+            // CLICK ROW -> open details page in new tab
             document.querySelector('#videosTable tbody')
                 .addEventListener('click', function(e){
-
                     const row = videosTable.row(e.target.closest('tr')).data();
                     if (!row) return;
-
-                    let html = '<div class="container-fluid">';
-
-                    if (row.poster) {
-                        html += `
-                    <img src="/uploads/${row.poster}"
-                         class="img-fluid mb-3 rounded" alt="${row.title}">
-                `;
+                    if (row.uuid) {
+                        window.open('/video/' + row.uuid, '_blank');
                     }
-
-
-                    // Render all fields except meta and poster
-                    Object.entries(row).forEach(([k,v])=>{
-                        if (k !== 'meta' && k !== 'poster') {
-                            html += `
-                                <div class=\"row border-bottom py-1\">
-                                    <div class=\"col-4 fw-bold\">${k}</div>
-                                    <div class=\"col-8\">${v}</div>
-                                </div>
-                            `;
-                        }
-                    });
-
-                    // Render meta block last, if present
-                    if (row.meta && typeof row.meta === 'object') {
-                        html += `<div class=\"row border-bottom py-1\"><div class=\"col-12 fw-bold mt-3 mb-2\">Meta</div></div>`;
-                        Object.entries(row.meta).forEach(([metaKey, metaVal]) => {
-                            html += `
-                                <div class=\"row border-bottom py-1\">
-                                    <div class=\"col-4 fw-bold\">${metaKey}</div>
-                                    <div class=\"col-8\">${metaVal}</div>
-                                </div>
-                            `;
-                        });
-                    }
-
-                    html += '</div>';
-
-                    document.getElementById('videoModalBody').innerHTML = html;
-
-                    new bootstrap.Modal('#videoModal').show();
                 });
 
 
