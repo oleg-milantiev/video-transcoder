@@ -112,4 +112,12 @@ class Video
     {
         return $this->id->toString() . '.' . $this->extension->value();
     }
+
+    public function getPoster(): ?string
+    {
+        if (($this->meta['preview'] ?? false) === true && $this->id) {
+            return $this->id->toString() . '.jpg';
+        }
+        return null;
+    }
 }

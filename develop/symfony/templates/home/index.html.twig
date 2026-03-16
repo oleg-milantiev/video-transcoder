@@ -175,19 +175,36 @@
 
                     if (row.poster) {
                         html += `
-                    <img src="${row.poster}"
+                    <img src="/uploads/${row.poster}"
                          class="img-fluid mb-3 rounded" alt="${row.title}">
                 `;
                     }
 
+
+                    // Render all fields except meta and poster
                     Object.entries(row).forEach(([k,v])=>{
-                        html += `
-                    <div class="row border-bottom py-1">
-                        <div class="col-4 fw-bold">${k}</div>
-                        <div class="col-8">${v}</div>
-                    </div>
-                `;
+                        if (k !== 'meta' && k !== 'poster') {
+                            html += `
+                                <div class=\"row border-bottom py-1\">
+                                    <div class=\"col-4 fw-bold\">${k}</div>
+                                    <div class=\"col-8\">${v}</div>
+                                </div>
+                            `;
+                        }
                     });
+
+                    // Render meta block last, if present
+                    if (row.meta && typeof row.meta === 'object') {
+                        html += `<div class=\"row border-bottom py-1\"><div class=\"col-12 fw-bold mt-3 mb-2\">Meta</div></div>`;
+                        Object.entries(row.meta).forEach(([metaKey, metaVal]) => {
+                            html += `
+                                <div class=\"row border-bottom py-1\">
+                                    <div class=\"col-4 fw-bold\">${metaKey}</div>
+                                    <div class=\"col-8\">${metaVal}</div>
+                                </div>
+                            `;
+                        });
+                    }
 
                     html += '</div>';
 
