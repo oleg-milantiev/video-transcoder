@@ -19,7 +19,7 @@ class VideoMapper
             userId: $entity->user->id,
             createdAt: $entity->createdAt,
             meta: $entity->meta,
-            id: $entity->id?->toString(),
+            id: $entity->id,
         );
     }
 
@@ -27,14 +27,19 @@ class VideoMapper
     {
         $entity = new VideoEntity();
         $entity->id = $video->id();
+        self::hydrate($entity, $video, $user);
+        $entity->createdAt = $video->createdAt();
+
+        return $entity;
+    }
+
+    public static function hydrate(VideoEntity $entity, Video $video, UserEntity $user): void
+    {
         $entity->title = $video->title()->value();
         $entity->extension = $video->extension()->value();
         $entity->user = $user;
         $entity->status = $video->status()->value;
         $entity->meta = $video->meta();
-        $entity->createdAt = $video->createdAt();
         $entity->updatedAt = $video->updatedAt();
-
-        return $entity;
     }
 }

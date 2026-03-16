@@ -6,11 +6,11 @@ use App\Application\Command\Video\CreateVideo;
 use App\Domain\Video\ValueObject\FileExtension;
 use App\Domain\Video\ValueObject\VideoStatus;
 use App\Domain\Video\ValueObject\VideoTitle;
-use Symfony\Component\Uid\Uuid;
+use Symfony\Component\Uid\UuidV4 as Uuid;
 
 class Video
 {
-    private ?Uuid $id = null;
+    private ?Uuid $id;
     private VideoTitle $title;
     private FileExtension $extension;
     private VideoStatus $status;
@@ -19,7 +19,7 @@ class Video
     // TODO DDD
     private ?\DateTimeImmutable $updatedAt = null;
     private int $userId;
-    private array $meta = [];
+    private array $meta;
 
     public function __construct(
         VideoTitle $title,
@@ -31,10 +31,9 @@ class Video
         ?\DateTimeImmutable $createdAt = null,
         // TODO DDD VO
         array $meta = [],
-        ?string $id = null,
+        ?Uuid $id = null,
     ) {
-        $this->id = $id ? Uuid::fromString($id) : Uuid::v4();
-
+        $this->id = $id;
         $this->title = $title;
         $this->extension = $extension;
         $this->status = $status;
@@ -51,6 +50,11 @@ class Video
             status: VideoStatus::UPLOADED,
             userId: $command->userId(),
         );
+    }
+
+    public function generateId(): void
+    {
+        $this->id = Uuid::v4();
     }
 
     public function id(): ?Uuid

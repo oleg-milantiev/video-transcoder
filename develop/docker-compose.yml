@@ -25,7 +25,8 @@ services:
             - 9000
         volumes:
             - ./symfony:/var/www/yc
-            - symfony-var:/var/www/yc/var
+# use filesystem for debug
+#            - symfony-var:/var/www/yc/var
 
     ffmpeg:
         restart: always
@@ -39,11 +40,11 @@ services:
             - redis
             - postgres
             - rabbitmq
-#        command: sh -c '/var/www/cutwise/bin/console messenger:consume async'
-        command: sleep 100000
+        command: sh -c '/var/www/yc/bin/console messenger:consume async -vvv'
         volumes:
             - ./symfony:/var/www/yc
-            - symfony-var:/var/www/yc/var
+# use filesystem for debug
+#            - symfony-var:/var/www/yc/var
 
     redis:
         restart: always

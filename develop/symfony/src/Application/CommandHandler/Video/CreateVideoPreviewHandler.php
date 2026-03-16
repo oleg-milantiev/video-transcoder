@@ -3,13 +3,11 @@
 namespace App\Application\CommandHandler\Video;
 
 use App\Application\Command\Video\CreateVideoPreview;
-use App\Domain\Video\Event\VideoPreviewGenerationFinished;
-use App\Domain\Video\Event\VideoPreviewGenerationStarted;
 use App\Domain\Video\Exception\VideoPreviewGenerationFailed;
 use App\Domain\Video\Repository\VideoRepositoryInterface;
 use App\Domain\Video\Service\Storage\StorageInterface;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
-use Symfony\Component\Messenger\MessageBusInterface;
+//use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Process\Exception\ProcessFailedException;
 use Symfony\Component\Process\Process;
 
@@ -18,7 +16,7 @@ final readonly class CreateVideoPreviewHandler
 {
     public function __construct(
         private StorageInterface $storage,
-        private MessageBusInterface $messageBus,
+//        private MessageBusInterface $messageBus,
         private VideoRepositoryInterface $videoRepository,
     ) {
     }
@@ -27,7 +25,8 @@ final readonly class CreateVideoPreviewHandler
     {
         $video = $command->video();
 
-        $this->messageBus->dispatch(new VideoPreviewGenerationStarted($video));
+        // TODO split command and event message busses
+//        $this->messageBus->dispatch(new VideoPreviewGenerationStarted($video));
 
         try {
             $inputPath = $this->storage->getAbsolutePath($video->getSrcFilename());
@@ -39,7 +38,8 @@ final readonly class CreateVideoPreviewHandler
 
             $this->videoRepository->log($video->id(), 'info', 'Preview Created');
 
-            $this->messageBus->dispatch(new VideoPreviewGenerationFinished($video));
+            // TODO split command and event message busses
+//            $this->messageBus->dispatch(new VideoPreviewGenerationFinished($video));
         } catch (\Exception $e) {
             $this->videoRepository->log($video->id(), 'error', 'Error Preview creating: '. $e->getMessage());
 

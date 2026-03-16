@@ -31,12 +31,26 @@ class VideoRepository extends ServiceEntityRepository implements VideoRepository
     /**
      * @throws ORMException
      */
-    public function save(Video $video): void
+    public function save(Video $video): Video
     {
         $em = $this->getEntityManager();
+        $user = $em->getReference(UserEntity::class, $video->userId());
 
-        $em->persist(VideoMapper::toDoctrine($video, $em->getReference(UserEntity::class, $video->userId())));
+        if ($video->id() === null) {
+            $video->generateId();
+            $entity = VideoMapper::toDoctrine($video, $user);
+        } else {
+            $entity = $this->find($video->id());
+            if (!$entity) {
+                throw new \RuntimeException(sprintf('Video with id %s not found', $video->id()));
+            }
+            VideoMapper::hydrate($entity, $video, $user);
+        }
+
+        $em->persist($entity);
         $em->flush();
+
+        return VideoMapper::toDomain($entity);
     }
 
     public function findById(int $id): ?Video

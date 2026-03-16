@@ -2,7 +2,6 @@
 
 namespace App\Presentation\Controller;
 
-use Psr\Log\LoggerInterface;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\Routing\Attribute\Route;
 use TusPhp\Tus\Server as TusServer;
@@ -15,9 +14,12 @@ class UploadController extends AbstractController
     public function uploadHandler(
         TusServer $server,
         EventDispatcherInterface $symfonyDispatcher,
-        LoggerInterface $logger,
     ): Response
     {
+        if (!is_dir($server->getUploadDir())) {
+            mkdir($server->getUploadDir());
+        }
+
         $server->setDispatcher($symfonyDispatcher);
 
         // TODO rename file to random uniq (by tus uuid?)

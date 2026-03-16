@@ -4,11 +4,10 @@ namespace App\Application\CommandHandler\Video;
 
 use App\Application\Command\Video\CreateVideoPreview;
 use App\Application\Command\Video\ExtractVideoMetadata;
-use App\Domain\Video\Event\VideoMetadataExtractionFinished;
-use App\Domain\Video\Event\VideoMetadataExtractionStarted;
 use App\Domain\Video\Exception\VideoMetadataExtractionFailed;
 use App\Domain\Video\Repository\VideoRepositoryInterface;
 use App\Domain\Video\Service\Storage\StorageInterface;
+use Psr\Log\LoggerInterface;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 use Symfony\Component\Messenger\Exception\ExceptionInterface;
 use Symfony\Component\Messenger\MessageBusInterface;
@@ -22,6 +21,7 @@ final readonly class ExtractVideoMetadataHandler
         private VideoRepositoryInterface $videoRepository,
         private StorageInterface $storage,
         private MessageBusInterface $messageBus,
+        private LoggerInterface $logger,
     ) {
     }
 
@@ -32,18 +32,26 @@ final readonly class ExtractVideoMetadataHandler
     {
         $video = $command->video();
 
-        $this->messageBus->dispatch(new VideoMetadataExtractionStarted($video));
+        // TODO split command and event message busses
+//        $this->messageBus->dispatch(new VideoMetadataExtractionStarted($video));
 
         try {
-            $inputPath = $this->storage->getAbsolutePath($video->getSrcFilename());
+            $this->logger->debug('Extract Video Metadata: started');
 
+            $inputPath = $this->storage->getAbsolutePath($video->getSrcFilename());
             $metadata = $this->getVideoMetadata($inputPath);
+            $this->logger->debug('Extract Video Metadata: data extracted', [
+                'meta' => $metadata,
+            ]);
+
             $video->updateMeta($metadata);
             $this->videoRepository->save($video);
+            $this->logger->debug('Extract Video Metadata: entity updated');
 
             $this->videoRepository->log($video->id(), 'info', 'Metadata extracted');
 
-            $this->messageBus->dispatch(new VideoMetadataExtractionFinished($video));
+            // TODO split command and event message busses
+//            $this->messageBus->dispatch(new VideoMetadataExtractionFinished($video));
             $this->messageBus->dispatch(new CreateVideoPreview($video));
         } catch (\Exception $e) {
             $this->videoRepository->log($video->id(), 'error', 'Metadata extraction error: '. $e->getMessage());
@@ -69,6 +77,7 @@ final readonly class ExtractVideoMetadataHandler
             throw new ProcessFailedException($process);
         }
 
+        // ex.: ffprobe.json
         $output = json_decode($process->getOutput(), true);
 
         if ($output === null) {
