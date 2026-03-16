@@ -2,7 +2,7 @@
 
 namespace App\Application\Query;
 
-use App\Application\DTO\TaskListResponse;
+use App\Application\Response\TaskListResponse;
 use App\Domain\Video\Repository\TaskRepositoryInterface;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 

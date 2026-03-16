@@ -1,13 +1,14 @@
 <?php
 
-namespace App\Application\DTO;
+namespace App\Application\Response;
 
-use App\Domain\Video\Entity\Task;
+use App\Application\DTO\VideoItemDTO;
+use App\Domain\Video\Entity\Video;
 
-readonly class TaskListResponse
+readonly class VideoListResponse
 {
     /**
-     * @param TaskItemDTO[] $items
+     * @param VideoItemDTO[] $items
      */
     public array $items;
     public int $total;
@@ -17,11 +18,9 @@ readonly class TaskListResponse
 
     public static function fromDomain(array $items, int $total, int $page, int $limit): self
     {
-
         $instance = new self();
 
-        $instance->items = array_map(fn(Task $task) => TaskItemDTO::fromDomain($task), $items);
-
+        $instance->items = array_map(fn(Video $video) => VideoItemDTO::fromDomain($video), $items);
         $instance->total = $total;
         $instance->page = $page;
         $instance->limit = $limit;

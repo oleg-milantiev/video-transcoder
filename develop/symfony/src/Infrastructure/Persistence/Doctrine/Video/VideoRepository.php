@@ -2,12 +2,12 @@
 
 namespace App\Infrastructure\Persistence\Doctrine\Video;
 
-use App\Application\DTO\PaginatedResult;
 use App\Domain\Video\Entity\Video;
 use App\Domain\Video\Repository\VideoRepositoryInterface;
 use App\Infrastructure\Persistence\Doctrine\Shared\Repository\PaginatedRepositoryTrait;
 use App\Infrastructure\Persistence\Doctrine\User\UserEntity;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\DBAL\Exception;
 use Doctrine\ORM\Exception\ORMException;
 use Doctrine\Persistence\ManagerRegistry;
 use Psr\Log\LoggerInterface;
@@ -61,6 +61,53 @@ class VideoRepository extends ServiceEntityRepository implements VideoRepository
     protected static function mapToDomain(VideoEntity $entity): Video
     {
         return VideoMapper::toDomain($entity);
+    }
+
+    /**
+     * @throws Exception
+     */
+    public function getDetails(Uuid $id): ?array
+    {
+        $video = $this->find($id);
+        if (!$video) {
+            return null;
+        }
+
+        $conn = $this->getEntityManager()->getConnection();
+
+        // SQL query to fetch all presets with their tasks for this video, sorted by preset name
+        $sql = <<<SQL
+            SELECT
+                p.id,
+                p.name,
+                t.status,
+                t.progress,
+                TO_CHAR(t.created_at, 'YYYY-MM-DD HH24:MI') as createdAt
+            FROM preset p
+            LEFT JOIN task t ON p.id = t.preset_id AND t.video_id = :videoId
+            ORDER BY p.name
+        SQL;
+
+        $result = $conn->executeQuery($sql, ['videoId' => $id->toRfc4122()]);
+        $rows = $result->fetchAllAssociative();
+
+        $presetsWithTasks = [];
+        foreach ($rows as $row) {
+            $presetsWithTasks[] = [
+                'id' => (int)$row['id'],
+                'name' => $row['name'],
+                'task' => $row['status'] !== null ? [
+                    'status' => (int)$row['status'],
+                    'progress' => (int)$row['progress'],
+                    'createdAt' => $row['createdAt'],
+                ] : null,
+            ];
+        }
+
+        return [
+            'video' => VideoMapper::toDomain($video),
+            'presetsWithTasks' => $presetsWithTasks,
+        ];
     }
 
     // You should NOT log into Persistence in prod. Just for debug now

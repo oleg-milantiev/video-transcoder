@@ -7,7 +7,6 @@ use App\Domain\Video\Entity\Video;
 readonly class VideoDetailsDTO
 {
     public function __construct(
-        public string $uuid,
         public string $title,
         public string $extension,
         public string $status,
@@ -16,12 +15,13 @@ readonly class VideoDetailsDTO
         public int $userId,
         public array $meta,
         public ?string $poster,
+        /** @var PresetWithTaskDTO[] */
+        public array $presetsWithTasks = [],
     ) {}
 
     public static function fromDomain(Video $video): self
     {
         return new self(
-            uuid: $video->id()?->toRfc4122() ?? '',
             title: $video->title()->value(),
             extension: $video->extension()->value(),
             status: $video->status()->name,

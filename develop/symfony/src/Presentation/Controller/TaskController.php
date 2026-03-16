@@ -2,10 +2,10 @@
 
 namespace App\Presentation\Controller;
 
-use App\Application\DTO\TaskListResponse;
 use App\Application\Exception\QueryException;
 use App\Application\Query\GetTaskListQuery;
 use App\Application\Query\QueryBus;
+use App\Application\Response\TaskListResponse;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;

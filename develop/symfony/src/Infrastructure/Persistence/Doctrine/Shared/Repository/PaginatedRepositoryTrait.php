@@ -3,14 +3,6 @@
 namespace App\Infrastructure\Persistence\Doctrine\Shared\Repository;
 
 use App\Application\DTO\PaginatedResult;
-use App\Domain\Video\Entity\Video;
-use App\Domain\Video\Repository\VideoRepositoryInterface;
-use App\Infrastructure\Persistence\Doctrine\User\UserEntity;
-use App\Infrastructure\Persistence\Doctrine\Video\VideoEntity;
-use App\Infrastructure\Persistence\Doctrine\Video\VideoMapper;
-use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
-use Doctrine\ORM\Exception\ORMException;
-use Doctrine\Persistence\ManagerRegistry;
 
 trait PaginatedRepositoryTrait
 {

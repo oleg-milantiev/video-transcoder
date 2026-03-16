@@ -12,4 +12,11 @@ interface VideoRepositoryInterface extends PaginatedRepositoryInterface
     public function save(Video $video): Video;
     public function findById(Uuid $id): ?Video;
     public function log(Uuid $id, string $level, string $text): void;
+
+    /**
+     * Get video details with all presets (sorted by name) and their tasks.
+     *
+     * @return array{video: Video, presetsWithTasks: array<array{presetId: int, presetName: string, task: ?array{status: int, progress: int, createdAt: string}}>}|null
+     */
+    public function getDetails(Uuid $id): ?array;
 }

@@ -2,8 +2,8 @@
 
 namespace App\Application\Query;
 
+use App\Application\Response\VideoListResponse;
 use App\Domain\Video\Repository\VideoRepositoryInterface;
-use App\Application\DTO\VideoListResponse;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 
 #[AsMessageHandler]
