@@ -40,6 +40,9 @@ class UserEntity implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\JoinColumn(name: "tariff_id", referencedColumnName: "id", nullable: true)]
     public ?TariffEntity $tariff = null;
 
+    #[ORM\Column(type: 'json', nullable: true, options: ['jsonb' => true])]
+    public ?array $log = null;
+
     /**
      * @var Collection<int, VideoEntity>
      */

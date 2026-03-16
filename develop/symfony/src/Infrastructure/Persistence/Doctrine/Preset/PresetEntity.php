@@ -31,6 +31,9 @@ class PresetEntity
     #[ORM\Column]
     public int $bitrate;
 
+    #[ORM\Column(type: 'json', nullable: true, options: ['jsonb' => true])]
+    public ?array $log = null;
+
     /** @var Collection<int, TaskEntity> */
     #[ORM\OneToMany(targetEntity: TaskEntity::class, mappedBy: 'preset')]
     public Collection $tasks;
