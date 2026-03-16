@@ -2,6 +2,7 @@
 
 namespace App\Application\CommandHandler\Video;
 
+use App\Application\Command\Video\CreateVideoPreview;
 use App\Application\Command\Video\ExtractVideoMetadata;
 use App\Domain\Video\Event\VideoMetadataExtractionFinished;
 use App\Domain\Video\Event\VideoMetadataExtractionStarted;
@@ -19,8 +20,8 @@ final readonly class ExtractVideoMetadataHandler
 {
     public function __construct(
         private VideoRepositoryInterface $videoRepository,
-        private StorageInterface         $storage,
-        private MessageBusInterface      $messageBus
+        private StorageInterface $storage,
+        private MessageBusInterface $messageBus,
     ) {
     }
 
@@ -40,8 +41,13 @@ final readonly class ExtractVideoMetadataHandler
             $video->updateMeta($metadata);
             $this->videoRepository->save($video);
 
+            $this->videoRepository->log($video->id(), 'info', 'Metadata extracted');
+
             $this->messageBus->dispatch(new VideoMetadataExtractionFinished($video));
+            $this->messageBus->dispatch(new CreateVideoPreview($video));
         } catch (\Exception $e) {
+            $this->videoRepository->log($video->id(), 'error', 'Metadata extraction error: '. $e->getMessage());
+
             throw VideoMetadataExtractionFailed::fromVideoId($video->id()->toString(), $e->getMessage());
         }
     }

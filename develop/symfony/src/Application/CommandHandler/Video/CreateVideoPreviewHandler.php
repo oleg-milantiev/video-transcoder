@@ -17,36 +17,33 @@ use Symfony\Component\Process\Process;
 final readonly class CreateVideoPreviewHandler
 {
     public function __construct(
+        private StorageInterface $storage,
+        private MessageBusInterface $messageBus,
         private VideoRepositoryInterface $videoRepository,
-        private StorageInterface         $storage,
-        private MessageBusInterface      $messageBus
     ) {
     }
 
     public function __invoke(CreateVideoPreview $command): void
     {
-        $videoId = $command->getVideoId();
-        $video = $this->videoRepository->findById($videoId);
+        $video = $command->video();
 
-        if (!$video) {
-            return;
-        }
-
-        $this->messageBus->dispatch(new VideoPreviewGenerationStarted($videoId));
+        $this->messageBus->dispatch(new VideoPreviewGenerationStarted($video));
 
         try {
             $inputPath = $this->storage->getAbsolutePath($video->getSrcFilename());
             $outputPath = dirname($inputPath) . DIRECTORY_SEPARATOR . 'preview.jpg';
 
             $duration = $video->duration() ?? 0.0;
-
-            // Генерация превью
             $captureTime = min($duration, 1.0);
             $this->generatePreview($inputPath, $outputPath, $captureTime);
 
-            $this->messageBus->dispatch(new VideoPreviewGenerationFinished($videoId));
+            $this->videoRepository->log($video->id(), 'info', 'Preview Created');
+
+            $this->messageBus->dispatch(new VideoPreviewGenerationFinished($video));
         } catch (\Exception $e) {
-            throw VideoPreviewGenerationFailed::fromVideoId($videoId->toString(), $e->getMessage());
+            $this->videoRepository->log($video->id(), 'error', 'Error Preview creating: '. $e->getMessage());
+
+            throw VideoPreviewGenerationFailed::fromVideoId($video->id()->toString(), $e->getMessage());
         }
     }
 

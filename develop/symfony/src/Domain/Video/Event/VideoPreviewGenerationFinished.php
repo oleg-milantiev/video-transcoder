@@ -2,17 +2,17 @@
 
 namespace App\Domain\Video\Event;
 
-use Symfony\Component\Uid\Uuid;
+use App\Domain\Video\Entity\Video;
 
 final readonly class VideoPreviewGenerationFinished
 {
     public function __construct(
-        private Uuid $videoId
+        private Video $video
     ) {
     }
 
-    public function videoId(): Uuid
+    public function video(): Video
     {
-        return $this->videoId;
+        return $this->video;
     }
 }

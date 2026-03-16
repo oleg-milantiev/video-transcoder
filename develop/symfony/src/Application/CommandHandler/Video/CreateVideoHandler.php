@@ -20,7 +20,6 @@ final readonly class CreateVideoHandler
     public function __construct(
         private MessageBusInterface $messageBus,
         private LoggerInterface $logger,
-//        private StorageInterface $storage,
         private VideoRepositoryInterface $videoRepository,
     ) {
     }
@@ -28,31 +27,18 @@ final readonly class CreateVideoHandler
     public function __invoke(CreateVideo $command): void
     {
         try {
-            // TODO @debug
-            $this->logger->info('Create Video Handler start', [
-                'file' => $command->file()->details(),
-            ]);
-
             $video = Video::createFromCommand($command);
             $this->videoRepository->save($video);
 
-//            $this->storage->upload(
-//                new File($command->file()->getFilePath()),
-//                $video->getSrcFilename(),
-//            );
-
-            // TODO catch it!
             $this->messageBus->dispatch(new VideoCreated($video));
-
-            // TODO @debug
-            $this->logger->info('Create Video Handler end');
+            $this->videoRepository->log($video->id(), 'info', 'Video created', [
+                'file' => $command->file()->details(),
+            ]);
 
             $this->messageBus->dispatch(new ExtractVideoMetadata($video));
         } catch (\Exception $e) {
-            // TODO catch it!
             $this->messageBus->dispatch(new VideoCreateFailed($command));
 
-            // TODO @debug
             $this->logger->error('Create Video Handler failed', [
                 'file' => $command->file()->details(),
                 'error' => $e->getMessage(),

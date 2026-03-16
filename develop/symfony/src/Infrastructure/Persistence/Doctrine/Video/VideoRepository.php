@@ -10,18 +10,20 @@ use App\Infrastructure\Persistence\Doctrine\User\UserEntity;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\ORM\Exception\ORMException;
 use Doctrine\Persistence\ManagerRegistry;
+use Psr\Log\LoggerInterface;
 use Symfony\Component\Uid\Uuid;
 
 /**
  * @extends ServiceEntityRepository<VideoEntity>
  */
-
-
 class VideoRepository extends ServiceEntityRepository implements VideoRepositoryInterface
 {
     use PaginatedRepositoryTrait;
 
-    public function __construct(ManagerRegistry $registry)
+    public function __construct(
+        ManagerRegistry $registry,
+        private readonly LoggerInterface $logger,
+    )
     {
         parent::__construct($registry, VideoEntity::class);
     }
@@ -48,8 +50,10 @@ class VideoRepository extends ServiceEntityRepository implements VideoRepository
     }
 
     // You should NOT log into Persistence in prod. Just for debug now
-    public function log(Uuid $id, string $level, string $text): void
+    public function log(Uuid $id, string $level, string $text, array $context = []): void
     {
+        $this->logger->log($level, $text, $context);
+
         $em = $this->getEntityManager();
         /** @var VideoEntity|null $video */
         $video = $this->find($id);
