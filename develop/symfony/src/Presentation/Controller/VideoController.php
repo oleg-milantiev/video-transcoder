@@ -16,6 +16,8 @@ use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Routing\Exception\InvalidParameterException;
 use Symfony\Component\Uid\UuidV4;
 
+// TODO не очень хорошо перепутался JSON в index и шаблон в details.
+// Унифицировать, как перейду на Vue
 #[Route('/video')]
 class VideoController extends AbstractController
 {

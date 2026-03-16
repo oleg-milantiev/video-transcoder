@@ -96,6 +96,7 @@
                     <table id="videosTable" class="table table-striped w-100">
                         <thead>
                         <tr>
+                            <th>Poster</th>
                             <th>Name</th>
                             <th>Status</th>
                             <th>Created</th>
@@ -143,11 +144,22 @@
                 },
                 pageLength: 10,
                 columns: [
+                    {
+                        data: 'poster',
+                        orderable: false,
+                        render: function(data, type, row) {
+                            if (data) {
+                                return `<img src="/uploads/${data}" alt="poster" style="width:150px;max-width:100%;height:auto;object-fit:cover;border-radius:6px;">`;
+                            } else {
+                                return `<div style="width:150px;height:84px;background:#eee;display:flex;align-items:center;justify-content:center;color:#aaa;font-size:12px;border-radius:6px;">No poster</div>`;
+                            }
+                        }
+                    },
                     {data:'title'},
                     {data:'status'},
                     {data:'createdAt'}
                 ],
-                order: [[2, 'desc']]
+                order: [[3, 'desc']]
             });
 
             // CLICK ROW -> open details page in new tab
