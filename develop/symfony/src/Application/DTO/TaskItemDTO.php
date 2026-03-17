@@ -2,7 +2,9 @@
 
 namespace App\Application\DTO;
 
+use App\Domain\Video\Entity\Preset;
 use App\Domain\Video\Entity\Task;
+use App\Domain\Video\Entity\Video;
 
 readonly class TaskItemDTO
 {
@@ -14,12 +16,12 @@ readonly class TaskItemDTO
         public string $createdAt
     ) {}
 
-    public static function fromDomain(Task $task): self
+    public static function fromDomain(Task $task, Video $video, Preset $preset): self
     {
         return new self(
-            videoTitle: $task->video()->title()->value(),
+            videoTitle: $video->title()->value(),
             // TODO preset name -> title
-            presetTitle: $task->preset()->name()->value(),
+            presetTitle: $preset->name()->value(),
             status: $task->status()->name,
             progress: $task->progress()->value(),
             createdAt: $task->createdAt()->format('Y-m-d H:i')

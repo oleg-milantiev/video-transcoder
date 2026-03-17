@@ -3,7 +3,6 @@
 namespace App\Application\Response;
 
 use App\Application\DTO\TaskItemDTO;
-use App\Domain\Video\Entity\Task;
 
 readonly class TaskListResponse
 {
@@ -18,11 +17,9 @@ readonly class TaskListResponse
 
     public static function fromDomain(array $items, int $total, int $page, int $limit): self
     {
-
         $instance = new self();
 
-        $instance->items = array_map(fn(Task $task) => TaskItemDTO::fromDomain($task), $items);
-
+        $instance->items = array_map(fn(array $item) => TaskItemDTO::fromDomain($item['task'], $item['video'], $item['preset']), $items);
         $instance->total = $total;
         $instance->page = $page;
         $instance->limit = $limit;

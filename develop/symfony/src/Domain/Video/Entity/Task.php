@@ -2,9 +2,9 @@
 
 namespace App\Domain\Video\Entity;
 
-use App\Domain\User\Entity\User;
 use App\Domain\Video\ValueObject\Progress;
 use App\Domain\Video\ValueObject\TaskStatus;
+use Symfony\Component\Uid\UuidV4 as Uuid;
 
 // TODO move to videoId, presetId, userId
 class Task
@@ -17,15 +17,15 @@ class Task
     // TODO DDD
     private ?\DateTimeImmutable $updatedAt = null;
     private array $meta;
-    private Video $video;
-    private Preset $preset;
-    private ?User $user = null;
-    // TODO DDD PresetId, VideoId
+    private Uuid $videoId;
+    private int $presetId;
+    private int $userId;
 
     // Constructor for mapping from Doctrine only. Use static::create() for domain
     public function __construct(
-        Video $video,
-        Preset $preset,
+        Uuid $videoId,
+        int $presetId,
+        int $userId,
         ?TaskStatus $status = null,
         ?Progress $progress = null,
         // TODO DDD
@@ -34,23 +34,21 @@ class Task
         ?\DateTimeImmutable $updatedAt = null,
         ?int $id = null,
         array $meta = [],
-        ?User $user = null,
     ) {
         $this->id = $id;
-        $this->video = $video;
-        $this->preset = $preset;
+        $this->videoId = $videoId;
+        $this->presetId = $presetId;
         $this->status = $status ?? TaskStatus::pending();
         $this->progress = $progress ?? new Progress(0);
         $this->createdAt = $createdAt ?? new \DateTimeImmutable();
         $this->updatedAt = $updatedAt;
         $this->meta = $meta;
-        $this->user = $user;
+        $this->userId = $userId;
     }
 
-    public static function create(Video $video, Preset $preset, ?User $user = null): self
+    public static function create(Uuid $videoId, int $presetId, int $userId): self
     {
-        // TODO optimize
-        return new self($video, $preset, null, null, null, null, null, [], $user);
+        return new self($videoId, $presetId, $userId);
     }
 
     public function start(): void
@@ -103,14 +101,14 @@ class Task
         return $this->updatedAt;
     }
 
-    public function video(): Video
+    public function videoId(): Uuid
     {
-        return $this->video;
+        return $this->videoId;
     }
 
-    public function preset(): Preset
+    public function presetId(): int
     {
-        return $this->preset;
+        return $this->presetId;
     }
 
     public function status(): TaskStatus
@@ -128,9 +126,9 @@ class Task
         return $this->meta;
     }
 
-    public function user(): ?User
+    public function userId(): int
     {
-        return $this->user;
+        return $this->userId;
     }
 
     public function updateMeta(array $meta): void

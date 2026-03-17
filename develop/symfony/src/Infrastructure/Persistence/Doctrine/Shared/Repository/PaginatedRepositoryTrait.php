@@ -25,11 +25,11 @@ trait PaginatedRepositoryTrait
             ->getQuery()
             ->getResult();
 
-        $videos = array_map(
-            static fn($entity)  => self::mapToDomain($entity),
+        $items = array_map(
+            static fn($entity) => self::mapToDomain($entity),
             $entities
         );
 
-        return new PaginatedResult($videos, $total);
+        return new PaginatedResult($items, $total);
     }
 }

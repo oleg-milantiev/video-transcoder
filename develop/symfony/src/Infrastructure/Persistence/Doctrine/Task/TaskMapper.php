@@ -2,32 +2,31 @@
 
 namespace App\Infrastructure\Persistence\Doctrine\Task;
 
-use App\Domain\Video\Entity\Preset;
 use App\Domain\Video\Entity\Task;
 use App\Domain\Video\ValueObject\Progress;
 use App\Domain\Video\ValueObject\TaskStatus;
-use App\Infrastructure\Persistence\Doctrine\Preset\PresetMapper;
-use App\Infrastructure\Persistence\Doctrine\Video\VideoMapper;
-use App\Infrastructure\Persistence\Doctrine\User\UserMapper;
+use App\Infrastructure\Persistence\Doctrine\Preset\PresetEntity;
+use App\Infrastructure\Persistence\Doctrine\User\UserEntity;
+use App\Infrastructure\Persistence\Doctrine\Video\VideoEntity;
 
 class TaskMapper
 {
     public static function toDomain(TaskEntity $entity): Task
     {
         return new Task(
-            video: VideoMapper::toDomain($entity->video),
-            preset: PresetMapper::toDomain($entity->preset),
+            videoId: $entity->video->id,
+            presetId: $entity->preset->id,
+            userId: $entity->user->id,
             status: TaskStatus::from($entity->status),
             progress: new Progress($entity->progress),
             createdAt: $entity->createdAt,
             updatedAt: $entity->updatedAt,
             id: $entity->id,
             meta: $entity->meta,
-            user: $entity->user ? UserMapper::toDomain($entity->user) : null,
         );
     }
 
-    public static function toDoctrine(Task $task): TaskEntity
+    public static function toDoctrine(Task $task, VideoEntity $video, PresetEntity $preset, UserEntity $user): TaskEntity
     {
         $entity = new TaskEntity();
         $entity->id = $task->id();
@@ -35,11 +34,10 @@ class TaskMapper
         $entity->progress = $task->progress()->value();
         $entity->createdAt = $task->createdAt();
         $entity->updatedAt = $task->updatedAt();
-        // TODO move to Ids
-        $entity->video = VideoMapper::toDoctrine($task->video());
-        $entity->preset = PresetMapper::toDoctrine($task->preset());
+        $entity->video = $video;
+        $entity->preset = $preset;
         $entity->meta = $task->meta();
-        $entity->user = $task->user() ? UserMapper::toDoctrine($task->user()) : null;
+        $entity->user = $user;
 
         return $entity;
     }

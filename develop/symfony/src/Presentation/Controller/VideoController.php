@@ -44,11 +44,10 @@ class VideoController extends AbstractController
     public function details(string $uuid): Response
     {
         try {
-            $dto = $this->queryBus->query(
-                new GetVideoDetailsQuery($uuid)
-            );
             return $this->render('video/details.html.twig', [
-                'dto' => $dto,
+                'dto' => $this->queryBus->query(
+                    new GetVideoDetailsQuery($uuid)
+                ),
             ]);
         } catch (QueryException | \DomainException $e) {
             return new Response('Video not found', 404);

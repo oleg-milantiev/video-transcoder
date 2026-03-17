@@ -43,13 +43,13 @@ final readonly class StartTranscodeHandler
         }
 
         try {
-            $task = Task::create($video, $preset, $user);
+            $task = Task::create($video->id(), $preset->id(), $user->id());
             $this->taskRepository->save($task);
         } catch (\Throwable $e) {
             throw new QueryException('Failed to create task: ' . $e->getMessage());
         }
 
-        return TaskItemDTO::fromDomain($task);
+        return TaskItemDTO::fromDomain($task, $video, $preset);
     }
 }
 

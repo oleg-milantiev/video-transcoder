@@ -82,7 +82,7 @@ class VideoRepository extends ServiceEntityRepository implements VideoRepository
                 p.name,
                 t.status,
                 t.progress,
-                TO_CHAR(t.created_at, 'YYYY-MM-DD HH24:MI') as createdAt
+                TO_CHAR(t.created_at, 'YYYY-MM-DD HH24:MI') as created_at
             FROM preset p
             LEFT JOIN task t ON p.id = t.preset_id AND t.video_id = :videoId
             ORDER BY p.name
@@ -99,7 +99,7 @@ class VideoRepository extends ServiceEntityRepository implements VideoRepository
                 'task' => $row['status'] !== null ? [
                     'status' => (int)$row['status'],
                     'progress' => (int)$row['progress'],
-                    'createdAt' => $row['createdAt'],
+                    'createdAt' => $row['created_at'],
                 ] : null,
             ];
         }

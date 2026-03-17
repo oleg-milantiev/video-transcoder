@@ -2,10 +2,17 @@
 
 namespace App\Infrastructure\Persistence\Doctrine\Task;
 
+use App\Domain\User\Repository\UserRepositoryInterface;
 use App\Domain\Video\Entity\Task;
+use App\Domain\Video\Repository\PresetRepositoryInterface;
 use App\Domain\Video\Repository\TaskRepositoryInterface;
+use App\Domain\Video\Repository\VideoRepositoryInterface;
+use App\Infrastructure\Persistence\Doctrine\Preset\PresetEntity;
 use App\Infrastructure\Persistence\Doctrine\Shared\Repository\PaginatedRepositoryTrait;
+use App\Infrastructure\Persistence\Doctrine\User\UserEntity;
+use App\Infrastructure\Persistence\Doctrine\Video\VideoEntity;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\ORM\Exception\ORMException;
 use Doctrine\Persistence\ManagerRegistry;
 
 /**
@@ -15,15 +22,33 @@ class TaskRepository extends ServiceEntityRepository implements TaskRepositoryIn
 {
     use PaginatedRepositoryTrait;
 
-    public function __construct(ManagerRegistry $registry)
+    public function __construct(
+        ManagerRegistry $registry,
+        private readonly VideoRepositoryInterface $videoRepository,
+        private readonly PresetRepositoryInterface $presetRepository,
+        private readonly UserRepositoryInterface $userRepository,
+    )
     {
         parent::__construct($registry, TaskEntity::class);
     }
 
+    /**
+     * @throws ORMException
+     */
     public function save(Task $task): void
     {
-        $this->getEntityManager()->persist(TaskMapper::toDoctrine($task));
-        $this->getEntityManager()->flush();
+        $em = $this->getEntityManager();
+
+        // TODO task update like in develop/symfony/src/Infrastructure/Persistence/Doctrine/Video/VideoRepository.php:37
+
+        $taskEntity = TaskMapper::toDoctrine(
+            $task,
+            $em->getReference(VideoEntity::class, $task->videoId()),
+            $em->getReference(PresetEntity::class, $task->presetId()),
+            $em->getReference(UserEntity::class, $task->userId()),
+        );
+        $em->persist($taskEntity);
+        $em->flush();
     }
 
     public function findById(int $id): ?Task
