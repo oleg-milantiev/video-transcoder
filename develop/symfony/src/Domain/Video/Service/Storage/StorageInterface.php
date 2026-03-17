@@ -4,6 +4,7 @@ namespace App\Domain\Video\Service\Storage;
 
 use Symfony\Component\HttpFoundation\File\File;
 
+// TODO use storage MORE
 interface StorageInterface
 {
     /**

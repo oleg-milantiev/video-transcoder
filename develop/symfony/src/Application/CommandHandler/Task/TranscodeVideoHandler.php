@@ -2,28 +2,30 @@
 
 namespace App\Application\CommandHandler\Task;
 
+use App\Application\Command\Task\StartTaskScheduler;
 use App\Application\Command\Task\TranscodeVideo;
+use App\Application\Service\Ffmpeg;
 use App\Domain\Video\Entity\Preset;
 use App\Domain\Video\Entity\Task;
 use App\Domain\Video\Repository\PresetRepositoryInterface;
 use App\Domain\Video\Repository\TaskRepositoryInterface;
 use App\Domain\Video\Repository\VideoRepositoryInterface;
 use App\Domain\Video\Service\Storage\StorageInterface;
-use App\Domain\Video\ValueObject\Bitrate;
-use App\Domain\Video\ValueObject\Codec;
 use App\Domain\Video\ValueObject\Progress;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
+use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Process\Exception\ProcessFailedException;
 use Symfony\Component\Process\Process;
 
 #[AsMessageHandler]
 final readonly class TranscodeVideoHandler
 {
-    private const PROGRESS_UPDATE_INTERVAL = 5.0;
+    private const float PROGRESS_UPDATE_INTERVAL = 5.0;
 
     public function __construct(
+        private MessageBusInterface $messageBus,
         private TaskRepositoryInterface $taskRepository,
         private VideoRepositoryInterface $videoRepository,
         private PresetRepositoryInterface $presetRepository,
@@ -33,6 +35,9 @@ final readonly class TranscodeVideoHandler
     ) {
     }
 
+    /**
+     * @throws \Throwable
+     */
     public function __invoke(TranscodeVideo $command): void
     {
         $scheduledTask = $command->scheduledTask;
@@ -43,43 +48,26 @@ final readonly class TranscodeVideoHandler
             return;
         }
 
-        $taskId = $task->id();
-        if ($taskId === null) {
-            throw new \RuntimeException('Task does not have a persistent identifier');
-        }
-
-        $video = $this->videoRepository->findById($scheduledTask->videoId);
+        $video = $this->videoRepository->findById($task->videoId());
         if (!$video) {
-            $this->taskRepository->log($taskId, 'error', 'Video not found for transcoding');
+            $this->taskRepository->log($task->id(), 'error', 'Video not found for transcoding');
             throw new \RuntimeException('Video not found for transcoding');
         }
 
         $preset = $this->presetRepository->findById($task->presetId());
         if (!$preset) {
-            $this->taskRepository->log($taskId, 'error', 'Preset not found for task');
+            $this->taskRepository->log($task->id(), 'error', 'Preset not found for task');
             throw new \RuntimeException('Preset not found for task');
         }
 
-        $presetId = $preset->id();
-        if ($presetId === null) {
-            $this->taskRepository->log($taskId, 'error', 'Preset does not have a persistent identifier');
-            throw new \RuntimeException('Preset does not have a persistent identifier');
-        }
-
-        $videoId = $video->id();
-        if (!$videoId) {
-            $this->taskRepository->log($taskId, 'error', 'Video does not have an identifier yet');
-            throw new \RuntimeException('Video does not have an identifier yet');
-        }
-
-        $relativeOutputPath = sprintf('uploads/%s/%d.mp4', $videoId->toString(), $presetId);
+        $relativeOutputPath = sprintf('uploads/%s/%d.mp4', $video->id()->toRfc4122(), $preset->id());
         $absoluteOutputPath = $this->storage->getAbsolutePath($relativeOutputPath);
         $this->filesystem->mkdir(\dirname($absoluteOutputPath));
 
         try {
             $task->start();
             $this->taskRepository->save($task);
-            $this->taskRepository->log($taskId, 'info', 'Transcoding started');
+            $this->taskRepository->log($task->id(), 'info', 'Transcoding started');
 
             $inputPath = $this->storage->getAbsolutePath($video->getSrcFilename());
             $this->runTranscodeProcess($inputPath, $absoluteOutputPath, $preset, $video->duration(), $task);
@@ -87,19 +75,21 @@ final readonly class TranscodeVideoHandler
             $task->updateProgress(new Progress(100));
             $task->updateMeta(['output' => $relativeOutputPath]);
             $this->taskRepository->save($task);
-            $this->taskRepository->log($taskId, 'info', 'Transcoding finished successfully');
+            $this->taskRepository->log($task->id(), 'info', 'Transcoding finished successfully');
         } catch (\Throwable $exception) {
             $task->fail();
             $this->taskRepository->save($task);
-            $this->taskRepository->log($taskId, 'error', 'Transcoding failed: '. $exception->getMessage());
+            $this->taskRepository->log($task->id(), 'error', 'Transcoding failed: '. $exception->getMessage());
             $this->logger->error('TranscodeVideoHandler failed', [
-                'taskId' => $taskId,
-                'videoId' => $videoId->toString(),
+                'taskId' => $task->id(),
+                'videoId' => $video->id()->toRfc4122(),
                 'exception' => $exception,
             ]);
 
             throw $exception;
         }
+
+        $this->messageBus->dispatch(new StartTaskScheduler());
     }
 
     private function runTranscodeProcess(
@@ -109,7 +99,7 @@ final readonly class TranscodeVideoHandler
         ?float $duration,
         Task $task,
     ): void {
-        $command = $this->buildCommand($inputPath, $outputPath, $preset);
+        $command = Ffmpeg::buildCommand($inputPath, $outputPath, $preset);
         $process = new Process($command);
         $process->setTimeout(null);
 
@@ -149,45 +139,6 @@ final readonly class TranscodeVideoHandler
         }
     }
 
-    private function buildCommand(string $inputPath, string $outputPath, Preset $preset): array
-    {
-        $resolution = $preset->resolution();
-        $codec = $preset->codec();
-        $bitrate = $preset->bitrate();
-
-        return [
-            'ffmpeg',
-            '-y',
-            '-i', $inputPath,
-            '-vf', sprintf('scale=%d:%d', $resolution->width(), $resolution->height()),
-            '-c:v', $this->mapCodec($codec),
-            '-b:v', $this->formatBitrate($bitrate),
-            '-preset', 'medium',
-            '-movflags', '+faststart',
-            '-c:a', 'aac',
-            '-b:a', '128k',
-            '-progress', 'pipe:2',
-            '-nostats',
-            $outputPath,
-        ];
-    }
-
-    private function mapCodec(Codec $codec): string
-    {
-        return match ($codec->value()) {
-            'h265' => 'libx265',
-            'vp9' => 'libvpx-vp9',
-            'av1' => 'libaom-av1',
-            default => 'libx264',
-        };
-    }
-
-    private function formatBitrate(Bitrate $bitrate): string
-    {
-        $kbps = max(100, (int) round($bitrate->value() * 1000));
-        return $kbps . 'k';
-    }
-
     private function shouldPersistProgress(float $lastPersistAt, int $lastProgress, int $nextProgress): bool
     {
         if ($nextProgress <= $lastProgress) {
@@ -205,10 +156,7 @@ final readonly class TranscodeVideoHandler
     {
         $task->updateProgress(new Progress($value));
         $this->taskRepository->save($task);
-        $taskId = $task->id();
-        if ($taskId !== null) {
-            $this->taskRepository->log($taskId, 'info', 'Transcoding progress: '. $value .'%');
-        }
+        $this->taskRepository->log($task->id(), 'info', 'Transcoding progress: '. $value .'%');
     }
 }
 
