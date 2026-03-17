@@ -3,7 +3,6 @@
 namespace App\Application\CommandHandler\Task;
 
 use App\Application\Command\Task\StartTaskScheduler;
-use App\Domain\Video\DTO\ScheduledTaskDTO;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 use Symfony\Component\Messenger\Exception\ExceptionInterface;

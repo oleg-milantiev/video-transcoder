@@ -2,12 +2,14 @@
 
 namespace App\Domain\Video\DTO;
 
+use Symfony\Component\Uid\UuidV4;
+
 final readonly class ScheduledTaskDTO
 {
     public function __construct(
         public int $taskId,
         public int $userId,
-        public int $videoId,
+        public UuidV4 $videoId,
     ) {
     }
 }

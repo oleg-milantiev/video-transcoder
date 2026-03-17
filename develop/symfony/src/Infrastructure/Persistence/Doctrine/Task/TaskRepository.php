@@ -16,6 +16,7 @@ use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\DBAL\Exception;
 use Doctrine\ORM\Exception\ORMException;
 use Doctrine\Persistence\ManagerRegistry;
+use Symfony\Component\Uid\UuidV4;
 
 /**
  * @extends ServiceEntityRepository<TaskEntity>
@@ -111,7 +112,7 @@ class TaskRepository extends ServiceEntityRepository implements TaskRepositoryIn
             static fn (array $row): ScheduledTaskDTO => new ScheduledTaskDTO(
                 (int) $row['task_id'],
                 (int) $row['user_id'],
-                (int) $row['video_id'],
+                UuidV4::fromString($row['video_id']),
             ),
             $stmt->fetchAllAssociative(),
         );
