@@ -12,6 +12,7 @@ use App\Infrastructure\Persistence\Doctrine\Shared\Repository\PaginatedRepositor
 use App\Infrastructure\Persistence\Doctrine\User\UserEntity;
 use App\Infrastructure\Persistence\Doctrine\Video\VideoEntity;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\DBAL\Exception;
 use Doctrine\ORM\Exception\ORMException;
 use Doctrine\Persistence\ManagerRegistry;
 
@@ -57,8 +58,7 @@ class TaskRepository extends ServiceEntityRepository implements TaskRepositoryIn
     }
 
     /**
-     * Return tasks eligible for start. For now return all tasks.
-     * @return array<int, array<string,mixed>>
+     * @throws Exception
      */
     public function getTasksForStart(): array
     {
@@ -105,9 +105,8 @@ class TaskRepository extends ServiceEntityRepository implements TaskRepositoryIn
         SQL;
 
         $stmt = $conn->executeQuery($sql);
-        $rows = $stmt->fetchAllAssociative();
-dd($rows);
-        return $rows;
+
+        return $stmt->fetchAllAssociative();
     }
 
     protected static function mapToDomain(TaskEntity $entity): Task
