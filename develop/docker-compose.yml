@@ -46,6 +46,21 @@ services:
 # use filesystem for debug
 #            - symfony-var:/var/www/yc/var
 
+    ffmpeg-transcode:
+        restart: always
+        image: olegmilantiev/yc-ffmpeg:${PROJECT_VERSION}
+        env_file:
+            - .env
+        depends_on:
+            - redis
+            - postgres
+            - rabbitmq
+        command: sh -c '/var/www/yc/bin/console messenger:consume async_transcode -vvv'
+        deploy:
+            replicas: 2
+        volumes:
+            - ./symfony:/var/www/yc
+
     redis:
         restart: always
         image: redis:7

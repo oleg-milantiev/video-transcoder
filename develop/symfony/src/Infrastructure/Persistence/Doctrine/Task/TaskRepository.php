@@ -3,6 +3,7 @@
 namespace App\Infrastructure\Persistence\Doctrine\Task;
 
 use App\Domain\User\Repository\UserRepositoryInterface;
+use App\Domain\Video\DTO\ScheduledTaskDTO;
 use App\Domain\Video\Entity\Task;
 use App\Domain\Video\Repository\PresetRepositoryInterface;
 use App\Domain\Video\Repository\TaskRepositoryInterface;
@@ -60,7 +61,7 @@ class TaskRepository extends ServiceEntityRepository implements TaskRepositoryIn
     /**
      * @throws Exception
      */
-    public function getTasksForStart(): array
+    public function getScheduled(): array
     {
         $conn = $this->getEntityManager()->getConnection();
 
@@ -91,7 +92,7 @@ class TaskRepository extends ServiceEntityRepository implements TaskRepositoryIn
                               JOIN user_metrics um ON tk.user_id = um.user_id
                      WHERE tk.status = 1 -- PENDING
                  )
-            SELECT id, user_id, video_id, last_start_time
+            SELECT id AS task_id, user_id, video_id
             FROM pending_tasks
             WHERE
               -- 1. Не превышаем лимит одновременных задач
@@ -106,7 +107,14 @@ class TaskRepository extends ServiceEntityRepository implements TaskRepositoryIn
 
         $stmt = $conn->executeQuery($sql);
 
-        return $stmt->fetchAllAssociative();
+        return array_map(
+            static fn (array $row): ScheduledTaskDTO => new ScheduledTaskDTO(
+                (int) $row['task_id'],
+                (int) $row['user_id'],
+                (int) $row['video_id'],
+            ),
+            $stmt->fetchAllAssociative(),
+        );
     }
 
     protected static function mapToDomain(TaskEntity $entity): Task
