@@ -84,11 +84,11 @@ class Preset
         Codec $codec,
         Bitrate $bitrate,
     ): void {
-        if ($resolution->is4k() && $bitrate->value() < 8000) {
+        if ($resolution->is4k() && $bitrate->value() < 8.0) {
             throw new \DomainException('Bitrate is too low for 4K resolution.');
         }
 
-        if ($codec->isAv1() && $bitrate->value() < 1000) {
+        if ($codec->isAv1() && $bitrate->value() < 1.0) {
             throw new \DomainException('Bitrate is too low for AV1 preset.');
         }
     }

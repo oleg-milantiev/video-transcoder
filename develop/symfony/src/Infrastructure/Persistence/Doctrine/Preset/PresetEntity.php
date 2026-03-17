@@ -28,8 +28,8 @@ class PresetEntity
     #[ORM\Column(length: 50)]
     public string $codec;
 
-    #[ORM\Column]
-    public int $bitrate;
+    #[ORM\Column(type: 'float')]
+    public float $bitrate;
 
     #[ORM\Column(type: 'json', nullable: true, options: ['jsonb' => true])]
     public ?array $log = null;
