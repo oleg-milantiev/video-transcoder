@@ -47,7 +47,15 @@
                                     <td colspan="3">
                                         <div class="d-flex justify-content-between align-items-center">
                                             <em>No task</em>
-                                            <button class="btn btn-primary btn-sm ms-3" disabled style="margin-left:auto;">Transcode</button>
+                                            {# Button enabled by default. JS will POST to the transcode route and disable it on click. #}
+                                            <button
+                                                type="button"
+                                                class="btn btn-primary btn-sm js-transcode-btn ms-3"
+                                                data-url="{{ path('video_transcode', {'id': dto.id, 'presetId': preset.id}) }}"
+                                                style="margin-left:auto;"
+                                            >
+                                                Transcode
+                                            </button>
                                         </div>
                                     </td>
                                 {% endif %}
@@ -69,3 +77,52 @@
         <a href="{{ path('video') }}" class="btn btn-secondary mt-3">Back to list</a>
     </div>
 {% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script>
+        (function () {
+            function onClick(e) {
+                var btn = e.currentTarget;
+                var url = btn.getAttribute('data-url');
+                if (!url) return;
+
+                // disable immediately to prevent double clicks
+                btn.disabled = true;
+                var originalText = btn.textContent;
+                btn.textContent = 'Processing...';
+
+                fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Content-Type': 'application/json'
+                    },
+                    credentials: 'same-origin'
+                }).then(function (resp) {
+                    if (resp.ok) {
+                        // keep disabled and show queued state
+                        btn.textContent = 'Queued';
+                    } else {
+                        // re-enable on error
+                        btn.disabled = false;
+                        btn.textContent = originalText;
+                        resp.text().then(function (t) { console.error('Transcode failed:', t); });
+                        alert('Failed to start transcode.');
+                    }
+                }).catch(function (err) {
+                    console.error(err);
+                    btn.disabled = false;
+                    btn.textContent = originalText;
+                    alert('Network error while starting transcode.');
+                });
+            }
+
+            document.addEventListener('DOMContentLoaded', function () {
+                var buttons = document.querySelectorAll('.js-transcode-btn');
+                buttons.forEach(function (b) { b.addEventListener('click', onClick); });
+            });
+        })();
+    </script>
+{% endblock %}
+

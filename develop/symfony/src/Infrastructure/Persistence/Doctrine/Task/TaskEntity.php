@@ -5,6 +5,7 @@ namespace App\Infrastructure\Persistence\Doctrine\Task;
 use App\Domain\Video\ValueObject\TaskStatus;
 use App\Infrastructure\Persistence\Doctrine\Preset\PresetEntity;
 use App\Infrastructure\Persistence\Doctrine\Video\VideoEntity;
+use App\Infrastructure\Persistence\Doctrine\User\UserEntity;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: TaskRepository::class)]
@@ -41,6 +42,10 @@ class TaskEntity
     #[ORM\ManyToOne(inversedBy: 'tasks')]
     #[ORM\JoinColumn(nullable: false)]
     public ?PresetEntity $preset = null;
+
+    #[ORM\ManyToOne(targetEntity: UserEntity::class)]
+    #[ORM\JoinColumn(name: 'user_id', referencedColumnName: 'id', nullable: true)]
+    public ?UserEntity $user = null;
 
     public function __construct()
     {

@@ -4,12 +4,10 @@ namespace App\Presentation\Controller;
 
 use App\Application\Exception\QueryException;
 use App\Application\Query\GetVideoDetailsQuery;
-use App\Application\Query\GetVideoDetailsWithPresetsQuery;
+use App\Application\Query\StartTranscodeQuery;
 use App\Application\Query\GetVideoListQuery;
 use App\Application\Query\QueryBus;
 use App\Application\Response\VideoListResponse;
-use App\Domain\Video\Repository\PresetRepositoryInterface;
-use App\Domain\Video\Repository\TaskRepositoryInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -23,8 +21,6 @@ class VideoController extends AbstractController
 {
     public function __construct(
         private readonly QueryBus $queryBus,
-        private readonly PresetRepositoryInterface $presetRepository,
-        private readonly TaskRepositoryInterface $taskRepository,
     ) {
     }
 
@@ -56,6 +52,28 @@ class VideoController extends AbstractController
             ]);
         } catch (QueryException | \DomainException $e) {
             return new Response('Video not found', 404);
+        }
+    }
+
+    #[Route('/{id}/transcode/{presetId}', name: 'video_transcode', methods: ['POST'])]
+    public function transcode(string $id, int $presetId): Response
+    {
+        try {
+            // TODO аттрибутами метода обязательно авторизованного
+            $user = $this->getUser();
+            if (!$user) {
+                return new JsonResponse(['error' => 'Unauthorized'], 401);
+            }
+
+            $taskDto = $this->queryBus->query(new StartTranscodeQuery($id, $presetId, (int)$user->getId()));
+
+            return new JsonResponse($taskDto);
+        } catch (QueryException $e) {
+            return new JsonResponse(['error' => $e->getMessage()], 400);
+        } catch (\DomainException $e) {
+            return new JsonResponse(['error' => $e->getMessage()], 403);
+        } catch (\Throwable $e) {
+            return new JsonResponse(['error' => 'Failed to start transcode'], 500);
         }
     }
 }

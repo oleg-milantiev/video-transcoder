@@ -2,9 +2,11 @@
 
 namespace App\Domain\Video\Entity;
 
+use App\Domain\User\Entity\User;
 use App\Domain\Video\ValueObject\Progress;
 use App\Domain\Video\ValueObject\TaskStatus;
 
+// TODO move to videoId, presetId, userId
 class Task
 {
     private ?int $id = null;
@@ -17,6 +19,7 @@ class Task
     private array $meta;
     private Video $video;
     private Preset $preset;
+    private ?User $user = null;
     // TODO DDD PresetId, VideoId
 
     // Constructor for mapping from Doctrine only. Use static::create() for domain
@@ -31,6 +34,7 @@ class Task
         ?\DateTimeImmutable $updatedAt = null,
         ?int $id = null,
         array $meta = [],
+        ?User $user = null,
     ) {
         $this->id = $id;
         $this->video = $video;
@@ -40,11 +44,13 @@ class Task
         $this->createdAt = $createdAt ?? new \DateTimeImmutable();
         $this->updatedAt = $updatedAt;
         $this->meta = $meta;
+        $this->user = $user;
     }
 
-    public static function create(Video $video, Preset $preset): self
+    public static function create(Video $video, Preset $preset, ?User $user = null): self
     {
-        return new self($video, $preset);
+        // TODO optimize
+        return new self($video, $preset, null, null, null, null, null, [], $user);
     }
 
     public function start(): void
@@ -120,6 +126,11 @@ class Task
     public function meta(): array
     {
         return $this->meta;
+    }
+
+    public function user(): ?User
+    {
+        return $this->user;
     }
 
     public function updateMeta(array $meta): void
