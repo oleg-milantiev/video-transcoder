@@ -56,6 +56,60 @@ class TaskRepository extends ServiceEntityRepository implements TaskRepositoryIn
         return self::mapToDomain($this->find($id));
     }
 
+    /**
+     * Return tasks eligible for start. For now return all tasks.
+     * @return array<int, array<string,mixed>>
+     */
+    public function getTasksForStart(): array
+    {
+        $conn = $this->getEntityManager()->getConnection();
+
+        $sql = <<<'SQL'
+            WITH user_metrics AS (
+                -- Считаем текущую нагрузку пользователя и время последнего запуска
+                SELECT
+                    u.id AS user_id,
+                    t.delay,
+                    t.instance,
+                    COUNT(CASE WHEN task.status = 2 THEN 1 END) AS active_count,
+                    MAX(CASE WHEN task.status IN (2, 3, 4) THEN task.updated_at END) AS last_start_time
+                FROM "user" u
+                         JOIN tariff t ON u.tariff_id = t.id
+                         LEFT JOIN task task ON u.id = task.user_id
+                GROUP BY u.id, t.delay, t.instance
+            ),
+                 pending_tasks AS (
+                     -- Нумеруем задачи в очереди для каждого юзера
+                     SELECT
+                         tk.*,
+                         ROW_NUMBER() OVER (PARTITION BY tk.user_id ORDER BY tk.created_at) as queue_pos,
+                         um.active_count,
+                         um.instance,
+                         um.last_start_time,
+                         um.delay
+                     FROM task tk
+                              JOIN user_metrics um ON tk.user_id = um.user_id
+                     WHERE tk.status = 1 -- PENDING
+                 )
+            SELECT id, user_id, video_id, last_start_time
+            FROM pending_tasks
+            WHERE
+              -- 1. Не превышаем лимит одновременных задач
+                (active_count + queue_pos) <= instance
+              -- 2. Прошло достаточно времени с последнего запуска (если он был)
+              AND (
+                last_start_time IS NULL
+                    -- TODO fields with timezone!
+                    OR last_start_time <= NOW() AT TIME ZONE 'MSK' - (delay || ' seconds')::interval
+                );
+        SQL;
+
+        $stmt = $conn->executeQuery($sql);
+        $rows = $stmt->fetchAllAssociative();
+dd($rows);
+        return $rows;
+    }
+
     protected static function mapToDomain(TaskEntity $entity): Task
     {
         return TaskMapper::toDomain($entity);

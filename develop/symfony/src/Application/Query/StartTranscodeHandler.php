@@ -2,6 +2,7 @@
 
 namespace App\Application\Query;
 
+use App\Application\Command\Task\StartTaskScheduler;
 use App\Application\DTO\TaskItemDTO;
 use App\Application\Exception\QueryException;
 use App\Domain\Video\Entity\Task;
@@ -10,17 +11,23 @@ use App\Domain\Video\Repository\TaskRepositoryInterface;
 use App\Domain\Video\Repository\VideoRepositoryInterface;
 use App\Domain\User\Repository\UserRepositoryInterface;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
+use Symfony\Component\Messenger\Exception\ExceptionInterface;
+use Symfony\Component\Messenger\MessageBusInterface;
 
 #[AsMessageHandler]
 final readonly class StartTranscodeHandler
 {
     public function __construct(
+        private MessageBusInterface $messageBus,
         private VideoRepositoryInterface $videoRepository,
         private PresetRepositoryInterface $presetRepository,
         private TaskRepositoryInterface $taskRepository,
         private UserRepositoryInterface $userRepository,
     ) {}
 
+    /**
+     * @throws ExceptionInterface
+     */
     public function __invoke(StartTranscodeQuery $query): TaskItemDTO
     {
         $video = $this->videoRepository->findById($query->uuid);
@@ -48,6 +55,8 @@ final readonly class StartTranscodeHandler
         } catch (\Throwable $e) {
             throw new QueryException('Failed to create task: ' . $e->getMessage());
         }
+
+        $this->messageBus->dispatch(new StartTaskScheduler());
 
         return TaskItemDTO::fromDomain($task, $video, $preset);
     }
