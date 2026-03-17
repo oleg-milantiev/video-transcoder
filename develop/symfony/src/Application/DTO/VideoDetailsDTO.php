@@ -19,7 +19,7 @@ readonly class VideoDetailsDTO
         public array $presetsWithTasks = [],
     ) {}
 
-    public static function fromDomain(Video $video): self
+    public static function fromDomain(Video $video, array $presetsWithTasks): self
     {
         return new self(
             title: $video->title()->value(),
@@ -28,8 +28,17 @@ readonly class VideoDetailsDTO
             createdAt: $video->createdAt()->format('Y-m-d H:i'),
             updatedAt: $video->updatedAt()?->format('Y-m-d H:i'),
             userId: $video->userId(),
-            meta: $video->meta(),
+            meta: self::sanitizeMeta($video->meta()),
             poster: $video->getPoster(),
+            presetsWithTasks: $presetsWithTasks,
         );
+    }
+
+    protected static function sanitizeMeta(array $meta): array
+    {
+        // Remove any sensitive information from meta
+        unset($meta['preview']);
+
+        return $meta;
     }
 }

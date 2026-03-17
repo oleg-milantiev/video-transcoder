@@ -42,16 +42,6 @@ final readonly class GetVideoDetailsHandler
             );
         }
 
-        return new VideoDetailsDTO(
-            title: $video->title()->value(),
-            extension: $video->extension()->value(),
-            status: $video->status()->name,
-            createdAt: $video->createdAt()->format('Y-m-d H:i'),
-            updatedAt: $video->updatedAt()?->format('Y-m-d H:i'),
-            userId: $video->userId(),
-            meta: $video->meta(),
-            poster: $video->getPoster(),
-            presetsWithTasks: $presetsWithTasks,
-        );
+        return VideoDetailsDTO::fromDomain($video, $presetsWithTasks);
     }
 }
