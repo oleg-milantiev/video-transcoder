@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Application\Command\Video;
+namespace App\Application\Command\Task;
 
 use App\Domain\Video\DTO\ScheduledTaskDTO;
 

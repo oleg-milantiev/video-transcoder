@@ -3,12 +3,12 @@
 namespace App\Application\CommandHandler\Task;
 
 use App\Application\Command\Task\StartTaskScheduler;
+use App\Application\Command\Task\TranscodeVideo;
+use App\Domain\Video\Repository\TaskRepositoryInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 use Symfony\Component\Messenger\Exception\ExceptionInterface;
 use Symfony\Component\Messenger\MessageBusInterface;
-use App\Domain\Video\Repository\TaskRepositoryInterface;
-use App\Application\Command\Video\TranscodeVideo;
 
 #[AsMessageHandler]
 final readonly class StartTaskSchedulerHandler
