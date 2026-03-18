@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Application\Query;
+namespace App\Application\QueryHandler;
 
+use App\Application\Query\GetTaskListQuery;
 use App\Application\Response\TaskListResponse;
 use App\Domain\Video\Entity\Task;
 use App\Domain\Video\Repository\PresetRepositoryInterface;

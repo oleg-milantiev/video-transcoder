@@ -3,11 +3,11 @@
 namespace App\Tests\Application\Query;
 
 use App\Application\DTO\PaginatedResult;
-use App\Application\Query\GetTaskListHandler;
 use App\Application\Query\GetTaskListQuery;
+use App\Application\QueryHandler\GetTaskListHandler;
+use App\Domain\Video\Repository\PresetRepositoryInterface;
 use App\Domain\Video\Repository\TaskRepositoryInterface;
 use App\Domain\Video\Repository\VideoRepositoryInterface;
-use App\Domain\Video\Repository\PresetRepositoryInterface;
 use App\Tests\Domain\Entity\PresetFake;
 use App\Tests\Domain\Entity\TaskFake;
 use App\Tests\Domain\Entity\VideoFake;

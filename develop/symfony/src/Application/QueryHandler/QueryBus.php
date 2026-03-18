@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Application\Query;
+namespace App\Application\QueryHandler;
 
 use Symfony\Component\Messenger\HandleTrait;
 use Symfony\Component\Messenger\MessageBusInterface;

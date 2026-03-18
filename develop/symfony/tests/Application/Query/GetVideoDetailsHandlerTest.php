@@ -2,8 +2,8 @@
 
 namespace App\Tests\Application\Query;
 
-use App\Application\Query\GetVideoDetailsHandler;
 use App\Application\Query\GetVideoDetailsQuery;
+use App\Application\QueryHandler\GetVideoDetailsHandler;
 use App\Domain\Video\Repository\VideoRepositoryInterface;
 use App\Tests\Domain\Entity\VideoFake;
 use PHPUnit\Framework\TestCase;

@@ -1,15 +1,16 @@
 <?php
 
-namespace App\Application\Query;
+namespace App\Application\QueryHandler;
 
 use App\Application\Command\Task\StartTaskScheduler;
 use App\Application\DTO\TaskItemDTO;
 use App\Application\Exception\QueryException;
+use App\Application\Query\StartTranscodeQuery;
+use App\Domain\User\Repository\UserRepositoryInterface;
 use App\Domain\Video\Entity\Task;
 use App\Domain\Video\Repository\PresetRepositoryInterface;
 use App\Domain\Video\Repository\TaskRepositoryInterface;
 use App\Domain\Video\Repository\VideoRepositoryInterface;
-use App\Domain\User\Repository\UserRepositoryInterface;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 use Symfony\Component\Messenger\Exception\ExceptionInterface;
 use Symfony\Component\Messenger\MessageBusInterface;

@@ -4,9 +4,9 @@ namespace App\Presentation\Controller;
 
 use App\Application\Exception\QueryException;
 use App\Application\Query\GetVideoDetailsQuery;
-use App\Application\Query\StartTranscodeQuery;
 use App\Application\Query\GetVideoListQuery;
-use App\Application\Query\QueryBus;
+use App\Application\Query\StartTranscodeQuery;
+use App\Application\QueryHandler\QueryBus;
 use App\Application\Response\VideoListResponse;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;

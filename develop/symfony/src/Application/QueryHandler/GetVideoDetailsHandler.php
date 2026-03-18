@@ -1,11 +1,12 @@
 <?php
 
-namespace App\Application\Query;
+namespace App\Application\QueryHandler;
 
 use App\Application\DTO\PresetWithTaskDTO;
 use App\Application\DTO\TaskInfoDTO;
 use App\Application\DTO\VideoDetailsDTO;
 use App\Application\Exception\QueryException;
+use App\Application\Query\GetVideoDetailsQuery;
 use App\Domain\Video\Repository\VideoRepositoryInterface;
 use App\Domain\Video\ValueObject\TaskStatus;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;

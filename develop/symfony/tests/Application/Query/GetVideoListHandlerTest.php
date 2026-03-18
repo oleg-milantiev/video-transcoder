@@ -3,8 +3,8 @@
 namespace App\Tests\Application\Query;
 
 use App\Application\DTO\PaginatedResult;
-use App\Application\Query\GetVideoListHandler;
 use App\Application\Query\GetVideoListQuery;
+use App\Application\QueryHandler\GetVideoListHandler;
 use App\Domain\Video\Repository\VideoRepositoryInterface;
 use App\Tests\Domain\Entity\VideoFake;
 use PHPUnit\Framework\TestCase;

@@ -4,7 +4,7 @@ namespace App\Presentation\Controller;
 
 use App\Application\Exception\QueryException;
 use App\Application\Query\GetTaskListQuery;
-use App\Application\Query\QueryBus;
+use App\Application\QueryHandler\QueryBus;
 use App\Application\Response\TaskListResponse;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;

@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Application\Query;
+namespace App\Application\QueryHandler;
 
+use App\Application\Query\GetVideoListQuery;
 use App\Application\Response\VideoListResponse;
 use App\Domain\Video\Repository\VideoRepositoryInterface;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
