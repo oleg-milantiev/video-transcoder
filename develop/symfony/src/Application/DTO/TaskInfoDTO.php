@@ -8,5 +8,6 @@ readonly class TaskInfoDTO
         public string $status,
         public int $progress,
         public string $createdAt,
+        public ?int $id = null,
     ) {}
 }

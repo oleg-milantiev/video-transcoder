@@ -66,13 +66,8 @@ class VideoRepository extends ServiceEntityRepository implements VideoRepository
     /**
      * @throws Exception
      */
-    public function getDetails(Uuid $id): ?array
+    public function getDetails(Video $video): array
     {
-        $video = $this->find($id);
-        if (!$video) {
-            return null;
-        }
-
         $conn = $this->getEntityManager()->getConnection();
 
         // SQL query to fetch all presets with their tasks for this video, sorted by preset name
@@ -80,6 +75,7 @@ class VideoRepository extends ServiceEntityRepository implements VideoRepository
             SELECT
                 p.id,
                 p.name,
+                t.id AS task_id,
                 t.status,
                 t.progress,
                 TO_CHAR(t.created_at, 'YYYY-MM-DD HH24:MI') as created_at
@@ -88,7 +84,7 @@ class VideoRepository extends ServiceEntityRepository implements VideoRepository
             ORDER BY p.name
         SQL;
 
-        $result = $conn->executeQuery($sql, ['videoId' => $id->toRfc4122()]);
+        $result = $conn->executeQuery($sql, ['videoId' => $video->id()->toRfc4122()]);
         $rows = $result->fetchAllAssociative();
 
         $presetsWithTasks = [];
@@ -96,7 +92,8 @@ class VideoRepository extends ServiceEntityRepository implements VideoRepository
             $presetsWithTasks[] = [
                 'id' => (int)$row['id'],
                 'name' => $row['name'],
-                'task' => $row['status'] !== null ? [
+                'task' => $row['task_id'] !== null ? [
+                    'id' => (int)$row['task_id'],
                     'status' => (int)$row['status'],
                     'progress' => (int)$row['progress'],
                     'createdAt' => $row['created_at'],
@@ -104,10 +101,7 @@ class VideoRepository extends ServiceEntityRepository implements VideoRepository
             ];
         }
 
-        return [
-            'video' => VideoMapper::toDomain($video),
-            'presetsWithTasks' => $presetsWithTasks,
-        ];
+        return $presetsWithTasks;
     }
 
     // You should NOT log into Persistence in prod. Just for debug now
