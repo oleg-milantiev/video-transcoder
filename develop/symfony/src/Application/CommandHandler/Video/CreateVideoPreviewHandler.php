@@ -11,6 +11,7 @@ use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 use Symfony\Component\Process\Exception\ProcessFailedException;
 use Symfony\Component\Process\Process;
 
+// TODO split and test!
 #[AsMessageHandler]
 final readonly class CreateVideoPreviewHandler
 {

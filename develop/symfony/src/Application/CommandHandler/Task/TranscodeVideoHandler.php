@@ -19,6 +19,7 @@ use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Process\Exception\ProcessFailedException;
 use Symfony\Component\Process\Process;
 
+// TODO split and test!
 #[AsMessageHandler]
 final readonly class TranscodeVideoHandler
 {
