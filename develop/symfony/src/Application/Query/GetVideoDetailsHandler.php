@@ -7,6 +7,7 @@ use App\Application\DTO\TaskInfoDTO;
 use App\Application\DTO\VideoDetailsDTO;
 use App\Application\Exception\QueryException;
 use App\Domain\Video\Repository\VideoRepositoryInterface;
+use App\Domain\Video\ValueObject\TaskStatus;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 
 #[AsMessageHandler]
@@ -30,7 +31,7 @@ final readonly class GetVideoDetailsHandler
             $taskDto = null;
             if ($presetData['task']) {
                 $taskDto = new TaskInfoDTO(
-                    status: $presetData['task']['status'],
+                    status: TaskStatus::tryFrom((int)$presetData['task']['status'])?->name ?? 'UNKNOWN',
                     progress: $presetData['task']['progress'],
                     createdAt: $presetData['task']['createdAt'],
                 );

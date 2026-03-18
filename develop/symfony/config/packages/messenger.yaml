@@ -27,7 +27,7 @@ framework:
             messenger.bus.default: []
 
         routing:
-            App\Application\Command\Video\TranscodeVideo: async_transcode
+            App\Application\Command\Task\TranscodeVideo: async_transcode
 
             App\Application\Command\Video\ExtractVideoMetadata: async
             App\Application\Command\Video\CreateVideoPreview: async

@@ -2,6 +2,8 @@
 
 ## ЗАГРУЗКА
 
+TODO обновить
+
   - **Frontend**: Пользователь загружает видеофайл через веб-интерфейс (uppy+tus форма с chunk загрузкой);
   - **Presentation + Infrastucture**: UploadController через Tus\Server грузит чанки, по готовности генерит TusPhp\Events\UploadComplete;
   - **Infrastructure Proxy**: инфраструктурное событие ловится TusPostFinishListener и проксируется в Application командой CreateVideo;

@@ -12,9 +12,9 @@ class BitrateTest extends TestCase
 {
     public function testValidBitrate(): void
     {
-        $bitrate = new Bitrate(1000000);
-        $this->assertSame(1000000, $bitrate->value());
-        $this->assertSame('1000000', (string)$bitrate);
+        $bitrate = new Bitrate(150.5);
+        $this->assertSame(150.5, $bitrate->value());
+        $this->assertSame('150.5', (string)$bitrate);
     }
 
     public function testNegativeBitrateThrowsException(): void
@@ -26,16 +26,15 @@ class BitrateTest extends TestCase
     public function testTooHighBitrateThrowsException(): void
     {
         $this->expectException(IncompatibleVideoFormat::class);
-        new Bitrate(201 * 1024 * 1024);
+        new Bitrate(250.0);
     }
 
     public function testEquals(): void
     {
-        $a = new Bitrate(1000);
-        $b = new Bitrate(1000);
-        $c = new Bitrate(2000);
+        $a = new Bitrate(120.0);
+        $b = new Bitrate(120.0);
+        $c = new Bitrate(180.0);
         $this->assertTrue($a->equals($b));
         $this->assertFalse($a->equals($c));
     }
 }
-

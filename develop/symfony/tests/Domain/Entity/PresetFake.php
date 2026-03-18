@@ -16,7 +16,8 @@ class PresetFake extends Preset
         $name = new PresetName($faker->sentence(3));
         $resolution = new Resolution($faker->numberBetween(240, 2160), $faker->numberBetween(240, 2160));
         $codec = new Codec($faker->randomElement(['h264', 'h265', 'vp9', 'av1']));
-        $bitrate = new Bitrate($faker->numberBetween(500, 5000));
-        parent::__construct($name, $resolution, $codec, $bitrate);
+        $bitrate = new Bitrate($faker->randomFloat(2, 10, 180));
+        $id = $faker->numberBetween(1, 1000);
+        parent::__construct($name, $resolution, $codec, $bitrate, $id);
     }
 }

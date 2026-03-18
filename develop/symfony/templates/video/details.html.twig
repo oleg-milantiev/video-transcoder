@@ -40,7 +40,7 @@
                             <tr>
                                 <td>{{ preset.name }}</td>
                                 {% if preset.task %}
-                                    <td>{{ preset.task.status }}</td>
+                                    <td>{{ preset.task.status|title }}</td>
                                     <td>{{ preset.task.progress }}%</td>
                                     <td>{{ preset.task.createdAt }}</td>
                                 {% else %}
@@ -125,4 +125,3 @@
         })();
     </script>
 {% endblock %}
-
