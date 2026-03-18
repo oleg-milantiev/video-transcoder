@@ -9,7 +9,7 @@ use Symfony\Component\Uid\UuidV4 as Uuid;
 // TODO move to videoId, presetId, userId
 class Task
 {
-    private ?int $id = null;
+    private ?int $id;
     private TaskStatus $status;
     private Progress $progress;
     // TODO DDD
@@ -119,6 +119,11 @@ class Task
     public function id(): ?int
     {
         return $this->id;
+    }
+
+    public function setId(int $id): void
+    {
+        $this->id = $id;
     }
 
     public function meta(): array
