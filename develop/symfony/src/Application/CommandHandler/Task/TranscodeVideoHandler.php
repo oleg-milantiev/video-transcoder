@@ -4,7 +4,7 @@ namespace App\Application\CommandHandler\Task;
 
 use App\Application\Command\Task\StartTaskScheduler;
 use App\Application\Command\Task\TranscodeVideo;
-use App\Application\Service\Ffmpeg;
+use App\Application\Service\Ffmpeg\Transcode;
 use App\Domain\Video\Entity\Preset;
 use App\Domain\Video\Entity\Task;
 use App\Domain\Video\Repository\PresetRepositoryInterface;
@@ -99,7 +99,7 @@ final readonly class TranscodeVideoHandler
         ?float $duration,
         Task $task,
     ): void {
-        $command = Ffmpeg::buildCommand($inputPath, $outputPath, $preset);
+        $command = Transcode::buildCommand($inputPath, $outputPath, $preset);
         $process = new Process($command);
         $process->setTimeout(null);
 

@@ -60,6 +60,7 @@ final readonly class ExtractVideoMetadataHandler
         }
     }
 
+    // TODO move to App\Application\Service\Ffmpeg
     private function getVideoMetadata(string $path): array
     {
         $process = new Process([

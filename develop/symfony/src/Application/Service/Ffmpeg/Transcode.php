@@ -1,13 +1,12 @@
 <?php
 
-namespace App\Application\Service;
+namespace App\Application\Service\Ffmpeg;
 
 use App\Domain\Video\Entity\Preset;
 use App\Domain\Video\ValueObject\Bitrate;
 use App\Domain\Video\ValueObject\Codec;
 
-// TODO create ffmpeg folder with few classes for meta, preview and transcode
-readonly class Ffmpeg
+readonly class Transcode
 {
     public static function buildCommand(string $inputPath, string $outputPath, Preset $preset): array
     {
