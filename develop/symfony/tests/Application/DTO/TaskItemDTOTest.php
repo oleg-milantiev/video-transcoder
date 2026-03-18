@@ -14,6 +14,7 @@ use App\Domain\Video\ValueObject\PresetName;
 use App\Domain\Video\ValueObject\Progress;
 use App\Domain\Video\ValueObject\Resolution;
 use App\Domain\Video\ValueObject\TaskStatus;
+use App\Domain\Video\ValueObject\TaskDates;
 use App\Domain\Video\ValueObject\VideoStatus;
 use App\Domain\Video\ValueObject\VideoTitle;
 use App\Domain\Video\ValueObject\FileExtension;
@@ -49,7 +50,7 @@ class TaskItemDTOTest extends TestCase
             userId: 99,
             status: TaskStatus::processing(),
             progress: new Progress(75),
-            createdAt: new \DateTimeImmutable('2026-03-18 10:00:00'),
+            dates: TaskDates::fromPersistence(new \DateTimeImmutable('2026-03-18 10:00:00'), null, null),
             id: 55,
         );
 

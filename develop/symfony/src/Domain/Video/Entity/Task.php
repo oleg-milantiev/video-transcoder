@@ -3,6 +3,7 @@
 namespace App\Domain\Video\Entity;
 
 use App\Domain\Video\ValueObject\Progress;
+use App\Domain\Video\ValueObject\TaskDates;
 use App\Domain\Video\ValueObject\TaskStatus;
 use Symfony\Component\Uid\UuidV4 as Uuid;
 
@@ -12,10 +13,7 @@ class Task
     private ?int $id;
     private TaskStatus $status;
     private Progress $progress;
-    // TODO DDD
-    private \DateTimeImmutable $createdAt;
-    // TODO DDD
-    private ?\DateTimeImmutable $updatedAt = null;
+    private TaskDates $dates;
     private array $meta;
     private Uuid $videoId;
     private int $presetId;
@@ -28,10 +26,7 @@ class Task
         int $userId,
         ?TaskStatus $status = null,
         ?Progress $progress = null,
-        // TODO DDD
-        ?\DateTimeImmutable $createdAt = null,
-        // TODO DDD
-        ?\DateTimeImmutable $updatedAt = null,
+        ?TaskDates $dates = null,
         ?int $id = null,
         array $meta = [],
     ) {
@@ -40,8 +35,7 @@ class Task
         $this->presetId = $presetId;
         $this->status = $status ?? TaskStatus::pending();
         $this->progress = $progress ?? new Progress(0);
-        $this->createdAt = $createdAt ?? new \DateTimeImmutable();
-        $this->updatedAt = $updatedAt;
+        $this->dates = $dates ?? TaskDates::create();
         $this->meta = $meta;
         $this->userId = $userId;
     }
@@ -58,7 +52,7 @@ class Task
         }
 
         $this->status = TaskStatus::processing();
-        $this->touch();
+        $this->dates = $this->dates->markStarted();
     }
 
     public function updateProgress(Progress $progress): void
@@ -93,12 +87,17 @@ class Task
 
     public function createdAt(): \DateTimeImmutable
     {
-        return $this->createdAt;
+        return $this->dates->createdAt();
+    }
+
+    public function startedAt(): ?\DateTimeImmutable
+    {
+        return $this->dates->startedAt();
     }
 
     public function updatedAt(): ?\DateTimeImmutable
     {
-        return $this->updatedAt;
+        return $this->dates->updatedAt();
     }
 
     public function videoId(): Uuid
@@ -144,6 +143,6 @@ class Task
 
     private function touch(): void
     {
-        $this->updatedAt = new \DateTimeImmutable();
+        $this->dates = $this->dates->touch();
     }
 }

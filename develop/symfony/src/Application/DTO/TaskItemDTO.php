@@ -19,7 +19,9 @@ readonly class TaskItemDTO
 
     public static function fromDomain(Task $task, Video $video, Preset $preset): self
     {
-        // TODO check task.id is not null
+        if ($task->id() === null) {
+            throw new \DomainException('Task id must be set for TaskItemDTO mapping.');
+        }
 
         return new self(
             id: $task->id(),

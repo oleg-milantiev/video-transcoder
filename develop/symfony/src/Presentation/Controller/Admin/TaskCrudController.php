@@ -42,7 +42,8 @@ class TaskCrudController extends AbstractCrudController
             ->add(NumericFilter::new('progress'))
             ->add(EntityFilter::new('video'))
             ->add(EntityFilter::new('preset'))
-            ->add(DateTimeFilter::new('createdAt'));
+            ->add(DateTimeFilter::new('createdAt'))
+            ->add(DateTimeFilter::new('startedAt'));
     }
 
     public function configureActions(Actions $actions): Actions
@@ -72,6 +73,7 @@ class TaskCrudController extends AbstractCrudController
                 ->hideOnIndex(),
             DateTimeField::new('createdAt')->hideOnForm(),
             DateTimeField::new('updatedAt')->hideOnForm(),
+            DateTimeField::new('startedAt')->hideOnForm(),
         ];
     }
 }

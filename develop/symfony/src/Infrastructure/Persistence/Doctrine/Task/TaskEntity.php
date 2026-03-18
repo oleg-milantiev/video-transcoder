@@ -29,6 +29,9 @@ class TaskEntity
     #[ORM\Column(nullable: true)]
     public ?\DateTimeImmutable $updatedAt = null;
 
+    #[ORM\Column(nullable: true)]
+    public ?\DateTimeImmutable $startedAt = null;
+
     #[ORM\Column(type: 'json')]
     public array $meta = [];
 

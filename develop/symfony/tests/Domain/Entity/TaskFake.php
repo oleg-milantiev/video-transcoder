@@ -22,7 +22,8 @@ class TaskFake extends Task
             presetId: $preset->id() ?? random_int(1, 1000),
             userId: $video->userId(),
             status: TaskStatus::pending(),
-            progress: new Progress(0)
+            progress: new Progress(0),
+            id: random_int(1, 1000),
         );
     }
 }

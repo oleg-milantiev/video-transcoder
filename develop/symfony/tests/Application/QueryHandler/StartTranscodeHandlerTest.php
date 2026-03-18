@@ -80,7 +80,10 @@ class StartTranscodeHandlerTest extends TestCase
         $taskRepo = $this->createMock(TaskRepositoryInterface::class);
         $taskRepo->expects($this->once())
             ->method('save')
-            ->with($this->isInstanceOf(Task::class));
+            ->with($this->isInstanceOf(Task::class))
+            ->willReturnCallback(static function (Task $task): void {
+                $task->setId(321);
+            });
 
         $userRepo = $this->createMock(UserRepositoryInterface::class);
         $userRepo->expects($this->once())

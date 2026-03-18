@@ -83,7 +83,7 @@ class TaskRepository extends ServiceEntityRepository implements TaskRepositoryIn
                     t.delay,
                     t.instance,
                     COUNT(CASE WHEN task.status = 2 THEN 1 END) AS active_count,
-                    MAX(CASE WHEN task.status IN (2, 3, 4) THEN task.created_at END) AS last_start_time
+                    MAX(CASE WHEN task.status IN (2, 3, 4) THEN COALESCE(task.started_at, task.created_at) END) AS last_start_time
                 FROM "user" u
                          JOIN tariff t ON u.tariff_id = t.id
                          LEFT JOIN task task ON u.id = task.user_id
