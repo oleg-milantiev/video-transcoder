@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Tests\Application\Query;
+namespace App\Tests\Application\QueryHandler;
 
 use App\Application\Query\GetVideoDetailsQuery;
 use App\Application\QueryHandler\GetVideoDetailsHandler;

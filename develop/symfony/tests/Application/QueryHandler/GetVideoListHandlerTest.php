@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Tests\Application\Query;
+namespace App\Tests\Application\QueryHandler;
 
 use App\Application\DTO\PaginatedResult;
 use App\Application\Query\GetVideoListQuery;
