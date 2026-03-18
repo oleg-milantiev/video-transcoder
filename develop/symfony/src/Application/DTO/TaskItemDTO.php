@@ -9,6 +9,7 @@ use App\Domain\Video\Entity\Video;
 readonly class TaskItemDTO
 {
     private function __construct(
+        public int $id,
         public string $videoTitle,
         public string $presetTitle,
         public string $status,
@@ -18,7 +19,10 @@ readonly class TaskItemDTO
 
     public static function fromDomain(Task $task, Video $video, Preset $preset): self
     {
+        // TODO check task.id is not null
+
         return new self(
+            id: $task->id(),
             videoTitle: $video->title()->value(),
             // TODO preset name -> title
             presetTitle: $preset->name()->value(),

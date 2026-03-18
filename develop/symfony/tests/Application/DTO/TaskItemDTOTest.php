@@ -50,10 +50,12 @@ class TaskItemDTOTest extends TestCase
             status: TaskStatus::processing(),
             progress: new Progress(75),
             createdAt: new \DateTimeImmutable('2026-03-18 10:00:00'),
+            id: 55,
         );
 
         $dto = TaskItemDTO::fromDomain($task, $video, $preset);
 
+        $this->assertSame(55, $dto->id);
         $this->assertSame('Task Source Video', $dto->videoTitle);
         $this->assertSame('HD 1080p', $dto->presetTitle);
         $this->assertSame('PROCESSING', $dto->status);

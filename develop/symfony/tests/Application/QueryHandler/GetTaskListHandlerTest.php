@@ -45,5 +45,8 @@ class GetTaskListHandlerTest extends TestCase
         $this->assertEquals($total, $response->total);
         $this->assertEquals($page, $response->page);
         $this->assertEquals($limit, $response->limit);
+
+        // TODO check all fields in all response tasks
+        $this->assertSame($task1->id(), $response->items[0]->id);
     }
 }

@@ -36,6 +36,7 @@ class TaskListResponseTest extends TestCase
         $this->assertSame(1, $response->page);
         $this->assertSame(2, $response->limit);
         $this->assertSame(2, $response->totalPages);
+        $this->assertSame($task->id(), $response->items[0]->id);
         $this->assertSame($video->title()->value(), $response->items[0]->videoTitle);
         $this->assertSame($preset->name()->value(), $response->items[0]->presetTitle);
     }
@@ -48,4 +49,3 @@ class TaskListResponseTest extends TestCase
         $this->assertSame(0, $response->totalPages);
     }
 }
-
