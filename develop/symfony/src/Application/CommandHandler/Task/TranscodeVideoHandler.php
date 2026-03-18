@@ -41,6 +41,7 @@ final readonly class TranscodeVideoHandler
      */
     public function __invoke(TranscodeVideo $command): void
     {
+        // TODO check is meta full
         $scheduledTask = $command->scheduledTask;
         $task = $this->taskRepository->findById($scheduledTask->taskId);
 
@@ -61,7 +62,7 @@ final readonly class TranscodeVideoHandler
             throw new \RuntimeException('Preset not found for task');
         }
 
-        $relativeOutputPath = sprintf('uploads/%s/%d.mp4', $video->id()->toRfc4122(), $preset->id());
+        $relativeOutputPath = sprintf('%s/%d.mp4', $video->id()->toRfc4122(), $preset->id());
         $absoluteOutputPath = $this->storage->getAbsolutePath($relativeOutputPath);
         $this->filesystem->mkdir(\dirname($absoluteOutputPath));
 

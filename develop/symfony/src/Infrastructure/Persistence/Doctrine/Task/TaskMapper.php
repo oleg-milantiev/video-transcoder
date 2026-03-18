@@ -30,15 +30,20 @@ class TaskMapper
     {
         $entity = new TaskEntity();
         $entity->id = $task->id();
+        self::hydrate($entity, $task, $video, $preset, $user);
+        $entity->createdAt = $task->createdAt();
+
+        return $entity;
+    }
+
+    public static function hydrate(TaskEntity $entity, Task $task, VideoEntity $video, PresetEntity $preset, UserEntity $user): void
+    {
         $entity->status = $task->status()->value;
         $entity->progress = $task->progress()->value();
-        $entity->createdAt = $task->createdAt();
         $entity->updatedAt = $task->updatedAt();
         $entity->video = $video;
         $entity->preset = $preset;
-        $entity->meta = $task->meta();
         $entity->user = $user;
-
-        return $entity;
+        $entity->meta = $task->meta();
     }
 }

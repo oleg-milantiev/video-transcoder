@@ -42,14 +42,21 @@ class TaskRepository extends ServiceEntityRepository implements TaskRepositoryIn
     {
         $em = $this->getEntityManager();
 
-        // TODO task update like in develop/symfony/src/Infrastructure/Persistence/Doctrine/Video/VideoRepository.php:37
+        $videoRef = $em->getReference(VideoEntity::class, $task->videoId());
+        $presetRef = $em->getReference(PresetEntity::class, $task->presetId());
+        $userRef = $em->getReference(UserEntity::class, $task->userId());
 
-        $taskEntity = TaskMapper::toDoctrine(
-            $task,
-            $em->getReference(VideoEntity::class, $task->videoId()),
-            $em->getReference(PresetEntity::class, $task->presetId()),
-            $em->getReference(UserEntity::class, $task->userId()),
-        );
+        if ($task->id() === null) {
+            $taskEntity = TaskMapper::toDoctrine($task, $videoRef, $presetRef, $userRef);
+        } else {
+            /** @var TaskEntity|null $taskEntity */
+            $taskEntity = $this->find($task->id());
+            if (!$taskEntity) {
+                throw new \RuntimeException(sprintf('Task with id %d not found', $task->id()));
+            }
+            TaskMapper::hydrate($taskEntity, $task, $videoRef, $presetRef, $userRef);
+        }
+
         $em->persist($taskEntity);
         $em->flush();
     }
