@@ -10,7 +10,7 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 
 class UploadController extends AbstractController
 {
-    #[Route('/upload/{token?}', name: 'tus', defaults: ['token' => ''])]
+    #[Route('/api/upload/{token?}', name: 'api_tus', defaults: ['token' => ''])]
     public function uploadHandler(
         TusServer $server,
         EventDispatcherInterface $symfonyDispatcher,

@@ -57,7 +57,7 @@
                                             <button
                                                 type="button"
                                                 class="btn btn-outline-primary btn-sm js-cancel-btn"
-                                                data-url="{{ path('task_cancel', {'id': preset.task.id}) }}"
+                                                data-url="{{ path('api_task_cancel', {'id': preset.task.id}) }}"
                                             >
                                                 Cancel
                                             </button>
@@ -73,7 +73,7 @@
                                         <button
                                             type="button"
                                             class="btn btn-outline-primary btn-sm js-transcode-btn"
-                                            data-url="{{ path('video_transcode', {'id': dto.id, 'presetId': preset.id}) }}"
+                                            data-url="{{ path('api_video_transcode', {'id': dto.id, 'presetId': preset.id}) }}"
                                         >
                                             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" class="me-1">
                                                 <path d="M8 3a5 5 0 0 1 4.546 2.916.5.5 0 1 0 .908-.418A6 6 0 1 0 13.5 8h-1a5 5 0 1 1-1.46-3.54L9.5 6H13V2.5l-1.607 1.607A5.98 5.98 0 0 0 8 3z"/>

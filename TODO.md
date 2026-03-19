@@ -29,9 +29,13 @@
 - кубер и тераформ масштабирование
 
 ### Frontend
-- переход на Vue в SPO
-  - перевод video/details в JSON
-- первый вход не показывает список видео / задач
+- переход на Vue в SPA:
+  - выделить API слой с префиксом /api/*, чтобы четко разделить HTML и JSON;
+  - добавить JSON-версию для деталей видео (сейчас GET /video/{uuid} рендерит Twig в develop/symfony/src/Presentation/Controller/VideoController.php);
+  - уточнить контракт POST-операций (transcode, cancel) и ошибки (единый формат JSON);
+  - SPA auth - перейти на token-based;
+  - сделать первый Vue-экран: Home tabs (Upload, Videos, Tasks) как один SPA route/view;
+  - реализовать video / details страницу.
 
 ## На потом
 - разделить TranscodeVideoHandler и обернуть тестами
