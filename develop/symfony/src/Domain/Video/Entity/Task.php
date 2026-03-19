@@ -45,6 +45,15 @@ class Task
         return new self($videoId, $presetId, $userId);
     }
 
+    public function canStart(?float $videoDuration): bool
+    {
+        if (!$this->status->canBeStarted()) {
+            return false;
+        }
+
+        return $videoDuration !== null && $videoDuration > 0.0;
+    }
+
     public function start(): void
     {
         if (!$this->status->canBeStarted()) {

@@ -16,6 +16,7 @@ use Psr\Log\LoggerInterface;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 use Symfony\Component\Messenger\MessageBusInterface;
+use Symfony\Component\Lock\LockFactory;
 use Symfony\Component\Process\Exception\ProcessFailedException;
 use Symfony\Component\Process\Process;
 
@@ -24,6 +25,8 @@ use Symfony\Component\Process\Process;
 final readonly class TranscodeVideoHandler
 {
     private const float PROGRESS_UPDATE_INTERVAL = 5.0;
+    private const int TASK_MUTEX_TTL = 7200;
+    private const int PROCESS_LOG_TAIL_LENGTH = 8000;
 
     public function __construct(
         private MessageBusInterface $messageBus,
@@ -33,6 +36,7 @@ final readonly class TranscodeVideoHandler
         private StorageInterface $storage,
         private Filesystem $filesystem,
         private LoggerInterface $logger,
+        private LockFactory $lockFactory,
     ) {
     }
 
@@ -41,12 +45,19 @@ final readonly class TranscodeVideoHandler
      */
     public function __invoke(TranscodeVideo $command): void
     {
-        // TODO check is meta full
         $scheduledTask = $command->scheduledTask;
         $task = $this->taskRepository->findById($scheduledTask->taskId);
 
         if (!$task) {
             $this->logger->error('Scheduled task not found for transcoding', ['taskId' => $scheduledTask->taskId]);
+            return;
+        }
+
+        // TODO move mutex to redis
+        $lock = $this->lockFactory->createLock(sprintf('transcode-task:%d', $scheduledTask->taskId), self::TASK_MUTEX_TTL);
+        $acquired = $lock->acquire();
+        if (!$acquired) {
+            $this->logger->info('Skipping task because mutex is already acquired by another worker', ['taskId' => $scheduledTask->taskId]);
             return;
         }
 
@@ -56,32 +67,45 @@ final readonly class TranscodeVideoHandler
             throw new \RuntimeException('Video not found for transcoding');
         }
 
-        $preset = $this->presetRepository->findById($task->presetId());
-        if (!$preset) {
-            $this->taskRepository->log($task->id(), 'error', 'Preset not found for task');
-            throw new \RuntimeException('Preset not found for task');
+        if (!$task->canStart($video->duration())) {
+            $this->taskRepository->log($task->id(), 'warning', 'Task cannot be started for transcoding (invalid state or video duration).');
+            throw new \RuntimeException('Task cannot be started');
         }
 
-        // TODO use abstract storage
-        $relativeOutputPath = sprintf('%s/%d.mp4', $video->id()->toRfc4122(), $preset->id());
-        $absoluteOutputPath = $this->storage->getAbsolutePath($relativeOutputPath);
-        $this->filesystem->mkdir(\dirname($absoluteOutputPath));
-
         try {
+            $preset = $this->presetRepository->findById($task->presetId());
+            if (!$preset) {
+                $this->taskRepository->log($task->id(), 'error', 'Preset not found for task');
+                throw new \RuntimeException('Preset not found for task');
+            }
+
+            // TODO use abstract storage
+            $relativeOutputPath = sprintf('%s/%d.mp4', $video->id()->toRfc4122(), $preset->id());
+            $absoluteOutputPath = $this->storage->getAbsolutePath($relativeOutputPath);
+            $this->filesystem->mkdir(\dirname($absoluteOutputPath));
+
             $task->start();
             $this->taskRepository->save($task);
             $this->taskRepository->log($task->id(), 'info', 'Transcoding started');
 
             $inputPath = $this->storage->getAbsolutePath($video->getSrcFilename());
-            $this->runTranscodeProcess($inputPath, $absoluteOutputPath, $preset, $video->duration(), $task);
+            $transcodeReport = $this->runTranscodeProcess($inputPath, $absoluteOutputPath, $preset, $video->duration(), $task);
 
             $task->updateProgress(new Progress(100));
-            $task->updateMeta(['output' => $relativeOutputPath]);
+            $task->updateMeta([
+                'output' => $relativeOutputPath,
+                'transcode' => [
+                    'finishedAt' => new \DateTimeImmutable()->format(DATE_ATOM),
+                    'report' => $transcodeReport,
+                ],
+            ]);
             $this->taskRepository->save($task);
             $this->taskRepository->log($task->id(), 'info', 'Transcoding finished successfully');
         } catch (\Throwable $exception) {
-            $task->fail();
-            $this->taskRepository->save($task);
+            if (!$task->status()->isFinished()) {
+                $task->fail();
+                $this->taskRepository->save($task);
+            }
             $this->taskRepository->log($task->id(), 'error', 'Transcoding failed: '. $exception->getMessage());
             $this->logger->error('TranscodeVideoHandler failed', [
                 'taskId' => $task->id(),
@@ -90,6 +114,15 @@ final readonly class TranscodeVideoHandler
             ]);
 
             throw $exception;
+        } finally {
+            try {
+                $lock->release();
+            } catch (\Throwable $exception) {
+                $this->logger->error('Failed to release transcode task mutex', [
+                    'taskId' => $scheduledTask->taskId,
+                    'exception' => $exception,
+                ]);
+            }
         }
 
         $this->messageBus->dispatch(new StartTaskScheduler());
@@ -101,18 +134,28 @@ final readonly class TranscodeVideoHandler
         Preset $preset,
         ?float $duration,
         Task $task,
-    ): void {
+    ): array {
         $command = Transcode::buildCommand($inputPath, $outputPath, $preset);
         $process = new Process($command);
         $process->setTimeout(null);
 
         $buffer = '';
+        $ffmpegStats = [];
+        $stderrTail = '';
+        $stdoutTail = '';
         $lastPersistAt = microtime(true);
         $lastProgressValue = $task->progress()->value();
+        $startedAt = microtime(true);
 
-        $process->run(function (string $type, string $data) use ($duration, $task, &$buffer, &$lastPersistAt, &$lastProgressValue) {
+        $process->run(function (string $type, string $data) use ($duration, $task, &$buffer, &$lastPersistAt, &$lastProgressValue, &$ffmpegStats, &$stderrTail, &$stdoutTail) {
             if ($type !== Process::OUT && $type !== Process::ERR) {
                 return;
+            }
+
+            if ($type === Process::ERR) {
+                $stderrTail = $this->appendLogTail($stderrTail, $data);
+            } else {
+                $stdoutTail = $this->appendLogTail($stdoutTail, $data);
             }
 
             $buffer .= $data;
@@ -120,6 +163,15 @@ final readonly class TranscodeVideoHandler
             while (($newlinePos = strpos($buffer, "\n")) !== false) {
                 $line = trim(substr($buffer, 0, $newlinePos));
                 $buffer = substr($buffer, $newlinePos + 1);
+
+                $equalsPos = strpos($line, '=');
+                if ($equalsPos !== false) {
+                    $key = substr($line, 0, $equalsPos);
+                    $value = substr($line, $equalsPos + 1);
+                    if ($key !== '') {
+                        $ffmpegStats[$key] = $value;
+                    }
+                }
 
                 if ($line === '' || strncmp($line, 'out_time_ms=', 12) !== 0 || !$duration || $duration <= 0.0) {
                     continue;
@@ -137,9 +189,23 @@ final readonly class TranscodeVideoHandler
             }
         });
 
+        $report = [
+            'ffmpeg' => $ffmpegStats,
+            'process' => [
+                'runtimeSec' => round(microtime(true) - $startedAt, 3),
+                'exitCode' => $process->getExitCode(),
+                'exitCodeText' => $process->getExitCodeText(),
+                'command' => implode(' ', $command),
+                'stderrTail' => $stderrTail,
+                'stdoutTail' => $stdoutTail,
+            ],
+        ];
+
         if (!$process->isSuccessful()) {
             throw new ProcessFailedException($process);
         }
+
+        return $report;
     }
 
     private function shouldPersistProgress(float $lastPersistAt, int $lastProgress, int $nextProgress): bool
@@ -160,6 +226,16 @@ final readonly class TranscodeVideoHandler
         $task->updateProgress(new Progress($value));
         $this->taskRepository->save($task);
         $this->taskRepository->log($task->id(), 'info', 'Transcoding progress: '. $value .'%');
+    }
+
+    private function appendLogTail(string $tail, string $chunk): string
+    {
+        $merged = $tail . $chunk;
+        if (strlen($merged) <= self::PROCESS_LOG_TAIL_LENGTH) {
+            return $merged;
+        }
+
+        return substr($merged, -self::PROCESS_LOG_TAIL_LENGTH);
     }
 }
 
