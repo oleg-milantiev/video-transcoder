@@ -2,7 +2,6 @@ FROM php:8.4-fpm-alpine
 
 RUN apk add --no-cache \
     bash \
-    git \
     icu-dev \
     libpq-dev \
     libzip-dev \
@@ -14,6 +13,7 @@ RUN apk add --no-cache \
     zip
 
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+COPY symfony/ /var/www/yc/
 
 WORKDIR /var/www/yc
 
