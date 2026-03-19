@@ -21,6 +21,7 @@ use App\Domain\Video\ValueObject\Bitrate;
 use App\Domain\Video\ValueObject\Codec;
 use App\Domain\Video\ValueObject\PresetTitle;
 use App\Domain\Video\ValueObject\Resolution;
+use App\Domain\Video\ValueObject\VideoDates;
 use App\Domain\Video\ValueObject\VideoStatus;
 use App\Domain\Video\ValueObject\VideoTitle;
 use App\Domain\Video\ValueObject\FileExtension;
@@ -41,13 +42,13 @@ class StartTranscodeHandlerTest extends TestCase
     public function testCreatesTaskAndDispatchesScheduler(): void
     {
         $videoId = UuidV4::fromString('123e4567-e89b-42d3-a456-426614174100');
-        $video = new Video(
+        $video = Video::create(
             new VideoTitle('Source Clip'),
             new FileExtension('mp4'),
             VideoStatus::UPLOADED,
             userId: 77,
-            createdAt: new \DateTimeImmutable('2026-03-18 12:00:00'),
             meta: [],
+            dates: VideoDates::create(new \DateTimeImmutable('2026-03-18 12:00:00')),
             id: $videoId,
         );
 

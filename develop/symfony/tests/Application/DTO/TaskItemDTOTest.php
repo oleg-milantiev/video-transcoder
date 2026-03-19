@@ -15,6 +15,7 @@ use App\Domain\Video\ValueObject\Progress;
 use App\Domain\Video\ValueObject\Resolution;
 use App\Domain\Video\ValueObject\TaskStatus;
 use App\Domain\Video\ValueObject\TaskDates;
+use App\Domain\Video\ValueObject\VideoDates;
 use App\Domain\Video\ValueObject\VideoStatus;
 use App\Domain\Video\ValueObject\VideoTitle;
 use App\Domain\Video\ValueObject\FileExtension;
@@ -26,13 +27,13 @@ class TaskItemDTOTest extends TestCase
     public function testFromDomainUsesProvidedEntities(): void
     {
         $videoId = UuidV4::fromString('22222222-2222-4222-8222-222222222222');
-        $video = new Video(
+        $video = Video::create(
             new VideoTitle('Task Source Video'),
             new FileExtension('mkv'),
             VideoStatus::UPLOADED,
             99,
-            new \DateTimeImmutable('2026-03-18 09:00:00'),
             [],
+            VideoDates::create(new \DateTimeImmutable('2026-03-18 09:00:00')),
             $videoId,
         );
 

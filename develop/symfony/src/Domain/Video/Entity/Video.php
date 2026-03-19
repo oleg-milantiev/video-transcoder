@@ -4,6 +4,7 @@ namespace App\Domain\Video\Entity;
 
 use App\Application\Command\Video\CreateVideo;
 use App\Domain\Video\ValueObject\FileExtension;
+use App\Domain\Video\ValueObject\VideoDates;
 use App\Domain\Video\ValueObject\VideoStatus;
 use App\Domain\Video\ValueObject\VideoTitle;
 use Symfony\Component\Uid\UuidV4 as Uuid;
@@ -14,10 +15,7 @@ class Video
     private VideoTitle $title;
     private FileExtension $extension;
     private VideoStatus $status;
-    // TODO DDD
-    private \DateTimeImmutable $createdAt;
-    // TODO DDD
-    private ?\DateTimeImmutable $updatedAt = null;
+    private VideoDates $dates;
     private int $userId;
     private array $meta;
 
@@ -27,24 +25,34 @@ class Video
         VideoStatus $status,
         // TODO DDD VO
         int $userId,
-        // TODO DDD VO
-        ?\DateTimeImmutable $createdAt = null,
-        // TODO DDD VO
         array $meta = [],
+        ?VideoDates $dates = null,
         ?Uuid $id = null,
     ) {
         $this->id = $id;
         $this->title = $title;
         $this->extension = $extension;
         $this->status = $status;
-        $this->createdAt = $createdAt ?? new \DateTimeImmutable();
+        $this->dates = $dates ?? VideoDates::create();
         $this->userId = $userId;
         $this->meta = $meta;
     }
 
+    public static function create(
+        VideoTitle $title,
+        FileExtension $extension,
+        VideoStatus $status,
+        int $userId,
+        array $meta = [],
+        ?VideoDates $dates = null,
+        ?Uuid $id = null,
+    ): self {
+        return new self($title, $extension, $status, $userId, $meta, $dates, $id);
+    }
+
     public static function createFromCommand(CreateVideo $command): self
     {
-        return new self(
+        return self::create(
             title: new VideoTitle($command->file()->details()['metadata']['originalName'] ?? $command->file()->getName()),
             extension: new FileExtension(pathinfo($command->file()->getName(), PATHINFO_EXTENSION)),
             status: VideoStatus::UPLOADED,
@@ -79,12 +87,12 @@ class Video
 
     public function createdAt(): \DateTimeImmutable
     {
-        return $this->createdAt;
+        return $this->dates->createdAt();
     }
 
     public function updatedAt(): ?\DateTimeImmutable
     {
-        return $this->updatedAt;
+        return $this->dates->updatedAt();
     }
 
     public function userId(): int
@@ -100,7 +108,7 @@ class Video
     public function updateMeta(array $meta): void
     {
         $this->meta = array_merge($this->meta, $meta);
-        $this->updatedAt = new \DateTimeImmutable();
+        $this->dates = $this->dates->touch();
     }
 
     public function duration(): ?float

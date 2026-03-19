@@ -7,6 +7,7 @@ namespace App\Tests\Application\DTO;
 use App\Application\DTO\VideoItemDTO;
 use App\Domain\Video\Entity\Video;
 use App\Domain\Video\ValueObject\FileExtension;
+use App\Domain\Video\ValueObject\VideoDates;
 use App\Domain\Video\ValueObject\VideoStatus;
 use App\Domain\Video\ValueObject\VideoTitle;
 use PHPUnit\Framework\TestCase;
@@ -17,13 +18,13 @@ class VideoItemDTOTest extends TestCase
     public function testFromDomainMapsAllFields(): void
     {
         $uuid = UuidV4::fromString('11111111-1111-4111-8111-111111111111');
-        $video = new Video(
+        $video = Video::create(
             new VideoTitle('Demo Video'),
             new FileExtension('mp4'),
             VideoStatus::UPLOADED,
             42,
-            new \DateTimeImmutable('2026-03-18 10:15:00'),
             ['preview' => true],
+            VideoDates::create(new \DateTimeImmutable('2026-03-18 10:15:00')),
             $uuid,
         );
 

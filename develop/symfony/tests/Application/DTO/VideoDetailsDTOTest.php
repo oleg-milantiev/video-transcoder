@@ -24,13 +24,13 @@ class VideoDetailsDTOTest extends TestCase
             'preview' => true,
             'bitrate' => '5Mbps',
         ];
-        $video = new Video(
+        $video = Video::create(
             new VideoTitle('Detailed Video'),
             new FileExtension('mov'),
             VideoStatus::UPLOADED,
             7,
-            new \DateTimeImmutable('2026-03-18 08:45:00'),
             $meta,
+            \App\Domain\Video\ValueObject\VideoDates::create(new \DateTimeImmutable('2026-03-18 08:45:00')),
             $uuid,
         );
 

@@ -7,7 +7,6 @@ use App\Domain\Video\ValueObject\TaskDates;
 use App\Domain\Video\ValueObject\TaskStatus;
 use Symfony\Component\Uid\UuidV4 as Uuid;
 
-// TODO move to videoId, presetId, userId
 class Task
 {
     private ?int $id;

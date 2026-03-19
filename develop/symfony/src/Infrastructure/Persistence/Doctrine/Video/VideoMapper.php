@@ -4,6 +4,7 @@ namespace App\Infrastructure\Persistence\Doctrine\Video;
 
 use App\Domain\Video\Entity\Video;
 use App\Domain\Video\ValueObject\FileExtension;
+use App\Domain\Video\ValueObject\VideoDates;
 use App\Domain\Video\ValueObject\VideoStatus;
 use App\Domain\Video\ValueObject\VideoTitle;
 use App\Infrastructure\Persistence\Doctrine\User\UserEntity;
@@ -12,13 +13,13 @@ class VideoMapper
 {
     public static function toDomain(VideoEntity $entity): Video
     {
-        return new Video(
+        return Video::create(
             title: new VideoTitle($entity->title),
             extension: new FileExtension($entity->extension),
             status: VideoStatus::from($entity->status),
             userId: $entity->user->id,
-            createdAt: $entity->createdAt,
             meta: $entity->meta,
+            dates: VideoDates::fromPersistence($entity->createdAt, $entity->updatedAt),
             id: $entity->id,
         );
     }

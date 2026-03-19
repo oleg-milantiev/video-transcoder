@@ -4,6 +4,7 @@ namespace App\Tests\Domain\Entity;
 
 use App\Domain\Video\Entity\Video;
 use App\Domain\Video\ValueObject\FileExtension;
+use App\Domain\Video\ValueObject\VideoDates;
 use App\Domain\Video\ValueObject\VideoStatus;
 use App\Domain\Video\ValueObject\VideoTitle;
 use Faker\Factory;
@@ -25,8 +26,8 @@ class VideoFake extends Video
             $extension,
             $status,
             $userId,
-            \DateTimeImmutable::createFromMutable($createdAt),
             [],
+            VideoDates::create(\DateTimeImmutable::createFromMutable($createdAt)),
             $id
         );
     }
