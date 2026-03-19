@@ -58,7 +58,7 @@ final class MinuteCommand extends Command
                 return Command::FAILURE;
             }
         } finally {
-            if (isset($lock) && $acquired) {
+            if ($acquired) {
                 try {
                     $lock->release();
                     $this->logger->info('Mutex released');
