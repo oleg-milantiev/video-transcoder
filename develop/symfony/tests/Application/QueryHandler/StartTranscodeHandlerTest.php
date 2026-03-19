@@ -24,7 +24,9 @@ use App\Domain\Video\ValueObject\Resolution;
 use App\Domain\Video\ValueObject\VideoStatus;
 use App\Domain\Video\ValueObject\VideoTitle;
 use App\Domain\Video\ValueObject\FileExtension;
+use App\Infrastructure\Security\Voter\VideoAccessVoter;
 use PHPUnit\Framework\TestCase;
+use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\Messenger\Envelope;
 use Symfony\Component\Messenger\Exception\ExceptionInterface;
 use Symfony\Component\Messenger\MessageBusInterface;
@@ -91,7 +93,13 @@ class StartTranscodeHandlerTest extends TestCase
             ->with($user->id())
             ->willReturn($user);
 
-        $handler = new StartTranscodeHandler($messageBus, $videoRepo, $presetRepo, $taskRepo, $userRepo);
+        $security = $this->createMock(Security::class);
+        $security->expects($this->once())
+            ->method('isGranted')
+            ->with(VideoAccessVoter::CAN_START_TRANSCODE, $video)
+            ->willReturn(true);
+
+        $handler = new StartTranscodeHandler($messageBus, $videoRepo, $presetRepo, $taskRepo, $userRepo, $security);
         $query = new StartTranscodeQuery($videoId->toRfc4122(), $preset->id(), $user->id());
         $dto = $handler($query);
 
@@ -116,6 +124,7 @@ class StartTranscodeHandlerTest extends TestCase
             $this->createStub(PresetRepositoryInterface::class),
             $this->createStub(TaskRepositoryInterface::class),
             $this->createStub(UserRepositoryInterface::class),
+            $this->createStub(Security::class),
         );
 
         $this->expectException(QueryException::class);

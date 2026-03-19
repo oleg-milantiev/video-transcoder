@@ -9,6 +9,7 @@ use App\Application\Exception\QueryException;
 use App\Application\Query\GetVideoDetailsQuery;
 use App\Domain\Video\Repository\VideoRepositoryInterface;
 use App\Domain\Video\ValueObject\TaskStatus;
+use App\Infrastructure\Security\Voter\VideoAccessVoter;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 
@@ -27,8 +28,7 @@ final readonly class GetVideoDetailsHandler
             throw new QueryException('Video not found');
         }
 
-        // TODO voter with admin grants
-        if ($video->userId() !== $this->security->getUser()->getId()) {
+        if (!$this->security->isGranted(VideoAccessVoter::CAN_VIEW_DETAILS, $video)) {
             throw new QueryException('Access denied');
         }
 

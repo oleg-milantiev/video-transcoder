@@ -11,6 +11,8 @@ use App\Domain\Video\Entity\Task;
 use App\Domain\Video\Repository\PresetRepositoryInterface;
 use App\Domain\Video\Repository\TaskRepositoryInterface;
 use App\Domain\Video\Repository\VideoRepositoryInterface;
+use App\Infrastructure\Security\Voter\VideoAccessVoter;
+use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 use Symfony\Component\Messenger\Exception\ExceptionInterface;
 use Symfony\Component\Messenger\MessageBusInterface;
@@ -24,6 +26,7 @@ final readonly class StartTranscodeHandler
         private PresetRepositoryInterface $presetRepository,
         private TaskRepositoryInterface $taskRepository,
         private UserRepositoryInterface $userRepository,
+        private Security $security,
     ) {}
 
     /**
@@ -41,7 +44,7 @@ final readonly class StartTranscodeHandler
             throw new QueryException('User not found');
         }
 
-        if ($video->userId() !== $user->id()) {
+        if (!$this->security->isGranted(VideoAccessVoter::CAN_START_TRANSCODE, $video)) {
             throw new QueryException('Access denied');
         }
 

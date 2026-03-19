@@ -5,7 +5,7 @@ namespace App\Tests\Application\QueryHandler;
 use App\Application\Query\GetVideoDetailsQuery;
 use App\Application\QueryHandler\GetVideoDetailsHandler;
 use App\Domain\Video\Repository\VideoRepositoryInterface;
-use App\Infrastructure\Persistence\Doctrine\User\UserEntity;
+use App\Infrastructure\Security\Voter\VideoAccessVoter;
 use App\Tests\Domain\Entity\VideoFake;
 use PHPUnit\Framework\TestCase;
 use Symfony\Bundle\SecurityBundle\Security;
@@ -37,13 +37,11 @@ class GetVideoDetailsHandlerTest extends TestCase
                 ],
             ]);
 
-        $user = new UserEntity();
-        $user->id = $video->userId();
-
         $security = $this->createMock(Security::class);
         $security->expects($this->once())
-            ->method('getUser')
-            ->willReturn($user);
+            ->method('isGranted')
+            ->with(VideoAccessVoter::CAN_VIEW_DETAILS, $video)
+            ->willReturn(true);
 
         $handler = new GetVideoDetailsHandler($repository, $security);
         $query = new GetVideoDetailsQuery($video->id()->toRfc4122());
