@@ -24,6 +24,7 @@ class VideoController extends AbstractController
     }
 
     #[Route('/', name: 'video')]
+    #[IsGranted('IS_AUTHENTICATED_FULLY')]
     public function index(Request $request): Response
     {
         try {

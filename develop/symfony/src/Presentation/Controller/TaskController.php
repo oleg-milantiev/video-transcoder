@@ -20,6 +20,7 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 #[Route('/task')]
 class TaskController extends AbstractController
@@ -35,6 +36,7 @@ class TaskController extends AbstractController
     }
 
     #[Route('/', name: 'task')]
+    #[IsGranted('IS_AUTHENTICATED_FULLY')]
     public function index(Request $request): Response
     {
         try {
@@ -50,7 +52,7 @@ class TaskController extends AbstractController
         }
     }
 
-    private function getTask(int $id): Task
+    private function getTask(int $id, string $attribute): Task
     {
         $task = $this->taskRepository->findById($id);
         if (!$task) {
@@ -62,7 +64,7 @@ class TaskController extends AbstractController
             throw $this->createNotFoundException('Video not found');
         }
 
-        if (!$this->security->isGranted(VideoAccessVoter::CAN_DOWNLOAD_TRANSCODE, $video)) {
+        if (!$this->security->isGranted($attribute, $video)) {
             throw $this->createAccessDeniedException('Access denied');
         }
 
@@ -70,9 +72,10 @@ class TaskController extends AbstractController
     }
 
     #[Route('/{id}/download', name: 'task_download', requirements: ['id' => '\\d+'])]
+    #[IsGranted('IS_AUTHENTICATED_FULLY')]
     public function download(int $id): Response
     {
-        $task = $this->getTask($id);
+        $task = $this->getTask($id, VideoAccessVoter::CAN_DOWNLOAD_TRANSCODE);
 
         if ($task->status() !== TaskStatus::COMPLETED) {
             throw $this->createNotFoundException('Task output is not ready');
@@ -90,9 +93,10 @@ class TaskController extends AbstractController
      * @throws InvalidArgumentException
      */
     #[Route('/{id}/cancel', name: 'task_cancel', requirements: ['id' => '\\d+'], methods: ['POST'])]
+    #[IsGranted('IS_AUTHENTICATED_FULLY')]
     public function cancel(int $id): Response
     {
-        $task = $this->getTask($id);
+        $task = $this->getTask($id, VideoAccessVoter::CAN_CANCEL_TRANSCODE);
 
         // TODO atomize it!
         // via $lock = $this->lockFactory->createLock(sprintf('transcode-task:%d', $scheduledTask->taskId), self::TASK_MUTEX_TTL);
