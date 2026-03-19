@@ -20,218 +20,22 @@
 
 {% block body %}
     <div class="container py-5">
-
-        <h1 class="mb-4">Video Transcoder</h1>
-
         {% if app.user %}
-            <p>You are logged in as <strong>{{ app.user.userIdentifier }}</strong>.</p>
-
-            <ul class="nav nav-tabs" id="mainTabs" role="tablist">
-                <li class="nav-item">
-                    <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#upload">
-                        Upload
-                    </button>
-                </li>
-                <li class="nav-item">
-                    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#videos">
-                        Videos
-                    </button>
-                </li>
-                <li class="nav-item">
-                    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tasks">
-                        Tasks
-                    </button>
-                </li>
-            </ul>
-
-            <div class="tab-content border border-top-0 p-4 bg-light">
-
-                {# ================= UPLOAD ================= #}
-                <div class="tab-pane fade show active" id="upload">
-
-                    <div id="drag-drop-area"></div>
-
-                    <script>
-                        window.__apiBearerToken = {{ apiAccessToken|default(null)|json_encode|raw }};
-
-                        function uuidv4() {
-                            return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-                                const r = crypto.getRandomValues(new Uint8Array(1))[0] & 15;
-                                const v = c === 'x' ? r : (r & 0x3 | 0x8);
-                                return v.toString(16);
-                            });
-                        }
-
-                        const allowedExtensions = ['mp4','mkv','avi','mov'];
-
-                        const uppy = new Uppy.Uppy({
-                            autoProceed: true,
-                            restrictions: {
-                                allowedFileTypes: allowedExtensions.map(ext => '.'+ext)
-                            }
-                        })
-                            .use(Uppy.Dashboard,{
-                                inline:true,
-                                target:'#drag-drop-area',
-                                proudlyDisplayPoweredByUppy:false
-                            })
-                            .use(Uppy.Tus,{
-                                endpoint:'{{ path('api_tus') }}',
-                                chunkSize:5*1024*1024,
-                                headers: function () {
-                                    if (!window.__apiBearerToken) {
-                                        return {};
-                                    }
-
-                                    return {
-                                        Authorization: 'Bearer ' + window.__apiBearerToken
-                                    };
-                                }
-                            });
-
-                        uppy.on('file-added',(file)=>{
-                            const uuid = uuidv4();
-                            const ext = file.name.split('.').pop().toLowerCase();
-
-                            uppy.setFileMeta(file.id,{
-                                name: uuid+'.'+ext,
-                                originalName:file.name
-                            });
-                        });
-                    </script>
-                </div>
-
-                {# ================= VIDEOS ================= #}
-                <div class="tab-pane fade" id="videos">
-
-                    <table id="videosTable" class="table table-striped w-100">
-                        <thead>
-                        <tr>
-                            <th>Poster</th>
-                            <th>Name</th>
-                            <th>Status</th>
-                            <th>Created</th>
-                        </tr>
-                        </thead>
-                    </table>
-                </div>
-
-                {# ================= TASKS ================= #}
-                <div class="tab-pane fade" id="tasks">
-
-                    <table id="tasksTable" class="table table-striped w-100">
-                        <thead>
-                        <tr>
-                            <th>Video</th>
-                            <th>Preset</th>
-                            <th>Status</th>
-                            <th>Progress</th>
-                            <th>Created</th>
-                            <th>Actions</th>
-                        </tr>
-                        </thead>
-                    </table>
-
-                </div>
-
-            </div>
+            <div
+                id="home-spa"
+                data-user-identifier="{{ app.user.userIdentifier|e('html_attr') }}"
+                data-api-bearer-token="{{ apiAccessToken|default('')|e('html_attr') }}"
+                data-api-upload-url="{{ path('api_tus')|e('html_attr') }}"
+                data-api-video-list-url="{{ path('api_video_list')|e('html_attr') }}"
+                data-api-task-list-url="{{ path('api_task_list')|e('html_attr') }}"
+                data-video-details-url-template="{{ path('video_details', {'uuid': '__UUID__'})|e('html_attr') }}"
+                data-task-download-url-template="{{ path('task_download', {'id': '__TASK_ID__'})|e('html_attr') }}"
+            ></div>
 
         {% else %}
             <p>Please <a href="{{ path('app_login') }}" class="btn btn-primary">Sign in</a>.</p>
         {% endif %}
     </div>
 
-
-
-
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            const apiBearerToken = window.__apiBearerToken || null;
-
-            /* ---------- VIDEOS TABLE ---------- */
-
-            const videosTable = new DataTable('#videosTable', {
-                ajax: {
-                    url: '{{ path('api_video_list') }}',
-                    headers: apiBearerToken ? { Authorization: 'Bearer ' + apiBearerToken } : {},
-                    dataSrc: ''
-                },
-                pageLength: 10,
-                columns: [
-                    {
-                        data: 'poster',
-                        orderable: false,
-                        render: function(data, type, row) {
-                            if (data) {
-                                return `<img src="/uploads/${data}" alt="poster" style="width:150px;max-width:100%;height:auto;object-fit:cover;border-radius:6px;">`;
-                            } else {
-                                return `<div style="width:150px;height:84px;background:#eee;display:flex;align-items:center;justify-content:center;color:#aaa;font-size:12px;border-radius:6px;">No poster</div>`;
-                            }
-                        }
-                    },
-                    {data:'title'},
-                    {data:'status'},
-                    {data:'createdAt'}
-                ],
-                order: [[3, 'desc']]
-            });
-
-            // CLICK ROW -> open details page in new tab
-            const videosTbody = document.querySelector('#videosTable tbody');
-            if (videosTbody && typeof videosTable !== 'undefined' && videosTable) {
-                videosTbody.addEventListener('click', function(e){
-                    const tr = e.target.closest('tr');
-                    if (!tr) return;
-                    const row = videosTable.row(tr).data();
-                    if (!row) return;
-                    if (row.uuid) {
-                        const detailsUrlTemplate = '{{ path('video_details', {'uuid': '__UUID__'}) }}';
-                        window.open(detailsUrlTemplate.replace('__UUID__', row.uuid), '_blank');
-                    }
-                });
-            }
-
-
-            /* ---------- TASKS TABLE ---------- */
-
-            new DataTable('#tasksTable', {
-                ajax: {
-                    url: '{{ path('api_task_list') }}',
-                    headers: apiBearerToken ? { Authorization: 'Bearer ' + apiBearerToken } : {},
-                    dataSrc: ''
-                },
-                pageLength: 10,
-                columns: [
-                    {data:'videoTitle'},
-                    {data:'presetTitle'},
-                    {data:'status'},
-                    {data:'progress'},
-                    {data:'createdAt'},
-                    {
-                        data: null,
-                        orderable: false,
-                        render: function(data, type, row) {
-                            if (row.status === 'COMPLETED' && row.id) {
-                                const downloadUrlTemplate = '{{ path('task_download', {'id': '__TASK_ID__'}) }}';
-                                return `
-                                    <a href="${downloadUrlTemplate.replace('__TASK_ID__', row.id)}" class="btn btn-outline-primary btn-sm" download>
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" class="me-1">
-                                            <path d="M8 1a.5.5 0 0 1 .5.5v7.793l2.146-2.147a.5.5 0 1 1 .708.708l-3 3a.5.5 0 0 1-.708 0l-3-3a.5.5 0 1 1 .708-.708L7.5 9.293V1.5A.5.5 0 0 1 8 1z"/>
-                                            <path d="M2.5 12a.5.5 0 0 1 .5.5v1h10v-1a.5.5 0 0 1 1 0V14a.5.5 0 0 1-.5.5h-11A.5.5 0 0 1 2 14v-1.5a.5.5 0 0 1 .5-.5z"/>
-                                        </svg>
-                                        Download
-                                    </a>
-                                `;
-                            }
-
-                            return '<span class="text-muted">-</span>';
-                        }
-                    }
-                ],
-                order: [[4, 'desc']]
-            });
-
-        });
-    </script>
 
 {% endblock %}

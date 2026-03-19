@@ -25,6 +25,9 @@ final class AuthApiController extends AbstractController
     ) {
     }
 
+    /**
+     * @throws \JsonException
+     */
     #[Route('/token', name: 'api_auth_token', methods: ['POST'])]
     public function token(Request $request): Response
     {
