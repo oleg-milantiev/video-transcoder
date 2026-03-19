@@ -23,7 +23,6 @@ class Video
         VideoTitle $title,
         FileExtension $extension,
         VideoStatus $status,
-        // TODO DDD VO
         int $userId,
         array $meta = [],
         ?VideoDates $dates = null,

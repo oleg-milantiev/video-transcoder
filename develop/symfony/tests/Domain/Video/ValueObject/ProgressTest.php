@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Domain\Video\ValueObject;
 
+use App\Domain\Video\Exception\InvalidProgress;
 use App\Domain\Video\ValueObject\Progress;
 use PHPUnit\Framework\TestCase;
 
@@ -24,13 +25,13 @@ class ProgressTest extends TestCase
 
     public function testNegativeThrows(): void
     {
-        $this->expectException(\DomainException::class);
+        $this->expectException(InvalidProgress::class);
         new Progress(-1);
     }
 
     public function testOver100Throws(): void
     {
-        $this->expectException(\DomainException::class);
+        $this->expectException(InvalidProgress::class);
         new Progress(101);
     }
 }

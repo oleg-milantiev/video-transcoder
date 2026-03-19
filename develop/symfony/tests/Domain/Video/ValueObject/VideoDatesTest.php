@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\Domain\Video\ValueObject;
 
+use App\Domain\Video\Exception\InvalidVideoDates;
 use App\Domain\Video\ValueObject\VideoDates;
 use PHPUnit\Framework\TestCase;
 
@@ -32,7 +33,7 @@ final class VideoDatesTest extends TestCase
 
     public function testInvalidUpdatedAtBeforeCreatedAtThrows(): void
     {
-        $this->expectException(\DomainException::class);
+        $this->expectException(InvalidVideoDates::class);
 
         VideoDates::fromPersistence(
             new \DateTimeImmutable('2026-03-19 10:00:00'),

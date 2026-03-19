@@ -2,6 +2,8 @@
 
 namespace App\Domain\Video\ValueObject;
 
+use App\Domain\Video\Exception\InvalidVideoTitle;
+
 final readonly class VideoTitle
 {
     private string $value;
@@ -11,13 +13,11 @@ final readonly class VideoTitle
         $trimmed = trim($value);
 
         if (mb_strlen($trimmed) < 1) {
-            // TODO DDD new exception
-            throw new \DomainException('Video title cannot be empty.');
+            throw InvalidVideoTitle::empty();
         }
 
         if (mb_strlen($trimmed) > 255) {
-            // TODO DDD new exception
-            throw new \DomainException('Video title must be less than 255 characters long.');
+            throw InvalidVideoTitle::tooLong(255);
         }
 
         $this->value = $trimmed;

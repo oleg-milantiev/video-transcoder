@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Domain\Video\ValueObject;
 
+use App\Domain\Video\Exception\InvalidTaskDates;
 use App\Domain\Video\ValueObject\TaskDates;
 use PHPUnit\Framework\TestCase;
 
@@ -44,7 +45,7 @@ class TaskDatesTest extends TestCase
 
     public function testInvalidStartedAtBeforeCreatedAtThrows(): void
     {
-        $this->expectException(\DomainException::class);
+        $this->expectException(InvalidTaskDates::class);
 
         TaskDates::fromPersistence(
             new \DateTimeImmutable('2026-03-18 10:00:00'),
@@ -55,7 +56,7 @@ class TaskDatesTest extends TestCase
 
     public function testInvalidUpdatedAtBeforeStartedAtThrows(): void
     {
-        $this->expectException(\DomainException::class);
+        $this->expectException(InvalidTaskDates::class);
 
         TaskDates::fromPersistence(
             new \DateTimeImmutable('2026-03-18 10:00:00'),
@@ -66,7 +67,7 @@ class TaskDatesTest extends TestCase
 
     public function testMarkStartedTwiceThrows(): void
     {
-        $this->expectException(\DomainException::class);
+        $this->expectException(InvalidTaskDates::class);
 
         TaskDates::create(new \DateTimeImmutable('2026-03-18 10:00:00'))
             ->markStarted(new \DateTimeImmutable('2026-03-18 10:05:00'))

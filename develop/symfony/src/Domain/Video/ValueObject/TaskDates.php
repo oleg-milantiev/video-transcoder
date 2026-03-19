@@ -2,6 +2,8 @@
 
 namespace App\Domain\Video\ValueObject;
 
+use App\Domain\Video\Exception\InvalidTaskDates;
+
 final readonly class TaskDates
 {
     private function __construct(
@@ -10,15 +12,15 @@ final readonly class TaskDates
         private ?\DateTimeImmutable $updatedAt,
     ) {
         if ($this->startedAt !== null && $this->startedAt < $this->createdAt) {
-            throw new \DomainException('startedAt cannot be earlier than createdAt.');
+            throw InvalidTaskDates::startedAtBeforeCreatedAt();
         }
 
         if ($this->updatedAt !== null && $this->updatedAt < $this->createdAt) {
-            throw new \DomainException('updatedAt cannot be earlier than createdAt.');
+            throw InvalidTaskDates::updatedAtBeforeCreatedAt();
         }
 
         if ($this->startedAt !== null && $this->updatedAt !== null && $this->updatedAt < $this->startedAt) {
-            throw new \DomainException('updatedAt cannot be earlier than startedAt.');
+            throw InvalidTaskDates::updatedAtBeforeStartedAt();
         }
     }
 
@@ -38,7 +40,7 @@ final readonly class TaskDates
     public function markStarted(?\DateTimeImmutable $startedAt = null): self
     {
         if ($this->startedAt !== null) {
-            throw new \DomainException('Task is already started.');
+            throw InvalidTaskDates::alreadyStarted();
         }
 
         $startedAt ??= new \DateTimeImmutable();

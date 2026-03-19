@@ -2,6 +2,8 @@
 
 namespace App\Domain\Video\ValueObject;
 
+use App\Domain\Video\Exception\InvalidVideoDates;
+
 final readonly class VideoDates
 {
     private function __construct(
@@ -9,7 +11,7 @@ final readonly class VideoDates
         private ?\DateTimeImmutable $updatedAt,
     ) {
         if ($this->updatedAt !== null && $this->updatedAt < $this->createdAt) {
-            throw new \DomainException('updatedAt cannot be earlier than createdAt.');
+            throw InvalidVideoDates::updatedAtBeforeCreatedAt();
         }
     }
 

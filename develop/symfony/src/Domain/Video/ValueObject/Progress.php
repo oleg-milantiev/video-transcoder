@@ -2,7 +2,7 @@
 
 namespace App\Domain\Video\ValueObject;
 
-use InvalidArgumentException;
+use App\Domain\Video\Exception\InvalidProgress;
 
 final readonly class Progress
 {
@@ -10,8 +10,7 @@ final readonly class Progress
         private int $value,
     ) {
         if ($this->value < 0 || $this->value > 100) {
-            // TODO DDD new exception
-            throw new \DomainException('Progress must be between 0 and 100.');
+            throw InvalidProgress::outOfRange($this->value);
         }
     }
 
