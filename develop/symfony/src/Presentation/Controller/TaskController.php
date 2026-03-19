@@ -6,11 +6,14 @@ use App\Application\Exception\QueryException;
 use App\Application\Query\GetTaskListQuery;
 use App\Application\QueryHandler\QueryBus;
 use App\Application\Response\TaskListResponse;
+use App\Domain\Video\Entity\Task;
 use App\Domain\Video\Repository\TaskRepositoryInterface;
 use App\Domain\Video\Repository\VideoRepositoryInterface;
 use App\Domain\Video\Service\Storage\StorageInterface;
 use App\Domain\Video\ValueObject\TaskStatus;
 use App\Infrastructure\Security\Voter\VideoAccessVoter;
+use App\Infrastructure\Task\TaskCancellationTrigger;
+use Psr\Cache\InvalidArgumentException;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -27,6 +30,7 @@ class TaskController extends AbstractController
         private readonly VideoRepositoryInterface $videoRepository,
         private readonly StorageInterface $storage,
         private readonly Security $security,
+        private readonly TaskCancellationTrigger $cancellationTrigger,
     ) {
     }
 
@@ -46,8 +50,7 @@ class TaskController extends AbstractController
         }
     }
 
-    #[Route('/{id}/download', name: 'task_download', requirements: ['id' => '\\d+'])]
-    public function download(int $id): Response
+    private function getTask(int $id): Task
     {
         $task = $this->taskRepository->findById($id);
         if (!$task) {
@@ -63,6 +66,14 @@ class TaskController extends AbstractController
             throw $this->createAccessDeniedException('Access denied');
         }
 
+        return $task;
+    }
+
+    #[Route('/{id}/download', name: 'task_download', requirements: ['id' => '\\d+'])]
+    public function download(int $id): Response
+    {
+        $task = $this->getTask($id);
+
         if ($task->status() !== TaskStatus::COMPLETED) {
             throw $this->createNotFoundException('Task output is not ready');
         }
@@ -73,5 +84,39 @@ class TaskController extends AbstractController
         }
 
         return $this->redirect($this->storage->getUrl($output));
+    }
+
+    /**
+     * @throws InvalidArgumentException
+     */
+    #[Route('/{id}/cancel', name: 'task_cancel', requirements: ['id' => '\\d+'], methods: ['POST'])]
+    public function cancel(int $id): Response
+    {
+        $task = $this->getTask($id);
+
+        // TODO atomize it!
+        // via $lock = $this->lockFactory->createLock(sprintf('transcode-task:%d', $scheduledTask->taskId), self::TASK_MUTEX_TTL);
+        // not db task status
+        $task->updateMeta([
+            'cancelledByUserId' => $this->getUser()->id,
+            'cancelRequestedAt' => new \DateTimeImmutable()->format(DATE_ATOM),
+        ]);
+
+        $cancelledNow = $task->status() === TaskStatus::PENDING && $task->startedAt() === null;
+        if ($cancelledNow) {
+            $task->cancel();
+            $this->taskRepository->log($task->id(), 'info', 'Task cancelled before start');
+        }
+
+        $this->taskRepository->save($task);
+
+        $this->cancellationTrigger->request($task->id());
+        $this->taskRepository->log($task->id(), 'info', 'Cancellation requested by user');
+
+        return new JsonResponse([
+            'status' => $task->status()->name,
+            'cancelledNow' => $cancelledNow,
+            'cancellationRequested' => true,
+        ]);
     }
 }

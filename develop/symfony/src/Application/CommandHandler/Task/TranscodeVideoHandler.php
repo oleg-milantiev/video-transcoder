@@ -11,7 +11,10 @@ use App\Domain\Video\Repository\TaskRepositoryInterface;
 use App\Domain\Video\Repository\VideoRepositoryInterface;
 use App\Domain\Video\Service\Storage\StorageInterface;
 use App\Domain\Video\ValueObject\Progress;
+use App\Domain\Video\ValueObject\TaskStatus;
 use App\Infrastructure\Ffmpeg\Transcode;
+use App\Infrastructure\Task\TaskCancellationTrigger;
+use Psr\Cache\InvalidArgumentException;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
@@ -25,6 +28,7 @@ use Symfony\Component\Process\Process;
 final readonly class TranscodeVideoHandler
 {
     private const float PROGRESS_UPDATE_INTERVAL = 5.0;
+    private const float CANCEL_CHECK_INTERVAL = 1.0;
     private const int TASK_MUTEX_TTL = 7200;
     private const int PROCESS_LOG_TAIL_LENGTH = 8000;
 
@@ -37,6 +41,7 @@ final readonly class TranscodeVideoHandler
         private Filesystem $filesystem,
         private LoggerInterface $logger,
         private LockFactory $lockFactory,
+        private TaskCancellationTrigger $cancellationTrigger,
     ) {
     }
 
@@ -67,9 +72,24 @@ final readonly class TranscodeVideoHandler
             throw new \RuntimeException('Video not found for transcoding');
         }
 
+        if ($this->cancellationTrigger->isRequested($task->id())) {
+            if ($task->canBeCancelled()) {
+                $task->cancel();
+                $task->updateMeta([
+                    'cancelledAt' => new \DateTimeImmutable()->format(DATE_ATOM),
+                ]);
+                $this->taskRepository->save($task);
+                $this->taskRepository->log($task->id(), 'info', 'Task cancelled before ffmpeg start');
+            }
+
+            $this->cancellationTrigger->clear($task->id());
+
+            return;
+        }
+
         if (!$task->canStart($video->duration())) {
             $this->taskRepository->log($task->id(), 'warning', 'Task cannot be started for transcoding (invalid state or video duration).');
-            throw new \RuntimeException('Task cannot be started');
+            return;
         }
 
         try {
@@ -91,6 +111,26 @@ final readonly class TranscodeVideoHandler
             $inputPath = $this->storage->getAbsolutePath($video->getSrcFilename());
             $transcodeReport = $this->runTranscodeProcess($inputPath, $absoluteOutputPath, $preset, $video->duration(), $task);
 
+            if (($transcodeReport['cancelled'] ?? false) === true) {
+                $cancelledTask = $this->taskRepository->findById($task->id()) ?? $task;
+                if ($cancelledTask->status() !== TaskStatus::CANCELLED) {
+                    $cancelledTask->cancel();
+                }
+                $cancelledTask->updateMeta([
+                    'transcode' => [
+                        'cancelledAt' => new \DateTimeImmutable()->format(DATE_ATOM),
+                        'report' => $transcodeReport,
+                    ],
+                ]);
+                $this->taskRepository->save($cancelledTask);
+                $this->taskRepository->log($cancelledTask->id(), 'info', 'Transcoding cancelled');
+                $this->cancellationTrigger->clear($cancelledTask->id());
+
+                $this->messageBus->dispatch(new StartTaskScheduler());
+
+                return;
+            }
+
             $task->updateProgress(new Progress(100));
             $task->updateMeta([
                 'output' => $relativeOutputPath,
@@ -101,6 +141,7 @@ final readonly class TranscodeVideoHandler
             ]);
             $this->taskRepository->save($task);
             $this->taskRepository->log($task->id(), 'info', 'Transcoding finished successfully');
+            $this->cancellationTrigger->clear($task->id());
         } catch (\Throwable $exception) {
             if (!$task->status()->isFinished()) {
                 $task->fail();
@@ -145,10 +186,18 @@ final readonly class TranscodeVideoHandler
         $stdoutTail = '';
         $lastPersistAt = microtime(true);
         $lastProgressValue = $task->progress()->value();
+        $lastCancelCheckAt = 0.0;
         $startedAt = microtime(true);
+        $cancelled = false;
 
-        $process->run(function (string $type, string $data) use ($duration, $task, &$buffer, &$lastPersistAt, &$lastProgressValue, &$ffmpegStats, &$stderrTail, &$stdoutTail) {
+        $process->run(function (string $type, string $data) use ($duration, $task, &$buffer, &$lastPersistAt, &$lastProgressValue, &$ffmpegStats, &$stderrTail, &$stdoutTail, &$lastCancelCheckAt, &$cancelled, $process) {
             if ($type !== Process::OUT && $type !== Process::ERR) {
+                return;
+            }
+
+            if ($this->shouldCheckCancellation($lastCancelCheckAt) && $this->isCancellationRequested($task)) {
+                $cancelled = true;
+                $process->stop(1);
                 return;
             }
 
@@ -190,6 +239,7 @@ final readonly class TranscodeVideoHandler
         });
 
         $report = [
+            'cancelled' => $cancelled,
             'ffmpeg' => $ffmpegStats,
             'process' => [
                 'runtimeSec' => round(microtime(true) - $startedAt, 3),
@@ -200,6 +250,10 @@ final readonly class TranscodeVideoHandler
                 'stdoutTail' => $stdoutTail,
             ],
         ];
+
+        if ($cancelled) {
+            return $report;
+        }
 
         if (!$process->isSuccessful()) {
             throw new ProcessFailedException($process);
@@ -236,6 +290,26 @@ final readonly class TranscodeVideoHandler
         }
 
         return substr($merged, -self::PROCESS_LOG_TAIL_LENGTH);
+    }
+
+    private function shouldCheckCancellation(float &$lastCheckAt): bool
+    {
+        $now = microtime(true);
+        if (($now - $lastCheckAt) < self::CANCEL_CHECK_INTERVAL) {
+            return false;
+        }
+
+        $lastCheckAt = $now;
+
+        return true;
+    }
+
+    /**
+     * @throws InvalidArgumentException
+     */
+    private function isCancellationRequested(Task $task): bool
+    {
+        return $this->cancellationTrigger->isRequested($task->id());
     }
 }
 

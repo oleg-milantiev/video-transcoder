@@ -53,6 +53,14 @@
                                                 </svg>
                                                 Download
                                             </a>
+                                        {% elseif (preset.task.status == 'PENDING' or preset.task.status == 'PROCESSING') and preset.task.id %}
+                                            <button
+                                                type="button"
+                                                class="btn btn-outline-primary btn-sm js-cancel-btn"
+                                                data-url="{{ path('task_cancel', {'id': preset.task.id}) }}"
+                                            >
+                                                Cancel
+                                            </button>
                                         {% else %}
                                             <span class="text-muted">-</span>
                                         {% endif %}
@@ -132,9 +140,45 @@
                 });
             }
 
+            function onCancelClick(e) {
+                const btn = e.currentTarget;
+                const url = btn.getAttribute('data-url');
+                if (!url) return;
+
+                btn.disabled = true;
+                var originalText = btn.textContent;
+                btn.textContent = 'Cancelling...';
+
+                fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Content-Type': 'application/json'
+                    },
+                    credentials: 'same-origin'
+                }).then(function (resp) {
+                    if (resp.ok) {
+                        btn.textContent = 'Cancelled';
+                    } else {
+                        btn.disabled = false;
+                        btn.textContent = originalText;
+                        resp.text().then(function (t) { console.error('Cancel failed:', t); });
+                        alert('Failed to cancel task.');
+                    }
+                }).catch(function (err) {
+                    console.error(err);
+                    btn.disabled = false;
+                    btn.textContent = originalText;
+                    alert('Network error while cancelling task.');
+                });
+            }
+
             document.addEventListener('DOMContentLoaded', function () {
-                var buttons = document.querySelectorAll('.js-transcode-btn');
+                const buttons = document.querySelectorAll('.js-transcode-btn');
                 buttons.forEach(function (b) { b.addEventListener('click', onClick); });
+
+                const cancelButtons = document.querySelectorAll('.js-cancel-btn');
+                cancelButtons.forEach(function (b) { b.addEventListener('click', onCancelClick); });
             });
         })();
     </script>

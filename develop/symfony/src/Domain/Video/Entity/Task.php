@@ -89,6 +89,21 @@ class Task
         $this->touch();
     }
 
+    public function canBeCancelled(): bool
+    {
+        return $this->status === TaskStatus::PENDING || $this->status === TaskStatus::PROCESSING;
+    }
+
+    public function cancel(): void
+    {
+        if (!$this->canBeCancelled()) {
+            throw new \DomainException('Task cannot be cancelled.');
+        }
+
+        $this->status = TaskStatus::cancelled();
+        $this->touch();
+    }
+
     public function progress(): Progress
     {
         return $this->progress;
