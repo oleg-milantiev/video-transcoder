@@ -47,7 +47,7 @@ enum TaskStatus: int
 
     public function canBeStarted(): bool
     {
-        return $this === self::PENDING;
+        return $this === self::PENDING || $this === self::CANCELLED;
     }
 
     public function isFinished(): bool
