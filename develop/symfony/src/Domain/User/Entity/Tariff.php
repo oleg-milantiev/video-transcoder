@@ -2,20 +2,23 @@
 
 namespace App\Domain\User\Entity;
 
+use App\Domain\User\ValueObject\TariffDelay;
+use App\Domain\User\ValueObject\TariffInstance;
+use App\Domain\User\ValueObject\TariffTitle;
+
 class Tariff
 {
     private ?int $id;
-    private string $title;
-    private int $delay;
-    private int $instance;
+    private TariffTitle $title;
+    private TariffDelay $delay;
+    private TariffInstance $instance;
 
     public function __construct(
-        string $title,
-        int    $delay,
-        int    $instance,
-        ?int   $id = null
+        TariffTitle $title,
+        TariffDelay $delay,
+        TariffInstance $instance,
+        ?int $id = null
     ) {
-        // TODO DDD
         $this->title = $title;
         $this->delay = $delay;
         $this->instance = $instance;
@@ -27,23 +30,23 @@ class Tariff
         return $this->id;
     }
 
-    public function title(): string
+    public function title(): TariffTitle
     {
         return $this->title;
     }
 
-    public function delay(): int
+    public function delay(): TariffDelay
     {
         return $this->delay;
     }
 
-    public function instance(): int
+    public function instance(): TariffInstance
     {
         return $this->instance;
     }
 
     public function __toString(): string
     {
-        return $this->title;
+        return $this->title->value();
     }
 }
