@@ -6,7 +6,8 @@
 - домен User улучшить (VO)
 
 ### Тесты и безопасность
-- анализ и запись ошибок ffmpeg
+- ? THINK ? security нельзя складывать видео и постеры в public. Нужен механизм проксирования с auth.
+- тесты App\Application\CommandHandler
 
 ### События, расширяемость
 - split command and event message buses (CreateVideoHandler, CreateVideoPreviewHandler, ExtractVideoMetadataHandler)
@@ -21,7 +22,6 @@
 - как-то pipeline надо в одной сущности делать, кажется, описывая порядок классов. Через yield?
 - ? THINK ? а где у меня будет удаление видео?
   - не забыть удалить постеры и пресет-видео при удалении видео;
-- ? THINK ? security нельзя складывать видео и постеры в public. Нужен механизм проксирования с auth.
 
 ### Шедулер и transcode, облака
 - запуск задач через update lock?
@@ -35,6 +35,7 @@
   - перевод video/details в JSON
 
 ## На потом
+- разделить TranscodeVideoHandler и обернуть тестами
 - добавить fake иконку доллара — ускорение очереди за ресурсы.
 - перенести ядро в laravel, постаравшись оставить как можно больше из текущего src. Это сверхзадача, сменится только presentation и infrastructure уровни;
 - в тариф тип инстанца (скорость кодирования, включая gpu).

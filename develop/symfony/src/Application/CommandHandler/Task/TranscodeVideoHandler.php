@@ -23,7 +23,6 @@ use Symfony\Component\Lock\LockFactory;
 use Symfony\Component\Process\Exception\ProcessFailedException;
 use Symfony\Component\Process\Process;
 
-// TODO split and test!
 #[AsMessageHandler]
 final readonly class TranscodeVideoHandler
 {
@@ -58,7 +57,6 @@ final readonly class TranscodeVideoHandler
             return;
         }
 
-        // TODO move mutex to redis
         $lock = $this->lockFactory->createLock(sprintf('transcode-task:%d', $scheduledTask->taskId), self::TASK_MUTEX_TTL);
         $acquired = $lock->acquire();
         if (!$acquired) {

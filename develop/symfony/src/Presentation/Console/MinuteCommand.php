@@ -15,7 +15,6 @@ use Symfony\Component\Lock\LockFactory;
 #[AsCommand(name: 'app:minute', description: 'Run every minute from cron to schedule tasks.')]
 final class MinuteCommand extends Command
 {
-    // TODO move lock into redis
     private const int MUTEX_TTL = 900; // 15 minutes in seconds
 
     public function __construct(

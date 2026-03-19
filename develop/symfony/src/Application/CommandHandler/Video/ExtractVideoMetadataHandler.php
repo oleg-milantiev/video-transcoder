@@ -14,7 +14,7 @@ use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Process\Exception\ProcessFailedException;
 use Symfony\Component\Process\Process;
 
-// TODO split and test!
+// TODO split
 #[AsMessageHandler]
 final readonly class ExtractVideoMetadataHandler
 {

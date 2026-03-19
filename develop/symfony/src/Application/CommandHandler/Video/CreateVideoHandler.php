@@ -12,7 +12,6 @@ use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\HttpFoundation\File\File;
 
-// TODO test
 #[AsMessageHandler]
 final readonly class CreateVideoHandler
 {
