@@ -38,7 +38,6 @@ readonly class VideoDetailsDTO
 
     protected static function sanitizeMeta(array $meta): array
     {
-        // Remove any sensitive information from meta
         unset($meta['preview']);
 
         return $meta;

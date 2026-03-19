@@ -14,13 +14,21 @@ final class VideoApiControllerTest extends ApiWebTestCase
     /**
      * @throws \JsonException
      */
-    public function testListReturnsItems(): void
+    public function testListReturnsPaginatedPayload(): void
     {
         $client = $this->createBearerAuthenticatedClient();
 
         $items = [
             ['uuid' => '11111111-1111-4111-8111-111111111111', 'title' => 'Video A'],
             ['uuid' => '22222222-2222-4222-8222-222222222222', 'title' => 'Video B'],
+        ];
+
+        $listPayload = [
+            'items' => $items,
+            'total' => 17,
+            'page' => 2,
+            'limit' => 5,
+            'totalPages' => 4,
         ];
 
         $queryBus = $this->createMock(QueryBus::class);
@@ -31,14 +39,14 @@ final class VideoApiControllerTest extends ApiWebTestCase
                     && $query->page === 2
                     && $query->limit === 5;
             }))
-            ->willReturn((object) ['items' => $items]);
+            ->willReturn((object) $listPayload);
 
         $this->replaceService(QueryBus::class, $queryBus);
 
         $client->request('GET', '/api/video/?page=2&limit=5');
 
         self::assertResponseStatusCodeSame(200);
-        self::assertSame($items, $this->decodeJson($client->getResponse()->getContent()));
+        self::assertSame($listPayload, $this->decodeJson($client->getResponse()->getContent()));
     }
 
     /**

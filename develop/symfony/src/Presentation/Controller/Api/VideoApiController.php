@@ -32,8 +32,7 @@ class VideoApiController extends AbstractController
                 new GetVideoListQuery($request)
             );
 
-            // TODO use all tasks list data and paged api call in dataTable
-            return new JsonResponse($videoListResponse->items);
+            return new JsonResponse($videoListResponse);
         } catch (QueryException $e) {
             return new JsonResponse(['error' => $e->getMessage()], 400);
         }

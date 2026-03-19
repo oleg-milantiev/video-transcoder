@@ -42,8 +42,7 @@ class TaskApiController extends AbstractController
                 new GetTaskListQuery($request)
             );
 
-            // TODO use all tasks list data and paged api call in dataTable
-            return new JsonResponse($taskListResponse->items);
+            return new JsonResponse($taskListResponse);
         } catch (QueryException $e) {
             return new JsonResponse(['error' => $e->getMessage()], 400);
         }

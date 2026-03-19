@@ -18,13 +18,21 @@ use Symfony\Component\Uid\UuidV4;
 
 final class TaskApiControllerTest extends ApiWebTestCase
 {
-    public function testListReturnsItems(): void
+    public function testListReturnsPaginatedPayload(): void
     {
         $client = $this->createBearerAuthenticatedClient();
 
         $items = [
             ['id' => 11, 'status' => 'PENDING'],
             ['id' => 12, 'status' => 'PROCESSING'],
+        ];
+
+        $listPayload = [
+            'items' => $items,
+            'total' => 9,
+            'page' => 1,
+            'limit' => 2,
+            'totalPages' => 5,
         ];
 
         $queryBus = $this->createMock(QueryBus::class);
@@ -35,14 +43,14 @@ final class TaskApiControllerTest extends ApiWebTestCase
                     && $query->page === 1
                     && $query->limit === 2;
             }))
-            ->willReturn((object) ['items' => $items]);
+            ->willReturn((object) $listPayload);
 
         $this->replaceService(QueryBus::class, $queryBus);
 
         $client->request('GET', '/api/task/?page=1&limit=2');
 
         self::assertResponseStatusCodeSame(200);
-        self::assertSame($items, $this->decodeJson($client->getResponse()->getContent()));
+        self::assertSame($listPayload, $this->decodeJson($client->getResponse()->getContent()));
     }
 
     /**
