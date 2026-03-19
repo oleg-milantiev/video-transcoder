@@ -28,6 +28,7 @@ final class ApiAuthorizationTest extends ApiWebTestCase
     {
         return [
             ['GET', '/api/video/'],
+            ['GET', '/api/video/11111111-1111-4111-8111-111111111111'],
             ['POST', '/api/video/11111111-1111-4111-8111-111111111111/transcode/1'],
             ['GET', '/api/task/'],
             ['POST', '/api/task/1/cancel'],

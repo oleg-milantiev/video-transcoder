@@ -30,11 +30,8 @@
 
 ### Frontend
 - переход на Vue в SPA:
-  - добавить JSON-версию для деталей видео (сейчас GET /video/{uuid} рендерит Twig в develop/symfony/src/Presentation/Controller/VideoController.php);
   - уточнить контракт POST-операций (transcode, cancel) и ошибки (единый формат JSON);
-  - сделать первый Vue-экран: Home tabs (Upload, Videos, Tasks) как один SPA route/view;
-  - реализовать video / details страницу.
-
+  
 ## На потом
 - разделить TranscodeVideoHandler и обернуть тестами
 - добавить fake иконку доллара — ускорение очереди за ресурсы.

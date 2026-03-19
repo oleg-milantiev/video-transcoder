@@ -1,4 +1,6 @@
 import { defineComponent, h, onBeforeUnmount, onMounted, ref } from 'vue';
+import { useRouter } from 'vue-router';
+import { useRoute } from 'vue-router';
 import { initHomeLegacyWidgets } from './legacyHomeWidgets.js';
 
 function createAuthHeader(apiBearerToken) {
@@ -47,7 +49,12 @@ export function createHomeTabsView(config) {
     return defineComponent({
         name: 'HomeTabsView',
         setup() {
-            const activeTab = ref('upload');
+            const router = useRouter();
+            const route = useRoute();
+            const allowedTabs = ['upload', 'videos', 'tasks'];
+            const queryTab = typeof route.query.tab === 'string' ? route.query.tab : '';
+            const initialTab = allowedTabs.includes(queryTab) ? queryTab : 'upload';
+            const activeTab = ref(initialTab);
             let cleanup = function noop() {};
             const pageLimit = 10;
             const authHeader = createAuthHeader(config.apiBearerToken || null);
@@ -123,6 +130,14 @@ export function createHomeTabsView(config) {
 
             onMounted(function () {
                 cleanup = initHomeLegacyWidgets(config);
+
+                if (initialTab === 'videos') {
+                    void loadVideos(1);
+                }
+
+                if (initialTab === 'tasks') {
+                    void loadTasks(1);
+                }
             });
 
             onBeforeUnmount(function () {
@@ -142,7 +157,7 @@ export function createHomeTabsView(config) {
             }
 
             function openVideoDetails(uuid) {
-                window.open(config.videoDetailsUrlTemplate.replace('__UUID__', uuid), '_blank');
+                void router.push(config.videoDetailsUrlTemplate.replace('__UUID__', uuid));
             }
 
             function getTaskDownloadUrl(taskId) {

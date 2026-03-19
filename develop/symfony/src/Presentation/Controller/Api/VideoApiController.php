@@ -3,6 +3,7 @@
 namespace App\Presentation\Controller\Api;
 
 use App\Application\Exception\QueryException;
+use App\Application\Query\GetVideoDetailsQuery;
 use App\Application\Query\GetVideoListQuery;
 use App\Application\Query\StartTranscodeQuery;
 use App\Application\QueryHandler\QueryBus;
@@ -35,6 +36,24 @@ class VideoApiController extends AbstractController
             return new JsonResponse($videoListResponse);
         } catch (QueryException $e) {
             return new JsonResponse(['error' => $e->getMessage()], 400);
+        }
+    }
+
+    #[Route('/{id}', name: 'api_video_details', requirements: ['id' => '[0-9a-fA-F-]{36}'], methods: ['GET'])]
+    public function details(string $id): Response
+    {
+        try {
+            $dto = $this->queryBus->query(
+                new GetVideoDetailsQuery($id)
+            );
+
+            return new JsonResponse($dto);
+        } catch (QueryException $e) {
+            $status = $e->getMessage() === 'Invalid UUID' ? 400 : 404;
+
+            return new JsonResponse(['error' => $e->getMessage()], $status);
+        } catch (\DomainException $e) {
+            return new JsonResponse(['error' => $e->getMessage()], 403);
         }
     }
 

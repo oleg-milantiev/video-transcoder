@@ -8,50 +8,43 @@ use App\Infrastructure\Persistence\Doctrine\User\UserEntity;
 use App\Tests\Presentation\Controller\Api\InMemoryTestUserProvider;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
-final class HomeControllerTest extends WebTestCase
+final class VideoControllerTest extends WebTestCase
 {
-    public function testGuestSeesLoginCtaAndNoSpaRoot(): void
+    public function testGuestIsRedirectedFromDetails(): void
     {
         $client = static::createClient();
-        $crawler = $client->request('GET', '/');
+        $client->request('GET', '/video/11111111-1111-4111-8111-111111111111');
 
-        self::assertResponseIsSuccessful();
-        self::assertSelectorExists('a[href="/login"]');
-        self::assertCount(0, $crawler->filter('#home-spa'));
+        self::assertResponseRedirects('/login');
     }
 
-    public function testAuthenticatedUserSeesSpaMountWithApiConfig(): void
+    public function testAuthenticatedUserSeesVideoDetailsSpaMount(): void
     {
         $client = static::createClient();
 
         $user = new UserEntity();
-        $user->id = 101;
-        $user->email = 'home-user@example.com';
+        $user->id = 201;
+        $user->email = 'video-user@example.com';
         $user->roles = ['ROLE_USER'];
 
         static::getContainer()->set('security.user.provider.concrete.app_user_provider', new InMemoryTestUserProvider($user));
 
         $client->loginUser($user);
-        $crawler = $client->request('GET', '/');
+        $crawler = $client->request('GET', '/video/11111111-1111-4111-8111-111111111111');
 
         self::assertResponseIsSuccessful();
-        self::assertCount(1, $crawler->filter('#home-spa'));
+        self::assertCount(1, $crawler->filter('#video-details-spa'));
 
-        $spaRoot = $crawler->filter('#home-spa')->first();
+        $spaRoot = $crawler->filter('#video-details-spa')->first();
 
-        self::assertSame('home-user@example.com', $spaRoot->attr('data-user-identifier'));
+        self::assertSame('video-user@example.com', $spaRoot->attr('data-user-identifier'));
         self::assertNotSame('', (string) $spaRoot->attr('data-api-bearer-token'));
-        self::assertSame('/api/video/', $spaRoot->attr('data-api-video-list-url'));
-        self::assertSame('/api/task/', $spaRoot->attr('data-api-task-list-url'));
         self::assertSame('/api/video/__UUID__', $spaRoot->attr('data-api-video-details-url-template'));
         self::assertSame('/api/video/__UUID__/transcode/__PRESET_ID__', $spaRoot->attr('data-api-video-transcode-url-template'));
         self::assertSame('/api/task/__TASK_ID__/cancel', $spaRoot->attr('data-api-task-cancel-url-template'));
-        self::assertSame('/api/upload', $spaRoot->attr('data-api-upload-url'));
-        self::assertSame('/video/__UUID__', $spaRoot->attr('data-video-details-url-template'));
         self::assertSame('/task/__TASK_ID__/download', $spaRoot->attr('data-task-download-url-template'));
         self::assertSame('/', $spaRoot->attr('data-home-url'));
+        self::assertSame('11111111-1111-4111-8111-111111111111', $spaRoot->attr('data-video-uuid'));
     }
 }
-
-
 
