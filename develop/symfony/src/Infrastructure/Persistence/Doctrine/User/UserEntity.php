@@ -3,7 +3,7 @@
 namespace App\Infrastructure\Persistence\Doctrine\User;
 
 use App\Infrastructure\Persistence\Doctrine\Video\VideoEntity;
-use App\Infrastructure\Validator\Constraints as AppAssert;
+use App\Presentation\Validator\Constraints\AtLeastOneAdmin;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
@@ -18,16 +18,24 @@ class UserEntity implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    public ?int $id = null;
+    public ?int $id = null {
+        get {
+            return $this->id;
+        }
+    }
 
     #[ORM\Column(length: 180)]
-    public ?string $email = null;
+    public ?string $email = null {
+        get {
+            return $this->email;
+        }
+    }
 
     /**
      * @var list<string> The user roles
      */
     #[ORM\Column]
-    #[AppAssert\AtLeastOneAdmin]
+    #[AtLeastOneAdmin]
     public array $roles = [];
 
     /**
@@ -52,16 +60,6 @@ class UserEntity implements UserInterface, PasswordAuthenticatedUserInterface
     public function __construct()
     {
         $this->videos = new ArrayCollection();
-    }
-
-    public function getId(): ?int
-    {
-        return $this->id;
-    }
-
-    public function getEmail(): ?string
-    {
-        return $this->email;
     }
 
     /**

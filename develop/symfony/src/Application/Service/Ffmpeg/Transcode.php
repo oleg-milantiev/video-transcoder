@@ -6,6 +6,7 @@ use App\Domain\Video\Entity\Preset;
 use App\Domain\Video\ValueObject\Bitrate;
 use App\Domain\Video\ValueObject\Codec;
 
+// TODO так это ж инфраструктура!
 readonly class Transcode
 {
     public static function buildCommand(string $inputPath, string $outputPath, Preset $preset): array

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Infrastructure\Validator\Constraints;
+namespace App\Presentation\Validator\Constraints;
 
 use App\Infrastructure\Persistence\Doctrine\User\UserEntity;
 use App\Infrastructure\Persistence\Doctrine\User\UserRepository;

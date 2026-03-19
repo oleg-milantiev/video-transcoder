@@ -62,7 +62,7 @@ final readonly class TranscodeVideoHandler
             throw new \RuntimeException('Preset not found for task');
         }
 
-        // TODO get path from service? / entity?
+        // TODO use abstract storage
         $relativeOutputPath = sprintf('%s/%d.mp4', $video->id()->toRfc4122(), $preset->id());
         $absoluteOutputPath = $this->storage->getAbsolutePath($relativeOutputPath);
         $this->filesystem->mkdir(\dirname($absoluteOutputPath));

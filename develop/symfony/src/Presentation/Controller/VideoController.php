@@ -60,7 +60,7 @@ class VideoController extends AbstractController
     {
         try {
             $taskDto = $this->queryBus->query(
-                new StartTranscodeQuery($id, $presetId, (int)$this->getUser()->getId())
+                new StartTranscodeQuery($id, $presetId, (int)$this->getUser()->id)
             );
 
             return new JsonResponse($taskDto);
