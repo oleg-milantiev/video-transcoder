@@ -7,9 +7,12 @@ use App\Application\Query\GetTaskListQuery;
 use App\Application\QueryHandler\QueryBus;
 use App\Application\Response\TaskListResponse;
 use App\Domain\Video\Repository\TaskRepositoryInterface;
+use App\Domain\Video\Repository\VideoRepositoryInterface;
 use App\Domain\Video\Service\Storage\StorageInterface;
 use App\Domain\Video\ValueObject\TaskStatus;
+use App\Infrastructure\Security\Voter\VideoAccessVoter;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -21,7 +24,9 @@ class TaskController extends AbstractController
     public function __construct(
         private readonly QueryBus $queryBus,
         private readonly TaskRepositoryInterface $taskRepository,
+        private readonly VideoRepositoryInterface $videoRepository,
         private readonly StorageInterface $storage,
+        private readonly Security $security,
     ) {
     }
 
@@ -49,8 +54,12 @@ class TaskController extends AbstractController
             throw $this->createNotFoundException('Task not found');
         }
 
-        // TODO voter with admin grants
-        if ($task->userId() !== $this->getUser()->getId()) {
+        $video = $this->videoRepository->findById($task->videoId());
+        if (!$video) {
+            throw $this->createNotFoundException('Video not found');
+        }
+
+        if (!$this->security->isGranted(VideoAccessVoter::CAN_DOWNLOAD_TRANSCODE, $video)) {
             throw $this->createAccessDeniedException('Access denied');
         }
 

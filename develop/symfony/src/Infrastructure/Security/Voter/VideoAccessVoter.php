@@ -10,6 +10,7 @@ final class VideoAccessVoter extends Voter
 {
     public const string CAN_VIEW_DETAILS = 'CAN_VIEW_DETAILS';
     public const string CAN_START_TRANSCODE = 'CAN_START_TRANSCODE';
+    public const string CAN_DOWNLOAD_TRANSCODE = 'CAN_DOWNLOAD_TRANSCODE';
 
     protected function supports(string $attribute, mixed $subject): bool
     {
@@ -17,7 +18,7 @@ final class VideoAccessVoter extends Voter
             return false;
         }
 
-        return in_array($attribute, [self::CAN_VIEW_DETAILS, self::CAN_START_TRANSCODE], true);
+        return in_array($attribute, [self::CAN_VIEW_DETAILS, self::CAN_START_TRANSCODE, self::CAN_DOWNLOAD_TRANSCODE], true);
     }
 
     protected function voteOnAttribute(string $attribute, mixed $subject, TokenInterface $token): bool
