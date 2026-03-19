@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace App\Tests\Application\Service\Ffmpeg;
 
-use App\Application\Service\Ffmpeg\Transcode;
 use App\Domain\Video\Entity\Preset;
 use App\Domain\Video\ValueObject\Bitrate;
 use App\Domain\Video\ValueObject\Codec;
 use App\Domain\Video\ValueObject\PresetTitle;
 use App\Domain\Video\ValueObject\Resolution;
+use App\Infrastructure\Ffmpeg\Transcode;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 

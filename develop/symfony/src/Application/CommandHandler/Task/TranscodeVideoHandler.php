@@ -4,7 +4,6 @@ namespace App\Application\CommandHandler\Task;
 
 use App\Application\Command\Task\StartTaskScheduler;
 use App\Application\Command\Task\TranscodeVideo;
-use App\Application\Service\Ffmpeg\Transcode;
 use App\Domain\Video\Entity\Preset;
 use App\Domain\Video\Entity\Task;
 use App\Domain\Video\Repository\PresetRepositoryInterface;
@@ -12,6 +11,7 @@ use App\Domain\Video\Repository\TaskRepositoryInterface;
 use App\Domain\Video\Repository\VideoRepositoryInterface;
 use App\Domain\Video\Service\Storage\StorageInterface;
 use App\Domain\Video\ValueObject\Progress;
+use App\Infrastructure\Ffmpeg\Transcode;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
