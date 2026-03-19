@@ -6,8 +6,7 @@
 - домен User улучшить (VO)
 
 ### Тесты и безопасность
-- тесты
-- анализ и запись ошибок ffmpeg на примере вертикального видео с гориз. пресетом
+- анализ и запись ошибок ffmpeg
 
 ### События
 - split command and event message buses (CreateVideoHandler, CreateVideoPreviewHandler, ExtractVideoMetadataHandler)
@@ -23,9 +22,10 @@
 - не забыть удалить постеры и пресет-видео при удалении видео;
 - security нельзя складывать видео и постеры в public. Нужен механизм проксирования с auth. ? THINK ?
 
-### Шедулер и обработка задач
+### Шедулер и transcode
 - запуск задач через update lock?
 - шедулер в крон
+- заполнене task.meta
 - кубер и тераформ масштабирование
 
 ### Frontend

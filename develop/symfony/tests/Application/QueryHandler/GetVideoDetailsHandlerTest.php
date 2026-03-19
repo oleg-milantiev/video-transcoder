@@ -27,7 +27,7 @@ class GetVideoDetailsHandlerTest extends TestCase
             ->willReturn([
                 [
                     'id' => 1,
-                    'name' => 'HD',
+                    'title' => 'HD',
                     'task' => [
                         'id' => 42,
                         'status' => 2,

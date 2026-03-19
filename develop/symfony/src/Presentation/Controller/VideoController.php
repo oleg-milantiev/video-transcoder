@@ -13,6 +13,7 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 #[Route('/video')]
 class VideoController extends AbstractController
@@ -39,6 +40,7 @@ class VideoController extends AbstractController
     }
 
     #[Route('/{uuid}', name: 'video_details', methods: ['GET'])]
+    #[IsGranted('IS_AUTHENTICATED_FULLY')]
     public function details(string $uuid): Response
     {
         try {
@@ -53,16 +55,13 @@ class VideoController extends AbstractController
     }
 
     #[Route('/{id}/transcode/{presetId}', name: 'video_transcode', methods: ['POST'])]
+    #[IsGranted('IS_AUTHENTICATED_FULLY')]
     public function transcode(string $id, int $presetId): Response
     {
         try {
-            // TODO аттрибутами метода обязательно авторизованного
-            $user = $this->getUser();
-            if (!$user) {
-                return new JsonResponse(['error' => 'Unauthorized'], 401);
-            }
-
-            $taskDto = $this->queryBus->query(new StartTranscodeQuery($id, $presetId, (int)$user->getId()));
+            $taskDto = $this->queryBus->query(
+                new StartTranscodeQuery($id, $presetId, (int)$this->getUser()->getId())
+            );
 
             return new JsonResponse($taskDto);
         } catch (QueryException $e) {
