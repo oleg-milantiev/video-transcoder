@@ -112,7 +112,7 @@ final readonly class TranscodeVideoHandler
             $transcodeReport = $this->runTranscodeProcess($inputPath, $absoluteOutputPath, $preset, $video->duration(), $task);
 
             if (($transcodeReport['cancelled'] ?? false) === true) {
-                $cancelledTask = $this->taskRepository->findById($task->id()) ?? $task;
+                $cancelledTask = $this->taskRepository->findByIdFresh($task->id()) ?? $task;
                 if ($cancelledTask->status() !== TaskStatus::CANCELLED) {
                     $cancelledTask->cancel();
                 }

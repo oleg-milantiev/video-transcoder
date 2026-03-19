@@ -69,6 +69,24 @@ class TaskRepository extends ServiceEntityRepository implements TaskRepositoryIn
     }
 
     /**
+     * @throws ORMException
+     */
+    public function findByIdFresh(int $id): ?Task
+    {
+        $em = $this->getEntityManager();
+
+        /** @var TaskEntity|null $entity */
+        $entity = $this->find($id);
+        if (!$entity) {
+            return null;
+        }
+
+        $em->refresh($entity);
+
+        return self::mapToDomain($entity);
+    }
+
+    /**
      * @throws Exception
      */
     public function getScheduled(): array

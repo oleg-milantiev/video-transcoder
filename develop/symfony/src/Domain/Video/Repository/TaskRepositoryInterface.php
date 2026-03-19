@@ -9,6 +9,7 @@ interface TaskRepositoryInterface extends PaginatedRepositoryInterface
 {
     public function save(Task $task): void;
     public function findById(int $id): ?Task;
+    public function findByIdFresh(int $id): ?Task;
     public function log(int $id, string $level, string $text): void;
     /**
      * @return ScheduledTaskDTO[]
