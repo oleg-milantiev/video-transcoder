@@ -38,6 +38,18 @@ function normalizeErrorMessage(error, fallback) {
     return fallback;
 }
 
+function extractApiErrorMessage(payload, fallback) {
+    if (payload && payload.error && typeof payload.error === 'object' && typeof payload.error.message === 'string') {
+        return payload.error.message;
+    }
+
+    if (payload && typeof payload.error === 'string') {
+        return payload.error;
+    }
+
+    return fallback;
+}
+
 export function createVideoDetailsView(config) {
     return defineComponent({
         name: 'VideoDetailsView',
@@ -90,7 +102,7 @@ export function createVideoDetailsView(config) {
 
                     if (!response.ok) {
                         dto.value = null;
-                        error.value = payload && payload.error ? payload.error : 'Failed to load video details';
+                        error.value = extractApiErrorMessage(payload, 'Failed to load video details');
                         return;
                     }
 
@@ -116,7 +128,7 @@ export function createVideoDetailsView(config) {
                     const payload = await parseJsonResponse(response);
 
                     if (!response.ok) {
-                        actionError.value = payload && payload.error ? payload.error : fallbackError;
+                        actionError.value = extractApiErrorMessage(payload, fallbackError);
                         return;
                     }
 

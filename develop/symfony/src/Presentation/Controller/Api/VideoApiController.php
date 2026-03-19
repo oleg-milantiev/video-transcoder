@@ -3,6 +3,12 @@
 namespace App\Presentation\Controller\Api;
 
 use App\Application\Exception\QueryException;
+use App\Application\Exception\InvalidUuidException;
+use App\Application\Exception\PresetNotFoundException;
+use App\Application\Exception\TaskCreationFailedException;
+use App\Application\Exception\TranscodeAccessDeniedException;
+use App\Application\Exception\UserNotFoundException;
+use App\Application\Exception\VideoNotFoundException;
 use App\Application\Query\GetVideoDetailsQuery;
 use App\Application\Query\GetVideoListQuery;
 use App\Application\Query\StartTranscodeQuery;
@@ -19,6 +25,8 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 #[IsGranted('IS_AUTHENTICATED_FULLY')]
 class VideoApiController extends AbstractController
 {
+    use ApiJsonResponseTrait;
+
     public function __construct(
         private readonly QueryBus $queryBus,
     ) {
@@ -35,6 +43,7 @@ class VideoApiController extends AbstractController
 
             return new JsonResponse($videoListResponse);
         } catch (QueryException $e) {
+            // TODO тут не $this->apiError?
             return new JsonResponse(['error' => $e->getMessage()], 400);
         }
     }
@@ -51,8 +60,10 @@ class VideoApiController extends AbstractController
         } catch (QueryException $e) {
             $status = $e->getMessage() === 'Invalid UUID' ? 400 : 404;
 
+            // TODO тут не $this->apiError?
             return new JsonResponse(['error' => $e->getMessage()], $status);
         } catch (\DomainException $e) {
+            // TODO тут не $this->apiError?
             return new JsonResponse(['error' => $e->getMessage()], 403);
         }
     }
@@ -65,13 +76,25 @@ class VideoApiController extends AbstractController
                 new StartTranscodeQuery($id, $presetId, (int)$this->getUser()->id)
             );
 
-            return new JsonResponse($taskDto);
+            return $this->apiSuccess(['task' => (array) $taskDto]);
+        } catch (InvalidUuidException $e) {
+            return $this->apiError('INVALID_UUID', $e->getMessage(), 400);
+        } catch (VideoNotFoundException $e) {
+            return $this->apiError('VIDEO_NOT_FOUND', $e->getMessage(), 404);
+        } catch (PresetNotFoundException $e) {
+            return $this->apiError('PRESET_NOT_FOUND', $e->getMessage(), 404);
+        } catch (UserNotFoundException $e) {
+            return $this->apiError('USER_NOT_FOUND', $e->getMessage(), 404);
+        } catch (TranscodeAccessDeniedException $e) {
+            return $this->apiError('ACCESS_DENIED', $e->getMessage(), 403);
+        } catch (TaskCreationFailedException $e) {
+            return $this->apiError('TASK_CREATION_FAILED', $e->getMessage(), 500);
         } catch (QueryException $e) {
-            return new JsonResponse(['error' => $e->getMessage()], 400);
+            return $this->apiError('QUERY_FAILED', $e->getMessage(), 400);
         } catch (\DomainException $e) {
-            return new JsonResponse(['error' => $e->getMessage()], 403);
+            return $this->apiError('ACCESS_DENIED', $e->getMessage(), 403);
         } catch (\Throwable $e) {
-            return new JsonResponse(['error' => 'Failed to start transcode'], 500);
+            return $this->apiError('INTERNAL_ERROR', 'Failed to start transcode', 500);
         }
     }
 }

@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\Application\QueryHandler;
 
 use App\Application\Command\Task\StartTaskScheduler;
-use App\Application\Exception\QueryException;
+use App\Application\Exception\VideoNotFoundException;
 use App\Application\Query\StartTranscodeQuery;
 use App\Application\QueryHandler\StartTranscodeHandler;
 use App\Application\DTO\TaskItemDTO;
@@ -128,7 +128,7 @@ class StartTranscodeHandlerTest extends TestCase
             $this->createStub(Security::class),
         );
 
-        $this->expectException(QueryException::class);
+        $this->expectException(VideoNotFoundException::class);
         $handler(new StartTranscodeQuery('123e4567-e89b-42d3-a456-426614174101', 1, 1));
     }
 }

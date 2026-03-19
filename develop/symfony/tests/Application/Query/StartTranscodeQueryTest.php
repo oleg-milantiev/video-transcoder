@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\Application\Query;
 
-use App\Application\Exception\QueryException;
+use App\Application\Exception\InvalidUuidException;
 use App\Application\Query\StartTranscodeQuery;
 use PHPUnit\Framework\TestCase;
 
@@ -20,9 +20,9 @@ class StartTranscodeQueryTest extends TestCase
         $this->assertSame(9, $query->userId);
     }
 
-    public function testInvalidUuidRaisesQueryException(): void
+    public function testInvalidUuidRaisesInvalidUuidException(): void
     {
-        $this->expectException(QueryException::class);
+        $this->expectException(InvalidUuidException::class);
         new StartTranscodeQuery('invalid', 1, 1);
     }
 }

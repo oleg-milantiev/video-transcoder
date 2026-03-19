@@ -4,7 +4,11 @@ namespace App\Application\QueryHandler;
 
 use App\Application\Command\Task\StartTaskScheduler;
 use App\Application\DTO\TaskItemDTO;
-use App\Application\Exception\QueryException;
+use App\Application\Exception\PresetNotFoundException;
+use App\Application\Exception\TaskCreationFailedException;
+use App\Application\Exception\TranscodeAccessDeniedException;
+use App\Application\Exception\UserNotFoundException;
+use App\Application\Exception\VideoNotFoundException;
 use App\Application\Query\StartTranscodeQuery;
 use App\Domain\User\Repository\UserRepositoryInterface;
 use App\Domain\Video\Entity\Task;
@@ -36,28 +40,28 @@ final readonly class StartTranscodeHandler
     {
         $video = $this->videoRepository->findById($query->uuid);
         if (!$video) {
-            throw new QueryException('Video not found');
+            throw new VideoNotFoundException('Video not found');
         }
 
         $user = $this->userRepository->findById($query->userId);
         if (!$user) {
-            throw new QueryException('User not found');
+            throw new UserNotFoundException('User not found');
         }
 
         if (!$this->security->isGranted(VideoAccessVoter::CAN_START_TRANSCODE, $video)) {
-            throw new QueryException('Access denied');
+            throw new TranscodeAccessDeniedException('Access denied');
         }
 
         $preset = $this->presetRepository->findById($query->presetId);
         if (!$preset) {
-            throw new QueryException('Preset not found');
+            throw new PresetNotFoundException('Preset not found');
         }
 
         try {
             $task = Task::create($video->id(), $preset->id(), $user->id());
             $this->taskRepository->save($task);
         } catch (\Throwable $e) {
-            throw new QueryException('Failed to create task: ' . $e->getMessage());
+            throw new TaskCreationFailedException('Failed to create task', previous: $e);
         }
 
         $this->messageBus->dispatch(new StartTaskScheduler());

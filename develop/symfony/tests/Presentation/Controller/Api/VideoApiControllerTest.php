@@ -148,7 +148,11 @@ final class VideoApiControllerTest extends ApiWebTestCase
         $client->request('POST', '/api/video/11111111-1111-4111-8111-111111111111/transcode/7');
 
         self::assertResponseStatusCodeSame(200);
-        self::assertSame(['taskId' => 15, 'status' => 'PENDING'], $this->decodeJson($client->getResponse()->getContent()));
+        self::assertSame([
+            'data' => [
+                'task' => ['taskId' => 15, 'status' => 'PENDING'],
+            ],
+        ], $this->decodeJson($client->getResponse()->getContent()));
     }
 
     /**
@@ -165,7 +169,13 @@ final class VideoApiControllerTest extends ApiWebTestCase
         $client->request('POST', '/api/video/not-a-uuid/transcode/7');
 
         self::assertResponseStatusCodeSame(400);
-        self::assertSame(['error' => 'Invalid UUID'], $this->decodeJson($client->getResponse()->getContent()));
+        self::assertSame([
+            'error' => [
+                'code' => 'INVALID_UUID',
+                'message' => 'Invalid UUID',
+                'details' => [],
+            ],
+        ], $this->decodeJson($client->getResponse()->getContent()));
     }
 
     /**
@@ -184,7 +194,13 @@ final class VideoApiControllerTest extends ApiWebTestCase
         $client->request('POST', '/api/video/11111111-1111-4111-8111-111111111111/transcode/7');
 
         self::assertResponseStatusCodeSame(403);
-        self::assertSame(['error' => 'Access denied'], $this->decodeJson($client->getResponse()->getContent()));
+        self::assertSame([
+            'error' => [
+                'code' => 'ACCESS_DENIED',
+                'message' => 'Access denied',
+                'details' => [],
+            ],
+        ], $this->decodeJson($client->getResponse()->getContent()));
     }
 
     /**
@@ -203,7 +219,13 @@ final class VideoApiControllerTest extends ApiWebTestCase
         $client->request('POST', '/api/video/11111111-1111-4111-8111-111111111111/transcode/7');
 
         self::assertResponseStatusCodeSame(500);
-        self::assertSame(['error' => 'Failed to start transcode'], $this->decodeJson($client->getResponse()->getContent()));
+        self::assertSame([
+            'error' => [
+                'code' => 'INTERNAL_ERROR',
+                'message' => 'Failed to start transcode',
+                'details' => [],
+            ],
+        ], $this->decodeJson($client->getResponse()->getContent()));
     }
 
     /**

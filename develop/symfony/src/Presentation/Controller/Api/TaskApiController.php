@@ -24,6 +24,8 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 #[IsGranted('IS_AUTHENTICATED_FULLY')]
 class TaskApiController extends AbstractController
 {
+    use ApiJsonResponseTrait;
+
     public function __construct(
         private readonly QueryBus $queryBus,
         private readonly TaskRepositoryInterface $taskRepository,
@@ -44,6 +46,7 @@ class TaskApiController extends AbstractController
 
             return new JsonResponse($taskListResponse);
         } catch (QueryException $e) {
+            // TODO тут не $this->apiError?
             return new JsonResponse(['error' => $e->getMessage()], 400);
         }
     }
@@ -56,16 +59,16 @@ class TaskApiController extends AbstractController
     {
         $task = $this->taskRepository->findById($id);
         if (!$task) {
-            throw $this->createNotFoundException('Task not found');
+            return $this->apiError('TASK_NOT_FOUND', 'Task not found', 404);
         }
 
         $video = $this->videoRepository->findById($task->videoId());
         if (!$video) {
-            throw $this->createNotFoundException('Video not found');
+            return $this->apiError('VIDEO_NOT_FOUND', 'Video not found', 404);
         }
 
         if (!$this->security->isGranted(VideoAccessVoter::CAN_CANCEL_TRANSCODE, $video)) {
-            throw $this->createAccessDeniedException('Access denied');
+            return $this->apiError('ACCESS_DENIED', 'Access denied', 403);
         }
 
         // TODO atomize it!
@@ -87,10 +90,13 @@ class TaskApiController extends AbstractController
         $this->cancellationTrigger->request($task->id());
         $this->taskRepository->log($task->id(), 'info', 'Cancellation requested by user');
 
-        return new JsonResponse([
-            'status' => $task->status()->name,
-            'cancelledNow' => $cancelledNow,
-            'cancellationRequested' => true,
+        return $this->apiSuccess([
+            'task' => [
+                'id' => $task->id(),
+                'status' => $task->status()->name,
+                'cancelledNow' => $cancelledNow,
+                'cancellationRequested' => true,
+            ],
         ]);
     }
 }

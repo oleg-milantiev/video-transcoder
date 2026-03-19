@@ -83,6 +83,13 @@ final class TaskApiControllerTest extends ApiWebTestCase
         $client->request('POST', '/api/task/404/cancel');
 
         self::assertResponseStatusCodeSame(404);
+        self::assertSame([
+            'error' => [
+                'code' => 'TASK_NOT_FOUND',
+                'message' => 'Task not found',
+                'details' => [],
+            ],
+        ], $this->decodeJson($client->getResponse()->getContent()));
     }
 
     public function testCancelReturnsNotFoundWhenVideoDoesNotExist(): void
@@ -102,6 +109,13 @@ final class TaskApiControllerTest extends ApiWebTestCase
         $client->request('POST', '/api/task/15/cancel');
 
         self::assertResponseStatusCodeSame(404);
+        self::assertSame([
+            'error' => [
+                'code' => 'VIDEO_NOT_FOUND',
+                'message' => 'Video not found',
+                'details' => [],
+            ],
+        ], $this->decodeJson($client->getResponse()->getContent()));
     }
 
     public function testCancelReturnsForbiddenWhenAccessIsDenied(): void
@@ -129,11 +143,15 @@ final class TaskApiControllerTest extends ApiWebTestCase
         $client->request('POST', '/api/task/18/cancel');
 
         self::assertResponseStatusCodeSame(403);
+        self::assertSame([
+            'error' => [
+                'code' => 'ACCESS_DENIED',
+                'message' => 'Access denied',
+                'details' => [],
+            ],
+        ], $this->decodeJson($client->getResponse()->getContent()));
     }
 
-    /**
-     * @throws \JsonException
-     */
     public function testCancelPendingTaskCancelsImmediately(): void
     {
         $client = $this->createBearerAuthenticatedClient(userId: 42);
@@ -163,9 +181,9 @@ final class TaskApiControllerTest extends ApiWebTestCase
         self::assertResponseStatusCodeSame(200);
 
         $payload = $this->decodeJson($client->getResponse()->getContent());
-        self::assertSame('CANCELLED', $payload['status']);
-        self::assertTrue($payload['cancelledNow']);
-        self::assertTrue($payload['cancellationRequested']);
+        self::assertSame('CANCELLED', $payload['data']['task']['status']);
+        self::assertTrue($payload['data']['task']['cancelledNow']);
+        self::assertTrue($payload['data']['task']['cancellationRequested']);
         self::assertSame(42, $task->meta()['cancelledByUserId']);
         self::assertArrayHasKey('cancelRequestedAt', $task->meta());
     }
@@ -199,9 +217,9 @@ final class TaskApiControllerTest extends ApiWebTestCase
         self::assertResponseStatusCodeSame(200);
 
         $payload = $this->decodeJson($client->getResponse()->getContent());
-        self::assertSame('PROCESSING', $payload['status']);
-        self::assertFalse($payload['cancelledNow']);
-        self::assertTrue($payload['cancellationRequested']);
+        self::assertSame('PROCESSING', $payload['data']['task']['status']);
+        self::assertFalse($payload['data']['task']['cancelledNow']);
+        self::assertTrue($payload['data']['task']['cancellationRequested']);
         self::assertSame(42, $task->meta()['cancelledByUserId']);
         self::assertArrayHasKey('cancelRequestedAt', $task->meta());
     }
@@ -215,9 +233,6 @@ final class TaskApiControllerTest extends ApiWebTestCase
         return $task;
     }
 
-    /**
-     * @throws \JsonException
-     */
     private function decodeJson(?string $content): array
     {
         self::assertNotNull($content);
