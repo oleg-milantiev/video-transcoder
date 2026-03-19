@@ -39,7 +39,7 @@
                     <tbody>
                         {% for preset in dto.presetsWithTasks %}
                             <tr>
-                                <td>{{ preset.name }}</td>
+                                <td>{{ preset.title }}</td>
                                 {% if preset.task %}
                                     <td>{{ preset.task.status|title }}</td>
                                     <td>{{ preset.task.progress }}%</td>
