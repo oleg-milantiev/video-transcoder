@@ -10,7 +10,7 @@ use App\Domain\Video\Entity\Task;
 use App\Domain\Video\Entity\Video;
 use App\Domain\Video\ValueObject\Bitrate;
 use App\Domain\Video\ValueObject\Codec;
-use App\Domain\Video\ValueObject\PresetName;
+use App\Domain\Video\ValueObject\PresetTitle;
 use App\Domain\Video\ValueObject\Progress;
 use App\Domain\Video\ValueObject\Resolution;
 use App\Domain\Video\ValueObject\TaskStatus;
@@ -37,7 +37,7 @@ class TaskItemDTOTest extends TestCase
         );
 
         $preset = new Preset(
-            new PresetName('HD 1080p'),
+            new PresetTitle('HD 1080p'),
             new Resolution(1920, 1080),
             new Codec('h264'),
             new Bitrate(50.0),

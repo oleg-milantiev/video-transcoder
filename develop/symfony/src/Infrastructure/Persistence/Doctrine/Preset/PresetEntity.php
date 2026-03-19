@@ -17,7 +17,7 @@ class PresetEntity
     public ?int $id = null;
 
     #[ORM\Column(length: 255)]
-    public string $name;
+    public string $title;
 
     #[ORM\Column]
     public int $width;
@@ -45,6 +45,6 @@ class PresetEntity
 
     public function __toString(): string
     {
-        return $this->name;
+        return $this->title;
     }
 }

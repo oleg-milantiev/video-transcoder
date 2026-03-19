@@ -14,9 +14,9 @@ interface VideoRepositoryInterface extends PaginatedRepositoryInterface
     public function log(Uuid $id, string $level, string $text): void;
 
     /**
-     * Get video details with all presets (sorted by name) and their tasks.
+     * Get video details with all presets (sorted by title) and their tasks.
      *
-     * @return array{video: Video, presetsWithTasks: array<array{id: int, name: string, task: ?array{id: int, status: int, progress: int, createdAt: string}}>}|null
+     * @return array{video: Video, presetsWithTasks: array<array{id: int, title: string, task: ?array{id: int, status: int, progress: int, createdAt: string}}>}|null
      */
     public function getDetails(Video $video): array;
 }

@@ -6,13 +6,14 @@ use App\Domain\Video\Entity\Video;
 use App\Domain\Video\ValueObject\FileExtension;
 use App\Domain\Video\ValueObject\VideoStatus;
 use App\Domain\Video\ValueObject\VideoTitle;
+use Faker\Factory;
 use Symfony\Component\Uid\Uuid;
 
 class VideoFake extends Video
 {
     public function __construct()
     {
-        $faker = \Faker\Factory::create();
+        $faker = Factory::create();
         $title = new VideoTitle($faker->sentence(3));
         $extension = new FileExtension($faker->randomElement(['mp4', 'mkv', 'avi', 'mov']));
         $status = VideoStatus::UPLOADED;

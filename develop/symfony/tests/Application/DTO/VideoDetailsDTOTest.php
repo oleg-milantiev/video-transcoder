@@ -36,7 +36,7 @@ class VideoDetailsDTOTest extends TestCase
 
         $presetDto = new PresetWithTaskDTO(
             id: 5,
-            name: 'Mobile',
+            title: 'Mobile',
             task: new TaskInfoDTO('PENDING', 0, '2026-03-18 08:50'),
         );
 

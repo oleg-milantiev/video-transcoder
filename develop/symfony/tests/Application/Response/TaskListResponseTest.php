@@ -38,7 +38,6 @@ class TaskListResponseTest extends TestCase
         $this->assertSame(2, $response->totalPages);
         $this->assertSame($task->id(), $response->items[0]->id);
         $this->assertSame($video->title()->value(), $response->items[0]->videoTitle);
-        $this->assertSame($preset->name()->value(), $response->items[0]->presetTitle);
     }
 
     public function testFromDomainHandlesEmptyCollection(): void

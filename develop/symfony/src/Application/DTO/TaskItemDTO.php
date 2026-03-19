@@ -26,8 +26,7 @@ readonly class TaskItemDTO
         return new self(
             id: $task->id(),
             videoTitle: $video->title()->value(),
-            // TODO preset name -> title
-            presetTitle: $preset->name()->value(),
+            presetTitle: $preset->title()->value(),
             status: $task->status()->name,
             progress: $task->progress()->value(),
             createdAt: $task->createdAt()->format('Y-m-d H:i')

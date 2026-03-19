@@ -5,26 +5,27 @@ namespace App\Domain\Video\Entity;
 use App\Domain\Video\ValueObject\Bitrate;
 use App\Domain\Video\ValueObject\Codec;
 use App\Domain\Video\ValueObject\PresetName;
+use App\Domain\Video\ValueObject\PresetTitle;
 use App\Domain\Video\ValueObject\Resolution;
 
 class Preset
 {
     private ?int $id;
-    private PresetName $name;
+    private PresetTitle $title;
     private Resolution $resolution;
     private Codec $codec;
     private Bitrate $bitrate;
 
     // TODO DDD подумать: PresetName и VideoFormat (resolution + codec + bitrate)
     public function __construct(
-        PresetName $name,
+        PresetTitle $title,
         Resolution $resolution,
         Codec $codec,
         Bitrate $bitrate,
         ?int $id = null,
     ) {
         $this->id = $id;
-        $this->rename($name);
+        $this->rename($title);
         $this->changeOutput($resolution, $codec, $bitrate);
     }
 
@@ -33,9 +34,9 @@ class Preset
         return $this->id;
     }
 
-    public function name(): PresetName
+    public function title(): PresetTitle
     {
-        return $this->name;
+        return $this->title;
     }
 
     public function resolution(): Resolution
@@ -54,17 +55,17 @@ class Preset
     }
 
     public static function create(
-        PresetName $name,
+        PresetTitle $title,
         Resolution $resolution,
         Codec $codec,
         Bitrate $bitrate,
     ): self {
-        return new self($name, $resolution, $codec, $bitrate);
+        return new self($title, $resolution, $codec, $bitrate);
     }
 
-    public function rename(PresetName $name): void
+    public function rename(PresetTitle $title): void
     {
-        $this->name = $name;
+        $this->title = $title;
     }
 
     public function changeOutput(

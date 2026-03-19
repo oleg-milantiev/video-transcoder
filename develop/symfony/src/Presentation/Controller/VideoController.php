@@ -14,8 +14,6 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 
-// TODO не очень хорошо перепутался JSON в index и шаблон в details.
-// Унифицировать, как перейду на Vue
 #[Route('/video')]
 class VideoController extends AbstractController
 {

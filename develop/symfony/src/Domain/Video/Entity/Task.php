@@ -20,6 +20,7 @@ class Task
     private int $userId;
 
     // Constructor for mapping from Doctrine only. Use static::create() for domain
+    // TODO remove it
     public function __construct(
         Uuid $videoId,
         int $presetId,

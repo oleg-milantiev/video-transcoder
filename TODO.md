@@ -3,12 +3,14 @@
 ## Основные задачи
 
 ### DDD
-- домен User улучшить
+- домен User улучшить (VO)
 
 ### Тесты и безопасность
-- unit на домен
-- первый вход не показывает список видео / задач
+- тесты
 - анализ и запись ошибок ffmpeg на примере вертикального видео с гориз. пресетом
+
+### События
+- split command and event message buses (CreateVideoHandler, CreateVideoPreviewHandler, ExtractVideoMetadataHandler)
 
 ### Видео и метаданные
 - добавить возможность отмены pending и transcoding4
@@ -25,6 +27,11 @@
 - запуск задач через update lock?
 - шедулер в крон
 - кубер и тераформ масштабирование
+
+### Frontend
+- первый вход не показывает список видео / задач
+- переход на Vue в SPO
+- перевод video/details в JSON
 
 ## На потом
 - вместо QueryException для прав и конфликтов может быть отдельный тип (например, AccessDeniedException, ConflictException) чтобы контроллер точнее возвращал 403/409.

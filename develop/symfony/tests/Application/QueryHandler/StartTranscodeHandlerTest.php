@@ -19,7 +19,7 @@ use App\Domain\Video\Repository\TaskRepositoryInterface;
 use App\Domain\Video\Repository\VideoRepositoryInterface;
 use App\Domain\Video\ValueObject\Bitrate;
 use App\Domain\Video\ValueObject\Codec;
-use App\Domain\Video\ValueObject\PresetName;
+use App\Domain\Video\ValueObject\PresetTitle;
 use App\Domain\Video\ValueObject\Resolution;
 use App\Domain\Video\ValueObject\VideoStatus;
 use App\Domain\Video\ValueObject\VideoTitle;
@@ -50,7 +50,7 @@ class StartTranscodeHandlerTest extends TestCase
         );
 
         $preset = new Preset(
-            new PresetName('HD 720p'),
+            new PresetTitle('HD 720p'),
             new Resolution(1280, 720),
             new Codec('h264'),
             new Bitrate(50.0),

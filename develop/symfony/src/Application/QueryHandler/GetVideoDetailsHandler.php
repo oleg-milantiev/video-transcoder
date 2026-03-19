@@ -45,7 +45,7 @@ final readonly class GetVideoDetailsHandler
             }
             $presetsWithTasks[] = new PresetWithTaskDTO(
                 id: $presetData['id'],
-                name: $presetData['name'],
+                title: $presetData['title'],
                 task: $taskDto,
             );
         }

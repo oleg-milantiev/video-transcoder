@@ -39,7 +39,7 @@ class PresetCrudController extends AbstractCrudController
     public function configureFilters(Filters $filters): Filters
     {
         return $filters
-            ->add(TextFilter::new('name'))
+            ->add(TextFilter::new('title'))
             ->add(NumericFilter::new('width'))
             ->add(NumericFilter::new('height'))
             ->add(TextFilter::new('codec'))
@@ -50,7 +50,7 @@ class PresetCrudController extends AbstractCrudController
     {
         return [
             IdField::new('id')->hideOnForm(),
-            TextField::new('name'),
+            TextField::new('title'),
             IntegerField::new('width'),
             IntegerField::new('height'),
             TextField::new('codec'),

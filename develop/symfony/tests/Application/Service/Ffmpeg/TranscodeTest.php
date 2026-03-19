@@ -8,7 +8,7 @@ use App\Application\Service\Ffmpeg\Transcode;
 use App\Domain\Video\Entity\Preset;
 use App\Domain\Video\ValueObject\Bitrate;
 use App\Domain\Video\ValueObject\Codec;
-use App\Domain\Video\ValueObject\PresetName;
+use App\Domain\Video\ValueObject\PresetTitle;
 use App\Domain\Video\ValueObject\Resolution;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
@@ -73,10 +73,10 @@ class TranscodeTest extends TestCase
         $this->assertSame('100k', $command[$index + 1]);
     }
 
-    private function createPreset(string $name, string $codec, float $bitrate, int $width, int $height): Preset
+    private function createPreset(string $title, string $codec, float $bitrate, int $width, int $height): Preset
     {
         return new Preset(
-            new PresetName($name),
+            new PresetTitle($title),
             new Resolution($width, $height),
             new Codec($codec),
             new Bitrate($bitrate),

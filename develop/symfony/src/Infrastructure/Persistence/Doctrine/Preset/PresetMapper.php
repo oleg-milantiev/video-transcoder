@@ -5,7 +5,7 @@ namespace App\Infrastructure\Persistence\Doctrine\Preset;
 use App\Domain\Video\Entity\Preset;
 use App\Domain\Video\ValueObject\Bitrate;
 use App\Domain\Video\ValueObject\Codec;
-use App\Domain\Video\ValueObject\PresetName;
+use App\Domain\Video\ValueObject\PresetTitle;
 use App\Domain\Video\ValueObject\Resolution;
 
 class PresetMapper
@@ -13,7 +13,7 @@ class PresetMapper
     public static function toDomain(PresetEntity $entity): Preset
     {
         return new Preset(
-            name: new PresetName($entity->name),
+            title: new PresetTitle($entity->title),
             resolution: new Resolution($entity->width, $entity->height),
             codec: new Codec($entity->codec),
             bitrate: new Bitrate($entity->bitrate),
@@ -25,7 +25,7 @@ class PresetMapper
     {
         $entity = new PresetEntity();
         $entity->id = $preset->id();
-        $entity->name = $preset->name()->value();
+        $entity->title = $preset->title()->value();
         $entity->width = $preset->resolution()->width();
         $entity->height = $preset->resolution()->height();
         $entity->codec = $preset->codec()->value();

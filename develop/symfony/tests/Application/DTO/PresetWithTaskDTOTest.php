@@ -13,11 +13,10 @@ class PresetWithTaskDTOTest extends TestCase
     public function testHoldsPresetDataAndOptionalTask(): void
     {
         $task = new TaskInfoDTO('COMPLETED', 100, '2026-03-18 08:00');
-        $dto = new PresetWithTaskDTO(1, '4K', $task);
+        $dto = new PresetWithTaskDTO(1, '4K', task: $task);
 
         $this->assertSame(1, $dto->id);
-        $this->assertSame('4K', $dto->name);
+        $this->assertSame('4K', $dto->title);
         $this->assertSame($task, $dto->task);
     }
 }
-
