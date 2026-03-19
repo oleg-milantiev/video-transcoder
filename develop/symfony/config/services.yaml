@@ -56,4 +56,4 @@ services:
                   - '%kernel.project_dir%/var/cache/uploads'
             - method: setApiPath
               arguments:
-                  - '/upload'
+                  - '/api/upload'

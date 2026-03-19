@@ -104,6 +104,21 @@
     {{ parent() }}
     <script>
         (function () {
+            var apiBearerToken = {{ apiAccessToken|default(null)|json_encode|raw }};
+
+            function buildApiHeaders() {
+                var headers = {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Content-Type': 'application/json'
+                };
+
+                if (apiBearerToken) {
+                    headers.Authorization = 'Bearer ' + apiBearerToken;
+                }
+
+                return headers;
+            }
+
             function onClick(e) {
                 var btn = e.currentTarget;
                 var url = btn.getAttribute('data-url');
@@ -116,10 +131,7 @@
 
                 fetch(url, {
                     method: 'POST',
-                    headers: {
-                        'X-Requested-With': 'XMLHttpRequest',
-                        'Content-Type': 'application/json'
-                    },
+                    headers: buildApiHeaders(),
                     credentials: 'same-origin'
                 }).then(function (resp) {
                     if (resp.ok) {
@@ -151,10 +163,7 @@
 
                 fetch(url, {
                     method: 'POST',
-                    headers: {
-                        'X-Requested-With': 'XMLHttpRequest',
-                        'Content-Type': 'application/json'
-                    },
+                    headers: buildApiHeaders(),
                     credentials: 'same-origin'
                 }).then(function (resp) {
                     if (resp.ok) {

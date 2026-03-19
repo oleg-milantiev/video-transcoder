@@ -8,16 +8,20 @@ use PHPUnit\Framework\Attributes\DataProvider;
 
 final class ApiAuthorizationTest extends ApiWebTestCase
 {
+    /**
+     * @throws \JsonException
+     */
     #[DataProvider('anonymousEndpointProvider')]
-    public function testAnonymousUserIsRedirectedToLogin(string $method, string $url): void
+    public function testAnonymousUserGetsUnauthorizedJson(string $method, string $url): void
     {
-        $client = ApiAuthorizationTest::createClient();
+        $client = static::createClient();
         $client->request($method, $url);
 
-        $response = $client->getResponse();
-
-        self::assertTrue($response->isRedirect(), 'Anonymous API request should be redirected to login.');
-        self::assertStringContainsString('/login', (string) $response->headers->get('Location'));
+        self::assertResponseStatusCodeSame(401);
+        self::assertSame(
+            ['error' => 'Missing Bearer token.'],
+            json_decode((string) $client->getResponse()->getContent(), true, 512, JSON_THROW_ON_ERROR)
+        );
     }
 
     public static function anonymousEndpointProvider(): array
@@ -29,5 +33,20 @@ final class ApiAuthorizationTest extends ApiWebTestCase
             ['POST', '/api/task/1/cancel'],
         ];
     }
-}
 
+    /**
+     * @throws \JsonException
+     */
+    public function testInvalidBearerTokenGetsUnauthorizedJson(): void
+    {
+        $client = static::createClient();
+        $client->setServerParameter('HTTP_AUTHORIZATION', 'Bearer invalid-token');
+        $client->request('GET', '/api/video/');
+
+        self::assertResponseStatusCodeSame(401);
+        self::assertSame(
+            ['error' => 'Invalid or expired token.'],
+            json_decode((string) $client->getResponse()->getContent(), true, 512, JSON_THROW_ON_ERROR)
+        );
+    }
+}

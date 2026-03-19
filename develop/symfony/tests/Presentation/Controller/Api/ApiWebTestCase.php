@@ -5,12 +5,13 @@ declare(strict_types=1);
 namespace App\Tests\Presentation\Controller\Api;
 
 use App\Infrastructure\Persistence\Doctrine\User\UserEntity;
+use App\Infrastructure\Security\ApiTokenService;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
 abstract class ApiWebTestCase extends WebTestCase
 {
-    protected function createAuthenticatedClient(int $userId = 1, array $roles = ['ROLE_USER']): KernelBrowser
+    protected function createBearerAuthenticatedClient(int $userId = 1, array $roles = ['ROLE_USER']): KernelBrowser
     {
         $client = static::createClient();
 
@@ -22,7 +23,11 @@ abstract class ApiWebTestCase extends WebTestCase
         $provider = new InMemoryTestUserProvider($user);
         static::getContainer()->set('security.user.provider.concrete.app_user_provider', $provider);
 
-        $client->loginUser($user);
+        /** @var ApiTokenService $tokenService */
+        $tokenService = static::getContainer()->get(ApiTokenService::class);
+        $token = $tokenService->createToken($userId, $user->getUserIdentifier());
+
+        $client->setServerParameter('HTTP_AUTHORIZATION', sprintf('Bearer %s', $token));
 
         return $client;
     }
@@ -32,6 +37,3 @@ abstract class ApiWebTestCase extends WebTestCase
         static::getContainer()->set($serviceId, $service);
     }
 }
-
-
-

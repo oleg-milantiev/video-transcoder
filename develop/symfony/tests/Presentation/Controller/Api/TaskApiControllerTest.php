@@ -20,7 +20,7 @@ final class TaskApiControllerTest extends ApiWebTestCase
 {
     public function testListReturnsItems(): void
     {
-        $client = $this->createAuthenticatedClient();
+        $client = $this->createBearerAuthenticatedClient();
 
         $items = [
             ['id' => 11, 'status' => 'PENDING'],
@@ -50,7 +50,7 @@ final class TaskApiControllerTest extends ApiWebTestCase
      */
     public function testListReturnsBadRequestOnQueryException(): void
     {
-        $client = $this->createAuthenticatedClient();
+        $client = $this->createBearerAuthenticatedClient();
 
         $queryBus = $this->createMock(QueryBus::class);
         $queryBus->expects($this->once())
@@ -66,7 +66,7 @@ final class TaskApiControllerTest extends ApiWebTestCase
 
     public function testCancelReturnsNotFoundWhenTaskDoesNotExist(): void
     {
-        $client = $this->createAuthenticatedClient(userId: 42);
+        $client = $this->createBearerAuthenticatedClient(userId: 42);
 
         $taskRepository = $this->createMock(TaskRepositoryInterface::class);
         $taskRepository->expects($this->once())->method('findById')->with(404)->willReturn(null);
@@ -79,7 +79,7 @@ final class TaskApiControllerTest extends ApiWebTestCase
 
     public function testCancelReturnsNotFoundWhenVideoDoesNotExist(): void
     {
-        $client = $this->createAuthenticatedClient(userId: 42);
+        $client = $this->createBearerAuthenticatedClient(userId: 42);
 
         $task = new TaskFake();
 
@@ -98,7 +98,7 @@ final class TaskApiControllerTest extends ApiWebTestCase
 
     public function testCancelReturnsForbiddenWhenAccessIsDenied(): void
     {
-        $client = $this->createAuthenticatedClient(userId: 42);
+        $client = $this->createBearerAuthenticatedClient(userId: 42);
 
         $task = new TaskFake();
         $video = new VideoFake();
@@ -128,7 +128,7 @@ final class TaskApiControllerTest extends ApiWebTestCase
      */
     public function testCancelPendingTaskCancelsImmediately(): void
     {
-        $client = $this->createAuthenticatedClient(userId: 42);
+        $client = $this->createBearerAuthenticatedClient(userId: 42);
 
         $task = new TaskFake();
         $video = new VideoFake();
@@ -164,7 +164,7 @@ final class TaskApiControllerTest extends ApiWebTestCase
 
     public function testCancelProcessingTaskMarksRequestWithoutImmediateCancel(): void
     {
-        $client = $this->createAuthenticatedClient(userId: 42);
+        $client = $this->createBearerAuthenticatedClient(userId: 42);
 
         $task = $this->createProcessingTask();
         $video = new VideoFake();

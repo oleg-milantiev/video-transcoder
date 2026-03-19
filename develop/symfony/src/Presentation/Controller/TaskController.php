@@ -22,7 +22,7 @@ class TaskController extends AbstractController
     ) {
     }
 
-    #[Route('/task/{id}/download', name: 'task_download', requirements: ['id' => '\\d+'])]
+    #[Route('/task/{id}/download', name: 'task_download')]
     public function download(int $id): Response
     {
         $task = $this->taskRepository->findById($id);

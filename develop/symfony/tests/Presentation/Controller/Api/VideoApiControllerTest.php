@@ -16,7 +16,7 @@ final class VideoApiControllerTest extends ApiWebTestCase
      */
     public function testListReturnsItems(): void
     {
-        $client = $this->createAuthenticatedClient();
+        $client = $this->createBearerAuthenticatedClient();
 
         $items = [
             ['uuid' => '11111111-1111-4111-8111-111111111111', 'title' => 'Video A'],
@@ -46,7 +46,7 @@ final class VideoApiControllerTest extends ApiWebTestCase
      */
     public function testListReturnsBadRequestOnQueryException(): void
     {
-        $client = $this->createAuthenticatedClient();
+        $client = $this->createBearerAuthenticatedClient();
 
         $queryBus = $this->createMock(QueryBus::class);
         $queryBus->expects($this->once())
@@ -65,7 +65,7 @@ final class VideoApiControllerTest extends ApiWebTestCase
      */
     public function testTranscodeReturnsTaskPayload(): void
     {
-        $client = $this->createAuthenticatedClient(userId: 42);
+        $client = $this->createBearerAuthenticatedClient(userId: 42);
 
         $queryBus = $this->createMock(QueryBus::class);
         $queryBus->expects($this->once())
@@ -91,7 +91,7 @@ final class VideoApiControllerTest extends ApiWebTestCase
      */
     public function testTranscodeReturnsBadRequestForInvalidUuid(): void
     {
-        $client = $this->createAuthenticatedClient();
+        $client = $this->createBearerAuthenticatedClient();
 
         $queryBus = $this->createMock(QueryBus::class);
         $queryBus->expects($this->never())->method('query');
@@ -108,7 +108,7 @@ final class VideoApiControllerTest extends ApiWebTestCase
      */
     public function testTranscodeReturnsForbiddenOnDomainException(): void
     {
-        $client = $this->createAuthenticatedClient();
+        $client = $this->createBearerAuthenticatedClient();
 
         $queryBus = $this->createMock(QueryBus::class);
         $queryBus->expects($this->once())
@@ -127,7 +127,7 @@ final class VideoApiControllerTest extends ApiWebTestCase
      */
     public function testTranscodeReturnsServerErrorOnUnexpectedException(): void
     {
-        $client = $this->createAuthenticatedClient();
+        $client = $this->createBearerAuthenticatedClient();
 
         $queryBus = $this->createMock(QueryBus::class);
         $queryBus->expects($this->once())
