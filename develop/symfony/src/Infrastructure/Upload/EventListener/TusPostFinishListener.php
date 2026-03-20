@@ -25,7 +25,7 @@ readonly class TusPostFinishListener
     {
         $this->messageBus->dispatch(new CreateVideo(
             file: $event->getFile(),
-            userId: $this->security->getUser()->getId(),
+            userId: $this->security->getUser()->id,
         ));
     }
 }
