@@ -7,8 +7,10 @@ const artifactsRoot = process.env.E2E_ARTIFACTS_DIR || path.join('/work/release.
 
 module.exports = defineConfig({
   testDir: './tests',
+  testMatch: ['**/*.js'],
   timeout: 180000,
-  fullyParallel: false,
+  // workers: 1,
+  // fullyParallel: false,
   retries: 0,
   reporter: [
     ['list'],
