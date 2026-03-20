@@ -1,5 +1,9 @@
 # AGENTS.md — AI Coding Agent Guide for video-transcoder
 
+Run phpunit and composer stan after every backend change.
+- **phpunit** - docker exec -i develop-php-1 vendor/bin/phpunit tests/
+- **stan** - docker exec -i develop-php-1 composer stan
+
 ## Architecture Overview
 - **Domain-Driven Design (DDD)**: The backend (Symfony) is organized by domain boundaries: `Domain`, `Application`, `Infrastructure`, `Presentation`.
 - **Core Components**:

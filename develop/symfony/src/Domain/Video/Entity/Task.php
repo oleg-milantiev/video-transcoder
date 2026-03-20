@@ -64,6 +64,17 @@ class Task
         $this->dates = $this->dates->markStarted();
     }
 
+    public function restart(): void
+    {
+        if (!$this->status->canBeRestarted()) {
+            throw new \DomainException('Task cannot be restarted.');
+        }
+
+        $this->status = TaskStatus::pending();
+        $this->progress = new Progress(0);
+        $this->dates = $this->dates->restart();
+    }
+
     public function updateProgress(Progress $progress): void
     {
         if ($this->status->isFinished()) {

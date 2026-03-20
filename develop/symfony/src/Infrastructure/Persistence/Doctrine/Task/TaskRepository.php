@@ -86,6 +86,23 @@ class TaskRepository extends ServiceEntityRepository implements TaskRepositoryIn
         return self::mapToDomain($entity);
     }
 
+    public function findForTranscode(UuidV4 $videoId, int $presetId, int $userId): ?Task
+    {
+        $qb = $this->createQueryBuilder('task')
+            ->andWhere('IDENTITY(task.video) = :videoId')
+            ->andWhere('IDENTITY(task.preset) = :presetId')
+            ->andWhere('IDENTITY(task.user) = :userId')
+            ->setParameter('videoId', $videoId->toRfc4122())
+            ->setParameter('presetId', $presetId)
+            ->setParameter('userId', $userId)
+            ->setMaxResults(1);
+
+        /** @var TaskEntity|null $entity */
+        $entity = $qb->getQuery()->getOneOrNullResult();
+
+        return $entity ? self::mapToDomain($entity) : null;
+    }
+
     /**
      * @throws Exception
      */

@@ -50,7 +50,7 @@ final readonly class TranscodeVideoHandler
     public function __invoke(TranscodeVideo $command): void
     {
         $scheduledTask = $command->scheduledTask;
-        $task = $this->taskRepository->findById($scheduledTask->taskId);
+        $task = $this->taskRepository->findByIdFresh($scheduledTask->taskId);
 
         if (!$task) {
             $this->logger->error('Scheduled task not found for transcoding', ['taskId' => $scheduledTask->taskId]);

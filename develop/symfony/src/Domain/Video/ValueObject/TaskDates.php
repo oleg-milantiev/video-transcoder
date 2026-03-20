@@ -48,6 +48,11 @@ final readonly class TaskDates
         return new self($this->createdAt, $startedAt, $startedAt);
     }
 
+    public function restart(): self
+    {
+        return new self($this->createdAt, null, new \DateTimeImmutable());
+    }
+
     public function touch(?\DateTimeImmutable $updatedAt = null): self
     {
         return new self($this->createdAt, $this->startedAt, $updatedAt ?? new \DateTimeImmutable());

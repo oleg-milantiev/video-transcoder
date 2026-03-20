@@ -58,7 +58,14 @@ final readonly class StartTranscodeHandler
         }
 
         try {
-            $task = Task::create($video->id(), $preset->id(), $user->id());
+            $task = $this->taskRepository->findForTranscode($video->id(), $preset->id(), $user->id());
+
+            if ($task instanceof Task) {
+                $task->restart();
+            } else {
+                $task = Task::create($video->id(), $preset->id(), $user->id());
+            }
+
             $this->taskRepository->save($task);
         } catch (\Throwable $e) {
             throw new TaskCreationFailedException('Failed to create task', previous: $e);
