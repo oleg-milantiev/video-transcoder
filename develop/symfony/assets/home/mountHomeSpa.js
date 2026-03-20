@@ -26,6 +26,10 @@ export function mountHomeSpa() {
         return;
     }
 
+    if (rootElement.dataset.vueMounted === '1') {
+        return;
+    }
+
     const config = readConfig(rootElement);
     const HomeTabsView = createHomeTabsView(config);
     const VideoDetailsView = createVideoDetailsView(config);
@@ -43,6 +47,10 @@ export function mountHomeSpa() {
                 name: 'video-details',
                 component: VideoDetailsView,
             },
+            {
+                path: '/:pathMatch(.*)*',
+                redirect: '/',
+            },
         ],
     });
 
@@ -52,6 +60,11 @@ export function mountHomeSpa() {
         },
     });
     app.use(router);
-    app.mount(rootElement);
+
+    // Wait for initial route resolution to avoid rendering an empty RouterView.
+    void router.isReady().then(function () {
+        rootElement.dataset.vueMounted = '1';
+        app.mount(rootElement);
+    });
 }
 
