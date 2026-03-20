@@ -23,8 +23,8 @@ services:
             - rabbitmq
         expose:
             - 9000
-        volumes:
-            - ./symfony:/var/www/yc
+#        volumes:
+#            - ./symfony:/var/www/yc
 # use filesystem for debug
 #            - symfony-var:/var/www/yc/var
 
@@ -41,8 +41,8 @@ services:
             - postgres
             - rabbitmq
         command: sh -c '/var/www/yc/bin/console messenger:consume async -vvv'
-        volumes:
-            - ./symfony:/var/www/yc
+#        volumes:
+#            - ./symfony:/var/www/yc
 # use filesystem for debug
 #            - symfony-var:/var/www/yc/var
 
@@ -62,8 +62,8 @@ services:
             resources:
                 limits:
                     memory: 256M
-        volumes:
-            - ./symfony:/var/www/yc
+#        volumes:
+#            - ./symfony:/var/www/yc
 
     redis:
         restart: always

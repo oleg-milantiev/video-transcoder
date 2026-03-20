@@ -17,6 +17,8 @@ COPY symfony/ /var/www/yc/
 
 WORKDIR /var/www/yc
 
+RUN composer install --no-interaction --prefer-dist --no-progress --optimize-autoloader
+
 RUN chown -R www-data:www-data /var/www/yc
 
 EXPOSE 9000
