@@ -232,7 +232,7 @@ export function createVideoDetailsView(config) {
                     actionNode = h('a', {
                         href: this.taskDownloadUrl(task.id),
                         class: 'btn btn-outline-primary btn-sm',
-                        download: true,
+                        download: '',
                     }, 'Download');
                 } else if (task && (task.status === 'PENDING' || task.status === 'PROCESSING') && task.id) {
                     actionNode = h('button', {

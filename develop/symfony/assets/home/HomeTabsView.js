@@ -302,7 +302,7 @@ export function createHomeTabsView(config) {
                                                             {
                                                                 href: this.getTaskDownloadUrl(task.id),
                                                                 class: 'btn btn-outline-primary btn-sm',
-                                                                download: true,
+                                                                download: '',
                                                             },
                                                             'Download'
                                                         )
