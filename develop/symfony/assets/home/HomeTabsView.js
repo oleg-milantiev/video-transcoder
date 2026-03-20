@@ -1,6 +1,5 @@
-import { defineComponent, h, onBeforeUnmount, onMounted, ref } from 'vue';
-import { useRouter } from 'vue-router';
-import { useRoute } from 'vue-router';
+import { defineComponent, h, onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 import { initHomeLegacyWidgets } from './legacyHomeWidgets.js';
 
 function createAuthHeader(apiBearerToken) {
@@ -52,8 +51,9 @@ export function createHomeTabsView(config) {
             const router = useRouter();
             const route = useRoute();
             const allowedTabs = ['upload', 'videos', 'tasks'];
+            const normalizeTab = (tab) => (allowedTabs.includes(tab) ? tab : 'upload');
             const queryTab = typeof route.query.tab === 'string' ? route.query.tab : '';
-            const initialTab = allowedTabs.includes(queryTab) ? queryTab : 'upload';
+            const initialTab = normalizeTab(queryTab);
             const activeTab = ref(initialTab);
             let cleanup = function noop() {};
             const pageLimit = 10;
@@ -128,25 +128,7 @@ export function createHomeTabsView(config) {
                 }
             }
 
-            onMounted(function () {
-                cleanup = initHomeLegacyWidgets(config);
-
-                if (initialTab === 'videos') {
-                    void loadVideos(1);
-                }
-
-                if (initialTab === 'tasks') {
-                    void loadTasks(1);
-                }
-            });
-
-            onBeforeUnmount(function () {
-                cleanup();
-            });
-
-            function setTab(tab) {
-                activeTab.value = tab;
-
+            function ensureTabDataLoaded(tab) {
                 if (tab === 'videos' && !videosLoading.value && !videosLoaded.value) {
                     void loadVideos(1);
                 }
@@ -155,6 +137,56 @@ export function createHomeTabsView(config) {
                     void loadTasks(1);
                 }
             }
+
+            function syncTabToRoute(tab) {
+                const currentTab = typeof route.query.tab === 'string' ? route.query.tab : '';
+                if (currentTab === tab) {
+                    return;
+                }
+
+                void router.replace({
+                    path: route.path,
+                    query: {
+                        ...route.query,
+                        tab,
+                    },
+                });
+            }
+
+            onMounted(function () {
+                cleanup = initHomeLegacyWidgets(config);
+                ensureTabDataLoaded(initialTab);
+                syncTabToRoute(initialTab);
+            });
+
+            onBeforeUnmount(function () {
+                cleanup();
+            });
+
+            function setTab(tab) {
+                const normalizedTab = normalizeTab(tab);
+                if (activeTab.value === normalizedTab) {
+                    syncTabToRoute(normalizedTab);
+                    return;
+                }
+
+                activeTab.value = normalizedTab;
+                ensureTabDataLoaded(normalizedTab);
+                syncTabToRoute(normalizedTab);
+            }
+
+            watch(
+                () => route.query.tab,
+                (tabFromQuery) => {
+                    const nextTab = normalizeTab(typeof tabFromQuery === 'string' ? tabFromQuery : '');
+                    if (nextTab === activeTab.value) {
+                        return;
+                    }
+
+                    activeTab.value = nextTab;
+                    ensureTabDataLoaded(nextTab);
+                }
+            );
 
             function openVideoDetails(uuid) {
                 void router.push(config.videoDetailsUrlTemplate.replace('__UUID__', uuid));
