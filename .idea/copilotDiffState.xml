@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="CopilotDiffPersistence">
+    <option name="pendingDiffs">
+      <map>
+        <entry key="/TaskInfoDTO (snapshot).php">
+          <value>
+            <PendingDiffInfo>
+              <option name="filePath" value="/TaskInfoDTO (snapshot).php" />
+              <option name="originalContent" value="&lt;?php&#10;&#10;namespace App\Application\DTO;&#10;&#10;readonly class TaskInfoDTO&#10;{&#10;    public function __construct(&#10;        public string $status,&#10;        public int $progress,&#10;        public string $createdAt,&#10;    ) {}&#10;}&#10;" />
+              <option name="updatedContent" value="&lt;?php&#10;&#10;namespace App\Application\DTO;&#10;&#10;readonly class TaskInfoDTO&#10;{&#10;    public function __construct(&#10;        public string $status,&#10;        public int $progress,&#10;        public string $createdAt,&#10;        public ?int $id = null,&#10;    ) {}&#10;}" />
+            </PendingDiffInfo>
+          </value>
+        </entry>
+        <entry key="/VideoItemDTOTest (snapshot).php">
+          <value>
+            <PendingDiffInfo>
+              <option name="filePath" value="/VideoItemDTOTest (snapshot).php" />
+              <option name="originalContent" value="&lt;?php&#10;&#10;declare(strict_types=1);&#10;&#10;namespace App\Tests\Application\DTO;&#10;&#10;use App\Application\DTO\VideoItemDTO;&#10;use App\Domain\Video\Entity\Video;&#10;use App\Domain\Video\ValueObject\FileExtension;&#10;use App\Domain\Video\ValueObject\VideoStatus;&#10;use App\Domain\Video\ValueObject\VideoTitle;&#10;use PHPUnit\Framework\TestCase;&#10;use Symfony\Component\Uid\Uuid;&#10;&#10;class VideoItemDTOTest extends TestCase&#10;{&#10;    public function testFromDomainMapsAllFields(): void&#10;    {&#10;        $uuid = Uuid::fromString('11111111-1111-1111-1111-111111111111');&#10;        $video = new Video(&#10;            new VideoTitle('Demo Video'),&#10;            new FileExtension('mp4'),&#10;            VideoStatus::UPLOADED,&#10;            42,&#10;            new \DateTimeImmutable('2026-03-18 10:15:00'),&#10;            ['preview' =&gt; true],&#10;            $uuid,&#10;        );&#10;&#10;        $dto = VideoItemDTO::fromDomain($video);&#10;&#10;        $this-&gt;assertSame($uuid-&gt;toRfc4122(), $dto-&gt;uuid);&#10;        $this-&gt;assertSame('Demo Video', $dto-&gt;title);&#10;        $this-&gt;assertSame('UPLOADED', $dto-&gt;status);&#10;        $this-&gt;assertSame('2026-03-18 10:15', $dto-&gt;createdAt);&#10;        $this-&gt;assertSame($uuid-&gt;toRfc4122() . '.jpg', $dto-&gt;poster);&#10;    }&#10;}&#10;&#10;" />
+              <option name="updatedContent" value="&lt;?php&#10;&#10;declare(strict_types=1);&#10;&#10;namespace App\Tests\Application\DTO;&#10;&#10;use App\Application\DTO\VideoItemDTO;&#10;use App\Domain\Video\Entity\Video;&#10;use App\Domain\Video\ValueObject\FileExtension;&#10;use App\Domain\Video\ValueObject\VideoStatus;&#10;use App\Domain\Video\ValueObject\VideoTitle;&#10;use PHPUnit\Framework\TestCase;&#10;use Symfony\Component\Uid\UuidV4;&#10;&#10;class VideoItemDTOTest extends TestCase&#10;{&#10;    public function testFromDomainMapsAllFields(): void&#10;    {&#10;        $uuid = UuidV4::fromString('11111111-1111-1111-1111-111111111111');&#10;        $video = new Video(&#10;            new VideoTitle('Demo Video'),&#10;            new FileExtension('mp4'),&#10;            VideoStatus::UPLOADED,&#10;            42,&#10;            new \DateTimeImmutable('2026-03-18 10:15:00'),&#10;            ['preview' =&gt; true],&#10;            $uuid,&#10;        );&#10;&#10;        $dto = VideoItemDTO::fromDomain($video);&#10;&#10;        $this-&gt;assertSame($uuid-&gt;toRfc4122(), $dto-&gt;uuid);&#10;        $this-&gt;assertSame('Demo Video', $dto-&gt;title);&#10;        $this-&gt;assertSame('UPLOADED', $dto-&gt;status);&#10;        $this-&gt;assertSame('2026-03-18 10:15', $dto-&gt;createdAt);&#10;        $this-&gt;assertSame($uuid-&gt;toRfc4122() . '.jpg', $dto-&gt;poster);&#10;    }&#10;}" />
+            </PendingDiffInfo>
+          </value>
+        </entry>
+        <entry key="/messenger (snapshot).yaml">
+          <value>
+            <PendingDiffInfo>
+              <option name="filePath" value="/messenger (snapshot).yaml" />
+              <option name="originalContent" value="framework:&#10;    messenger:&#10;        failure_transport: failed&#10;&#10;        transports:&#10;            # https://symfony.com/doc/current/messenger.html#transport-configuration&#10;            async:&#10;                dsn: '%env(MESSENGER_TRANSPORT_DSN)%'&#10;                retry_strategy:&#10;                    max_retries: 3&#10;                    multiplier: 2&#10;            async_transcode:&#10;                dsn: '%env(MESSENGER_TRANSPORT_DSN)%'&#10;                retry_strategy:&#10;                    max_retries: 3&#10;                    multiplier: 2&#10;            failed: 'doctrine://default?queue_name=failed'&#10;            # sync: 'sync://'&#10;&#10;        default_bus: messenger.bus.default&#10;&#10;        buses:&#10;            messenger.bus.default: []&#10;&#10;        routing:&#10;            App\Application\Command\Video\ExtractVideoMetadata: async&#10;            App\Application\Command\Video\CreateVideoPreview: async&#10;            Symfony\Component\Mailer\Messenger\SendEmailMessage: async&#10;            Symfony\Component\Notifier\Message\ChatMessage: async&#10;            Symfony\Component\Notifier\Message\SmsMessage: async&#10;&#10;            App\Application\Command\Video\TranscodeVideo: async_transcode&#10;&#10;            # Route your messages to the transports&#10;            # 'App\Message\YourMessage': async&#10;" />
+              <option name="updatedContent" value="framework:&#10;    messenger:&#10;        failure_transport: failed&#10;&#10;        transports:&#10;            # https://symfony.com/doc/current/messenger.html#transport-configuration&#10;            async:&#10;                dsn: '%env(MESSENGER_TRANSPORT_DSN)%'&#10;                options:&#10;                    queue_name: default&#10;                retry_strategy:&#10;                    max_retries: 3&#10;                    multiplier: 2&#10;            async_transcode:&#10;                dsn: '%env(MESSENGER_TRANSPORT_DSN)%'&#10;                options:&#10;                    queue_name: async_transcode&#10;                retry_strategy:&#10;                    max_retries: 3&#10;                    multiplier: 2&#10;            failed: 'doctrine://default?queue_name=failed'&#10;            # sync: 'sync://'&#10;&#10;        default_bus: messenger.bus.default&#10;&#10;        buses:&#10;            messenger.bus.default: []&#10;&#10;        routing:&#10;            App\Application\Command\Video\ExtractVideoMetadata: async&#10;            App\Application\Command\Video\CreateVideoPreview: async&#10;            Symfony\Component\Mailer\Messenger\SendEmailMessage: async&#10;            Symfony\Component\Notifier\Message\ChatMessage: async&#10;            Symfony\Component\Notifier\Message\SmsMessage: async&#10;&#10;            App\Application\Command\Video\TranscodeVideo: async_transcode&#10;&#10;            # Route your messages to the transports&#10;            # 'App\Message\YourMessage': async" />
+            </PendingDiffInfo>
+          </value>
+        </entry>
+        <entry key="$PROJECT_DIR$/develop/docker/php/conf.d/zz-memory-limit.ini">
+          <value>
+            <PendingDiffInfo>
+              <option name="filePath" value="$PROJECT_DIR$/develop/docker/php/conf.d/zz-memory-limit.ini" />
+              <option name="updatedContent" value="memory_limit = 512M&#10;" />
+            </PendingDiffInfo>
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
+</project>
