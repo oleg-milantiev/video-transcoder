@@ -24,7 +24,6 @@ final readonly class CreateVideoHandler
         private MessageBusInterface $commandBus,
         #[Autowire(service: 'messenger.bus.event')]
         private MessageBusInterface $eventBus,
-        private LoggerInterface $logger,
         private VideoRepositoryInterface $videoRepository,
         private StorageInterface $storage,
     ) {

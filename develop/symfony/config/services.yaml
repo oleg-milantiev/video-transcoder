@@ -34,6 +34,7 @@ services:
     # Interface binding
     App\Domain\Storage\StorageInterface: '@App\Infrastructure\Storage\LocalStorage'
     App\Domain\Repository\VideoRepositoryInterface: '@App\Repository\VideoRepository'
+    App\Infrastructure\Ffmpeg\ProcessRunnerInterface: '@App\Infrastructure\Ffmpeg\SymfonyProcessRunner'
 
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones

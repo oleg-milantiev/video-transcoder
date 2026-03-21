@@ -9,13 +9,11 @@ use App\Application\Event\CreateVideoPreviewSuccess;
 use App\Domain\Video\Exception\VideoPreviewGenerationFailed;
 use App\Domain\Video\Repository\VideoRepositoryInterface;
 use App\Domain\Video\Service\Storage\StorageInterface;
+use App\Infrastructure\Ffmpeg\VideoPreviewGenerator;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 use Symfony\Component\Messenger\MessageBusInterface;
-use Symfony\Component\Process\Exception\ProcessFailedException;
-use Symfony\Component\Process\Process;
 
-// TODO split
 #[AsMessageHandler(bus: 'messenger.bus.command')]
 final readonly class CreateVideoPreviewHandler
 {
@@ -24,6 +22,7 @@ final readonly class CreateVideoPreviewHandler
         #[Autowire(service: 'messenger.bus.event')]
         private MessageBusInterface $eventBus,
         private VideoRepositoryInterface $videoRepository,
+        private VideoPreviewGenerator $videoPreviewGenerator,
     ) {
     }
 
@@ -40,7 +39,7 @@ final readonly class CreateVideoPreviewHandler
 
             $duration = $video->duration() ?? 0.0;
             $captureTime = min($duration, 1.0);
-            $this->generatePreview($inputPath, $outputPath, $captureTime);
+            $this->videoPreviewGenerator->generate($inputPath, $outputPath, $captureTime);
 
             $video->updateMeta(['preview' => true]);
             $this->videoRepository->save($video);
@@ -56,23 +55,4 @@ final readonly class CreateVideoPreviewHandler
         }
     }
 
-    // TODO move to App\Application\Service\Ffmpeg
-    private function generatePreview(string $inputPath, string $outputPath, float $time): void
-    {
-        $process = new Process([
-            'ffmpeg',
-            '-y',
-            '-ss', (string) $time,
-            '-i', $inputPath,
-            '-frames:v', '1',
-            '-q:v', '2',
-            $outputPath
-        ]);
-
-        $process->run();
-
-        if (!$process->isSuccessful()) {
-            throw new ProcessFailedException($process);
-        }
-    }
 }
