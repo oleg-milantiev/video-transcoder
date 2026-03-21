@@ -2,6 +2,6 @@
 
 namespace App\Application\Event;
 
-readonly class ApplicationEvent
+abstract readonly class ApplicationEvent
 {
 }
