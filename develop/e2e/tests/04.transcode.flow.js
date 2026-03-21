@@ -1,5 +1,8 @@
 const { test, expect } = require('@playwright/test');
 
+const UI_TIMEOUT = 8000;
+const NAV_TIMEOUT = 15000;
+
 async function shot(page, testInfo, name) {
     await page.screenshot({ path: testInfo.outputPath(name), fullPage: true });
 }
@@ -19,7 +22,7 @@ function presetRow(page, presetTitle) {
 
 async function readPresetTaskState(page, presetTitle) {
     const row = presetRow(page, presetTitle);
-    await expect(row).toBeVisible();
+    await expect(row).toBeVisible({ timeout: UI_TIMEOUT });
 
     const status = (await row.locator('td').nth(1).innerText()).trim();
     const progressText = (await row.locator('td').nth(2).innerText()).trim();
@@ -30,14 +33,14 @@ async function readPresetTaskState(page, presetTitle) {
 }
 
 async function waitForVideoDetailsVisible(page) {
-    await expect(page.getByRole('heading', { name: 'Video Details' })).toBeVisible();
-    await expect(page.getByRole('heading', { name: 'Presets' })).toBeVisible();
-    await expect(presetsTable(page)).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Video Details' })).toBeVisible({ timeout: UI_TIMEOUT });
+    await expect(page.getByRole('heading', { name: 'Presets' })).toBeVisible({ timeout: UI_TIMEOUT });
+    await expect(presetsTable(page)).toBeVisible({ timeout: UI_TIMEOUT });
 }
 
 async function clickDownloadAndVerifyMp4(page, row) {
     const downloadLink = row.getByRole('link', { name: 'Download' });
-    await expect(downloadLink).toBeVisible();
+    await expect(downloadLink).toBeVisible({ timeout: UI_TIMEOUT });
 
     const href = await downloadLink.getAttribute('href');
     if (!href) {
@@ -45,7 +48,7 @@ async function clickDownloadAndVerifyMp4(page, row) {
     }
 
     const downloadPromise = page.waitForEvent('download', { timeout: 15000 }).catch(() => null);
-    await downloadLink.click();
+    await downloadLink.click({ timeout: UI_TIMEOUT });
 
     const download = await downloadPromise;
 
@@ -79,35 +82,35 @@ test('transcode flow from video details to downloadable mp4', async ({ page }, t
     const presetTitle = '180p';
 
     // 1) Home + login
-    await page.goto('/', { waitUntil: 'domcontentloaded' });
-    await page.getByRole('link', { name: 'Sign in' }).last().click();
+    await page.goto('/', { waitUntil: 'domcontentloaded', timeout: NAV_TIMEOUT });
+    await page.getByRole('link', { name: 'Sign in' }).last().click({ timeout: UI_TIMEOUT });
     await page.locator('#inputEmail').fill(adminEmail);
     await page.locator('#inputPassword').fill(adminPassword);
-    await page.getByRole('button', { name: 'Sign in' }).click();
-    await expect(page.getByRole('button', { name: 'Videos' })).toBeVisible();
+    await page.getByRole('button', { name: 'Sign in' }).click({ timeout: UI_TIMEOUT });
+    await expect(page.getByRole('button', { name: 'Videos' })).toBeVisible({ timeout: UI_TIMEOUT });
     await shot(page, testInfo, '01-login-success.png');
 
 
     // 2) Open Videos tab
-    await page.getByRole('button', { name: 'Videos' }).click();
-    await expect(page.locator('#videosTable')).toBeVisible();
+    await page.getByRole('button', { name: 'Videos' }).click({ timeout: UI_TIMEOUT });
+    await expect(page.locator('#videosTable')).toBeVisible({ timeout: UI_TIMEOUT });
     await shot(page, testInfo, '02-videos-tab-open.png');
 
     // 3) Open previously uploaded video card
     const row = videoRowByTitle(page, uploadedVideoName);
     await expect(row).toBeVisible({ timeout: 20000 });
-    await row.click();
+    await row.click({ timeout: UI_TIMEOUT });
 
     // 4) Verify presets table + preset exists
     await waitForVideoDetailsVisible(page);
     const row180p = presetRow(page, presetTitle);
-    await expect(row180p).toBeVisible();
+    await expect(row180p).toBeVisible({ timeout: UI_TIMEOUT });
     await shot(page, testInfo, '03-video-details-with-presets.png');
 
     // 5) Verify and click Transcode button
     const transcodeButton = row180p.getByRole('button', { name: 'Transcode' });
-    await expect(transcodeButton).toBeVisible();
-    await transcodeButton.click();
+    await expect(transcodeButton).toBeVisible({ timeout: UI_TIMEOUT });
+    await transcodeButton.click({ timeout: UI_TIMEOUT });
     await shot(page, testInfo, '04-transcode-clicked.png');
 
     // 6) Verify task appears in running state
@@ -142,7 +145,7 @@ test('transcode flow from video details to downloadable mp4', async ({ page }, t
         }
 
         await page.waitForTimeout(5000);
-        await page.reload();
+        await page.reload({ waitUntil: 'domcontentloaded', timeout: NAV_TIMEOUT });
         await waitForVideoDetailsVisible(page);
     }
 
@@ -152,13 +155,13 @@ test('transcode flow from video details to downloadable mp4', async ({ page }, t
 
     // 8) Verify Download button and download without errors
     const completedRow = presetRow(page, presetTitle);
-    await expect(completedRow.getByRole('link', { name: 'Download' })).toBeVisible();
+    await expect(completedRow.getByRole('link', { name: 'Download' })).toBeVisible({ timeout: UI_TIMEOUT });
     await clickDownloadAndVerifyMp4(page, completedRow);
     await shot(page, testInfo, '06-download-verified.png');
 
     // 9) Sign out
-    await expect(page.getByRole('link', { name: 'Sign out' })).toBeVisible();
-    await page.getByRole('link', { name: 'Sign out' }).click();
-    await expect(page.getByRole('link', { name: 'Sign in' })).toHaveCount(2);
+    await expect(page.getByRole('link', { name: 'Sign out' })).toBeVisible({ timeout: UI_TIMEOUT });
+    await page.getByRole('link', { name: 'Sign out' }).click({ timeout: UI_TIMEOUT });
+    await expect(page.getByRole('link', { name: 'Sign in' })).toHaveCount(2, { timeout: UI_TIMEOUT });
     await shot(page, testInfo, '07-sign-out.png');
 });
