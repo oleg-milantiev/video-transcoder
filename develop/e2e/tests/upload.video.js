@@ -16,7 +16,7 @@ async function expectDetailsValue(page, label) {
 }
 
 async function waitForPosterAndMeta(page, testInfo) {
-  const maxAttempts = 3;
+  const maxAttempts = 5;
 
   for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
     const hasPoster = (await page.locator('.card-body img.img-fluid').count()) > 0;

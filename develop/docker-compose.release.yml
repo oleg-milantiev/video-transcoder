@@ -2,6 +2,8 @@ services:
     nginx:
         restart: always
         image: olegmilantiev/yc-nginx:${PROJECT_VERSION}
+#        ports:
+#            - 80:80
         expose:
             - 80
             - 443
@@ -15,14 +17,13 @@ services:
             - .env
         depends_on:
             redis:
-                condition: service_started
+                condition: service_healthy
             postgres:
                 condition: service_healthy
         expose:
             - 9000
         volumes:
-            # TODO а как в prod обычно file-кеши чистят? У каждого ящика?
-            - symfony-var:/var/www/yc/var
+            - uploads:/var/www/yc/public/uploads
 
     ffmpeg:
         restart: always
@@ -31,7 +32,7 @@ services:
             - .env
         depends_on:
             redis:
-                condition: service_started
+                condition: service_healthy
             postgres:
                 condition: service_healthy
         command: sh -c '/var/www/yc/bin/console messenger:consume async -vvv'
@@ -42,7 +43,7 @@ services:
                 limits:
                     memory: 256M
         volumes:
-            - symfony-var:/var/www/yc/var
+            - uploads:/var/www/yc/public/uploads
 
     ffmpeg-transcode:
         restart: always
@@ -51,24 +52,30 @@ services:
             - .env
         depends_on:
             redis:
-                condition: service_started
+                condition: service_healthy
             postgres:
                 condition: service_healthy
         command: sh -c '/var/www/yc/bin/console messenger:consume async_transcode -vvv'
         mem_limit: 256m
         deploy:
-            replicas: 2
+            # todo test with 2 replicas
+            replicas: 1
             resources:
                 limits:
                     memory: 256M
         volumes:
-            - symfony-var:/var/www/yc/var
+            - uploads:/var/www/yc/public/uploads
 
     redis:
         restart: always
         image: redis:7
         expose:
             - 6379
+        healthcheck:
+            test: ["CMD", "redis-cli", "ping"]
+            interval: 5s
+            timeout: 3s
+            retries: 5
 
     postgres:
         restart: always
@@ -84,9 +91,6 @@ services:
         environment:
             - POSTGRES_USER=${POSTGRES_USER}
             - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-        volumes:
-            - ./postgresql:/host
-            - db-data:/var/lib/postgresql/data
 
     playwright:
         image: mcr.microsoft.com/playwright:v1.53.0-jammy
@@ -98,12 +102,9 @@ services:
             - ./e2e:/work/e2e
             - ./release.check:/work/release.check
 
-volumes:
-    # PostgreSQL data volume
-    db-data:
-
-    symfony-var:
-
 networks:
     appnet:
         driver: bridge
+
+volumes:
+    uploads:
