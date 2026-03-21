@@ -129,12 +129,14 @@ export function createHomeTabsView(config) {
             }
 
             function ensureTabDataLoaded(tab) {
-                if (tab === 'videos' && !videosLoading.value && !videosLoaded.value) {
-                    void loadVideos(1);
+                if (tab === 'videos' && !videosLoading.value) {
+                    const targetPage = videosLoaded.value ? videosMeta.value.page : 1;
+                    void loadVideos(targetPage);
                 }
 
-                if (tab === 'tasks' && !tasksLoading.value && !tasksLoaded.value) {
-                    void loadTasks(1);
+                if (tab === 'tasks' && !tasksLoading.value) {
+                    const targetPage = tasksLoaded.value ? tasksMeta.value.page : 1;
+                    void loadTasks(targetPage);
                 }
             }
 
