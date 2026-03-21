@@ -28,5 +28,17 @@ final readonly class SymfonyProcessRunner implements ProcessRunnerInterface
 
         return $process->getOutput();
     }
+
+    public function runStreaming(array $command, callable $onData): Process
+    {
+        $process = new Process($command);
+        $process->setTimeout(null);
+
+        $process->run(static function (string $type, string $data) use ($onData, $process): void {
+            $onData($type, $data, $process);
+        });
+
+        return $process;
+    }
 }
 

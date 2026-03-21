@@ -8,6 +8,7 @@ use App\Application\DTO\TranscodeStartContextDTO;
 use App\Domain\Video\Entity\Task;
 use App\Domain\Video\Repository\TaskRepositoryInterface;
 use App\Domain\Video\ValueObject\Progress;
+use App\Infrastructure\Ffmpeg\ProcessRunnerInterface;
 use App\Infrastructure\Ffmpeg\Transcode;
 use App\Infrastructure\Task\TaskCancellationTrigger;
 use Psr\Cache\InvalidArgumentException;
@@ -23,6 +24,7 @@ final readonly class TranscodeProcessService
     public function __construct(
         private TaskRepositoryInterface $taskRepository,
         private TaskCancellationTrigger $cancellationTrigger,
+        private ProcessRunnerInterface $processRunner,
     ) {
     }
 
@@ -31,8 +33,6 @@ final readonly class TranscodeProcessService
         $task = $context->task;
         $duration = $context->video->duration();
         $command = Transcode::buildCommand($context->inputPath, $context->absoluteOutputPath, $context->preset);
-        $process = new Process($command);
-        $process->setTimeout(null);
 
         $buffer = '';
         $ffmpegStats = [];
@@ -44,7 +44,7 @@ final readonly class TranscodeProcessService
         $startedAt = microtime(true);
         $cancelled = false;
 
-        $process->run(function (string $type, string $data) use ($duration, $task, &$buffer, &$lastPersistAt, &$lastProgressValue, &$ffmpegStats, &$stderrTail, &$stdoutTail, &$lastCancelCheckAt, &$cancelled, $process) {
+        $process = $this->processRunner->runStreaming($command, function (string $type, string $data, Process $process) use ($duration, $task, &$buffer, &$lastPersistAt, &$lastProgressValue, &$ffmpegStats, &$stderrTail, &$stdoutTail, &$lastCancelCheckAt, &$cancelled) {
             if ($type !== Process::OUT && $type !== Process::ERR) {
                 return;
             }
