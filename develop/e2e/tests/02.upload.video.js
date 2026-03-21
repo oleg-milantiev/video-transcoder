@@ -84,5 +84,11 @@ test('upload video and verify details flow', async ({ page }, testInfo) => {
   await shot(page, testInfo, '04-video-details-filled.png');
 
   await waitForPosterAndMeta(page, testInfo);
+
+  // Sign out at the end of the flow (same as in 01.admin.login.js)
+  await expect(page.getByRole('link', { name: 'Sign out' })).toBeVisible();
+  await page.getByRole('link', { name: 'Sign out' }).click();
+  await expect(page.getByRole('link', { name: 'Sign in' })).toHaveCount(2);
+  await shot(page, testInfo, '08-sign-out-and-sign-in-links.png');
 });
 
