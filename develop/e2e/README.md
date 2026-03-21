@@ -4,6 +4,8 @@ This directory contains release smoke tests running against the release Docker C
 
 ## What is covered
 
+Tests are designed to run sequentially (`workers: 1`) and build on data created by previous specs.
+
 ### `01.admin.login.js` - admin login and empty tabs smoke
 
 - Opens start page and verifies `Sign in` is visible
@@ -36,6 +38,32 @@ This directory contains release smoke tests running against the release Docker C
 - Verifies uploaded video from test 02 exists in `Videos`
 - Returns to main page, performs `Sign out`, and verifies `Sign in` links are visible again
 - Saves screenshots for each key step
+
+### `04.transcode.flow.js` - transcode and download flow
+
+- Logs in as admin and ensures the current user has tariff `Free` (required for scheduler pickup)
+- Opens `Videos`, enters the previously uploaded video `2022_10_04_Two_Maxes.mp4`
+- Verifies `Presets` table is visible on `Video Details`
+- Verifies preset `180p` exists and starts transcoding via `Transcode`
+- Verifies task appears for preset and tracks status/progress
+- Reloads page every 5 seconds and checks progress/status until `COMPLETED`
+- Verifies `Download` action is shown for completed task
+- Clicks `Download` and validates successful download endpoint response/redirect to `.mp4`
+- Performs `Sign out` and verifies `Sign in` links are visible again
+- Saves screenshots for each key step
+
+## Execution order
+
+- `01.admin.login.js`
+- `02.upload.video.js`
+- `03.admin.crud.js`
+- `04.transcode.flow.js`
+
+## Data dependencies
+
+- `02` uploads the source video used later by `03` and `04`
+- `03` ensures preset `180p` and tariff `Free` exist
+- `04` uses the uploaded video and preset, and enforces tariff assignment before transcode
 
 ## Local run in release stack
 
