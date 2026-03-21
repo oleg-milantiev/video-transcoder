@@ -4,10 +4,14 @@ namespace App\Application\CommandHandler\Video;
 
 use App\Application\Command\Video\CreateVideoPreview;
 use App\Application\Command\Video\ExtractVideoMetadata;
+use App\Application\Event\ExtractVideoMetadataFail;
+use App\Application\Event\ExtractVideoMetadataStart;
+use App\Application\Event\ExtractVideoMetadataSuccess;
 use App\Domain\Video\Exception\VideoMetadataExtractionFailed;
 use App\Domain\Video\Repository\VideoRepositoryInterface;
 use App\Domain\Video\Service\Storage\StorageInterface;
 use Psr\Log\LoggerInterface;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 use Symfony\Component\Messenger\Exception\ExceptionInterface;
 use Symfony\Component\Messenger\MessageBusInterface;
@@ -15,13 +19,16 @@ use Symfony\Component\Process\Exception\ProcessFailedException;
 use Symfony\Component\Process\Process;
 
 // TODO split
-#[AsMessageHandler]
+#[AsMessageHandler(bus: 'messenger.bus.command')]
 final readonly class ExtractVideoMetadataHandler
 {
     public function __construct(
         private VideoRepositoryInterface $videoRepository,
         private StorageInterface $storage,
-        private MessageBusInterface $messageBus,
+        #[Autowire(service: 'messenger.bus.command')]
+        private MessageBusInterface $commandBus,
+        #[Autowire(service: 'messenger.bus.event')]
+        private MessageBusInterface $eventBus,
         private LoggerInterface $logger,
     ) {
     }
@@ -32,12 +39,10 @@ final readonly class ExtractVideoMetadataHandler
     public function __invoke(ExtractVideoMetadata $command): void
     {
         $video = $command->video();
-
-        // TODO split command and event message busses
-//        $this->messageBus->dispatch(new VideoMetadataExtractionStarted($video));
+        $videoId = $video->id()?->toRfc4122();
 
         try {
-            $this->logger->debug('Extract Video Metadata: started');
+            $this->eventBus->dispatch(new ExtractVideoMetadataStart($videoId));
 
             $inputPath = $this->storage->getAbsolutePath($video->getSrcFilename());
             $metadata = $this->getVideoMetadata($inputPath);
@@ -47,15 +52,14 @@ final readonly class ExtractVideoMetadataHandler
 
             $video->updateMeta($metadata);
             $this->videoRepository->save($video);
-            $this->logger->debug('Extract Video Metadata: entity updated');
 
             $this->videoRepository->log($video->id(), 'info', 'Metadata extracted');
 
-            // TODO split command and event message busses
-//            $this->messageBus->dispatch(new VideoMetadataExtractionFinished($video));
-            $this->messageBus->dispatch(new CreateVideoPreview($video));
+            $this->commandBus->dispatch(new CreateVideoPreview($video));
+            $this->eventBus->dispatch(new ExtractVideoMetadataSuccess($videoId));
         } catch (\Exception $e) {
             $this->videoRepository->log($video->id(), 'error', 'Metadata extraction error: '. $e->getMessage());
+            $this->eventBus->dispatch(new ExtractVideoMetadataFail($e->getMessage(), $videoId));
 
             throw VideoMetadataExtractionFailed::fromVideoId($video->id()->toString(), $e->getMessage());
         }

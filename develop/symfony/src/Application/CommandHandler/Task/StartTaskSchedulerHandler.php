@@ -4,19 +4,26 @@ namespace App\Application\CommandHandler\Task;
 
 use App\Application\Command\Task\StartTaskScheduler;
 use App\Application\Command\Task\TranscodeVideo;
+use App\Application\Event\StartTaskSchedulerFail;
+use App\Application\Event\StartTaskSchedulerStart;
+use App\Application\Event\StartTaskSchedulerSuccess;
 use App\Domain\Video\Repository\TaskRepositoryInterface;
 use Psr\Log\LoggerInterface;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 use Symfony\Component\Messenger\Exception\ExceptionInterface;
 use Symfony\Component\Messenger\MessageBusInterface;
 
-#[AsMessageHandler]
+#[AsMessageHandler(bus: 'messenger.bus.command')]
 final readonly class StartTaskSchedulerHandler
 {
     public function __construct(
         private LoggerInterface $logger,
         private TaskRepositoryInterface $taskRepository,
-        private MessageBusInterface $messageBus,
+        #[Autowire(service: 'messenger.bus.command')]
+        private MessageBusInterface $commandBus,
+        #[Autowire(service: 'messenger.bus.event')]
+        private MessageBusInterface $eventBus,
     ) {
     }
 
@@ -25,18 +32,25 @@ final readonly class StartTaskSchedulerHandler
      */
     public function __invoke(StartTaskScheduler $command): void
     {
-        $this->logger->info('StartTaskScheduler invoked');
+        try {
+            $this->eventBus->dispatch(new StartTaskSchedulerStart());
 
-        $scheduled = $this->taskRepository->getScheduled();
-        $this->logger->info('Tasks found for start', ['count' => count($scheduled)]);
+            $scheduled = $this->taskRepository->getScheduled();
+            $this->logger->info('Tasks found for start', ['count' => count($scheduled)]);
 
-        foreach ($scheduled as $item) {
-            $this->logger->info('Dispatching transcode for scheduled', [
-                'taskId' => $item->taskId,
-                'userId' => $item->userId,
-                'videoId' => $item->videoId,
-            ]);
-            $this->messageBus->dispatch(new TranscodeVideo($item));
+            foreach ($scheduled as $item) {
+                $this->logger->info('Dispatching transcode for scheduled', [
+                    'taskId' => $item->taskId,
+                    'userId' => $item->userId,
+                    'videoId' => $item->videoId,
+                ]);
+                $this->commandBus->dispatch(new TranscodeVideo($item));
+            }
+
+            $this->eventBus->dispatch(new StartTaskSchedulerSuccess(count($scheduled)));
+        } catch (\Throwable $e) {
+            $this->eventBus->dispatch(new StartTaskSchedulerFail($e->getMessage()));
+            throw $e;
         }
     }
 }

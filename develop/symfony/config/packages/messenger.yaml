@@ -21,10 +21,19 @@ framework:
             failed: 'doctrine://default?queue_name=failed'
             # sync: 'sync://'
 
-        default_bus: messenger.bus.default
+        default_bus: messenger.bus.command
 
         buses:
-            messenger.bus.default: []
+            messenger.bus.command:
+                default_middleware:
+                    enabled: true
+                    allow_no_handlers: false
+                    allow_no_senders: true
+            messenger.bus.event:
+                default_middleware:
+                    enabled: true
+                    allow_no_handlers: true
+                    allow_no_senders: true
 
         routing:
             App\Application\Command\Task\TranscodeVideo: async_transcode

@@ -4,19 +4,26 @@ namespace App\Application\CommandHandler\Video;
 
 use App\Application\Command\Video\CreateVideo;
 use App\Application\Command\Video\ExtractVideoMetadata;
+use App\Application\Event\CreateVideoFail;
+use App\Application\Event\CreateVideoStart;
+use App\Application\Event\CreateVideoSuccess;
 use App\Domain\Video\Entity\Video;
 use App\Domain\Video\Repository\VideoRepositoryInterface;
 use App\Domain\Video\Service\Storage\StorageInterface;
 use Psr\Log\LoggerInterface;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\HttpFoundation\File\File;
 
-#[AsMessageHandler]
+#[AsMessageHandler(bus: 'messenger.bus.command')]
 final readonly class CreateVideoHandler
 {
     public function __construct(
-        private MessageBusInterface $messageBus,
+        #[Autowire(service: 'messenger.bus.command')]
+        private MessageBusInterface $commandBus,
+        #[Autowire(service: 'messenger.bus.event')]
+        private MessageBusInterface $eventBus,
         private LoggerInterface $logger,
         private VideoRepositoryInterface $videoRepository,
         private StorageInterface $storage,
@@ -26,45 +33,35 @@ final readonly class CreateVideoHandler
     public function __invoke(CreateVideo $command): void
     {
         try {
-            $this->logger->debug('Create Video: started');
+            $this->eventBus->dispatch(new CreateVideoStart(
+                userId: $command->userId(),
+                filename: $command->file()->getName(),
+            ));
 
             $video = Video::createFromCommand($command);
-            $this->logger->debug('Create Video: video created from command', [
-                'video' => print_r($video, true),
-            ]);
             $video = $this->videoRepository->save($video);
-
-            $this->logger->debug('Create Video: video saved', [
-                'video' => print_r($video, true),
-            ]);
 
             $this->storage->upload(
                 new File($command->file()->getFilePath()),
                 $video->getSrcFilename(),
             );
 
-            $this->logger->debug('Create Video: file moved to '. $video->getSrcFilename(), [
-                'video' => print_r($video, true),
-            ]);
-
-            // TODO split command and event message busses
-//            $this->messageBus->dispatch(new VideoCreated($video));
             $this->videoRepository->log($video->id(), 'info', 'Video created', [
                 'video' => print_r($video, true),
                 'file' => $command->file()->details(),
             ]);
 
-            $this->logger->debug('Create Video: log saved');
-
-            $this->messageBus->dispatch(new ExtractVideoMetadata($video));
+            $this->commandBus->dispatch(new ExtractVideoMetadata($video));
+            $this->eventBus->dispatch(new CreateVideoSuccess(
+                videoId: $video->id()?->toRfc4122(),
+                userId: $command->userId(),
+            ));
         } catch (\Exception $e) {
-            // TODO split command and event message busses
-            //$this->messageBus->dispatch(new VideoCreateFailed($command));
-
-            $this->logger->error('Create Video Handler failed', [
-                'file' => $command->file()->details(),
-                'error' => $e->getMessage(),
-            ]);
+            $this->eventBus->dispatch(new CreateVideoFail(
+                error: $e->getMessage(),
+                userId: $command->userId(),
+                filename: $command->file()->getName(),
+            ));
         }
     }
 }

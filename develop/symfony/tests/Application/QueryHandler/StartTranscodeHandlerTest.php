@@ -5,6 +5,9 @@ declare(strict_types=1);
 namespace App\Tests\Application\QueryHandler;
 
 use App\Application\Command\Task\StartTaskScheduler;
+use App\Application\Event\StartTranscodeFail;
+use App\Application\Event\StartTranscodeStart;
+use App\Application\Event\StartTranscodeSuccess;
 use App\Application\Exception\VideoNotFoundException;
 use App\Application\Query\StartTranscodeQuery;
 use App\Application\QueryHandler\StartTranscodeHandler;
@@ -62,11 +65,21 @@ class StartTranscodeHandlerTest extends TestCase
 
         $user = new User('user@example.com', ['ROLE_USER'], id: $video->userId());
 
-        $messageBus = $this->createMock(MessageBusInterface::class);
-        $messageBus->expects($this->once())
+        $commandBus = $this->createMock(MessageBusInterface::class);
+        $commandBus->expects($this->once())
             ->method('dispatch')
             ->with($this->isInstanceOf(StartTaskScheduler::class))
             ->willReturn(new Envelope(new StartTaskScheduler(), [new HandledStamp(null, 'handler')]));
+
+        $eventBus = $this->createMock(MessageBusInterface::class);
+        $dispatchedEventClasses = [];
+        $eventBus->expects($this->exactly(2))
+            ->method('dispatch')
+            ->willReturnCallback(static function (object $message) use (&$dispatchedEventClasses): Envelope {
+                $dispatchedEventClasses[] = $message::class;
+
+                return new Envelope($message);
+            });
 
         $videoRepo = $this->createMock(VideoRepositoryInterface::class);
         $videoRepo->expects($this->once())
@@ -100,7 +113,7 @@ class StartTranscodeHandlerTest extends TestCase
             ->with(VideoAccessVoter::CAN_START_TRANSCODE, $video)
             ->willReturn(true);
 
-        $handler = new StartTranscodeHandler($messageBus, $videoRepo, $presetRepo, $taskRepo, $userRepo, $security);
+        $handler = new StartTranscodeHandler($commandBus, $eventBus, $videoRepo, $presetRepo, $taskRepo, $userRepo, $security);
         $query = new StartTranscodeQuery($videoId->toRfc4122(), $preset->id(), $user->id());
         $dto = $handler($query);
 
@@ -108,6 +121,10 @@ class StartTranscodeHandlerTest extends TestCase
         $this->assertSame('Source Clip', $dto->videoTitle);
         $this->assertSame('HD 720p', $dto->presetTitle);
         $this->assertSame('PENDING', $dto->status);
+        $this->assertSame([
+            StartTranscodeStart::class,
+            StartTranscodeSuccess::class,
+        ], $dispatchedEventClasses);
     }
 
     /**
@@ -115,12 +132,22 @@ class StartTranscodeHandlerTest extends TestCase
      */
     public function testThrowsWhenVideoNotFound(): void
     {
-        $messageBus = $this->createStub(MessageBusInterface::class);
+        $commandBus = $this->createStub(MessageBusInterface::class);
+        $eventBus = $this->createMock(MessageBusInterface::class);
+        $dispatchedEventClasses = [];
+        $eventBus->expects($this->exactly(2))
+            ->method('dispatch')
+            ->willReturnCallback(static function (object $message) use (&$dispatchedEventClasses): Envelope {
+                $dispatchedEventClasses[] = $message::class;
+
+                return new Envelope($message);
+            });
         $videoRepo = $this->createStub(VideoRepositoryInterface::class);
         $videoRepo->method('findById')->willReturn(null);
 
         $handler = new StartTranscodeHandler(
-            $messageBus,
+            $commandBus,
+            $eventBus,
             $videoRepo,
             $this->createStub(PresetRepositoryInterface::class),
             $this->createStub(TaskRepositoryInterface::class),
@@ -129,7 +156,14 @@ class StartTranscodeHandlerTest extends TestCase
         );
 
         $this->expectException(VideoNotFoundException::class);
-        $handler(new StartTranscodeQuery('123e4567-e89b-42d3-a456-426614174101', 1, 1));
+        try {
+            $handler(new StartTranscodeQuery('123e4567-e89b-42d3-a456-426614174101', 1, 1));
+        } finally {
+            $this->assertSame([
+                StartTranscodeStart::class,
+                StartTranscodeFail::class,
+            ], $dispatchedEventClasses);
+        }
     }
 }
 

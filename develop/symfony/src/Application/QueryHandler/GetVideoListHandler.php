@@ -7,7 +7,7 @@ use App\Application\Response\VideoListResponse;
 use App\Domain\Video\Repository\VideoRepositoryInterface;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 
-#[AsMessageHandler]
+#[AsMessageHandler(bus: 'messenger.bus.command')]
 final readonly class GetVideoListHandler
 {
     public function __construct(

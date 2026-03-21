@@ -8,6 +8,7 @@ use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Messenger\Exception\ExceptionInterface as MessengerExceptionInterface;
 use Symfony\Component\Lock\LockFactory;
@@ -18,7 +19,8 @@ final class MinuteCommand extends Command
     private const int MUTEX_TTL = 900; // 15 minutes in seconds
 
     public function __construct(
-        private readonly MessageBusInterface $messageBus,
+        #[Autowire(service: 'messenger.bus.command')]
+        private readonly MessageBusInterface $commandBus,
         private readonly LoggerInterface $logger,
         private readonly LockFactory $lockFactory,
     ) {
@@ -43,7 +45,7 @@ final class MinuteCommand extends Command
 
             $output->writeln('Dispatching StartTaskScheduler...');
             try {
-                $this->messageBus->dispatch(new StartTaskScheduler());
+                $this->commandBus->dispatch(new StartTaskScheduler());
                 $this->logger->info('StartTaskScheduler dispatched');
                 $output->writeln('Dispatched successfully.');
                 return Command::SUCCESS;

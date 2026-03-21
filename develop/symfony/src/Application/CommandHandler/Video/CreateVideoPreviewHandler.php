@@ -3,21 +3,26 @@
 namespace App\Application\CommandHandler\Video;
 
 use App\Application\Command\Video\CreateVideoPreview;
+use App\Application\Event\CreateVideoPreviewFail;
+use App\Application\Event\CreateVideoPreviewStart;
+use App\Application\Event\CreateVideoPreviewSuccess;
 use App\Domain\Video\Exception\VideoPreviewGenerationFailed;
 use App\Domain\Video\Repository\VideoRepositoryInterface;
 use App\Domain\Video\Service\Storage\StorageInterface;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
-//use Symfony\Component\Messenger\MessageBusInterface;
+use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Process\Exception\ProcessFailedException;
 use Symfony\Component\Process\Process;
 
 // TODO split
-#[AsMessageHandler]
+#[AsMessageHandler(bus: 'messenger.bus.command')]
 final readonly class CreateVideoPreviewHandler
 {
     public function __construct(
         private StorageInterface $storage,
-//        private MessageBusInterface $messageBus,
+        #[Autowire(service: 'messenger.bus.event')]
+        private MessageBusInterface $eventBus,
         private VideoRepositoryInterface $videoRepository,
     ) {
     }
@@ -25,11 +30,11 @@ final readonly class CreateVideoPreviewHandler
     public function __invoke(CreateVideoPreview $command): void
     {
         $video = $command->video();
-
-        // TODO split command and event message busses
-//        $this->messageBus->dispatch(new VideoPreviewGenerationStarted($video));
+        $videoId = $video->id()?->toRfc4122();
 
         try {
+            $this->eventBus->dispatch(new CreateVideoPreviewStart($videoId));
+
             $inputPath = $this->storage->getAbsolutePath($video->getSrcFilename());
             $outputPath = preg_replace('/\.[^.]+$/', '.jpg', $inputPath);
 
@@ -42,10 +47,10 @@ final readonly class CreateVideoPreviewHandler
 
             $this->videoRepository->log($video->id(), 'info', 'Preview Created');
 
-            // TODO split command and event message busses
-//            $this->messageBus->dispatch(new VideoPreviewGenerationFinished($video));
+            $this->eventBus->dispatch(new CreateVideoPreviewSuccess($videoId));
         } catch (\Exception $e) {
             $this->videoRepository->log($video->id(), 'error', 'Error Preview creating: '. $e->getMessage());
+            $this->eventBus->dispatch(new CreateVideoPreviewFail($e->getMessage(), $videoId));
 
             throw VideoPreviewGenerationFailed::fromVideoId($video->id()->toString(), $e->getMessage());
         }

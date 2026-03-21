@@ -13,7 +13,7 @@ use App\Infrastructure\Security\Voter\VideoAccessVoter;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 
-#[AsMessageHandler]
+#[AsMessageHandler(bus: 'messenger.bus.command')]
 final readonly class GetVideoDetailsHandler
 {
     public function __construct(

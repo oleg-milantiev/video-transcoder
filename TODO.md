@@ -8,7 +8,6 @@
 ### Тесты и безопасность
 - ? THINK ? security нельзя складывать видео и постеры в public. Нужен механизм проксирования с auth.
 - тесты App\Application\CommandHandler
-- !!! разделить и тестировать TranscodeVideoHandler
 - e2e
   - 04 тест (базовый transcode)
     - добавить проверку, что таск с этим пресетом один
@@ -32,7 +31,6 @@
     - скачать два готовых файла
 
 ### События, расширяемость
-- split command and event message buses (CreateVideoHandler, CreateVideoPreviewHandler, ExtractVideoMetadataHandler)
 - add events for transcoding
 
 ### Видео и метаданные
