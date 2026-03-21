@@ -2,9 +2,9 @@
 
 namespace App\Tests\Application\QueryHandler;
 
-use App\Application\DTO\PaginatedResult;
 use App\Application\Query\GetTaskListQuery;
 use App\Application\QueryHandler\GetTaskListHandler;
+use App\Domain\Video\DTO\PaginatedResult;
 use App\Domain\Video\Repository\PresetRepositoryInterface;
 use App\Domain\Video\Repository\TaskRepositoryInterface;
 use App\Domain\Video\Repository\VideoRepositoryInterface;

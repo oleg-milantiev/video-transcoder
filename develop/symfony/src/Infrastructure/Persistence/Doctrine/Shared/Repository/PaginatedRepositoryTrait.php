@@ -2,7 +2,7 @@
 
 namespace App\Infrastructure\Persistence\Doctrine\Shared\Repository;
 
-use App\Application\DTO\PaginatedResult;
+use App\Domain\Video\DTO\PaginatedResult;
 
 trait PaginatedRepositoryTrait
 {

@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace App\Tests\Application\DTO;
+namespace App\Tests\Domain\Video\DTO;
 
-use App\Application\DTO\PaginatedResult;
+use App\Domain\Video\DTO\PaginatedResult;
 use PHPUnit\Framework\TestCase;
 
-class PaginatedResultTest extends TestCase
+final class PaginatedResultTest extends TestCase
 {
     public function testStoresItemsAndTotal(): void
     {
@@ -18,4 +18,3 @@ class PaginatedResultTest extends TestCase
         $this->assertSame(2, $result->total);
     }
 }
-

@@ -2,7 +2,7 @@
 
 namespace App\Domain\Video\Repository;
 
-use App\Application\DTO\PaginatedResult;
+use App\Domain\Video\DTO\PaginatedResult;
 
 interface PaginatedRepositoryInterface
 {
