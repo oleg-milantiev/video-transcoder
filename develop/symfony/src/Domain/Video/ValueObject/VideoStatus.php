@@ -12,7 +12,7 @@ enum VideoStatus: int
         self::UPLOADED->value => self::UPLOADED->name,
     ];
 
-    public function value(): string
+    public function value(): int
     {
         return $this->value;
     }
