@@ -27,7 +27,9 @@ class VideoMapper
     public static function toDoctrine(Video $video, UserEntity $user): VideoEntity
     {
         $entity = new VideoEntity();
-        $entity->id = $video->id();
+        if ($video->id() !== null) {
+            $entity->id = $video->id();
+        }
         self::hydrate($entity, $video, $user);
         $entity->createdAt = $video->createdAt();
 

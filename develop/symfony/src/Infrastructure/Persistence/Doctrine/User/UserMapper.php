@@ -20,7 +20,9 @@ class UserMapper
     public static function toDoctrine(User $user): UserEntity
     {
         $entity = new UserEntity();
-        $entity->id = $user->id();
+        if ($user->id() !== null) {
+            $entity->id = $user->id();
+        }
         $entity->email = $user->email();
         $entity->roles = $user->roles();
         $entity->password = $user->password();

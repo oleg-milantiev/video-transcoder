@@ -24,7 +24,9 @@ class PresetMapper
     public static function toDoctrine(Preset $preset): PresetEntity
     {
         $entity = new PresetEntity();
-        $entity->id = $preset->id();
+        if ($preset->id() !== null) {
+            $entity->id = $preset->id();
+        }
         $entity->title = $preset->title()->value();
         $entity->width = $preset->resolution()->width();
         $entity->height = $preset->resolution()->height();

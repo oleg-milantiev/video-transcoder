@@ -22,7 +22,9 @@ class TariffMapper
     public static function toDoctrine(Tariff $tariff): TariffEntity
     {
         $entity = new TariffEntity();
-        $entity->id = $tariff->id();
+        if ($tariff->id() !== null) {
+            $entity->id = $tariff->id();
+        }
         $entity->title = $tariff->title()->value();
         $entity->delay = $tariff->delay()->value();
         $entity->instance = $tariff->instance()->value();

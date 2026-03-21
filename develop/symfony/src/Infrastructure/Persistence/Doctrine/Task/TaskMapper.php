@@ -33,7 +33,9 @@ class TaskMapper
     public static function toDoctrine(Task $task, VideoEntity $video, PresetEntity $preset, UserEntity $user): TaskEntity
     {
         $entity = new TaskEntity();
-        $entity->id = $task->id();
+        if ($task->id() !== null) {
+            $entity->id = $task->id();
+        }
         self::hydrate($entity, $task, $video, $preset, $user);
         $entity->createdAt = $task->createdAt();
 
