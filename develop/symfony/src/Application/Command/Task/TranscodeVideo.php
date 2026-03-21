@@ -2,7 +2,7 @@
 
 namespace App\Application\Command\Task;
 
-use App\Domain\Video\DTO\ScheduledTaskDTO;
+use App\Application\DTO\ScheduledTaskDTO;
 
 final readonly class TranscodeVideo
 {

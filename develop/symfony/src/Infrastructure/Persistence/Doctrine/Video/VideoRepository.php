@@ -2,6 +2,7 @@
 
 namespace App\Infrastructure\Persistence\Doctrine\Video;
 
+use App\Application\Query\Repository\VideoDetailsReadRepositoryInterface;
 use App\Domain\Video\Entity\Video;
 use App\Domain\Video\Repository\VideoRepositoryInterface;
 use App\Infrastructure\Persistence\Doctrine\Shared\Repository\PaginatedRepositoryTrait;
@@ -12,11 +13,12 @@ use Doctrine\ORM\Exception\ORMException;
 use Doctrine\Persistence\ManagerRegistry;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Uid\Uuid;
+use Symfony\Component\Uid\UuidV4;
 
 /**
  * @extends ServiceEntityRepository<VideoEntity>
  */
-class VideoRepository extends ServiceEntityRepository implements VideoRepositoryInterface
+class VideoRepository extends ServiceEntityRepository implements VideoRepositoryInterface, VideoDetailsReadRepositoryInterface
 {
     use PaginatedRepositoryTrait;
 
@@ -66,7 +68,7 @@ class VideoRepository extends ServiceEntityRepository implements VideoRepository
     /**
      * @throws Exception
      */
-    public function getDetails(Video $video): array
+    public function getDetailsByVideoId(UuidV4 $videoId): array
     {
         $conn = $this->getEntityManager()->getConnection();
 
@@ -84,7 +86,7 @@ class VideoRepository extends ServiceEntityRepository implements VideoRepository
             ORDER BY p.title
         SQL;
 
-        $result = $conn->executeQuery($sql, ['videoId' => $video->id()->toRfc4122()]);
+        $result = $conn->executeQuery($sql, ['videoId' => $videoId->toRfc4122()]);
         $rows = $result->fetchAllAssociative();
 
         $presetsWithTasks = [];

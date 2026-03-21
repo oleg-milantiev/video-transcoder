@@ -7,7 +7,7 @@ use App\Application\Command\Task\TranscodeVideo;
 use App\Application\Event\StartTaskSchedulerFail;
 use App\Application\Event\StartTaskSchedulerStart;
 use App\Application\Event\StartTaskSchedulerSuccess;
-use App\Domain\Video\Repository\TaskRepositoryInterface;
+use App\Application\Query\Repository\ScheduledTaskReadRepositoryInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
@@ -19,7 +19,7 @@ final readonly class StartTaskSchedulerHandler
 {
     public function __construct(
         private LoggerInterface $logger,
-        private TaskRepositoryInterface $taskRepository,
+        private ScheduledTaskReadRepositoryInterface $taskReadRepository,
         #[Autowire(service: 'messenger.bus.command')]
         private MessageBusInterface $commandBus,
         #[Autowire(service: 'messenger.bus.event')]
@@ -35,7 +35,7 @@ final readonly class StartTaskSchedulerHandler
         try {
             $this->eventBus->dispatch(new StartTaskSchedulerStart());
 
-            $scheduled = $this->taskRepository->getScheduled();
+            $scheduled = $this->taskReadRepository->getScheduled();
             $this->logger->info('Tasks found for start', ['count' => count($scheduled)]);
 
             foreach ($scheduled as $item) {

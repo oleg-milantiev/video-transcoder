@@ -4,6 +4,7 @@ namespace App\Tests\Application\QueryHandler;
 
 use App\Application\Query\GetVideoDetailsQuery;
 use App\Application\QueryHandler\GetVideoDetailsHandler;
+use App\Application\Query\Repository\VideoDetailsReadRepositoryInterface;
 use App\Domain\Video\Repository\VideoRepositoryInterface;
 use App\Infrastructure\Security\Voter\VideoAccessVoter;
 use App\Tests\Domain\Entity\VideoFake;
@@ -21,9 +22,10 @@ class GetVideoDetailsHandlerTest extends TestCase
             ->method('findById')
             ->with($video->id())
             ->willReturn($video);
-        $repository->expects($this->once())
-            ->method('getDetails')
-            ->with($video)
+        $videoDetailsRepository = $this->createMock(VideoDetailsReadRepositoryInterface::class);
+        $videoDetailsRepository->expects($this->once())
+            ->method('getDetailsByVideoId')
+            ->with($video->id())
             ->willReturn([
                 [
                     'id' => 1,
@@ -43,7 +45,7 @@ class GetVideoDetailsHandlerTest extends TestCase
             ->with(VideoAccessVoter::CAN_VIEW_DETAILS, $video)
             ->willReturn(true);
 
-        $handler = new GetVideoDetailsHandler($repository, $security);
+        $handler = new GetVideoDetailsHandler($repository, $videoDetailsRepository, $security);
         $query = new GetVideoDetailsQuery($video->id()->toRfc4122());
         $dto = $handler($query);
 

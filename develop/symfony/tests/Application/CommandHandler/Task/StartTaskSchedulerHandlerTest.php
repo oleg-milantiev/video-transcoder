@@ -7,11 +7,11 @@ namespace App\Tests\Application\CommandHandler\Task;
 use App\Application\Command\Task\StartTaskScheduler;
 use App\Application\Command\Task\TranscodeVideo;
 use App\Application\CommandHandler\Task\StartTaskSchedulerHandler;
+use App\Application\DTO\ScheduledTaskDTO;
 use App\Application\Event\StartTaskSchedulerFail;
 use App\Application\Event\StartTaskSchedulerStart;
 use App\Application\Event\StartTaskSchedulerSuccess;
-use App\Domain\Video\DTO\ScheduledTaskDTO;
-use App\Domain\Video\Repository\TaskRepositoryInterface;
+use App\Application\Query\Repository\ScheduledTaskReadRepositoryInterface;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Messenger\Envelope;
@@ -22,7 +22,7 @@ class StartTaskSchedulerHandlerTest extends TestCase
 {
     public function testDispatchesLifecycleEventsOnSuccess(): void
     {
-        $taskRepository = $this->createStub(TaskRepositoryInterface::class);
+        $taskRepository = $this->createStub(ScheduledTaskReadRepositoryInterface::class);
         $taskRepository->method('getScheduled')->willReturn([
             new ScheduledTaskDTO(10, 7, UuidV4::fromString('123e4567-e89b-42d3-a456-426614174141')),
         ]);
@@ -60,7 +60,7 @@ class StartTaskSchedulerHandlerTest extends TestCase
 
     public function testDispatchesFailedEventAndRethrows(): void
     {
-        $taskRepository = $this->createStub(TaskRepositoryInterface::class);
+        $taskRepository = $this->createStub(ScheduledTaskReadRepositoryInterface::class);
         $taskRepository->method('getScheduled')->willReturn([
             new ScheduledTaskDTO(11, 8, UuidV4::fromString('123e4567-e89b-42d3-a456-426614174142')),
         ]);

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Domain\Video\DTO;
+namespace App\Application\DTO;
 
 use Symfony\Component\Uid\UuidV4;
 
@@ -13,4 +13,3 @@ final readonly class ScheduledTaskDTO
     ) {
     }
 }
-

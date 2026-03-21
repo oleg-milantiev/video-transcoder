@@ -2,8 +2,9 @@
 
 namespace App\Infrastructure\Persistence\Doctrine\Task;
 
+use App\Application\DTO\ScheduledTaskDTO;
+use App\Application\Query\Repository\ScheduledTaskReadRepositoryInterface;
 use App\Domain\User\Repository\UserRepositoryInterface;
-use App\Domain\Video\DTO\ScheduledTaskDTO;
 use App\Domain\Video\Entity\Task;
 use App\Domain\Video\Repository\PresetRepositoryInterface;
 use App\Domain\Video\Repository\TaskRepositoryInterface;
@@ -21,7 +22,7 @@ use Symfony\Component\Uid\UuidV4;
 /**
  * @extends ServiceEntityRepository<TaskEntity>
  */
-class TaskRepository extends ServiceEntityRepository implements TaskRepositoryInterface
+class TaskRepository extends ServiceEntityRepository implements TaskRepositoryInterface, ScheduledTaskReadRepositoryInterface
 {
     use PaginatedRepositoryTrait;
 
