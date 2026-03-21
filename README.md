@@ -1,5 +1,7 @@
 # video-transcoder
 
+AI-powered Wiki: https://deepwiki.com/oleg-milantiev/video-transcoder
+
 TBD English
 
 --
