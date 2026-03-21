@@ -23,7 +23,8 @@ Tests are designed to run sequentially (`workers: 1`) and build on data created 
 - Verifies upload completion status in Uppy
 - Opens `Videos` tab and checks uploaded row fields are filled
 - Opens video details and verifies core fields (`Title`, `Extension`, `Status`, `Created At`, `User ID`)
-- Waits for poster/meta readiness with retries and page reloads
+- Waits for async processing and verifies poster is not broken (`img.complete`, non-zero natural size)
+- Verifies `Duration` meta field is present and non-empty after processing
 - Performs `Sign out` and verifies `Sign in` links are visible again
 - Saves screenshots for each key step
 

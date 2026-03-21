@@ -15,14 +15,50 @@ async function expectDetailsValue(page, label) {
   await expect(dd).toHaveText(/\S+/);
 }
 
+async function isPosterLoaded(page) {
+  // Support both legacy card image markup and current accessible image name markup.
+  const posterByName = page.getByRole('img', { name: /\.mp4$/i }).first();
+  const posterLegacy = page.locator('.card-body img.img-fluid').first();
+  const poster = (await posterByName.count()) > 0 ? posterByName : posterLegacy;
+
+  if ((await poster.count()) === 0) return false;
+
+  return poster.evaluate((img) => {
+    if (!(img instanceof HTMLImageElement)) {
+      return false;
+    }
+
+    return Boolean(img.currentSrc) && img.complete && img.naturalWidth > 0 && img.naturalHeight > 0;
+  });
+}
+
+async function hasDurationMeta(page) {
+  const metaHeading = page.getByRole('heading', { name: 'Meta' }).first();
+  if ((await metaHeading.count()) === 0) return false;
+
+  const metaList = metaHeading.locator('xpath=following-sibling::ul[1]');
+  if ((await metaList.count()) === 0) return false;
+
+  const durationItem = metaList.locator('li', {
+    has: page.locator('strong', { hasText: /^\s*duration\s*:\s*$/i }),
+  }).first();
+  if ((await durationItem.count()) === 0) return false;
+
+  const value = (await durationItem.textContent())
+    ?.replace(/^\s*duration\s*:\s*/i, '')
+    .trim() || '';
+
+  return value.length > 0 && value !== '-' && !/no\s+meta\s+data/i.test(value);
+}
+
 async function waitForPosterAndMeta(page, testInfo) {
   const maxAttempts = 5;
 
   for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
-    const hasPoster = (await page.locator('.card-body img.img-fluid').count()) > 0;
-    const noMetaVisible = await page.getByText('No meta data').isVisible().catch(() => false);
+    const posterLoaded = await isPosterLoaded(page);
+    const durationReady = await hasDurationMeta(page);
 
-    if (hasPoster && !noMetaVisible) {
+    if (posterLoaded && durationReady) {
       await shot(page, testInfo, `07-details-poster-meta-ready-attempt-${attempt}.png`);
       return;
     }
@@ -34,7 +70,7 @@ async function waitForPosterAndMeta(page, testInfo) {
     }
   }
 
-  throw new Error('Poster or meta data is still missing after 3 checks with 5-second delays');
+  throw new Error('Poster is not fully loaded or Meta duration is missing after 5 checks with 5-second delays');
 }
 
 test('upload video and verify details flow', async ({ page }, testInfo) => {

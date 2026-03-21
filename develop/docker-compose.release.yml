@@ -9,6 +9,8 @@ services:
             - 443
         depends_on:
             - php
+        volumes:
+            - uploads:/var/www/yc/public/uploads:ro
 
     php:
         restart: always
