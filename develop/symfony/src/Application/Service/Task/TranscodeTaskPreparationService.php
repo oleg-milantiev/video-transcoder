@@ -1,0 +1,52 @@
+<?php
+
+namespace App\Application\Service\Task;
+
+use App\Application\DTO\TranscodeStartContextDTO;
+use App\Domain\Video\Entity\Task;
+use App\Domain\Video\Entity\Video;
+use App\Domain\Video\Repository\PresetRepositoryInterface;
+use App\Domain\Video\Repository\TaskRepositoryInterface;
+use App\Domain\Video\Service\Storage\StorageInterface;
+use Symfony\Component\Filesystem\Filesystem;
+
+final readonly class TranscodeTaskPreparationService
+{
+    public function __construct(
+        private PresetRepositoryInterface $presetRepository,
+        private TaskRepositoryInterface $taskRepository,
+        private StorageInterface $storage,
+        private Filesystem $filesystem,
+    ) {
+    }
+
+    public function prepare(Task $task, Video $video): TranscodeStartContextDTO
+    {
+        $preset = $this->presetRepository->findById($task->presetId());
+        if (!$preset) {
+            $this->taskRepository->log($task->id(), 'error', 'Preset not found for task');
+            throw new \RuntimeException('Preset not found for task');
+        }
+
+        // TODO use abstract storage
+        $relativeOutputPath = sprintf('%s/%d.mp4', $video->id()->toRfc4122(), $preset->id());
+        $absoluteOutputPath = $this->storage->getAbsolutePath($relativeOutputPath);
+        $this->filesystem->mkdir(\dirname($absoluteOutputPath));
+
+        $task->start();
+        $this->taskRepository->save($task);
+        $this->taskRepository->log($task->id(), 'info', 'Transcoding started');
+
+        $inputPath = $this->storage->getAbsolutePath($video->getSrcFilename());
+
+        return new TranscodeStartContextDTO(
+            task: $task,
+            video: $video,
+            preset: $preset,
+            relativeOutputPath: $relativeOutputPath,
+            absoluteOutputPath: $absoluteOutputPath,
+            inputPath: $inputPath,
+        );
+    }
+}
+
