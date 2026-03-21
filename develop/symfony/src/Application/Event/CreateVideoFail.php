@@ -6,7 +6,7 @@ final readonly class CreateVideoFail extends ApplicationEvent
 {
     public function __construct(
         public string $error,
-        public int $userId,
+        public string $userId,
         public string $filename,
     ) {
     }

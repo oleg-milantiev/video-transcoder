@@ -53,7 +53,7 @@ class TaskRepository extends ServiceEntityRepository implements TaskRepositoryIn
             /** @var TaskEntity|null $taskEntity */
             $taskEntity = $this->find($task->id());
             if (!$taskEntity) {
-                throw new \RuntimeException(sprintf('Task with id %d not found', $task->id()));
+                throw new \RuntimeException(sprintf('Task with id %s not found', $task->id()->toRfc4122()));
             }
             TaskMapper::hydrate($taskEntity, $task, $videoRef, $presetRef, $userRef);
         }
@@ -64,15 +64,17 @@ class TaskRepository extends ServiceEntityRepository implements TaskRepositoryIn
         $task->setId($taskEntity->id);
     }
 
-    public function findById(int $id): ?Task
+    public function findById(UuidV4 $id): ?Task
     {
-        return self::mapToDomain($this->find($id));
+        $entity = $this->find($id);
+
+        return $entity ? self::mapToDomain($entity) : null;
     }
 
     /**
      * @throws ORMException
      */
-    public function findByIdFresh(int $id): ?Task
+    public function findByIdFresh(UuidV4 $id): ?Task
     {
         $em = $this->getEntityManager();
 
@@ -87,15 +89,15 @@ class TaskRepository extends ServiceEntityRepository implements TaskRepositoryIn
         return self::mapToDomain($entity);
     }
 
-    public function findForTranscode(UuidV4 $videoId, int $presetId, int $userId): ?Task
+    public function findForTranscode(UuidV4 $videoId, UuidV4 $presetId, UuidV4 $userId): ?Task
     {
         $qb = $this->createQueryBuilder('task')
             ->andWhere('IDENTITY(task.video) = :videoId')
             ->andWhere('IDENTITY(task.preset) = :presetId')
             ->andWhere('IDENTITY(task.user) = :userId')
             ->setParameter('videoId', $videoId->toRfc4122())
-            ->setParameter('presetId', $presetId)
-            ->setParameter('userId', $userId)
+            ->setParameter('presetId', $presetId->toRfc4122())
+            ->setParameter('userId', $userId->toRfc4122())
             ->setMaxResults(1);
 
         /** @var TaskEntity|null $entity */
@@ -155,8 +157,8 @@ class TaskRepository extends ServiceEntityRepository implements TaskRepositoryIn
 
         return array_map(
             static fn (array $row): ScheduledTaskDTO => new ScheduledTaskDTO(
-                (int) $row['task_id'],
-                (int) $row['user_id'],
+                UuidV4::fromString($row['task_id']),
+                UuidV4::fromString($row['user_id']),
                 UuidV4::fromString($row['video_id']),
             ),
             $stmt->fetchAllAssociative(),
@@ -169,13 +171,13 @@ class TaskRepository extends ServiceEntityRepository implements TaskRepositoryIn
     }
 
     // You should NOT log into Persistence in prod. Just for debug now
-    public function log(int $id, string $level, string $text): void
+    public function log(UuidV4 $id, string $level, string $text): void
     {
         $em = $this->getEntityManager();
         /** @var TaskEntity|null $task */
         $task = $this->find($id);
         if (!$task) {
-            throw new \RuntimeException("Task with id $id not found");
+            throw new \RuntimeException(sprintf('Task with id %s not found', $id->toRfc4122()));
         }
         $log = $task->log ?? [];
         $log[] = [

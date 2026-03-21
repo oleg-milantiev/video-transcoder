@@ -92,10 +92,10 @@ class VideoRepository extends ServiceEntityRepository implements VideoRepository
         $presetsWithTasks = [];
         foreach ($rows as $row) {
             $presetsWithTasks[] = [
-                'id' => (int)$row['id'],
+                'id' => $row['id'],
                 'title' => $row['title'],
                 'task' => $row['task_id'] !== null ? [
-                    'id' => (int)$row['task_id'],
+                    'id' => $row['task_id'],
                     'status' => (int)$row['status'],
                     'progress' => (int)$row['progress'],
                     'createdAt' => $row['created_at'],

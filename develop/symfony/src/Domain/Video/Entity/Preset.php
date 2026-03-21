@@ -4,13 +4,13 @@ namespace App\Domain\Video\Entity;
 
 use App\Domain\Video\ValueObject\Bitrate;
 use App\Domain\Video\ValueObject\Codec;
-use App\Domain\Video\ValueObject\PresetName;
 use App\Domain\Video\ValueObject\PresetTitle;
 use App\Domain\Video\ValueObject\Resolution;
+use Symfony\Component\Uid\UuidV4 as Uuid;
 
 class Preset
 {
-    private ?int $id;
+    private ?Uuid $id;
     private PresetTitle $title;
     private Resolution $resolution;
     private Codec $codec;
@@ -22,14 +22,14 @@ class Preset
         Resolution $resolution,
         Codec $codec,
         Bitrate $bitrate,
-        ?int $id = null,
+        ?Uuid $id = null,
     ) {
         $this->id = $id;
         $this->rename($title);
         $this->changeOutput($resolution, $codec, $bitrate);
     }
 
-    public function id(): ?int
+    public function id(): ?Uuid
     {
         return $this->id;
     }

@@ -23,7 +23,7 @@ final class VideoTest extends TestCase
             title: new VideoTitle('Trailer'),
             extension: new FileExtension('mp4'),
             status: VideoStatus::UPLOADED,
-            userId: 17,
+            userId: UuidV4::fromString('77777777-7777-4777-8777-777777777777'),
             meta: ['duration' => 11.5],
             dates: VideoDates::create($createdAt),
             id: $id,
@@ -33,7 +33,7 @@ final class VideoTest extends TestCase
         $this->assertSame('Trailer', $video->title()->value());
         $this->assertSame('mp4', $video->extension()->value());
         $this->assertSame(VideoStatus::UPLOADED, $video->status());
-        $this->assertSame(17, $video->userId());
+        $this->assertSame('77777777-7777-4777-8777-777777777777', $video->userId()->toRfc4122());
         $this->assertSame(11.5, $video->duration());
         $this->assertSame($createdAt, $video->createdAt());
         $this->assertNull($video->updatedAt());
@@ -45,7 +45,7 @@ final class VideoTest extends TestCase
             new VideoTitle('No id video'),
             new FileExtension('mov'),
             VideoStatus::UPLOADED,
-            5,
+            UuidV4::fromString('55555555-5555-4555-8555-555555555550'),
         );
 
         $this->assertNull($video->id());
@@ -61,7 +61,7 @@ final class VideoTest extends TestCase
             title: new VideoTitle('Meta merge'),
             extension: new FileExtension('mkv'),
             status: VideoStatus::UPLOADED,
-            userId: 2,
+            userId: UuidV4::fromString('22222222-2222-4222-8222-222222222220'),
             meta: ['duration' => 100.2, 'quality' => 'hd'],
             dates: VideoDates::create(new \DateTimeImmutable('2026-03-19 10:00:00')),
             id: UuidV4::fromString('11111111-1111-4111-8111-111111111111'),
@@ -81,7 +81,7 @@ final class VideoTest extends TestCase
             new VideoTitle('Replace key'),
             new FileExtension('mp4'),
             VideoStatus::UPLOADED,
-            2,
+            UuidV4::fromString('22222222-2222-4222-8222-222222222221'),
             ['duration' => 50.0],
             VideoDates::create(new \DateTimeImmutable('2026-03-19 10:00:00')),
             UuidV4::fromString('22222222-2222-4222-8222-222222222222'),
@@ -99,7 +99,7 @@ final class VideoTest extends TestCase
             new VideoTitle('Source file'),
             new FileExtension('avi'),
             VideoStatus::UPLOADED,
-            8,
+            UuidV4::fromString('88888888-8888-4888-8888-888888888888'),
             id: $id,
         );
 
@@ -113,7 +113,7 @@ final class VideoTest extends TestCase
             new VideoTitle('Poster test'),
             new FileExtension('mp4'),
             VideoStatus::UPLOADED,
-            9,
+            UuidV4::fromString('99999999-9999-4999-8999-999999999998'),
             ['preview' => true],
             id: $id,
         );
@@ -127,7 +127,7 @@ final class VideoTest extends TestCase
             new VideoTitle('No poster'),
             new FileExtension('mp4'),
             VideoStatus::UPLOADED,
-            9,
+            UuidV4::fromString('99999999-9999-4999-8999-999999999997'),
             ['preview' => false],
             id: UuidV4::fromString('55555555-5555-4555-8555-555555555555'),
         );

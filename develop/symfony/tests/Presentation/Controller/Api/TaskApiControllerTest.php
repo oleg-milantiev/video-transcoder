@@ -74,13 +74,15 @@ final class TaskApiControllerTest extends ApiWebTestCase
 
     public function testCancelReturnsNotFoundWhenTaskDoesNotExist(): void
     {
-        $client = $this->createBearerAuthenticatedClient(userId: 42);
+        $client = $this->createBearerAuthenticatedClient(userId: UuidV4::fromString('00000000-0000-4000-8000-000000000042'));
+
+        $taskId = UuidV4::fromString('40404040-4040-4040-8040-404040404040');
 
         $taskRepository = $this->createMock(TaskRepositoryInterface::class);
-        $taskRepository->expects($this->once())->method('findById')->with(404)->willReturn(null);
+        $taskRepository->expects($this->once())->method('findById')->with($taskId)->willReturn(null);
         $this->replaceService(TaskRepositoryInterface::class, $taskRepository);
 
-        $client->request('POST', '/api/task/404/cancel');
+        $client->request('POST', '/api/task/' . $taskId->toRfc4122() . '/cancel');
 
         self::assertResponseStatusCodeSame(404);
         self::assertSame([
@@ -94,19 +96,21 @@ final class TaskApiControllerTest extends ApiWebTestCase
 
     public function testCancelReturnsNotFoundWhenVideoDoesNotExist(): void
     {
-        $client = $this->createBearerAuthenticatedClient(userId: 42);
+        $client = $this->createBearerAuthenticatedClient(userId: UuidV4::fromString('00000000-0000-4000-8000-000000000042'));
+
+        $taskId = UuidV4::fromString('15151515-1515-4515-8515-151515151515');
 
         $task = new TaskFake();
 
         $taskRepository = $this->createMock(TaskRepositoryInterface::class);
-        $taskRepository->expects($this->once())->method('findById')->with(15)->willReturn($task);
+        $taskRepository->expects($this->once())->method('findById')->with($taskId)->willReturn($task);
         $this->replaceService(TaskRepositoryInterface::class, $taskRepository);
 
         $videoRepository = $this->createMock(VideoRepositoryInterface::class);
         $videoRepository->expects($this->once())->method('findById')->with($task->videoId())->willReturn(null);
         $this->replaceService(VideoRepositoryInterface::class, $videoRepository);
 
-        $client->request('POST', '/api/task/15/cancel');
+        $client->request('POST', '/api/task/' . $taskId->toRfc4122() . '/cancel');
 
         self::assertResponseStatusCodeSame(404);
         self::assertSame([
@@ -120,13 +124,15 @@ final class TaskApiControllerTest extends ApiWebTestCase
 
     public function testCancelReturnsForbiddenWhenAccessIsDenied(): void
     {
-        $client = $this->createBearerAuthenticatedClient(userId: 42);
+        $client = $this->createBearerAuthenticatedClient(userId: UuidV4::fromString('00000000-0000-4000-8000-000000000042'));
+
+        $taskId = UuidV4::fromString('18181818-1818-4818-8818-181818181818');
 
         $task = new TaskFake();
         $video = new VideoFake();
 
         $taskRepository = $this->createMock(TaskRepositoryInterface::class);
-        $taskRepository->expects($this->once())->method('findById')->with(18)->willReturn($task);
+        $taskRepository->expects($this->once())->method('findById')->with($taskId)->willReturn($task);
         $this->replaceService(TaskRepositoryInterface::class, $taskRepository);
 
         $videoRepository = $this->createMock(VideoRepositoryInterface::class);
@@ -140,7 +146,7 @@ final class TaskApiControllerTest extends ApiWebTestCase
             ->willReturn(false);
         $this->replaceService(Security::class, $security);
 
-        $client->request('POST', '/api/task/18/cancel');
+        $client->request('POST', '/api/task/' . $taskId->toRfc4122() . '/cancel');
 
         self::assertResponseStatusCodeSame(403);
         self::assertSame([
@@ -154,13 +160,15 @@ final class TaskApiControllerTest extends ApiWebTestCase
 
     public function testCancelPendingTaskCancelsImmediately(): void
     {
-        $client = $this->createBearerAuthenticatedClient(userId: 42);
+        $client = $this->createBearerAuthenticatedClient(userId: UuidV4::fromString('00000000-0000-4000-8000-000000000042'));
+
+        $taskId = UuidV4::fromString('21212121-2121-4212-8212-212121212121');
 
         $task = new TaskFake();
         $video = new VideoFake();
 
         $taskRepository = $this->createMock(TaskRepositoryInterface::class);
-        $taskRepository->expects($this->once())->method('findById')->with(21)->willReturn($task);
+        $taskRepository->expects($this->once())->method('findById')->with($taskId)->willReturn($task);
         $taskRepository->expects($this->once())->method('save')->with($task);
         $taskRepository->expects($this->exactly(2))->method('log');
         $this->replaceService(TaskRepositoryInterface::class, $taskRepository);
@@ -176,7 +184,7 @@ final class TaskApiControllerTest extends ApiWebTestCase
             ->willReturn(true);
         $this->replaceService(Security::class, $security);
 
-        $client->request('POST', '/api/task/21/cancel');
+        $client->request('POST', '/api/task/' . $taskId->toRfc4122() . '/cancel');
 
         self::assertResponseStatusCodeSame(200);
 
@@ -184,19 +192,21 @@ final class TaskApiControllerTest extends ApiWebTestCase
         self::assertSame('CANCELLED', $payload['data']['task']['status']);
         self::assertTrue($payload['data']['task']['cancelledNow']);
         self::assertTrue($payload['data']['task']['cancellationRequested']);
-        self::assertSame(42, $task->meta()['cancelledByUserId']);
+        self::assertSame('00000000-0000-4000-8000-000000000042', $task->meta()['cancelledByUserId']);
         self::assertArrayHasKey('cancelRequestedAt', $task->meta());
     }
 
     public function testCancelProcessingTaskMarksRequestWithoutImmediateCancel(): void
     {
-        $client = $this->createBearerAuthenticatedClient(userId: 42);
+        $client = $this->createBearerAuthenticatedClient(userId: UuidV4::fromString('00000000-0000-4000-8000-000000000042'));
+
+        $taskId = UuidV4::fromString('25252525-2525-4252-8252-252525252525');
 
         $task = $this->createProcessingTask();
         $video = new VideoFake();
 
         $taskRepository = $this->createMock(TaskRepositoryInterface::class);
-        $taskRepository->expects($this->once())->method('findById')->with(25)->willReturn($task);
+        $taskRepository->expects($this->once())->method('findById')->with($taskId)->willReturn($task);
         $taskRepository->expects($this->once())->method('save')->with($task);
         $taskRepository->expects($this->once())->method('log');
         $this->replaceService(TaskRepositoryInterface::class, $taskRepository);
@@ -212,7 +222,7 @@ final class TaskApiControllerTest extends ApiWebTestCase
             ->willReturn(true);
         $this->replaceService(Security::class, $security);
 
-        $client->request('POST', '/api/task/25/cancel');
+        $client->request('POST', '/api/task/' . $taskId->toRfc4122() . '/cancel');
 
         self::assertResponseStatusCodeSame(200);
 
@@ -220,14 +230,18 @@ final class TaskApiControllerTest extends ApiWebTestCase
         self::assertSame('PROCESSING', $payload['data']['task']['status']);
         self::assertFalse($payload['data']['task']['cancelledNow']);
         self::assertTrue($payload['data']['task']['cancellationRequested']);
-        self::assertSame(42, $task->meta()['cancelledByUserId']);
+        self::assertSame('00000000-0000-4000-8000-000000000042', $task->meta()['cancelledByUserId']);
         self::assertArrayHasKey('cancelRequestedAt', $task->meta());
     }
 
     private function createProcessingTask(): Task
     {
-        $task = Task::create(UuidV4::fromString('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'), 101, 42);
-        $task->setId(777);
+        $task = Task::create(
+            UuidV4::fromString('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'),
+            UuidV4::fromString('10101010-1010-4010-8010-101010101010'),
+            UuidV4::fromString('00000000-0000-4000-8000-000000000042')
+        );
+        $task->setId(UuidV4::fromString('77777777-7777-4777-8777-777777777777'));
         $task->start();
 
         return $task;

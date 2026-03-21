@@ -41,7 +41,7 @@ final class VideoAccessVoter extends Voter
             return false;
         }
 
-        return $subject->userId() === $user->id;
+        return $subject->userId()->equals($user->id);
     }
 
     private function isAdmin(object $user): bool

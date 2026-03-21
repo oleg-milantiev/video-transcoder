@@ -29,7 +29,7 @@ final readonly class TranscodeTaskPreparationService
         }
 
         // TODO use abstract storage
-        $relativeOutputPath = sprintf('%s/%d.mp4', $video->id()->toRfc4122(), $preset->id());
+        $relativeOutputPath = sprintf('%s/%s.mp4', $video->id()->toRfc4122(), $preset->id()->toRfc4122());
         $absoluteOutputPath = $this->storage->getAbsolutePath($relativeOutputPath);
         $this->filesystem->mkdir(\dirname($absoluteOutputPath));
 

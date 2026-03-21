@@ -9,6 +9,7 @@ use App\Application\Query\GetVideoDetailsQuery;
 use App\Application\Query\GetVideoListQuery;
 use App\Application\Query\StartTranscodeQuery;
 use App\Application\QueryHandler\QueryBus;
+use Symfony\Component\Uid\UuidV4;
 
 final class VideoApiControllerTest extends ApiWebTestCase
 {
@@ -83,7 +84,7 @@ final class VideoApiControllerTest extends ApiWebTestCase
             'status' => 'READY',
             'createdAt' => '2026-03-19 09:00',
             'updatedAt' => null,
-            'userId' => 1,
+            'userId' => '11111111-1111-4111-8111-111111111111',
             'meta' => ['duration' => 12],
             'poster' => null,
             'presetsWithTasks' => [],
@@ -130,7 +131,7 @@ final class VideoApiControllerTest extends ApiWebTestCase
      */
     public function testTranscodeReturnsTaskPayload(): void
     {
-        $client = $this->createBearerAuthenticatedClient(userId: 42);
+        $client = $this->createBearerAuthenticatedClient(userId: UuidV4::fromString('00000000-0000-4000-8000-000000000042'));
 
         $queryBus = $this->createMock(QueryBus::class);
         $queryBus->expects($this->once())
@@ -138,19 +139,19 @@ final class VideoApiControllerTest extends ApiWebTestCase
             ->with($this->callback(function (object $query): bool {
                 return $query instanceof StartTranscodeQuery
                     && $query->uuid->toRfc4122() === '11111111-1111-4111-8111-111111111111'
-                    && $query->presetId === 7
-                    && $query->userId === 42;
+                    && $query->presetId->toRfc4122() === '77777777-7777-4777-8777-777777777777'
+                    && $query->userId->toRfc4122() === '00000000-0000-4000-8000-000000000042';
             }))
-            ->willReturn(['taskId' => 15, 'status' => 'PENDING']);
+            ->willReturn(['taskId' => '15151515-1515-4515-8515-151515151515', 'status' => 'PENDING']);
 
         $this->replaceService(QueryBus::class, $queryBus);
 
-        $client->request('POST', '/api/video/11111111-1111-4111-8111-111111111111/transcode/7');
+        $client->request('POST', '/api/video/11111111-1111-4111-8111-111111111111/transcode/77777777-7777-4777-8777-777777777777');
 
         self::assertResponseStatusCodeSame(200);
         self::assertSame([
             'data' => [
-                'task' => ['taskId' => 15, 'status' => 'PENDING'],
+                'task' => ['taskId' => '15151515-1515-4515-8515-151515151515', 'status' => 'PENDING'],
             ],
         ], $this->decodeJson($client->getResponse()->getContent()));
     }
@@ -166,7 +167,7 @@ final class VideoApiControllerTest extends ApiWebTestCase
         $queryBus->expects($this->never())->method('query');
         $this->replaceService(QueryBus::class, $queryBus);
 
-        $client->request('POST', '/api/video/not-a-uuid/transcode/7');
+        $client->request('POST', '/api/video/not-a-uuid/transcode/77777777-7777-4777-8777-777777777777');
 
         self::assertResponseStatusCodeSame(400);
         self::assertSame([
@@ -191,7 +192,7 @@ final class VideoApiControllerTest extends ApiWebTestCase
             ->willThrowException(new \DomainException('Access denied'));
         $this->replaceService(QueryBus::class, $queryBus);
 
-        $client->request('POST', '/api/video/11111111-1111-4111-8111-111111111111/transcode/7');
+        $client->request('POST', '/api/video/11111111-1111-4111-8111-111111111111/transcode/77777777-7777-4777-8777-777777777777');
 
         self::assertResponseStatusCodeSame(403);
         self::assertSame([
@@ -216,7 +217,7 @@ final class VideoApiControllerTest extends ApiWebTestCase
             ->willThrowException(new \RuntimeException('boom'));
         $this->replaceService(QueryBus::class, $queryBus);
 
-        $client->request('POST', '/api/video/11111111-1111-4111-8111-111111111111/transcode/7');
+        $client->request('POST', '/api/video/11111111-1111-4111-8111-111111111111/transcode/77777777-7777-4777-8777-777777777777');
 
         self::assertResponseStatusCodeSame(500);
         self::assertSame([

@@ -2,9 +2,11 @@
 
 namespace App\Domain\User\Entity;
 
+use Symfony\Component\Uid\UuidV4 as Uuid;
+
 class User
 {
-    private ?int $id;
+    private ?Uuid $id;
     private string $email;
     private array $roles;
     private ?string $password = null;
@@ -12,10 +14,10 @@ class User
 
     public function __construct(
         string  $email,
-        array   $roles,
+        array $roles,
         ?string $password = null,
         ?Tariff $tariff = null,
-        ?int    $id = null,
+        ?Uuid $id = null,
     ) {
         $this->id = $id;
 
@@ -26,7 +28,7 @@ class User
         $this->tariff = $tariff;
     }
 
-    public function id(): ?int
+    public function id(): ?Uuid
     {
         return $this->id;
     }

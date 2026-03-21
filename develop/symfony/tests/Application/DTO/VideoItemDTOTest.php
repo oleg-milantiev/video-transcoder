@@ -22,7 +22,7 @@ class VideoItemDTOTest extends TestCase
             new VideoTitle('Demo Video'),
             new FileExtension('mp4'),
             VideoStatus::UPLOADED,
-            42,
+            UuidV4::fromString('42424242-4242-4242-8242-424242424242'),
             ['preview' => true],
             VideoDates::create(new \DateTimeImmutable('2026-03-18 10:15:00')),
             $uuid,

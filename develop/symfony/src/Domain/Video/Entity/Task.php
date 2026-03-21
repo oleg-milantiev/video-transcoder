@@ -9,25 +9,25 @@ use Symfony\Component\Uid\UuidV4 as Uuid;
 
 class Task
 {
-    private ?int $id;
+    private ?Uuid $id;
     private TaskStatus $status;
     private Progress $progress;
     private TaskDates $dates;
     private array $meta;
     private Uuid $videoId;
-    private int $presetId;
-    private int $userId;
+    private Uuid $presetId;
+    private Uuid $userId;
 
     // Constructor for mapping from Doctrine only. Use static::create() for domain
     // TODO remove it
     public function __construct(
         Uuid $videoId,
-        int $presetId,
-        int $userId,
+        Uuid $presetId,
+        Uuid $userId,
         ?TaskStatus $status = null,
         ?Progress $progress = null,
         ?TaskDates $dates = null,
-        ?int $id = null,
+        ?Uuid $id = null,
         array $meta = [],
     ) {
         $this->id = $id;
@@ -40,7 +40,7 @@ class Task
         $this->userId = $userId;
     }
 
-    public static function create(Uuid $videoId, int $presetId, int $userId): self
+    public static function create(Uuid $videoId, Uuid $presetId, Uuid $userId): self
     {
         return new self($videoId, $presetId, $userId);
     }
@@ -140,7 +140,7 @@ class Task
         return $this->videoId;
     }
 
-    public function presetId(): int
+    public function presetId(): Uuid
     {
         return $this->presetId;
     }
@@ -150,12 +150,12 @@ class Task
         return $this->status;
     }
 
-    public function id(): ?int
+    public function id(): ?Uuid
     {
         return $this->id;
     }
 
-    public function setId(int $id): void
+    public function setId(Uuid $id): void
     {
         $this->id = $id;
     }
@@ -165,7 +165,7 @@ class Task
         return $this->meta;
     }
 
-    public function userId(): int
+    public function userId(): Uuid
     {
         return $this->userId;
     }

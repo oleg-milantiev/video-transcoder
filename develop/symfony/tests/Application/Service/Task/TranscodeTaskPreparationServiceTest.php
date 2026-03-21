@@ -27,7 +27,7 @@ class TranscodeTaskPreparationServiceTest extends TestCase
     public function testPrepareReturnsContextAndMarksTaskStarted(): void
     {
         $video = $this->createVideo(12.5);
-        $preset = $this->createPreset(5);
+        $preset = $this->createPreset(UuidV4::fromString('123e4567-e89b-42d3-a456-426614174005'));
         $task = $this->createTask($video->id(), $preset->id());
 
         $taskRepository = $this->createMock(TaskRepositoryInterface::class);
@@ -36,19 +36,19 @@ class TranscodeTaskPreparationServiceTest extends TestCase
             ->with($this->callback(static fn (Task $savedTask): bool => $savedTask->status()->name === 'PROCESSING'));
         $taskRepository->expects($this->once())
             ->method('log')
-            ->with(13, 'info', 'Transcoding started');
+            ->with(UuidV4::fromString('123e4567-e89b-42d3-a456-426614174013'), 'info', 'Transcoding started');
 
         $presetRepository = $this->createMock(PresetRepositoryInterface::class);
         $presetRepository->expects($this->once())
             ->method('findById')
-            ->with(5)
+            ->with(UuidV4::fromString('123e4567-e89b-42d3-a456-426614174005'))
             ->willReturn($preset);
 
         $storage = $this->createMock(StorageInterface::class);
         $storage->expects($this->exactly(2))
             ->method('getAbsolutePath')
             ->willReturnCallback(static function (string $path) use ($video): string {
-                if ($path === sprintf('%s/5.mp4', $video->id()->toRfc4122())) {
+                if ($path === sprintf('%s/%s.mp4', $video->id()->toRfc4122(), '123e4567-e89b-42d3-a456-426614174005')) {
                     return '/var/storage/' . $path;
                 }
 
@@ -67,8 +67,8 @@ class TranscodeTaskPreparationServiceTest extends TestCase
         $service = new TranscodeTaskPreparationService($presetRepository, $taskRepository, $storage, $filesystem);
         $context = $service->prepare($task, $video);
 
-        $this->assertSame(sprintf('%s/5.mp4', $video->id()->toRfc4122()), $context->relativeOutputPath);
-        $this->assertSame(sprintf('/var/storage/%s/5.mp4', $video->id()->toRfc4122()), $context->absoluteOutputPath);
+        $this->assertSame(sprintf('%s/%s.mp4', $video->id()->toRfc4122(), '123e4567-e89b-42d3-a456-426614174005'), $context->relativeOutputPath);
+        $this->assertSame(sprintf('/var/storage/%s/%s.mp4', $video->id()->toRfc4122(), '123e4567-e89b-42d3-a456-426614174005'), $context->absoluteOutputPath);
         $this->assertSame('/var/storage/' . $video->getSrcFilename(), $context->inputPath);
         $this->assertSame($task, $context->task);
         $this->assertSame($video, $context->video);
@@ -78,18 +78,18 @@ class TranscodeTaskPreparationServiceTest extends TestCase
     public function testPrepareLogsAndThrowsWhenPresetNotFound(): void
     {
         $video = $this->createVideo(10.0);
-        $task = $this->createTask($video->id(), 99);
+        $task = $this->createTask($video->id(), UuidV4::fromString('123e4567-e89b-42d3-a456-426614174099'));
 
         $taskRepository = $this->createMock(TaskRepositoryInterface::class);
         $taskRepository->expects($this->once())
             ->method('log')
-            ->with(13, 'error', 'Preset not found for task');
+            ->with(UuidV4::fromString('123e4567-e89b-42d3-a456-426614174013'), 'error', 'Preset not found for task');
         $taskRepository->expects($this->never())->method('save');
 
         $presetRepository = $this->createMock(PresetRepositoryInterface::class);
         $presetRepository->expects($this->once())
             ->method('findById')
-            ->with(99)
+            ->with(UuidV4::fromString('123e4567-e89b-42d3-a456-426614174099'))
             ->willReturn(null);
 
         $storage = $this->createStub(StorageInterface::class);
@@ -109,13 +109,13 @@ class TranscodeTaskPreparationServiceTest extends TestCase
             title: new VideoTitle('Clip'),
             extension: new FileExtension('mp4'),
             status: VideoStatus::UPLOADED,
-            userId: 7,
+            userId: UuidV4::fromString('123e4567-e89b-42d3-a456-426614174007'),
             meta: ['duration' => $duration],
             id: UuidV4::fromString('123e4567-e89b-42d3-a456-426614174120'),
         );
     }
 
-    private function createPreset(int $id): Preset
+    private function createPreset(UuidV4 $id): Preset
     {
         return new Preset(
             title: new PresetTitle('HD 720'),
@@ -126,10 +126,10 @@ class TranscodeTaskPreparationServiceTest extends TestCase
         );
     }
 
-    private function createTask(UuidV4 $videoId, int $presetId): Task
+    private function createTask(UuidV4 $videoId, UuidV4 $presetId): Task
     {
-        $task = Task::create($videoId, $presetId, 7);
-        $task->setId(13);
+        $task = Task::create($videoId, $presetId, UuidV4::fromString('123e4567-e89b-42d3-a456-426614174007'));
+        $task->setId(UuidV4::fromString('123e4567-e89b-42d3-a456-426614174013'));
 
         return $task;
     }

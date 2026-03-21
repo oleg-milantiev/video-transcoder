@@ -6,6 +6,7 @@ use App\Domain\User\Entity\Tariff;
 use App\Domain\User\Repository\TariffRepositoryInterface;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
+use Symfony\Component\Uid\UuidV4 as Uuid;
 
 /**
  * @extends ServiceEntityRepository<TariffEntity>
@@ -24,7 +25,7 @@ class TariffRepository extends ServiceEntityRepository implements TariffReposito
         $this->getEntityManager()->flush();
     }
 
-    public function findById(int $id): ?Tariff
+    public function findById(Uuid $id): ?Tariff
     {
         $entity = $this->find($id);
         return $entity ? TariffMapper::toDomain($entity) : null;

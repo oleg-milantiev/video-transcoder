@@ -7,6 +7,7 @@ use App\Presentation\Validator\Constraints\AtLeastOneAdmin;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Uid\UuidV4 as Uuid;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
 
@@ -16,9 +17,8 @@ use Symfony\Component\Security\Core\User\UserInterface;
 class UserEntity implements UserInterface, PasswordAuthenticatedUserInterface
 {
     #[ORM\Id]
-    #[ORM\GeneratedValue]
-    #[ORM\Column]
-    public ?int $id = null {
+    #[ORM\Column(type: 'uuid', unique: true)]
+    public ?Uuid $id = null {
         get {
             return $this->id;
         }
@@ -59,6 +59,7 @@ class UserEntity implements UserInterface, PasswordAuthenticatedUserInterface
 
     public function __construct()
     {
+        $this->id = Uuid::v4();
         $this->videos = new ArrayCollection();
     }
 

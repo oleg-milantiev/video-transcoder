@@ -22,9 +22,10 @@ final class VideoAccessVoterTest extends TestCase
     #[DataProvider('attributeProvider')]
     public function testGrantsAccessForVideoOwner(string $attribute): void
     {
-        $video = $this->createVideo(77);
+        $ownerId = UuidV4::fromString('77777777-7777-4777-8777-777777777777');
+        $video = $this->createVideo($ownerId);
         $user = new UserEntity();
-        $user->id = 77;
+        $user->id = $ownerId;
         $user->roles = ['ROLE_USER'];
 
         $token = $this->createStub(TokenInterface::class);
@@ -38,9 +39,9 @@ final class VideoAccessVoterTest extends TestCase
     #[DataProvider('attributeProvider')]
     public function testGrantsAccessForAdmin(string $attribute): void
     {
-        $video = $this->createVideo(77);
+        $video = $this->createVideo(UuidV4::fromString('77777777-7777-4777-8777-777777777777'));
         $user = new UserEntity();
-        $user->id = 12;
+        $user->id = UuidV4::fromString('12121212-1212-4212-8212-121212121212');
         $user->roles = ['ROLE_ADMIN'];
 
         $token = $this->createStub(TokenInterface::class);
@@ -54,9 +55,9 @@ final class VideoAccessVoterTest extends TestCase
     #[DataProvider('attributeProvider')]
     public function testDeniesAccessForForeignUser(string $attribute): void
     {
-        $video = $this->createVideo(77);
+        $video = $this->createVideo(UuidV4::fromString('77777777-7777-4777-8777-777777777777'));
         $user = new UserEntity();
-        $user->id = 88;
+        $user->id = UuidV4::fromString('88888888-8888-4888-8888-888888888888');
         $user->roles = ['ROLE_USER'];
 
         $token = $this->createStub(TokenInterface::class);
@@ -70,7 +71,7 @@ final class VideoAccessVoterTest extends TestCase
     #[DataProvider('attributeProvider')]
     public function testDeniesAccessForAnonymous(string $attribute): void
     {
-        $video = $this->createVideo(77);
+        $video = $this->createVideo(UuidV4::fromString('77777777-7777-4777-8777-777777777777'));
 
         $token = $this->createStub(TokenInterface::class);
         $token->method('getUser')->willReturn(null);
@@ -88,7 +89,7 @@ final class VideoAccessVoterTest extends TestCase
         ];
     }
 
-    private function createVideo(int $ownerId): Video
+    private function createVideo(UuidV4 $ownerId): Video
     {
         return Video::create(
             new VideoTitle('Owner video'),

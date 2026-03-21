@@ -7,6 +7,7 @@ use App\Domain\User\Repository\UserRepositoryInterface;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\DBAL\Exception;
 use Doctrine\Persistence\ManagerRegistry;
+use Symfony\Component\Uid\UuidV4 as Uuid;
 use Symfony\Component\Security\Core\Exception\UnsupportedUserException;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\PasswordUpgraderInterface;
@@ -40,15 +41,17 @@ class UserRepository extends ServiceEntityRepository implements PasswordUpgrader
         $this->getEntityManager()->flush();
     }
 
-    public function findById(int $id): ?User
+    public function findById(Uuid $id): ?User
     {
-        return UserMapper::toDomain($this->find($id));
+        $entity = $this->find($id);
+
+        return $entity ? UserMapper::toDomain($entity) : null;
     }
 
     /**
      * @throws Exception
      */
-    public function countAdmins(?int $excludeId = null): int
+    public function countAdmins(?Uuid $excludeId = null): int
     {
         $sql = 'SELECT count(id) FROM "user" WHERE roles::jsonb @> :role';
 
@@ -60,7 +63,7 @@ class UserRepository extends ServiceEntityRepository implements PasswordUpgrader
         $stmt->bindValue('role', json_encode(['ROLE_ADMIN']));
 
         if ($excludeId !== null) {
-            $stmt->bindValue('id', $excludeId);
+            $stmt->bindValue('id', $excludeId->toRfc4122());
         }
 
         $result = $stmt->executeQuery();
@@ -69,7 +72,7 @@ class UserRepository extends ServiceEntityRepository implements PasswordUpgrader
     }
 
     // You should NOT log into Persistence in prod. Just for debug now
-    public function log(int $id, string $level, string $text): void
+    public function log(Uuid $id, string $level, string $text): void
     {
         $em = $this->getEntityManager();
         /** @var UserEntity|null $user */

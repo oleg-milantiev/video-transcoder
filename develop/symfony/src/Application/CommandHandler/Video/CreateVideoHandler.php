@@ -33,7 +33,7 @@ final readonly class CreateVideoHandler
     {
         try {
             $this->eventBus->dispatch(new CreateVideoStart(
-                userId: $command->userId(),
+                userId: $command->userId()->toRfc4122(),
                 filename: $command->file()->getName(),
             ));
 
@@ -53,12 +53,12 @@ final readonly class CreateVideoHandler
             $this->commandBus->dispatch(new ExtractVideoMetadata($video));
             $this->eventBus->dispatch(new CreateVideoSuccess(
                 videoId: $video->id()?->toRfc4122(),
-                userId: $command->userId(),
+                userId: $command->userId()->toRfc4122(),
             ));
         } catch (\Exception $e) {
             $this->eventBus->dispatch(new CreateVideoFail(
                 error: $e->getMessage(),
-                userId: $command->userId(),
+                userId: $command->userId()->toRfc4122(),
                 filename: $command->file()->getName(),
             ));
         }

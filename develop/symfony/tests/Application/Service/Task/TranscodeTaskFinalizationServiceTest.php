@@ -19,14 +19,15 @@ class TranscodeTaskFinalizationServiceTest extends TestCase
 {
     public function testHandleCancellationUsesFreshTaskAndPersistsCancelledReport(): void
     {
-        $originalTask = $this->createTask(10);
-        $freshTask = $this->createTask(10);
+        $taskId = UuidV4::fromString('123e4567-e89b-42d3-a456-426614174210');
+        $originalTask = $this->createTask($taskId);
+        $freshTask = $this->createTask($taskId);
         $report = $this->createReport(true);
 
         $taskRepository = $this->createMock(TaskRepositoryInterface::class);
         $taskRepository->expects($this->once())
             ->method('findByIdFresh')
-            ->with(10)
+            ->with($taskId)
             ->willReturn($freshTask);
 
         $taskRepository->expects($this->once())
@@ -41,20 +42,21 @@ class TranscodeTaskFinalizationServiceTest extends TestCase
 
         $taskRepository->expects($this->once())
             ->method('log')
-            ->with(10, 'info', 'Transcoding cancelled');
+            ->with($taskId, 'info', 'Transcoding cancelled');
 
         $cancellationTrigger = new TaskCancellationTrigger(new ArrayAdapter());
-        $cancellationTrigger->request(10);
+        $cancellationTrigger->request($taskId);
 
         $service = new TranscodeTaskFinalizationService($taskRepository, $cancellationTrigger);
         $service->handleCancellation($originalTask, $report);
 
-        $this->assertFalse($cancellationTrigger->isRequested(10));
+        $this->assertFalse($cancellationTrigger->isRequested($taskId));
     }
 
     public function testHandleSuccessStoresOutputAndCompletesTask(): void
     {
-        $task = $this->createTask(11);
+        $taskId = UuidV4::fromString('123e4567-e89b-42d3-a456-426614174211');
+        $task = $this->createTask($taskId);
         $task->start();
         $report = $this->createReport(false);
 
@@ -73,20 +75,21 @@ class TranscodeTaskFinalizationServiceTest extends TestCase
 
         $taskRepository->expects($this->once())
             ->method('log')
-            ->with(11, 'info', 'Transcoding finished successfully');
+            ->with($taskId, 'info', 'Transcoding finished successfully');
 
         $cancellationTrigger = new TaskCancellationTrigger(new ArrayAdapter());
-        $cancellationTrigger->request(11);
+        $cancellationTrigger->request($taskId);
 
         $service = new TranscodeTaskFinalizationService($taskRepository, $cancellationTrigger);
         $service->handleSuccess($task, 'video/11.mp4', $report);
 
-        $this->assertFalse($cancellationTrigger->isRequested(11));
+        $this->assertFalse($cancellationTrigger->isRequested($taskId));
     }
 
     public function testHandleFailureFailsActiveTaskAndLogsError(): void
     {
-        $task = $this->createTask(12);
+        $taskId = UuidV4::fromString('123e4567-e89b-42d3-a456-426614174212');
+        $task = $this->createTask($taskId);
 
         $taskRepository = $this->createMock(TaskRepositoryInterface::class);
         $taskRepository->expects($this->once())
@@ -95,15 +98,19 @@ class TranscodeTaskFinalizationServiceTest extends TestCase
 
         $taskRepository->expects($this->once())
             ->method('log')
-            ->with(12, 'error', 'Transcoding failed: boom');
+            ->with($taskId, 'error', 'Transcoding failed: boom');
 
         $service = new TranscodeTaskFinalizationService($taskRepository, new TaskCancellationTrigger(new ArrayAdapter()));
         $service->handleFailure($task, new \RuntimeException('boom'));
     }
 
-    private function createTask(int $id): Task
+    private function createTask(UuidV4 $id): Task
     {
-        $task = Task::create(UuidV4::fromString('123e4567-e89b-42d3-a456-426614174199'), 1, 7);
+        $task = Task::create(
+            UuidV4::fromString('123e4567-e89b-42d3-a456-426614174199'),
+            UuidV4::fromString('123e4567-e89b-42d3-a456-426614174001'),
+            UuidV4::fromString('123e4567-e89b-42d3-a456-426614174007')
+        );
         $task->setId($id);
 
         return $task;

@@ -31,7 +31,7 @@ class TaskItemDTOTest extends TestCase
             new VideoTitle('Task Source Video'),
             new FileExtension('mkv'),
             VideoStatus::UPLOADED,
-            99,
+            UuidV4::fromString('99999999-9999-4999-8999-999999999999'),
             [],
             VideoDates::create(new \DateTimeImmutable('2026-03-18 09:00:00')),
             $videoId,
@@ -42,22 +42,22 @@ class TaskItemDTOTest extends TestCase
             new Resolution(1920, 1080),
             new Codec('h264'),
             new Bitrate(50.0),
-            7,
+            UuidV4::fromString('77777777-7777-4777-8777-777777777777'),
         );
 
         $task = new Task(
             videoId: $videoId,
-            presetId: 7,
-            userId: 99,
+            presetId: UuidV4::fromString('77777777-7777-4777-8777-777777777777'),
+            userId: UuidV4::fromString('99999999-9999-4999-8999-999999999999'),
             status: TaskStatus::processing(),
             progress: new Progress(75),
             dates: TaskDates::fromPersistence(new \DateTimeImmutable('2026-03-18 10:00:00'), null, null),
-            id: 55,
+            id: UuidV4::fromString('55555555-5555-4555-8555-555555555555'),
         );
 
         $dto = TaskItemDTO::fromDomain($task, $video, $preset);
 
-        $this->assertSame(55, $dto->id);
+        $this->assertSame('55555555-5555-4555-8555-555555555555', $dto->id);
         $this->assertSame('Task Source Video', $dto->videoTitle);
         $this->assertSame('HD 1080p', $dto->presetTitle);
         $this->assertSame('PROCESSING', $dto->status);

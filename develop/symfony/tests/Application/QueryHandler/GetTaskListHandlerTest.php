@@ -55,12 +55,12 @@ class GetTaskListHandlerTest extends TestCase
         $presetRepo = $this->createMock(PresetRepositoryInterface::class);
         $presetRepo->expects($this->exactly(2))
             ->method('findById')
-            ->willReturnCallback(function (int $presetId) use ($task1, $task2, $preset1, $preset2) {
-                if ($presetId === $task1->presetId()) {
+            ->willReturnCallback(function ($presetId) use ($task1, $task2, $preset1, $preset2) {
+                if ($presetId->equals($task1->presetId())) {
                     return $preset1;
                 }
 
-                if ($presetId === $task2->presetId()) {
+                if ($presetId->equals($task2->presetId())) {
                     return $preset2;
                 }
 
@@ -78,14 +78,14 @@ class GetTaskListHandlerTest extends TestCase
         $this->assertSame(1, $response->totalPages);
         $this->assertCount(2, $response->items);
 
-        $this->assertSame($task1->id(), $response->items[0]->id);
+        $this->assertSame($task1->id()->toRfc4122(), $response->items[0]->id);
         $this->assertSame($video1->title()->value(), $response->items[0]->videoTitle);
         $this->assertSame($preset1->title()->value(), $response->items[0]->presetTitle);
         $this->assertSame($task1->status()->name, $response->items[0]->status);
         $this->assertSame($task1->progress()->value(), $response->items[0]->progress);
         $this->assertSame($task1->createdAt()->format('Y-m-d H:i'), $response->items[0]->createdAt);
 
-        $this->assertSame($task2->id(), $response->items[1]->id);
+        $this->assertSame($task2->id()->toRfc4122(), $response->items[1]->id);
         $this->assertSame($video2->title()->value(), $response->items[1]->videoTitle);
         $this->assertSame($preset2->title()->value(), $response->items[1]->presetTitle);
         $this->assertSame($task2->status()->name, $response->items[1]->status);

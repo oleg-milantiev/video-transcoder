@@ -7,6 +7,7 @@ namespace App\Tests\Presentation\Controller;
 use App\Infrastructure\Persistence\Doctrine\User\UserEntity;
 use App\Tests\Presentation\Controller\Api\InMemoryTestUserProvider;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
+use Symfony\Component\Uid\UuidV4;
 
 final class VideoControllerTest extends WebTestCase
 {
@@ -23,7 +24,7 @@ final class VideoControllerTest extends WebTestCase
         $client = static::createClient();
 
         $user = new UserEntity();
-        $user->id = 201;
+        $user->id = UuidV4::fromString('00000000-0000-4000-8000-000000000201');
         $user->email = 'video-user@example.com';
         $user->roles = ['ROLE_USER'];
 

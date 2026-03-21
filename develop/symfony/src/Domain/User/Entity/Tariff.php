@@ -5,10 +5,11 @@ namespace App\Domain\User\Entity;
 use App\Domain\User\ValueObject\TariffDelay;
 use App\Domain\User\ValueObject\TariffInstance;
 use App\Domain\User\ValueObject\TariffTitle;
+use Symfony\Component\Uid\UuidV4 as Uuid;
 
 class Tariff
 {
-    private ?int $id;
+    private ?Uuid $id;
     private TariffTitle $title;
     private TariffDelay $delay;
     private TariffInstance $instance;
@@ -17,7 +18,7 @@ class Tariff
         TariffTitle $title,
         TariffDelay $delay,
         TariffInstance $instance,
-        ?int $id = null
+        ?Uuid $id = null
     ) {
         $this->title = $title;
         $this->delay = $delay;
@@ -25,7 +26,7 @@ class Tariff
         $this->id = $id;
     }
 
-    public function id(): ?int
+    public function id(): ?Uuid
     {
         return $this->id;
     }

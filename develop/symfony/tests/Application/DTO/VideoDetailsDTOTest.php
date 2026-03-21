@@ -28,16 +28,16 @@ class VideoDetailsDTOTest extends TestCase
             new VideoTitle('Detailed Video'),
             new FileExtension('mov'),
             VideoStatus::UPLOADED,
-            7,
+            UuidV4::fromString('123e4567-e89b-42d3-a456-426614174007'),
             $meta,
             \App\Domain\Video\ValueObject\VideoDates::create(new \DateTimeImmutable('2026-03-18 08:45:00')),
             $uuid,
         );
 
         $presetDto = new PresetWithTaskDTO(
-            id: 5,
+            id: '123e4567-e89b-42d3-a456-426614174005',
             title: 'Mobile',
-            task: new TaskInfoDTO('PENDING', 0, '2026-03-18 08:50'),
+            task: new TaskInfoDTO('PENDING', 0, '2026-03-18 08:50', '123e4567-e89b-42d3-a456-426614174055'),
         );
 
         $dto = VideoDetailsDTO::fromDomain($video, [$presetDto]);
@@ -48,7 +48,7 @@ class VideoDetailsDTOTest extends TestCase
         $this->assertSame('UPLOADED', $dto->status);
         $this->assertSame('2026-03-18 08:45', $dto->createdAt);
         $this->assertNull($dto->updatedAt);
-        $this->assertSame(7, $dto->userId);
+        $this->assertSame('123e4567-e89b-42d3-a456-426614174007', $dto->userId);
         $this->assertSame([$presetDto], $dto->presetsWithTasks);
         $this->assertSame($uuid->toRfc4122() . '.jpg', $dto->poster);
         $this->assertArrayHasKey('duration', $dto->meta);

@@ -11,6 +11,7 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Uid\UuidV4;
 
 class TaskController extends AbstractController
 {
@@ -22,10 +23,16 @@ class TaskController extends AbstractController
     ) {
     }
 
-    #[Route('/task/{id}/download', name: 'task_download')]
-    public function download(int $id): Response
+    #[Route('/task/{id}/download', name: 'task_download', requirements: ['id' => '[0-9a-fA-F-]{36}'])]
+    public function download(string $id): Response
     {
-        $task = $this->taskRepository->findById($id);
+        try {
+            $taskId = UuidV4::fromString($id);
+        } catch (\Throwable) {
+            throw $this->createNotFoundException('Task not found');
+        }
+
+        $task = $this->taskRepository->findById($taskId);
         if (!$task) {
             throw $this->createNotFoundException('Task not found');
         }

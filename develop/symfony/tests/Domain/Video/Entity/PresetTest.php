@@ -10,6 +10,7 @@ use App\Domain\Video\ValueObject\Codec;
 use App\Domain\Video\ValueObject\PresetTitle;
 use App\Domain\Video\ValueObject\Resolution;
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\Uid\UuidV4;
 
 final class PresetTest extends TestCase
 {
@@ -37,12 +38,12 @@ final class PresetTest extends TestCase
             new Resolution(1280, 720),
             new Codec('h264'),
             new Bitrate(3.0),
-            11,
+            UuidV4::fromString('11111111-1111-4111-8111-111111111111'),
         );
 
         $preset->rename(new PresetTitle('Updated'));
 
-        $this->assertSame(11, $preset->id());
+        $this->assertSame('11111111-1111-4111-8111-111111111111', $preset->id()->toRfc4122());
         $this->assertSame('Updated', $preset->title()->value());
     }
 

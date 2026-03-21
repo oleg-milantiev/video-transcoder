@@ -28,10 +28,10 @@ class GetVideoDetailsHandlerTest extends TestCase
             ->with($video->id())
             ->willReturn([
                 [
-                    'id' => 1,
+                    'id' => '11111111-1111-4111-8111-111111111111',
                     'title' => 'HD',
                     'task' => [
-                        'id' => 42,
+                        'id' => '42424242-4242-4242-8242-424242424242',
                         'status' => 2,
                         'progress' => 75,
                         'createdAt' => '2024-03-18 10:00',
@@ -50,6 +50,6 @@ class GetVideoDetailsHandlerTest extends TestCase
         $dto = $handler($query);
 
         $this->assertSame('PROCESSING', $dto->presetsWithTasks[0]->task->status);
-        $this->assertSame(42, $dto->presetsWithTasks[0]->task->id);
+        $this->assertSame('42424242-4242-4242-8242-424242424242', $dto->presetsWithTasks[0]->task->id);
     }
 }

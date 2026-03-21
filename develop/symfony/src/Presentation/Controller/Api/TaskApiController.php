@@ -19,6 +19,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
+use Symfony\Component\Uid\UuidV4;
 
 #[Route('/api/task')]
 #[IsGranted('IS_AUTHENTICATED_FULLY')]
@@ -54,10 +55,16 @@ class TaskApiController extends AbstractController
     /**
      * @throws InvalidArgumentException
      */
-    #[Route('/{id}/cancel', name: 'api_task_cancel', requirements: ['id' => '\\d+'], methods: ['POST'])]
-    public function cancel(int $id): Response
+    #[Route('/{id}/cancel', name: 'api_task_cancel', requirements: ['id' => '[0-9a-fA-F-]{36}'], methods: ['POST'])]
+    public function cancel(string $id): Response
     {
-        $task = $this->taskRepository->findById($id);
+        try {
+            $taskId = UuidV4::fromString($id);
+        } catch (\Throwable) {
+            return $this->apiError('INVALID_TASK_ID', 'Invalid task id', 400);
+        }
+
+        $task = $this->taskRepository->findById($taskId);
         if (!$task) {
             return $this->apiError('TASK_NOT_FOUND', 'Task not found', 404);
         }
@@ -75,7 +82,7 @@ class TaskApiController extends AbstractController
         // via $lock = $this->lockFactory->createLock(sprintf('transcode-task:%d', $scheduledTask->taskId), self::TASK_MUTEX_TTL);
         // not db task status
         $task->updateMeta([
-            'cancelledByUserId' => $this->getUser()->id,
+            'cancelledByUserId' => $this->getUser()->id->toRfc4122(),
             'cancelRequestedAt' => new \DateTimeImmutable()->format(DATE_ATOM),
         ]);
 
@@ -92,7 +99,7 @@ class TaskApiController extends AbstractController
 
         return $this->apiSuccess([
             'task' => [
-                'id' => $task->id(),
+                'id' => $task->id()->toRfc4122(),
                 'status' => $task->status()->name,
                 'cancelledNow' => $cancelledNow,
                 'cancellationRequested' => true,

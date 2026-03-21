@@ -13,7 +13,7 @@ readonly class VideoDetailsDTO
         public string $status,
         public string $createdAt,
         public ?string $updatedAt,
-        public int $userId,
+        public string $userId,
         public array $meta,
         public ?string $poster,
         /** @var PresetWithTaskDTO[] */
@@ -29,7 +29,7 @@ readonly class VideoDetailsDTO
             status: $video->status()->name,
             createdAt: $video->createdAt()->format('Y-m-d H:i'),
             updatedAt: $video->updatedAt()?->format('Y-m-d H:i'),
-            userId: $video->userId(),
+            userId: $video->userId()->toRfc4122(),
             meta: self::sanitizeMeta($video->meta()),
             poster: $video->getPoster(),
             presetsWithTasks: $presetsWithTasks,

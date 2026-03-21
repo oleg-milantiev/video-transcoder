@@ -5,6 +5,7 @@ namespace App\Infrastructure\Task;
 use Psr\Cache\CacheItemPoolInterface;
 use Psr\Cache\InvalidArgumentException;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
+use Symfony\Component\Uid\UuidV4;
 
 // TODO подумать, тут ли ему лежать
 final readonly class TaskCancellationTrigger
@@ -19,7 +20,7 @@ final readonly class TaskCancellationTrigger
     /**
      * @throws InvalidArgumentException
      */
-    public function request(int $taskId, int $ttlSeconds = self::DEFAULT_TTL_SECONDS): void
+    public function request(UuidV4 $taskId, int $ttlSeconds = self::DEFAULT_TTL_SECONDS): void
     {
         $item = $this->cache->getItem($this->key($taskId));
         $item->set(true);
@@ -30,7 +31,7 @@ final readonly class TaskCancellationTrigger
     /**
      * @throws InvalidArgumentException
      */
-    public function isRequested(int $taskId): bool
+    public function isRequested(UuidV4 $taskId): bool
     {
         return $this->cache->getItem($this->key($taskId))->isHit();
     }
@@ -38,14 +39,14 @@ final readonly class TaskCancellationTrigger
     /**
      * @throws InvalidArgumentException
      */
-    public function clear(int $taskId): void
+    public function clear(UuidV4 $taskId): void
     {
         $this->cache->deleteItem($this->key($taskId));
     }
 
-    private function key(int $taskId): string
+    private function key(UuidV4 $taskId): string
     {
-        return sprintf('task_cancel_trigger_%d', $taskId);
+        return sprintf('task_cancel_trigger_%s', $taskId->toRfc4122());
     }
 }
 

@@ -24,7 +24,11 @@ class StartTaskSchedulerHandlerTest extends TestCase
     {
         $taskRepository = $this->createStub(ScheduledTaskReadRepositoryInterface::class);
         $taskRepository->method('getScheduled')->willReturn([
-            new ScheduledTaskDTO(10, 7, UuidV4::fromString('123e4567-e89b-42d3-a456-426614174141')),
+            new ScheduledTaskDTO(
+                UuidV4::fromString('123e4567-e89b-42d3-a456-426614174110'),
+                UuidV4::fromString('123e4567-e89b-42d3-a456-426614174107'),
+                UuidV4::fromString('123e4567-e89b-42d3-a456-426614174141')
+            ),
         ]);
 
         $commandBus = $this->createMock(MessageBusInterface::class);
@@ -62,7 +66,11 @@ class StartTaskSchedulerHandlerTest extends TestCase
     {
         $taskRepository = $this->createStub(ScheduledTaskReadRepositoryInterface::class);
         $taskRepository->method('getScheduled')->willReturn([
-            new ScheduledTaskDTO(11, 8, UuidV4::fromString('123e4567-e89b-42d3-a456-426614174142')),
+            new ScheduledTaskDTO(
+                UuidV4::fromString('123e4567-e89b-42d3-a456-426614174111'),
+                UuidV4::fromString('123e4567-e89b-42d3-a456-426614174108'),
+                UuidV4::fromString('123e4567-e89b-42d3-a456-426614174142')
+            ),
         ]);
 
         $commandBus = $this->createMock(MessageBusInterface::class);

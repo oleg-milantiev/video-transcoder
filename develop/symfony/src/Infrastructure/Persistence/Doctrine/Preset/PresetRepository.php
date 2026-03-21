@@ -6,6 +6,7 @@ use App\Domain\Video\Entity\Preset;
 use App\Domain\Video\Repository\PresetRepositoryInterface;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
+use Symfony\Component\Uid\UuidV4 as Uuid;
 
 /**
  * @extends ServiceEntityRepository<PresetEntity>
@@ -23,13 +24,15 @@ class PresetRepository extends ServiceEntityRepository implements PresetReposito
         $this->getEntityManager()->flush();
     }
 
-    public function findById(int $id): ?Preset
+    public function findById(Uuid $id): ?Preset
     {
-        return PresetMapper::toDomain($this->find($id));
+        $entity = $this->find($id);
+
+        return $entity ? PresetMapper::toDomain($entity) : null;
     }
 
     // You should NOT log into Persistence in prod. Just for debug now
-    public function log(int $id, string $level, string $text): void
+    public function log(Uuid $id, string $level, string $text): void
     {
         $em = $this->getEntityManager();
         /** @var PresetEntity|null $preset */

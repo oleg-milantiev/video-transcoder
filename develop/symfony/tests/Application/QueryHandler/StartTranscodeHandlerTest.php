@@ -49,7 +49,7 @@ class StartTranscodeHandlerTest extends TestCase
             new VideoTitle('Source Clip'),
             new FileExtension('mp4'),
             VideoStatus::UPLOADED,
-            userId: 77,
+            userId: UuidV4::fromString('123e4567-e89b-42d3-a456-426614174077'),
             meta: [],
             dates: VideoDates::create(new \DateTimeImmutable('2026-03-18 12:00:00')),
             id: $videoId,
@@ -60,7 +60,7 @@ class StartTranscodeHandlerTest extends TestCase
             new Resolution(1280, 720),
             new Codec('h264'),
             new Bitrate(50.0),
-            id: 5,
+            id: UuidV4::fromString('123e4567-e89b-42d3-a456-426614174005'),
         );
 
         $user = new User('user@example.com', ['ROLE_USER'], id: $video->userId());
@@ -98,7 +98,7 @@ class StartTranscodeHandlerTest extends TestCase
             ->method('save')
             ->with($this->isInstanceOf(Task::class))
             ->willReturnCallback(static function (Task $task): void {
-                $task->setId(321);
+                $task->setId(UuidV4::fromString('123e4567-e89b-42d3-a456-426614174321'));
             });
 
         $userRepo = $this->createMock(UserRepositoryInterface::class);
@@ -114,7 +114,7 @@ class StartTranscodeHandlerTest extends TestCase
             ->willReturn(true);
 
         $handler = new StartTranscodeHandler($commandBus, $eventBus, $videoRepo, $presetRepo, $taskRepo, $userRepo, $security);
-        $query = new StartTranscodeQuery($videoId->toRfc4122(), $preset->id(), $user->id());
+        $query = new StartTranscodeQuery($videoId->toRfc4122(), $preset->id()->toRfc4122(), $user->id()->toRfc4122());
         $dto = $handler($query);
 
         $this->assertInstanceOf(TaskItemDTO::class, $dto);
@@ -157,7 +157,11 @@ class StartTranscodeHandlerTest extends TestCase
 
         $this->expectException(VideoNotFoundException::class);
         try {
-            $handler(new StartTranscodeQuery('123e4567-e89b-42d3-a456-426614174101', 1, 1));
+            $handler(new StartTranscodeQuery(
+                '123e4567-e89b-42d3-a456-426614174101',
+                '123e4567-e89b-42d3-a456-426614174001',
+                '123e4567-e89b-42d3-a456-426614174001'
+            ));
         } finally {
             $this->assertSame([
                 StartTranscodeStart::class,

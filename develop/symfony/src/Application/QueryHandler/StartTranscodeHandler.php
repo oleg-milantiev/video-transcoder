@@ -45,28 +45,32 @@ final readonly class StartTranscodeHandler
      */
     public function __invoke(StartTranscodeQuery $query): TaskItemDTO
     {
-        $this->eventBus->dispatch(new StartTranscodeStart($query->uuid, $query->presetId, $query->userId));
+        $this->eventBus->dispatch(new StartTranscodeStart(
+            $query->uuid->toRfc4122(),
+            $query->presetId->toRfc4122(),
+            $query->userId->toRfc4122(),
+        ));
 
         $video = $this->videoRepository->findById($query->uuid);
         if (!$video) {
-            $this->eventBus->dispatch(new StartTranscodeFail('Video not found', $query->uuid, $query->presetId, $query->userId));
+            $this->eventBus->dispatch(new StartTranscodeFail('Video not found', $query->uuid->toRfc4122(), $query->presetId->toRfc4122(), $query->userId->toRfc4122()));
             throw new VideoNotFoundException('Video not found');
         }
 
         $user = $this->userRepository->findById($query->userId);
         if (!$user) {
-            $this->eventBus->dispatch(new StartTranscodeFail('User not found', $query->uuid, $query->presetId, $query->userId));
+            $this->eventBus->dispatch(new StartTranscodeFail('User not found', $query->uuid->toRfc4122(), $query->presetId->toRfc4122(), $query->userId->toRfc4122()));
             throw new UserNotFoundException('User not found');
         }
 
         if (!$this->security->isGranted(VideoAccessVoter::CAN_START_TRANSCODE, $video)) {
-            $this->eventBus->dispatch(new StartTranscodeFail('Access denied', $query->uuid, $query->presetId, $query->userId));
+            $this->eventBus->dispatch(new StartTranscodeFail('Access denied', $query->uuid->toRfc4122(), $query->presetId->toRfc4122(), $query->userId->toRfc4122()));
             throw new TranscodeAccessDeniedException('Access denied');
         }
 
         $preset = $this->presetRepository->findById($query->presetId);
         if (!$preset) {
-            $this->eventBus->dispatch(new StartTranscodeFail('Preset not found', $query->uuid, $query->presetId, $query->userId));
+            $this->eventBus->dispatch(new StartTranscodeFail('Preset not found', $query->uuid->toRfc4122(), $query->presetId->toRfc4122(), $query->userId->toRfc4122()));
             throw new PresetNotFoundException('Preset not found');
         }
 
@@ -81,12 +85,17 @@ final readonly class StartTranscodeHandler
 
             $this->taskRepository->save($task);
         } catch (\Throwable $e) {
-            $this->eventBus->dispatch(new StartTranscodeFail('Failed to create task', $query->uuid, $query->presetId, $query->userId));
+            $this->eventBus->dispatch(new StartTranscodeFail('Failed to create task', $query->uuid->toRfc4122(), $query->presetId->toRfc4122(), $query->userId->toRfc4122()));
             throw new TaskCreationFailedException('Failed to create task', previous: $e);
         }
 
         $this->commandBus->dispatch(new StartTaskScheduler());
-        $this->eventBus->dispatch(new StartTranscodeSuccess($task->id(), $query->uuid, $query->presetId, $query->userId));
+        $this->eventBus->dispatch(new StartTranscodeSuccess(
+            $task->id()->toRfc4122(),
+            $query->uuid->toRfc4122(),
+            $query->presetId->toRfc4122(),
+            $query->userId->toRfc4122(),
+        ));
 
         return TaskItemDTO::fromDomain($task, $video, $preset);
     }

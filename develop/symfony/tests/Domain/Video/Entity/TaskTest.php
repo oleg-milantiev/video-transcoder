@@ -14,7 +14,7 @@ final class TaskTest extends TestCase
 {
     public function testCreateInitializesPendingTaskWithDefaults(): void
     {
-        $task = Task::create($this->videoId(), 10, 7);
+        $task = Task::create($this->videoId(), $this->presetId(), $this->userId());
 
         $this->assertNull($task->id());
         $this->assertSame(TaskStatus::PENDING, $task->status());
@@ -26,7 +26,7 @@ final class TaskTest extends TestCase
 
     public function testCanStartDependsOnStatusAndDuration(): void
     {
-        $task = Task::create($this->videoId(), 10, 7);
+        $task = Task::create($this->videoId(), $this->presetId(), $this->userId());
 
         $this->assertTrue($task->canStart(12.5));
         $this->assertFalse($task->canStart(null));
@@ -40,7 +40,7 @@ final class TaskTest extends TestCase
 
     public function testStartSwitchesToProcessingAndSetsDates(): void
     {
-        $task = Task::create($this->videoId(), 10, 7);
+        $task = Task::create($this->videoId(), $this->presetId(), $this->userId());
 
         $task->start();
 
@@ -51,7 +51,7 @@ final class TaskTest extends TestCase
 
     public function testStartTwiceThrows(): void
     {
-        $task = Task::create($this->videoId(), 10, 7);
+        $task = Task::create($this->videoId(), $this->presetId(), $this->userId());
         $task->start();
 
         $this->expectException(\DomainException::class);
@@ -60,7 +60,7 @@ final class TaskTest extends TestCase
 
     public function testUpdateProgressToCompleteMarksTaskCompleted(): void
     {
-        $task = Task::create($this->videoId(), 10, 7);
+        $task = Task::create($this->videoId(), $this->presetId(), $this->userId());
         $task->start();
 
         $task->updateProgress(new Progress(100));
@@ -72,7 +72,7 @@ final class TaskTest extends TestCase
 
     public function testFailMarksTaskFailed(): void
     {
-        $task = Task::create($this->videoId(), 10, 7);
+        $task = Task::create($this->videoId(), $this->presetId(), $this->userId());
         $task->start();
 
         $task->fail();
@@ -82,11 +82,11 @@ final class TaskTest extends TestCase
 
     public function testCancelMarksTaskCancelledForPendingAndProcessing(): void
     {
-        $pendingTask = Task::create($this->videoId(), 10, 7);
+        $pendingTask = Task::create($this->videoId(), $this->presetId(), $this->userId());
         $pendingTask->cancel();
         $this->assertSame(TaskStatus::CANCELLED, $pendingTask->status());
 
-        $processingTask = Task::create($this->videoId(), 10, 7);
+        $processingTask = Task::create($this->videoId(), $this->presetId(), $this->userId());
         $processingTask->start();
         $processingTask->cancel();
         $this->assertSame(TaskStatus::CANCELLED, $processingTask->status());
@@ -94,7 +94,7 @@ final class TaskTest extends TestCase
 
     public function testCancelCompletedTaskThrows(): void
     {
-        $task = Task::create($this->videoId(), 10, 7);
+        $task = Task::create($this->videoId(), $this->presetId(), $this->userId());
         $task->start();
         $task->updateProgress(new Progress(100));
 
@@ -106,8 +106,8 @@ final class TaskTest extends TestCase
     {
         $task = new Task(
             videoId: $this->videoId(),
-            presetId: 10,
-            userId: 7,
+            presetId: $this->presetId(),
+            userId: $this->userId(),
             meta: [
                 'output' => 'old.mp4',
                 'transcode' => ['runtimeSec' => 12.3],
@@ -128,8 +128,8 @@ final class TaskTest extends TestCase
     {
         $task = new Task(
             videoId: $this->videoId(),
-            presetId: 10,
-            userId: 7,
+            presetId: $this->presetId(),
+            userId: $this->userId(),
             meta: ['output' => 'old.mp4'],
         );
 
@@ -141,6 +141,16 @@ final class TaskTest extends TestCase
     private function videoId(): UuidV4
     {
         return UuidV4::fromString('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa');
+    }
+
+    private function presetId(): UuidV4
+    {
+        return UuidV4::fromString('bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb');
+    }
+
+    private function userId(): UuidV4
+    {
+        return UuidV4::fromString('cccccccc-cccc-4ccc-8ccc-cccccccccccc');
     }
 }
 

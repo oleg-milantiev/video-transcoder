@@ -3,12 +3,13 @@
 namespace App\Application\Command\Video;
 
 use TusPhp\File;
+use Symfony\Component\Uid\UuidV4;
 
 final readonly class CreateVideo
 {
     public function __construct(
         private File $file,
-        private int $userId,
+        private UuidV4 $userId,
     ) {
     }
 
@@ -16,7 +17,7 @@ final readonly class CreateVideo
     {
         return $this->file;
     }
-    public function userId(): int
+    public function userId(): UuidV4
     {
         return $this->userId;
     }

@@ -3,6 +3,7 @@
 namespace App\Infrastructure\Security;
 
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
+use Symfony\Component\Uid\UuidV4;
 
 final readonly class ApiTokenService
 {
@@ -15,10 +16,10 @@ final readonly class ApiTokenService
     ) {
     }
 
-    public function createToken(int $userId, string $identifier): string
+    public function createToken(UuidV4 $userId, string $identifier): string
     {
         $payload = [
-            'sub' => $userId,
+            'sub' => $userId->toRfc4122(),
             'identifier' => $identifier,
             'exp' => time() + $this->ttlSeconds(),
         ];
@@ -30,7 +31,7 @@ final readonly class ApiTokenService
     }
 
     /**
-     * @return array{sub: int, identifier: string, exp: int}
+     * @return array{sub: string, identifier: string, exp: int}
      * @throws \JsonException
      */
     public function parseToken(string $token): array
@@ -58,7 +59,7 @@ final readonly class ApiTokenService
         $identifier = $payload['identifier'] ?? null;
         $exp = $payload['exp'] ?? null;
 
-        if (!is_int($sub) || !is_string($identifier) || !is_int($exp)) {
+        if (!is_string($sub) || !UuidV4::isValid($sub) || !is_string($identifier) || !is_int($exp)) {
             throw new \InvalidArgumentException('Invalid token claims.');
         }
 

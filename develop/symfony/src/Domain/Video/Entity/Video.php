@@ -15,14 +15,14 @@ class Video
     private FileExtension $extension;
     private VideoStatus $status;
     private VideoDates $dates;
-    private int $userId;
+    private Uuid $userId;
     private array $meta;
 
     public function __construct(
         VideoTitle $title,
         FileExtension $extension,
         VideoStatus $status,
-        int $userId,
+        Uuid $userId,
         array $meta = [],
         ?VideoDates $dates = null,
         ?Uuid $id = null,
@@ -40,7 +40,7 @@ class Video
         VideoTitle $title,
         FileExtension $extension,
         VideoStatus $status,
-        int $userId,
+        Uuid $userId,
         array $meta = [],
         ?VideoDates $dates = null,
         ?Uuid $id = null,
@@ -83,7 +83,7 @@ class Video
         return $this->dates->updatedAt();
     }
 
-    public function userId(): int
+    public function userId(): Uuid
     {
         return $this->userId;
     }

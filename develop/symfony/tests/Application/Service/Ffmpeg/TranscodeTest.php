@@ -12,6 +12,7 @@ use App\Domain\Video\ValueObject\Resolution;
 use App\Infrastructure\Ffmpeg\Transcode;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\Uid\UuidV4;
 
 class TranscodeTest extends TestCase
 {
@@ -80,7 +81,7 @@ class TranscodeTest extends TestCase
             new Resolution($width, $height),
             new Codec($codec),
             new Bitrate($bitrate),
-            id: 1,
+            id: UuidV4::fromString('11111111-1111-4111-8111-111111111111'),
         );
     }
 }

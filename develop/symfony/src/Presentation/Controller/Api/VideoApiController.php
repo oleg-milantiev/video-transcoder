@@ -69,11 +69,11 @@ class VideoApiController extends AbstractController
     }
 
     #[Route('/{id}/transcode/{presetId}', name: 'api_video_transcode', methods: ['POST'])]
-    public function transcode(string $id, int $presetId): Response
+    public function transcode(string $id, string $presetId): Response
     {
         try {
             $taskDto = $this->queryBus->query(
-                new StartTranscodeQuery($id, $presetId, (int)$this->getUser()->id)
+                new StartTranscodeQuery($id, $presetId, $this->getUser()->id->toRfc4122())
             );
 
             return $this->apiSuccess(['task' => (array) $taskDto]);

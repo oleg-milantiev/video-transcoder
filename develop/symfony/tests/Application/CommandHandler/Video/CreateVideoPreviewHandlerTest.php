@@ -118,7 +118,7 @@ class CreateVideoPreviewHandlerTest extends TestCase
             title: new VideoTitle('Clip'),
             extension: new FileExtension('mp4'),
             status: VideoStatus::UPLOADED,
-            userId: 5,
+            userId: UuidV4::fromString('123e4567-e89b-42d3-a456-426614174105'),
             meta: ['duration' => $duration],
             id: UuidV4::fromString('123e4567-e89b-42d3-a456-426614174151'),
         );

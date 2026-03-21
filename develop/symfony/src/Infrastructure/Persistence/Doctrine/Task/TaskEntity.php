@@ -7,15 +7,15 @@ use App\Infrastructure\Persistence\Doctrine\Preset\PresetEntity;
 use App\Infrastructure\Persistence\Doctrine\Video\VideoEntity;
 use App\Infrastructure\Persistence\Doctrine\User\UserEntity;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Uid\UuidV4 as Uuid;
 
 #[ORM\Entity(repositoryClass: TaskRepository::class)]
 #[ORM\Table(name: 'task')]
 class TaskEntity
 {
     #[ORM\Id]
-    #[ORM\GeneratedValue]
-    #[ORM\Column]
-    public ?int $id = null;
+    #[ORM\Column(type: 'uuid', unique: true)]
+    public ?Uuid $id = null;
 
     #[ORM\Column(length: 50)]
     public int $status = TaskStatus::PENDING->value;
@@ -52,11 +52,12 @@ class TaskEntity
 
     public function __construct()
     {
+        $this->id = Uuid::v4();
         $this->createdAt = new \DateTimeImmutable();
     }
 
     public function __toString(): string
     {
-        return sprintf('Task #%d (%s)', $this->id, TaskStatus::from($this->status)->name);
+        return sprintf('Task #%s (%s)', $this->id?->toRfc4122() ?? 'new', TaskStatus::from($this->status)->name);
     }
 }
