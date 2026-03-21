@@ -2,7 +2,6 @@
 
 namespace App\Domain\Video\Entity;
 
-use App\Application\Command\Video\CreateVideo;
 use App\Domain\Video\ValueObject\FileExtension;
 use App\Domain\Video\ValueObject\VideoDates;
 use App\Domain\Video\ValueObject\VideoStatus;
@@ -47,16 +46,6 @@ class Video
         ?Uuid $id = null,
     ): self {
         return new self($title, $extension, $status, $userId, $meta, $dates, $id);
-    }
-
-    public static function createFromCommand(CreateVideo $command): self
-    {
-        return self::create(
-            title: new VideoTitle($command->file()->details()['metadata']['originalName'] ?? $command->file()->getName()),
-            extension: new FileExtension(pathinfo($command->file()->getName(), PATHINFO_EXTENSION)),
-            status: VideoStatus::UPLOADED,
-            userId: $command->userId(),
-        );
     }
 
     public function generateId(): void

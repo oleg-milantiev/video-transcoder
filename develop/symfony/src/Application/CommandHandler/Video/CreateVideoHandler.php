@@ -7,10 +7,9 @@ use App\Application\Command\Video\ExtractVideoMetadata;
 use App\Application\Event\CreateVideoFail;
 use App\Application\Event\CreateVideoStart;
 use App\Application\Event\CreateVideoSuccess;
-use App\Domain\Video\Entity\Video;
+use App\Application\Factory\VideoFactory;
 use App\Domain\Video\Repository\VideoRepositoryInterface;
 use App\Domain\Video\Service\Storage\StorageInterface;
-use Psr\Log\LoggerInterface;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 use Symfony\Component\Messenger\MessageBusInterface;
@@ -26,6 +25,7 @@ final readonly class CreateVideoHandler
         private MessageBusInterface $eventBus,
         private VideoRepositoryInterface $videoRepository,
         private StorageInterface $storage,
+        private VideoFactory $videoFactory,
     ) {
     }
 
@@ -37,7 +37,7 @@ final readonly class CreateVideoHandler
                 filename: $command->file()->getName(),
             ));
 
-            $video = Video::createFromCommand($command);
+            $video = $this->videoFactory->fromCreateVideo($command);
             $video = $this->videoRepository->save($video);
 
             $this->storage->upload(

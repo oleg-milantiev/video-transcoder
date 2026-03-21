@@ -3,7 +3,16 @@
 ## Основные задачи
 
 ### DDD
-- домен User улучшить (VO)
+Правильное направление зависимостей Domain <- Application <- Infrastructure.
+- [High] Убрать зависимость Domain-репозиториев от Application DTO: PaginatedRepositoryInterface возвращает App\Application\DTO\PaginatedResult в develop/symfony/src/Domain/Video/Repository/PaginatedRepositoryInterface.php:5; Domain не должен импортировать типы Application.
+- [High] Вынести read-model/проекции из Domain: ScheduledTaskDTO и getDetails() с массивом представления (status/progress/createdAt как scalar shape) в develop/symfony/src/Domain/Video/Repository/TaskRepositoryInterface.php:5 и develop/symfony/src/Domain/Video/Repository/VideoRepositoryInterface.php:19 — это скорее Query/Application слой, не доменная модель.
+- [High] Изолировать Domain от Symfony Http/File API: StorageInterface принимает Symfony\Component\HttpFoundation\File\File в develop/symfony/src/Domain/Video/Service/Storage/StorageInterface.php:5; лучше доменный абстрактный тип (например BinaryContent/StoredObject) или порт на уровне Application.
+- [Medium] Убрать persistence-утечки из сущностей: Task имеет публичный конструктор “for Doctrine only” (develop/symfony/src/Domain/Video/Entity/Task.php:21) и setId() (develop/symfony/src/Domain/Video/Entity/Task.php:158), Video генерирует id внутри сущности (develop/symfony/src/Domain/Video/Entity/Video.php:62); лучше единый паттерн создания агрегата + assignment id на границе репозитория.
+- [Medium] Усилить инварианты переходов Task внутри агрегата: сейчас start() не использует проверку длительности (canStart() отдельно в develop/symfony/src/Domain/Video/Entity/Task.php:48 и develop/symfony/src/Domain/Video/Entity/Task.php:57), а updateProgress() разрешен не только для PROCESSING (develop/symfony/src/Domain/Video/Entity/Task.php:78); часть бизнес-правил может обходиться.
+- [Medium] Исправить баг в VideoStatus: value(): string возвращает int-backed enum value в develop/symfony/src/Domain/Video/ValueObject/VideoStatus.php:15; это типовой дефект (должно быть int или метод убрать совсем).
+- [Medium] Убрать инфраструктурные/технические операции из доменных репозиториев: log() в develop/symfony/src/Domain/Video/Repository/VideoRepositoryInterface.php:14, develop/symfony/src/Domain/Video/Repository/TaskRepositoryInterface.php:15, develop/symfony/src/Domain/User/Repository/UserRepositoryInterface.php:11 — это cross-cutting concern, лучше отдельный порт/сервис.
+- [Low] Уменьшить primitive obsession в User aggregate: User хранит email, roles, password как сырые примитивы в develop/symfony/src/Domain/User/Entity/User.php:8; стоит ввести VO (Email, RoleSet, возможно PasswordHash) и инварианты (минимум один роль/валидный email).
+- [Low] Закрыть тестовые пробелы по DDD-рискам: нет тестов на createFromCommand/VideoCreateFailed (поиск по тестам не дал совпадений), нет тестов на ошибочный VideoStatus::value(), и мало тестов на запрещенные переходы статусов.
 
 ### Тесты и безопасность
 - ? THINK ? security нельзя складывать видео и постеры в public. Нужен механизм проксирования с auth.
