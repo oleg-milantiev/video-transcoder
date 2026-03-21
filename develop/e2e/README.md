@@ -35,14 +35,16 @@ Tests are designed to run sequentially (`workers: 1`) and build on data created 
 - Verifies user `oleg@milantiev.com` exists in `Users`
 - Verifies CRUD action availability/limitations per section
 - Creates or updates preset `180p` (`320x180`, codec `h264`, bitrate `1.1` Mbps)
-- Creates or updates tariff `Free` (`instance=1`, `delay=60`)
+- Creates/updates tariff `Free` in two explicit steps: first `delay=60`, then updates to `delay=3600` (`instance=1`)
+- Creates or updates tariff `Premium` (`instance=2`, `delay=0`)
+- Assigns tariff `Free` to `oleg@milantiev.com`
 - Verifies uploaded video from test 02 exists in `Videos`
 - Returns to main page, performs `Sign out`, and verifies `Sign in` links are visible again
 - Saves screenshots for each key step
 
 ### `04.transcode.flow.js` - transcode and download flow
 
-- Logs in as admin and ensures the current user has tariff `Free` (required for scheduler pickup)
+- Logs in as admin
 - Opens `Videos`, enters the previously uploaded video `2022_10_04_Two_Maxes.mp4`
 - Verifies `Presets` table is visible on `Video Details`
 - Verifies preset `180p` exists and starts transcoding via `Transcode`
@@ -63,8 +65,8 @@ Tests are designed to run sequentially (`workers: 1`) and build on data created 
 ## Data dependencies
 
 - `02` uploads the source video used later by `03` and `04`
-- `03` ensures preset `180p` and tariff `Free` exist
-- `04` uses the uploaded video and preset, and enforces tariff assignment before transcode
+- `03` ensures preset `180p`, tariffs (`Free`, `Premium`), and user tariff assignment (`Free`) are ready
+- `04` uses data prepared by `03` and validates full transcode lifecycle
 
 ## Local run in release stack
 

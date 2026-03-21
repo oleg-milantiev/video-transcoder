@@ -8,53 +8,6 @@ function videoRowByTitle(page, fileName) {
     return page.locator('#videosTable tbody tr', { hasText: fileName }).first();
 }
 
-function adminMenuLink(page, pathSuffix) {
-    return page.locator(`a[href$="${pathSuffix}"]`).first();
-}
-
-async function submitCrudForm(page) {
-    const saveChangesButton = page.getByRole('button', { name: 'Save changes', exact: true });
-    if ((await saveChangesButton.count()) > 0) {
-        await saveChangesButton.click();
-        return;
-    }
-
-    const updateButton = page.getByRole('button', { name: 'Update', exact: true });
-    if ((await updateButton.count()) > 0) {
-        await updateButton.click();
-        return;
-    }
-
-    await page.getByRole('button', { name: 'Create', exact: true }).click();
-}
-
-async function ensureUserTariff(page, adminEmail, tariffTitle) {
-    await expect(page.getByRole('link', { name: 'Admin', exact: true })).toBeVisible();
-    await page.getByRole('link', { name: 'Admin', exact: true }).click();
-    await expect(page).toHaveURL(/\/admin/);
-
-    await adminMenuLink(page, '/admin/user').click();
-    await expect(page.getByRole('heading', { name: 'Users' }).first()).toBeVisible();
-
-    const userRow = page.locator('article table tbody tr', { hasText: adminEmail }).first();
-    await expect(userRow).toBeVisible();
-    await userRow.locator('a.action-edit, button:has-text("Edit")').first().click();
-
-    const tariffSelect = page.locator('select[name$="[tariff]"]').first();
-    if ((await tariffSelect.count()) > 0) {
-        await tariffSelect.selectOption({ label: tariffTitle });
-    } else {
-        const tariffInput = page.getByLabel('Tariff').first();
-        await tariffInput.click();
-        await tariffInput.fill(tariffTitle);
-        await page.keyboard.press('Enter');
-    }
-
-    await submitCrudForm(page);
-    await page.goto('/');
-    await expect(page.getByRole('button', { name: 'Videos' })).toBeVisible();
-}
-
 function presetsTable(page) {
     const heading = page.getByRole('heading', { name: 'Presets' }).first();
     return heading.locator('xpath=following-sibling::table[1]');
@@ -124,10 +77,9 @@ test('transcode flow from video details to downloadable mp4', async ({ page }, t
     const adminPassword = process.env.ADMIN_PASSWORD || 'admin';
     const uploadedVideoName = '2022_10_04_Two_Maxes.mp4';
     const presetTitle = '180p';
-    const tariffTitle = 'Free';
 
     // 1) Home + login
-    await page.goto('/');
+    await page.goto('/', { waitUntil: 'domcontentloaded' });
     await page.getByRole('link', { name: 'Sign in' }).last().click();
     await page.locator('#inputEmail').fill(adminEmail);
     await page.locator('#inputPassword').fill(adminPassword);
@@ -135,9 +87,6 @@ test('transcode flow from video details to downloadable mp4', async ({ page }, t
     await expect(page.getByRole('button', { name: 'Videos' })).toBeVisible();
     await shot(page, testInfo, '01-login-success.png');
 
-    // Assign a tariff to the current user so scheduler can pick pending tasks.
-    await ensureUserTariff(page, adminEmail, tariffTitle);
-    await shot(page, testInfo, '01b-user-tariff-assigned.png');
 
     // 2) Open Videos tab
     await page.getByRole('button', { name: 'Videos' }).click();

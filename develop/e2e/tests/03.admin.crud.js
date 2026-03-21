@@ -1,5 +1,8 @@
 const { test, expect } = require('@playwright/test');
 
+const UI_TIMEOUT = 8000;
+const NAV_TIMEOUT = 15000;
+
 async function shot(page, testInfo, name) {
   await page.screenshot({ path: testInfo.outputPath(name), fullPage: true });
 }
@@ -9,10 +12,10 @@ function adminMenuLink(page, pathSuffix) {
 }
 
 async function openAdminSection(page, sectionName, pathSuffix) {
-  await adminMenuLink(page, pathSuffix).click();
-  await expect(page).toHaveURL(/\/admin/);
-  await expect(page.getByRole('heading', { name: sectionName }).first()).toBeVisible();
-  await expect(mainTableBodyForHeading(page, sectionName)).toBeVisible();
+  await adminMenuLink(page, pathSuffix).click({ timeout: UI_TIMEOUT });
+  await expect(page).toHaveURL(/\/admin/, { timeout: NAV_TIMEOUT });
+  await expect(page.getByRole('heading', { name: sectionName }).first()).toBeVisible({ timeout: UI_TIMEOUT });
+  await expect(mainTableBodyForHeading(page, sectionName)).toBeVisible({ timeout: UI_TIMEOUT });
 }
 
 // Return tbody of the main table that is associated with a page heading (e.g. 'Users').
@@ -24,45 +27,69 @@ function mainTableBodyForHeading(page, heading) {
 async function submitCrudForm(page) {
   const createButton = page.getByRole('button', { name: 'Create', exact: true });
   if ((await createButton.count()) > 0) {
-    await createButton.click();
+    await createButton.click({ timeout: UI_TIMEOUT });
     return;
   }
 
   const saveChangesButton = page.getByRole('button', { name: 'Save changes', exact: true });
   if ((await saveChangesButton.count()) > 0) {
-    await saveChangesButton.click();
+    await saveChangesButton.click({ timeout: UI_TIMEOUT });
     return;
   }
 
-  await page.getByRole('button', { name: 'Update', exact: true }).click();
+  await page.getByRole('button', { name: 'Update', exact: true }).click({ timeout: UI_TIMEOUT });
 }
 
-async function createOrUpdateTariff(page, testInfo) {
+async function createOrUpdateTariffByTitle(page, title, delay, instance, testInfo, screenshotName) {
   await openAdminSection(page, 'Tariffs', '/admin/tariff');
 
   const tariffsTbody = mainTableBodyForHeading(page, 'Tariffs');
-  const tariffRows = tariffsTbody.locator('tr', { hasText: 'Free' });
+  const tariffRows = tariffsTbody.locator('tr', { hasText: title });
 
   if ((await tariffRows.count()) === 0) {
-    await expect(page.locator('a.action-new')).toBeVisible();
-    await page.locator('a.action-new').click();
+    await expect(page.locator('a.action-new')).toBeVisible({ timeout: UI_TIMEOUT });
+    await page.locator('a.action-new').click({ timeout: UI_TIMEOUT });
 
-    await page.getByLabel('Title').fill('Free');
-    await page.getByLabel('Delay').fill('60');
-    await page.getByLabel('Instance').fill('1');
+    await page.getByLabel('Title').fill(title);
+    await page.getByLabel('Delay').fill(String(delay));
+    await page.getByLabel('Instance').fill(String(instance));
     await submitCrudForm(page);
   }
 
-  await expect(tariffsTbody.locator('tr', { hasText: 'Free' }).first()).toBeVisible();
-  await shot(page, testInfo, '07-tariff-free-present.png');
+  const tariffRow = tariffsTbody.locator('tr', { hasText: title }).first();
+  await expect(tariffRow).toBeVisible({ timeout: UI_TIMEOUT });
+  await shot(page, testInfo, screenshotName);
 
-  const freeRow = tariffsTbody.locator('tr', { hasText: 'Free' }).first();
-  await freeRow.locator('a.action-edit').click();
-  await page.getByLabel('Delay').fill('60');
-  await page.getByLabel('Instance').fill('1');
+  await tariffRow.locator('a.action-edit').click({ timeout: UI_TIMEOUT });
+  await page.getByLabel('Delay').fill(String(delay));
+  await page.getByLabel('Instance').fill(String(instance));
   await submitCrudForm(page);
-  await expect(tariffsTbody.locator('tr', { hasText: 'Free' }).first()).toContainText('60');
-  await expect(tariffsTbody.locator('tr', { hasText: 'Free' }).first()).toContainText('1');
+  await expect(tariffsTbody.locator('tr', { hasText: title }).first()).toContainText(String(delay), { timeout: UI_TIMEOUT });
+  await expect(tariffsTbody.locator('tr', { hasText: title }).first()).toContainText(String(instance), { timeout: UI_TIMEOUT });
+}
+
+async function assignTariffToUser(page, userEmail, tariffTitle, testInfo) {
+  await openAdminSection(page, 'Users', '/admin/user');
+
+  const usersTbody = mainTableBodyForHeading(page, 'Users');
+  const userRow = usersTbody.locator('tr', { hasText: userEmail }).first();
+  await expect(userRow).toBeVisible({ timeout: UI_TIMEOUT });
+
+  await userRow.locator('a.action-edit').click({ timeout: UI_TIMEOUT });
+
+  const tariffSelect = page.locator('select[name$="[tariff]"]').first();
+  if ((await tariffSelect.count()) > 0) {
+    await tariffSelect.selectOption({ label: tariffTitle });
+  } else {
+    const tariffInput = page.getByLabel('Tariff').first();
+    await tariffInput.click();
+    await tariffInput.fill(tariffTitle);
+    await page.keyboard.press('Enter');
+  }
+
+  await submitCrudForm(page);
+  await expect(mainTableBodyForHeading(page, 'Users').locator('tr', { hasText: userEmail }).first()).toContainText(tariffTitle, { timeout: UI_TIMEOUT });
+  await shot(page, testInfo, '08-user-free-tariff-assigned.png');
 }
 
 async function createOrUpdatePreset(page, testInfo) {
@@ -71,8 +98,8 @@ async function createOrUpdatePreset(page, testInfo) {
   const presetRows = presetsTbody.locator('tr', { hasText: '180p' });
 
   if ((await presetRows.count()) === 0) {
-    await expect(page.locator('a.action-new')).toBeVisible();
-    await page.locator('a.action-new').click();
+    await expect(page.locator('a.action-new')).toBeVisible({ timeout: UI_TIMEOUT });
+    await page.locator('a.action-new').click({ timeout: UI_TIMEOUT });
 
     await page.getByLabel('Title').fill('180p');
     await page.getByLabel('Width').fill('320');
@@ -83,17 +110,17 @@ async function createOrUpdatePreset(page, testInfo) {
   }
 
   const presetRow = presetsTbody.locator('tr', { hasText: '180p' }).first();
-  await expect(presetRow).toBeVisible();
+  await expect(presetRow).toBeVisible({ timeout: UI_TIMEOUT });
   await shot(page, testInfo, '06-preset-180p-present.png');
 
-  await presetRow.locator('a.action-edit').click();
+  await presetRow.locator('a.action-edit').click({ timeout: UI_TIMEOUT });
   await page.getByLabel('Width').fill('320');
   await page.getByLabel('Height').fill('180');
   await page.getByLabel('Codec').fill('h264');
   await page.getByLabel('Bitrate (Mbps)').fill('1.1');
   await submitCrudForm(page);
-  await expect(presetsTbody.locator('tr', { hasText: '180p' }).first()).toContainText('320');
-  await expect(presetsTbody.locator('tr', { hasText: '180p' }).first()).toContainText('180');
+  await expect(presetsTbody.locator('tr', { hasText: '180p' }).first()).toContainText('320', { timeout: UI_TIMEOUT });
+  await expect(presetsTbody.locator('tr', { hasText: '180p' }).first()).toContainText('180', { timeout: UI_TIMEOUT });
 }
 
 test('admin area full smoke with CRUD checks', async ({ page }, testInfo) => {
@@ -101,54 +128,57 @@ test('admin area full smoke with CRUD checks', async ({ page }, testInfo) => {
   const adminPassword = process.env.ADMIN_PASSWORD || 'admin';
   const uploadedVideoName = '2022_10_04_Two_Maxes.mp4';
 
-  await page.goto('/');
-  await page.getByRole('link', { name: 'Sign in' }).last().click();
+  await page.goto('/', { waitUntil: 'domcontentloaded', timeout: NAV_TIMEOUT });
+  await page.getByRole('link', { name: 'Sign in' }).last().click({ timeout: UI_TIMEOUT });
   await page.locator('#inputEmail').fill(adminEmail);
   await page.locator('#inputPassword').fill(adminPassword);
-  await page.getByRole('button', { name: 'Sign in' }).click();
+  await page.getByRole('button', { name: 'Sign in' }).click({ timeout: UI_TIMEOUT });
 
-  await expect(page.getByRole('link', { name: 'Admin', exact: true })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Admin', exact: true })).toBeVisible({ timeout: UI_TIMEOUT });
   await shot(page, testInfo, '01-home-admin-link.png');
 
-  await page.getByRole('link', { name: 'Admin', exact: true }).click();
-  await expect(page).toHaveURL(/\/admin/);
-  await expect(page.getByRole('heading', { name: 'Users' }).first()).toBeVisible();
+  await page.getByRole('link', { name: 'Admin', exact: true }).click({ timeout: UI_TIMEOUT });
+  await expect(page).toHaveURL(/\/admin/, { timeout: NAV_TIMEOUT });
+  await expect(page.getByRole('heading', { name: 'Users' }).first()).toBeVisible({ timeout: UI_TIMEOUT });
 
   // Users: check sections and user, verify CRUD controls are visible.
-  await expect(adminMenuLink(page, '/admin/user')).toBeVisible();
-  await expect(adminMenuLink(page, '/admin/tariff')).toBeVisible();
-  await expect(adminMenuLink(page, '/admin/video')).toBeVisible();
-  await expect(adminMenuLink(page, '/admin/preset')).toBeVisible();
-  await expect(adminMenuLink(page, '/admin/task')).toBeVisible();
+  await expect(adminMenuLink(page, '/admin/user')).toBeVisible({ timeout: UI_TIMEOUT });
+  await expect(adminMenuLink(page, '/admin/tariff')).toBeVisible({ timeout: UI_TIMEOUT });
+  await expect(adminMenuLink(page, '/admin/video')).toBeVisible({ timeout: UI_TIMEOUT });
+  await expect(adminMenuLink(page, '/admin/preset')).toBeVisible({ timeout: UI_TIMEOUT });
+  await expect(adminMenuLink(page, '/admin/task')).toBeVisible({ timeout: UI_TIMEOUT });
 
-  await expect(page.locator('a.action-new')).toBeVisible();
-  await expect(page.locator('a.action-edit').first()).toBeVisible();
-  await expect(page.locator('a.action-detail').first()).toBeVisible();
+  await expect(page.locator('a.action-new')).toBeVisible({ timeout: UI_TIMEOUT });
+  await expect(page.locator('a.action-edit').first()).toBeVisible({ timeout: UI_TIMEOUT });
+  await expect(page.locator('a.action-detail').first()).toBeVisible({ timeout: UI_TIMEOUT });
   const usersTbody = mainTableBodyForHeading(page, 'Users');
-  await expect(usersTbody).toContainText('oleg@milantiev.com');
+  await expect(usersTbody).toContainText('oleg@milantiev.com', { timeout: UI_TIMEOUT });
   await shot(page, testInfo, '02-admin-users-and-menu.png');
 
   await createOrUpdatePreset(page, testInfo);
-  await createOrUpdateTariff(page, testInfo);
+  await createOrUpdateTariffByTitle(page, 'Free', 60, 1, testInfo, '07-tariff-free-initial.png');
+  await createOrUpdateTariffByTitle(page, 'Free', 3600, 1, testInfo, '07b-tariff-free-updated-to-hour.png');
+  await createOrUpdateTariffByTitle(page, 'Premium', 0, 2, testInfo, '07c-tariff-premium-present.png');
+  await assignTariffToUser(page, adminEmail, 'Free', testInfo);
 
   await openAdminSection(page, 'Videos', '/admin/video');
-  await expect(page.locator('a.action-new')).toHaveCount(0);
+  await expect(page.locator('a.action-new')).toHaveCount(0, { timeout: UI_TIMEOUT });
   const videosTbody = mainTableBodyForHeading(page, 'Videos');
-  await expect(videosTbody).toContainText(uploadedVideoName);
-  await expect(videosTbody.locator('a.action-detail').first()).toBeVisible();
+  await expect(videosTbody).toContainText(uploadedVideoName, { timeout: UI_TIMEOUT });
+  await expect(videosTbody.locator('a.action-detail').first()).toBeVisible({ timeout: UI_TIMEOUT });
   await shot(page, testInfo, '03-admin-videos-uploaded-file.png');
 
   await openAdminSection(page, 'Tasks', '/admin/task');
-  await expect(page.locator('a.action-new')).toHaveCount(0);
-  await expect(page.locator('a.action-edit')).toHaveCount(0);
-  await expect(page.locator('a.action-delete')).toHaveCount(0);
+  await expect(page.locator('a.action-new')).toHaveCount(0, { timeout: UI_TIMEOUT });
+  await expect(page.locator('a.action-edit')).toHaveCount(0, { timeout: UI_TIMEOUT });
+  await expect(page.locator('a.action-delete')).toHaveCount(0, { timeout: UI_TIMEOUT });
   await shot(page, testInfo, '04-admin-tasks-crud-constraints.png');
 
-  await page.goto('/');
-  await expect(page.getByRole('button', { name: 'Upload' })).toBeVisible();
-  await expect(page.getByRole('link', { name: 'Sign out' })).toBeVisible();
-  await page.getByRole('link', { name: 'Sign out' }).click();
-  await expect(page.getByRole('link', { name: 'Sign in' })).toHaveCount(2);
-  await shot(page, testInfo, '08-sign-out-after-admin-flow.png');
+  await page.goto('/', { waitUntil: 'domcontentloaded', timeout: NAV_TIMEOUT });
+  await expect(page.getByRole('button', { name: 'Upload' })).toBeVisible({ timeout: UI_TIMEOUT });
+  await expect(page.getByRole('link', { name: 'Sign out' })).toBeVisible({ timeout: UI_TIMEOUT });
+  await page.getByRole('link', { name: 'Sign out' }).click({ timeout: UI_TIMEOUT });
+  await expect(page.getByRole('link', { name: 'Sign in' })).toHaveCount(2, { timeout: UI_TIMEOUT });
+  await shot(page, testInfo, '09-sign-out-after-admin-flow.png');
 });
 
