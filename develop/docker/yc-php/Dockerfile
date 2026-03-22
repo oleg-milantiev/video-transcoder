@@ -23,6 +23,8 @@ WORKDIR /var/www/yc
 
 ARG DEFAULT_URI
 ARG DATABASE_URL
+ARG REDIS_HOST
+ARG REDIS_PORT
 RUN composer install --no-interaction --prefer-dist --no-progress --optimize-autoloader
 
 RUN chown -R www-data:www-data /var/www/yc
