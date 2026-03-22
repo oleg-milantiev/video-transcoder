@@ -53,6 +53,10 @@ final readonly class CreateVideoHandler
                 'video' => VideoItemDTO::fromDomain($video),
                 'file' => $command->file()->details(),
             ]);
+            $this->logService->log('user', $command->userId(), LogLevel::INFO, 'User uploaded video', [
+                'videoId' => $video->id()?->toRfc4122(),
+                'file' => $command->file()->details(),
+            ]);
 
             $this->commandBus->dispatch(new ExtractVideoMetadata($video));
             $this->eventBus->dispatch(new CreateVideoSuccess(

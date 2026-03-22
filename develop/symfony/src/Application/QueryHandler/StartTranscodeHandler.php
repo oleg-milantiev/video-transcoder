@@ -12,6 +12,7 @@ use App\Application\Exception\TaskCreationFailedException;
 use App\Application\Exception\TranscodeAccessDeniedException;
 use App\Application\Exception\UserNotFoundException;
 use App\Application\Exception\VideoNotFoundException;
+use App\Application\Logging\LogServiceInterface;
 use App\Application\Query\StartTranscodeQuery;
 use App\Domain\User\Repository\UserRepositoryInterface;
 use App\Domain\Video\Entity\Task;
@@ -19,6 +20,7 @@ use App\Domain\Video\Repository\PresetRepositoryInterface;
 use App\Domain\Video\Repository\TaskRepositoryInterface;
 use App\Domain\Video\Repository\VideoRepositoryInterface;
 use App\Infrastructure\Security\Voter\VideoAccessVoter;
+use Psr\Log\LogLevel;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
@@ -37,6 +39,7 @@ final readonly class StartTranscodeHandler
         private PresetRepositoryInterface $presetRepository,
         private TaskRepositoryInterface $taskRepository,
         private UserRepositoryInterface $userRepository,
+        private LogServiceInterface $logService,
         private Security $security,
     ) {}
 
@@ -84,6 +87,17 @@ final readonly class StartTranscodeHandler
             }
 
             $this->taskRepository->save($task);
+
+            $context = [
+                'taskId' => $task->id()?->toRfc4122(),
+                'videoId' => $video->id()?->toRfc4122(),
+                'presetId' => $preset->id()?->toRfc4122(),
+                'userId' => $user->id()?->toRfc4122(),
+                'isRestart' => $task->status()->name === 'PENDING',
+            ];
+            $this->logService->log('task', $task->id(), LogLevel::INFO, 'Transcode requested', $context);
+            $this->logService->log('video', $video->id(), LogLevel::INFO, 'Transcode started for video', $context);
+            $this->logService->log('user', $user->id(), LogLevel::INFO, 'User started transcoding', $context);
         } catch (\Throwable $e) {
             $this->eventBus->dispatch(new StartTranscodeFail('Failed to create task', $query->uuid->toRfc4122(), $query->presetId->toRfc4122(), $query->userId->toRfc4122()));
             throw new TaskCreationFailedException('Failed to create task', previous: $e);

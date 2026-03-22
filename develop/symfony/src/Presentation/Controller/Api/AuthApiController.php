@@ -2,8 +2,10 @@
 
 namespace App\Presentation\Controller\Api;
 
+use App\Application\Logging\LogServiceInterface;
 use App\Infrastructure\Persistence\Doctrine\User\UserEntity;
 use App\Infrastructure\Security\ApiTokenService;
+use Psr\Log\LogLevel;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -22,6 +24,7 @@ final class AuthApiController extends AbstractController
         private readonly UserProviderInterface $userProvider,
         private readonly UserPasswordHasherInterface $passwordHasher,
         private readonly ApiTokenService $tokenService,
+        private readonly LogServiceInterface $logService,
     ) {
     }
 
@@ -60,6 +63,12 @@ final class AuthApiController extends AbstractController
         if ($user->id === null) {
             return new JsonResponse(['error' => 'Invalid credentials.'], Response::HTTP_UNAUTHORIZED);
         }
+
+        $this->logService->log('user', $user->id, LogLevel::INFO, 'User signed in via API token', [
+            'email' => $user->getUserIdentifier(),
+            'ip' => $request->getClientIp(),
+            'route' => (string) $request->attributes->get('_route', 'api_auth_token'),
+        ]);
 
         return new JsonResponse([
             'tokenType' => 'Bearer',

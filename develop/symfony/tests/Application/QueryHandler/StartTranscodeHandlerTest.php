@@ -9,6 +9,7 @@ use App\Application\Event\StartTranscodeFail;
 use App\Application\Event\StartTranscodeStart;
 use App\Application\Event\StartTranscodeSuccess;
 use App\Application\Exception\VideoNotFoundException;
+use App\Application\Logging\LogServiceInterface;
 use App\Application\Query\StartTranscodeQuery;
 use App\Application\QueryHandler\StartTranscodeHandler;
 use App\Application\DTO\TaskItemDTO;
@@ -113,7 +114,10 @@ class StartTranscodeHandlerTest extends TestCase
             ->with(VideoAccessVoter::CAN_START_TRANSCODE, $video)
             ->willReturn(true);
 
-        $handler = new StartTranscodeHandler($commandBus, $eventBus, $videoRepo, $presetRepo, $taskRepo, $userRepo, $security);
+        $logService = $this->createMock(LogServiceInterface::class);
+        $logService->expects($this->exactly(3))->method('log');
+
+        $handler = new StartTranscodeHandler($commandBus, $eventBus, $videoRepo, $presetRepo, $taskRepo, $userRepo, $logService, $security);
         $query = new StartTranscodeQuery($videoId->toRfc4122(), $preset->id()->toRfc4122(), $user->id()->toRfc4122());
         $dto = $handler($query);
 
@@ -152,6 +156,7 @@ class StartTranscodeHandlerTest extends TestCase
             $this->createStub(PresetRepositoryInterface::class),
             $this->createStub(TaskRepositoryInterface::class),
             $this->createStub(UserRepositoryInterface::class),
+            $this->createStub(LogServiceInterface::class),
             $this->createStub(Security::class),
         );
 

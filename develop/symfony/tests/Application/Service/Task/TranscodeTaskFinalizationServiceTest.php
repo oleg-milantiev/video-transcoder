@@ -103,7 +103,7 @@ class TranscodeTaskFinalizationServiceTest extends TestCase
         $logService = $this->createMock(LogServiceInterface::class);
         $logService->expects($this->once())
             ->method('log')
-            ->with('task', $taskId, LogLevel::ERROR, 'Transcoding failed: boom');
+            ->with('task', $taskId, LogLevel::ERROR, 'Transcoding failed', ['message' => 'boom']);
 
         $service = new TranscodeTaskFinalizationService($taskRepository, $logService, new TaskCancellationTrigger(new ArrayAdapter()));
         $service->handleFailure($task, new \RuntimeException('boom'));

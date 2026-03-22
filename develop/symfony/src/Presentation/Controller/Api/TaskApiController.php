@@ -90,13 +90,33 @@ class TaskApiController extends AbstractController
         ]);
 
         $cancelledNow = $task->status() === TaskStatus::PENDING && $task->startedAt() === null;
+        $requestedByUserId = $this->getUser()->id;
+
         if ($cancelledNow) {
             $task->cancel();
-            $this->logService->log('task', $task->id(), LogLevel::INFO, 'Task cancelled before start');
+            $this->logService->log('task', $task->id(), LogLevel::INFO, 'Task cancelled before start', [
+                'videoId' => $video->id()?->toRfc4122(),
+                'requestedByUserId' => $requestedByUserId?->toRfc4122(),
+            ]);
         }
         else {
-            $this->logService->log('task', $task->id(), LogLevel::INFO, 'Cancellation requested in progress');
+            $this->logService->log('task', $task->id(), LogLevel::INFO, 'Cancellation requested in progress', [
+                'videoId' => $video->id()?->toRfc4122(),
+                'requestedByUserId' => $requestedByUserId?->toRfc4122(),
+            ]);
         }
+
+        $this->logService->log('video', $video->id(), LogLevel::INFO, 'Cancellation requested for video task', [
+            'taskId' => $task->id()->toRfc4122(),
+            'requestedByUserId' => $requestedByUserId?->toRfc4122(),
+            'cancelledNow' => $cancelledNow,
+        ]);
+
+        $this->logService->log('user', $requestedByUserId, LogLevel::INFO, 'User requested transcode cancellation', [
+            'taskId' => $task->id()->toRfc4122(),
+            'videoId' => $video->id()?->toRfc4122(),
+            'cancelledNow' => $cancelledNow,
+        ]);
 
         $this->taskRepository->save($task);
 

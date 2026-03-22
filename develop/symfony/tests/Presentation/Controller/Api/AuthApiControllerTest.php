@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\Presentation\Controller\Api;
 
+use App\Application\Logging\LogServiceInterface;
 use App\Infrastructure\Persistence\Doctrine\User\UserEntity;
 use App\Infrastructure\Security\ApiTokenService;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
@@ -127,6 +128,10 @@ final class AuthApiControllerTest extends ApiWebTestCase
             ->with($user, 'secret-password')
             ->willReturn(true);
         static::getContainer()->set(UserPasswordHasherInterface::class, $hasher);
+
+        $logService = $this->createMock(LogServiceInterface::class);
+        $logService->expects($this->once())->method('log');
+        static::getContainer()->set(LogServiceInterface::class, $logService);
 
         $client->request(
             'POST',
