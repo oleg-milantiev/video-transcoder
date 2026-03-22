@@ -35,12 +35,12 @@ services:
             - redis
             - postgres
         command: sh -c '/var/www/yc/bin/console messenger:consume async -vvv'
-        mem_limit: 256m
+#        mem_limit: 256m
         deploy:
             replicas: 1
-            resources:
-                limits:
-                    memory: 256M
+#            resources:
+#                limits:
+#                    memory: 256M
         volumes:
             - ./symfony:/var/www/yc
 # use filesystem for debug
@@ -55,12 +55,12 @@ services:
             - redis
             - postgres
         command: sh -c '/var/www/yc/bin/console messenger:consume async_transcode -vvv'
-        mem_limit: 256m
+#        mem_limit: 256m
         deploy:
             replicas: 2
-            resources:
-                limits:
-                    memory: 256M
+#            resources:
+#                limits:
+#                    memory: 256M
         volumes:
             - ./symfony:/var/www/yc
 
