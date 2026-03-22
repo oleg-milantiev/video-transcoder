@@ -7,6 +7,7 @@
         "php": ">=8.4",
         "ext-ctype": "*",
         "ext-iconv": "*",
+        "ext-redis": "*",
         "ext-pdo_pgsql": "*",
         "ankitpokhrel/tus-php": "^2.4",
         "doctrine/doctrine-bundle": "^3.2.2",
