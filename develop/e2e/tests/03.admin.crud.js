@@ -147,6 +147,7 @@ test('admin area full smoke with CRUD checks', async ({ page }, testInfo) => {
   await expect(adminMenuLink(page, '/admin/video')).toBeVisible({ timeout: UI_TIMEOUT });
   await expect(adminMenuLink(page, '/admin/preset')).toBeVisible({ timeout: UI_TIMEOUT });
   await expect(adminMenuLink(page, '/admin/task')).toBeVisible({ timeout: UI_TIMEOUT });
+  await expect(adminMenuLink(page, '/admin/log')).toBeVisible({ timeout: UI_TIMEOUT });
 
   await expect(page.locator('a.action-new')).toBeVisible({ timeout: UI_TIMEOUT });
   await expect(page.locator('a.action-edit').first()).toBeVisible({ timeout: UI_TIMEOUT });
@@ -173,6 +174,19 @@ test('admin area full smoke with CRUD checks', async ({ page }, testInfo) => {
   await expect(page.locator('a.action-edit')).toHaveCount(0, { timeout: UI_TIMEOUT });
   await expect(page.locator('a.action-delete')).toHaveCount(0, { timeout: UI_TIMEOUT });
   await shot(page, testInfo, '04-admin-tasks-crud-constraints.png');
+
+  await openAdminSection(page, 'Logs', '/admin/log');
+  await expect(page.locator('a.action-new')).toHaveCount(0, { timeout: UI_TIMEOUT });
+  await expect(page.locator('a.action-edit')).toHaveCount(0, { timeout: UI_TIMEOUT });
+  const filtersAction = page
+    .locator('a.action-filters, button.action-filters, a.action-filters-button, button.action-filters-button')
+    .or(page.getByRole('button', { name: /filter/i }))
+    .or(page.getByRole('link', { name: /filter/i }))
+    .first();
+  await expect(filtersAction).toBeVisible({ timeout: UI_TIMEOUT });
+  const logsTbody = mainTableBodyForHeading(page, 'Logs');
+  await expect.poll(async () => logsTbody.locator('tr').count(), { timeout: UI_TIMEOUT }).toBeGreaterThan(0);
+  await shot(page, testInfo, '05-admin-logs-readonly-with-filters.png');
 
   await page.goto('/', { waitUntil: 'domcontentloaded', timeout: NAV_TIMEOUT });
   await expect(page.getByRole('button', { name: 'Upload' })).toBeVisible({ timeout: UI_TIMEOUT });

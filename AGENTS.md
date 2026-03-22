@@ -1,5 +1,8 @@
 # AGENTS.md — AI Coding Agent Guide for video-transcoder
 
+e2e tests:
+- **e2e** cd /root/video-transcoder/develop && bash release.check.sh
+
 Run phpunit and composer stan after every backend change.
 - **phpunit** - docker exec -i develop-php-1 vendor/bin/phpunit tests/
 - **stan** - docker exec -i develop-php-1 composer stan

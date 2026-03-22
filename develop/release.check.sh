@@ -11,9 +11,6 @@ mkdir -p "$ARTIFACTS_DIR"
 
 cleanup() {
 echo exit
-  docker compose -p "$PROJECT_NAME" -f docker-compose.release.yml cp php:/var/www/yc/var/log/dev.log "$ARTIFACTS_DIR/php.log" || true
-  docker compose -p "$PROJECT_NAME" -f docker-compose.release.yml cp ffmpeg:/var/www/yc/var/log/dev.log "$ARTIFACTS_DIR/ffmpeg.log" || true
-  docker compose -p "$PROJECT_NAME" -f docker-compose.release.yml cp ffmpeg-transcode:/var/www/yc/var/log/dev.log "$ARTIFACTS_DIR/ffmpeg-transcode.log" || true
   docker compose -p "$PROJECT_NAME" -f docker-compose.release.yml logs > "$ARTIFACTS_DIR/docker-compose.log" || true
   docker compose -p "$PROJECT_NAME" -f docker-compose.release.yml down -v || true
 }
@@ -62,3 +59,7 @@ docker compose -p "$PROJECT_NAME" -f docker-compose.release.yml exec -T playwrig
   ADMIN_PASSWORD=admin \
   npx playwright test --project=chromium
 "
+
+docker compose -p "$PROJECT_NAME" -f docker-compose.release.yml cp php:/var/www/yc/var/log/dev.log "$ARTIFACTS_DIR/php.log" || true
+docker compose -p "$PROJECT_NAME" -f docker-compose.release.yml cp ffmpeg:/var/www/yc/var/log/dev.log "$ARTIFACTS_DIR/ffmpeg.log" || true
+docker compose -p "$PROJECT_NAME" -f docker-compose.release.yml cp ffmpeg-transcode:/var/www/yc/var/log/dev.log "$ARTIFACTS_DIR/ffmpeg-transcode.log" || true
