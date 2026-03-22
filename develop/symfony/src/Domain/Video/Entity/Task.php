@@ -71,6 +71,10 @@ class Task
             return false;
         }
 
+        if ($this->startedAt() !== null) {
+            return false;
+        }
+
         return $videoDuration !== null && $videoDuration > 0.0;
     }
 
@@ -196,6 +200,10 @@ class Task
 
     public function updateMeta(array $meta): void
     {
+        if ($this->status === TaskStatus::COMPLETED) {
+            throw new \DomainException('Completed task metadata cannot be changed.');
+        }
+
         $this->meta = array_merge($this->meta, $meta);
         $this->touch();
     }

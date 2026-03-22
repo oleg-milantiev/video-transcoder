@@ -8,6 +8,25 @@
 - [Low] Уменьшить primitive obsession в User aggregate: User хранит email, roles, password как сырые примитивы в develop/symfony/src/Domain/User/Entity/User.php:8; стоит ввести VO (Email, RoleSet, возможно PasswordHash) и инварианты (минимум один роль/валидный email).
 - [Low] Закрыть тестовые пробелы по DDD-рискам: нет тестов на createFromCommand/VideoCreateFailed (поиск по тестам не дал совпадений), нет тестов на ошибочный VideoStatus::value(), и мало тестов на запрещенные переходы статусов.
 
+- переходы Task: canBeStarted() допускает FAILED/CANCELLED, но start() не сбрасывает прогресс/мета — риск “грязного” рестарта в Task.
+- Video смешивает доменную модель и storage-представление (getSrcFilename(), getPoster(), meta['duration']) — риск утечки инфраструктурной логики в Video.
+- Domain зависит от Symfony-типов (Uuid*, HttpFoundation\File) — риск слабой переносимости и тестируемости в StorageInterface.
+- Несогласованная стратегия identity (Task::assignId() vs VideoRepository::save() возвращает новый domain-экземпляр) — риск ошибок жизненного цикла агрегатов.
+- Слабая типизация meta: array в Task/Video — риск нарушения инвариантов и неявной связи с application-слоем.
+
+- Medium: В домене есть инфраструктурная зависимость на HTTP-слой Symfony
+  StorageInterface в домене принимает Symfony\Component\HttpFoundation\File\File (develop/symfony/src/Domain/Video/Service/Storage/StorageInterface.php:5, develop/symfony/src/Domain/Video/Service/Storage/StorageInterface.php:15). Это привязывает domain model к transport/framework и ухудшает изоляцию bounded context.
+  Риск: сложнее переносимость/тестируемость и чище application-порты.
+- Medium: Video содержит storage-проекцию/формат пути вместо чистой бизнес-семантики
+  Методы getSrcFilename() и getPoster() шьют файловые соглашения в агрегат (develop/symfony/src/Domain/Video/Entity/Video.php:112, develop/symfony/src/Domain/Video/Entity/Video.php:117). Это ближе к инфраструктуре/presentation policy, чем к core-domain.
+  Риск: размывание ответственности агрегата и тяжёлый рефактор storage-стратегии.
+- Medium: Потенциальный NPE-контракт в Video::getSrcFilename()
+  Метод использует $this->id->toString() без проверки на null (develop/symfony/src/Domain/Video/Entity/Video.php:114), хотя id nullable (develop/symfony/src/Domain/Video/Entity/Video.php:13, develop/symfony/src/Domain/Video/Entity/Video.php:61).
+  Риск: скрытая ошибка при вызове до персиста (или в тестовых/edge сценариях).
+- Low: Репозиторные интерфейсы домена зависят от Symfony UUID
+  В TaskRepositoryInterface/VideoRepositoryInterface используется Symfony\Component\Uid\Uuid* (develop/symfony/src/Domain/Video/Repository/TaskRepositoryInterface.php:6, develop/symfony/src/Domain/Video/Repository/VideoRepositoryInterface.php:8). Это не критично, но это framework leakage в доменные порты.
+  Риск: ограничение автономности домена и vendor lock-in на уровне ubiquitous language.
+
 ### Тесты и безопасность
 - ? THINK ? security нельзя складывать видео и постеры в public. Нужен механизм проксирования с auth.
 - e2e

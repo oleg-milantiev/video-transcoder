@@ -146,6 +146,37 @@ final class TaskTest extends TestCase
         $task->updateProgress(new Progress(1));
     }
 
+    public function testUpdateMetaOnCompletedTaskThrows(): void
+    {
+        $task = Task::create($this->videoId(), $this->presetId(), $this->userId());
+        $task->start(12.5);
+        $task->updateProgress(new Progress(100));
+
+        $this->expectException(\DomainException::class);
+        $task->updateMeta(['output' => 'completed.mp4']);
+    }
+
+    public function testCanStartDependsOnStartedAtForFailedAndCancelled(): void
+    {
+        $cancelledBeforeStart = Task::create($this->videoId(), $this->presetId(), $this->userId());
+        $cancelledBeforeStart->cancel();
+        $this->assertTrue($cancelledBeforeStart->canStart(12.5));
+
+        $cancelledAfterStart = Task::create($this->videoId(), $this->presetId(), $this->userId());
+        $cancelledAfterStart->start(12.5);
+        $cancelledAfterStart->cancel();
+        $this->assertFalse($cancelledAfterStart->canStart(12.5));
+
+        $failedBeforeStart = Task::create($this->videoId(), $this->presetId(), $this->userId());
+        $failedBeforeStart->fail();
+        $this->assertTrue($failedBeforeStart->canStart(12.5));
+
+        $failedAfterStart = Task::create($this->videoId(), $this->presetId(), $this->userId());
+        $failedAfterStart->start(12.5);
+        $failedAfterStart->fail();
+        $this->assertFalse($failedAfterStart->canStart(12.5));
+    }
+
     private function videoId(): UuidV4
     {
         return UuidV4::fromString('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa');

@@ -2,6 +2,8 @@
 
 AI-powered Wiki: https://deepwiki.com/oleg-milantiev/video-transcoder
 
+Task state flow (DDD): [TASK_STATE_FLOW.md](TASK_STATE_FLOW.md)
+
 TBD English
 
 --

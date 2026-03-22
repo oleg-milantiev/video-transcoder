@@ -41,7 +41,6 @@ final readonly class TranscodeTaskFinalizationService
 
     public function handleSuccess(Task $task, string $relativeOutputPath, TranscodeReportDTO $report): void
     {
-        $task->updateProgress(new Progress(100));
         $task->updateMeta([
             'output' => $relativeOutputPath,
             'transcode' => [
@@ -49,6 +48,7 @@ final readonly class TranscodeTaskFinalizationService
                 'report' => $report->toArray(),
             ],
         ]);
+        $task->updateProgress(new Progress(100));
 
         $this->taskRepository->save($task);
         $this->logService->log('task', $task->id(), LogLevel::INFO, 'Transcoding finished successfully');
