@@ -18,9 +18,9 @@ echo exit
 trap cleanup EXIT
 
 # build + push
-cd /root/video-transcoder/develop/docker/yc-php && ./build.sh
-cd /root/video-transcoder/develop/docker/yc-ffmpeg && ./build.sh
-cd /root/video-transcoder/develop/docker/yc-nginx && ./build.sh
+#cd /root/video-transcoder/develop/docker/yc-php && ./build.sh
+#cd /root/video-transcoder/develop/docker/yc-ffmpeg && ./build.sh
+#cd /root/video-transcoder/develop/docker/yc-nginx && ./build.sh
 
 # release test stack up (without workers)
 cd /root/video-transcoder/develop

@@ -92,35 +92,35 @@ async function assignTariffToUser(page, userEmail, tariffTitle, testInfo) {
   await shot(page, testInfo, '08-user-free-tariff-assigned.png');
 }
 
-async function createOrUpdatePreset(page, testInfo) {
+async function createOrUpdatePreset(page, preset, testInfo) {
   await openAdminSection(page, 'Presets', '/admin/preset');
   const presetsTbody = mainTableBodyForHeading(page, 'Presets');
-  const presetRows = presetsTbody.locator('tr', { hasText: '180p' });
+  const presetRows = presetsTbody.locator('tr', { hasText: preset.title });
 
   if ((await presetRows.count()) === 0) {
     await expect(page.locator('a.action-new')).toBeVisible({ timeout: UI_TIMEOUT });
     await page.locator('a.action-new').click({ timeout: UI_TIMEOUT });
 
-    await page.getByLabel('Title').fill('180p');
-    await page.getByLabel('Width').fill('320');
-    await page.getByLabel('Height').fill('180');
-    await page.getByLabel('Codec').fill('h264');
-    await page.getByLabel('Bitrate (Mbps)').fill('1.1');
+    await page.getByLabel('Title').fill(preset.title);
+    await page.getByLabel('Width').fill(String(preset.width));
+    await page.getByLabel('Height').fill(String(preset.height));
+    await page.getByLabel('Codec').fill(preset.codec);
+    await page.getByLabel('Bitrate (Mbps)').fill(String(preset.bitrate));
     await submitCrudForm(page);
   }
 
-  const presetRow = presetsTbody.locator('tr', { hasText: '180p' }).first();
+  const presetRow = presetsTbody.locator('tr', { hasText: preset.title }).first();
   await expect(presetRow).toBeVisible({ timeout: UI_TIMEOUT });
-  await shot(page, testInfo, '06-preset-180p-present.png');
+  await shot(page, testInfo, `06-preset-${preset.title}-present.png`);
 
   await presetRow.locator('a.action-edit').click({ timeout: UI_TIMEOUT });
-  await page.getByLabel('Width').fill('320');
-  await page.getByLabel('Height').fill('180');
-  await page.getByLabel('Codec').fill('h264');
-  await page.getByLabel('Bitrate (Mbps)').fill('1.1');
+  await page.getByLabel('Width').fill(String(preset.width));
+  await page.getByLabel('Height').fill(String(preset.height));
+  await page.getByLabel('Codec').fill(preset.codec);
+  await page.getByLabel('Bitrate (Mbps)').fill(String(preset.bitrate));
   await submitCrudForm(page);
-  await expect(presetsTbody.locator('tr', { hasText: '180p' }).first()).toContainText('320', { timeout: UI_TIMEOUT });
-  await expect(presetsTbody.locator('tr', { hasText: '180p' }).first()).toContainText('180', { timeout: UI_TIMEOUT });
+  await expect(presetsTbody.locator('tr', { hasText: preset.title }).first()).toContainText(String(preset.width), { timeout: UI_TIMEOUT });
+  await expect(presetsTbody.locator('tr', { hasText: preset.title }).first()).toContainText(String(preset.height), { timeout: UI_TIMEOUT });
 }
 
 test('admin area full smoke with CRUD checks', async ({ page }, testInfo) => {
@@ -156,7 +156,20 @@ test('admin area full smoke with CRUD checks', async ({ page }, testInfo) => {
   await expect(usersTbody).toContainText('oleg@milantiev.com', { timeout: UI_TIMEOUT });
   await shot(page, testInfo, '02-admin-users-and-menu.png');
 
-  await createOrUpdatePreset(page, testInfo);
+  await createOrUpdatePreset(page, {
+    title: '180p',
+    width: 320,
+    height: 180,
+    codec: 'h264',
+    bitrate: 1.1,
+  }, testInfo);
+  await createOrUpdatePreset(page, {
+    title: '4k',
+    width: 3840,
+    height: 2160,
+    codec: 'h264',
+    bitrate: 8.0,
+  }, testInfo);
   await createOrUpdateTariffByTitle(page, 'Free', 60, 1, testInfo, '07-tariff-free-initial.png');
   await createOrUpdateTariffByTitle(page, 'Free', 3600, 1, testInfo, '07b-tariff-free-updated-to-hour.png');
   await createOrUpdateTariffByTitle(page, 'Premium', 0, 2, testInfo, '07c-tariff-premium-present.png');
