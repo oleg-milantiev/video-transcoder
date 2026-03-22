@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\Application\Service\Task;
 
 use App\Application\Service\Task\TranscodeTaskPreparationService;
+use App\Application\Service\Task\TaskRealtimeNotifier;
 use App\Domain\Video\ValueObject\VideoDates;
 use Psr\Log\LogLevel;
 use App\Application\Logging\LogServiceInterface;
@@ -22,7 +23,9 @@ use App\Domain\Video\ValueObject\Resolution;
 use App\Domain\Video\ValueObject\VideoStatus;
 use App\Domain\Video\ValueObject\VideoTitle;
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\Messenger\Envelope;
 use Symfony\Component\Filesystem\Filesystem;
+use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Uid\UuidV4;
 
 class TranscodeTaskPreparationServiceTest extends TestCase
@@ -68,7 +71,13 @@ class TranscodeTaskPreparationServiceTest extends TestCase
             ->method('mkdir')
             ->with(sprintf('/var/storage/%s', $video->id()->toRfc4122()));
 
-        $service = new TranscodeTaskPreparationService($presetRepository, $taskRepository, $logService, $storage, $filesystem);
+        $commandBus = $this->createMock(MessageBusInterface::class);
+        $commandBus->expects($this->once())
+            ->method('dispatch')
+            ->willReturn(new Envelope(new \stdClass()));
+        $taskRealtimeNotifier = new TaskRealtimeNotifier($commandBus);
+
+        $service = new TranscodeTaskPreparationService($presetRepository, $taskRepository, $logService, $taskRealtimeNotifier, $storage, $filesystem);
         $context = $service->prepare($task, $video);
 
         $this->assertSame(sprintf('%s/%s.mp4', $video->id()->toRfc4122(), '123e4567-e89b-42d3-a456-426614174005'), $context->relativeOutputPath);
@@ -100,8 +109,11 @@ class TranscodeTaskPreparationServiceTest extends TestCase
 
         $storage = $this->createStub(StorageInterface::class);
         $filesystem = $this->createStub(Filesystem::class);
+        $commandBus = $this->createMock(MessageBusInterface::class);
+        $commandBus->expects($this->never())->method('dispatch');
+        $taskRealtimeNotifier = new TaskRealtimeNotifier($commandBus);
 
-        $service = new TranscodeTaskPreparationService($presetRepository, $taskRepository, $logService, $storage, $filesystem);
+        $service = new TranscodeTaskPreparationService($presetRepository, $taskRepository, $logService, $taskRealtimeNotifier, $storage, $filesystem);
 
         $this->expectException(\RuntimeException::class);
         $this->expectExceptionMessage('Preset not found for task');

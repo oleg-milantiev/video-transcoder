@@ -18,6 +18,7 @@ final readonly class TranscodeTaskPreparationService
         private PresetRepositoryInterface $presetRepository,
         private TaskRepositoryInterface $taskRepository,
         private LogServiceInterface $logService,
+        private TaskRealtimeNotifier $taskRealtimeNotifier,
         private StorageInterface $storage,
         private Filesystem $filesystem,
     ) {
@@ -39,6 +40,7 @@ final readonly class TranscodeTaskPreparationService
         $task->start($video->duration());
         $this->taskRepository->save($task);
         $this->logService->log('task', $task->id(), LogLevel::INFO, 'Transcoding started');
+        $this->taskRealtimeNotifier->notifyTaskUpdated($task, 'started');
 
         $inputPath = $this->storage->getAbsolutePath($video->getSrcFilename());
 

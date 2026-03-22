@@ -16,6 +16,7 @@ final readonly class TranscodeTaskFinalizationService
     public function __construct(
         private TaskRepositoryInterface $taskRepository,
         private LogServiceInterface $logService,
+        private TaskRealtimeNotifier $taskRealtimeNotifier,
         private TaskCancellationTrigger $cancellationTrigger,
     ) {
     }
@@ -36,6 +37,7 @@ final readonly class TranscodeTaskFinalizationService
 
         $this->taskRepository->save($cancelledTask);
         $this->logService->log('task', $cancelledTask->id(), LogLevel::INFO, 'Transcoding cancelled');
+        $this->taskRealtimeNotifier->notifyTaskUpdated($cancelledTask, 'cancelled');
         $this->cancellationTrigger->clear($cancelledTask->id());
     }
 
@@ -52,6 +54,7 @@ final readonly class TranscodeTaskFinalizationService
 
         $this->taskRepository->save($task);
         $this->logService->log('task', $task->id(), LogLevel::INFO, 'Transcoding finished successfully');
+        $this->taskRealtimeNotifier->notifyTaskUpdated($task, 'completed');
         $this->cancellationTrigger->clear($task->id());
     }
 
@@ -60,6 +63,9 @@ final readonly class TranscodeTaskFinalizationService
         if (!$task->status()->isFinished()) {
             $task->fail();
             $this->taskRepository->save($task);
+            $this->taskRealtimeNotifier->notifyTaskUpdated($task, 'failed', [
+                'error' => $exception->getMessage(),
+            ]);
         }
 
         $this->logService->log('task', $task->id(), LogLevel::ERROR, 'Transcoding failed', [

@@ -13,6 +13,7 @@ use App\Domain\Video\Repository\VideoRepositoryInterface;
 use App\Domain\Video\ValueObject\TaskStatus;
 use App\Infrastructure\Security\Voter\VideoAccessVoter;
 use App\Infrastructure\Task\TaskCancellationTrigger;
+use App\Application\Service\Task\TaskRealtimeNotifier;
 use Psr\Cache\InvalidArgumentException;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Bundle\SecurityBundle\Security;
@@ -36,6 +37,7 @@ class TaskApiController extends AbstractController
         private readonly LogServiceInterface $logService,
         private readonly Security $security,
         private readonly TaskCancellationTrigger $cancellationTrigger,
+        private readonly TaskRealtimeNotifier $taskRealtimeNotifier,
     ) {
     }
 
@@ -119,6 +121,10 @@ class TaskApiController extends AbstractController
         ]);
 
         $this->taskRepository->save($task);
+        $this->taskRealtimeNotifier->notifyTaskUpdated($task, $cancelledNow ? 'cancelled' : 'cancel_requested', [
+            'cancelledNow' => $cancelledNow,
+            'cancellationRequested' => true,
+        ]);
 
         $this->cancellationTrigger->request($task->id());
 

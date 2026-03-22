@@ -44,6 +44,19 @@ function buildPageUrl(baseUrl, page, limit) {
     return url.toString();
 }
 
+function toInt(value, fallback) {
+    const parsed = Number.parseInt(String(value), 10);
+    return Number.isFinite(parsed) ? parsed : fallback;
+}
+
+function isTaskActive(status) {
+    return status === 'PENDING' || status === 'PROCESSING';
+}
+
+function isTaskMessage(message) {
+    return message && typeof message === 'object' && message.entity === 'task' && message.payload && typeof message.payload === 'object';
+}
+
 export function createHomeTabsView(config) {
     return defineComponent({
         name: 'HomeTabsView',
@@ -70,6 +83,31 @@ export function createHomeTabsView(config) {
             const tasksLoading = ref(false);
             const tasksError = ref('');
             const tasksLoaded = ref(false);
+            const taskActionKey = ref('');
+            const onMercureMessage = function (event) {
+                const message = event.detail;
+                if (!isTaskMessage(message)) {
+                    return;
+                }
+
+                const update = message.payload;
+                const taskId = typeof update.taskId === 'string' ? update.taskId : '';
+                if (!taskId) {
+                    return;
+                }
+
+                tasks.value = tasks.value.map((task) => {
+                    if (String(task.id) !== taskId) {
+                        return task;
+                    }
+
+                    return {
+                        ...task,
+                        status: typeof update.status === 'string' ? update.status : task.status,
+                        progress: toInt(update.progress, task.progress),
+                    };
+                });
+            };
 
             async function fetchList(url, page, limit) {
                 const response = await fetch(buildPageUrl(url, page, limit), {
@@ -128,6 +166,30 @@ export function createHomeTabsView(config) {
                 }
             }
 
+            async function cancelTask(taskId) {
+                if (!taskId) {
+                    return;
+                }
+
+                taskActionKey.value = 'cancel-' + String(taskId);
+
+                try {
+                    const url = config.apiTaskCancelUrlTemplate.replace('__TASK_ID__', String(taskId));
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        headers: authHeader,
+                    });
+
+                    if (!response.ok) {
+                        tasksError.value = 'Failed to cancel task';
+                    }
+                } catch (e) {
+                    tasksError.value = 'Failed to cancel task';
+                } finally {
+                    taskActionKey.value = '';
+                }
+            }
+
             function ensureTabDataLoaded(tab) {
                 if (tab === 'videos' && !videosLoading.value) {
                     const targetPage = videosLoaded.value ? videosMeta.value.page : 1;
@@ -159,10 +221,12 @@ export function createHomeTabsView(config) {
                 cleanup = initHomeLegacyWidgets(config);
                 ensureTabDataLoaded(initialTab);
                 syncTabToRoute(initialTab);
+                window.addEventListener('mercure:message', onMercureMessage);
             });
 
             onBeforeUnmount(function () {
                 cleanup();
+                window.removeEventListener('mercure:message', onMercureMessage);
             });
 
             function setTab(tab) {
@@ -214,6 +278,9 @@ export function createHomeTabsView(config) {
                 loadTasks,
                 openVideoDetails,
                 getTaskDownloadUrl,
+                cancelTask,
+                taskActionKey,
+                isTaskActive,
             };
         },
         render() {
@@ -327,10 +394,10 @@ export function createHomeTabsView(config) {
                                               h('td', task.videoTitle || '-'),
                                               h('td', task.presetTitle || '-'),
                                               h('td', task.status || '-'),
-                                              h('td', task.progress || '-'),
+                                              h('td', typeof task.progress === 'number' ? String(task.progress) + '%' : '-'),
                                               h('td', task.createdAt || '-'),
                                               h('td', [
-                                                  task.status === 'COMPLETED' && task.id
+                                                   task.status === 'COMPLETED' && task.id
                                                       ? h(
                                                             'a',
                                                             {
@@ -340,7 +407,18 @@ export function createHomeTabsView(config) {
                                                             },
                                                             'Download'
                                                         )
-                                                      : h('span', { class: 'text-muted' }, '-'),
+                                                       : this.isTaskActive(task.status) && task.id
+                                                           ? h(
+                                                                 'button',
+                                                                 {
+                                                                     type: 'button',
+                                                                     class: 'btn btn-outline-primary btn-sm',
+                                                                     disabled: this.taskActionKey === 'cancel-' + String(task.id),
+                                                                     onClick: () => this.cancelTask(task.id),
+                                                                 },
+                                                                 this.taskActionKey === 'cancel-' + String(task.id) ? 'Cancelling...' : 'Cancel'
+                                                             )
+                                                           : h('span', { class: 'text-muted' }, '-'),
                                               ]),
                                           ])
                                       )

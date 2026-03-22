@@ -1,4 +1,4 @@
-import { computed, defineComponent, h, onMounted, ref } from 'vue';
+import { computed, defineComponent, h, onBeforeUnmount, onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
 function createAuthHeaders(apiBearerToken) {
@@ -50,6 +50,15 @@ function extractApiErrorMessage(payload, fallback) {
     return fallback;
 }
 
+function isTaskMessage(message) {
+    return message && typeof message === 'object' && message.entity === 'task' && message.payload && typeof message.payload === 'object';
+}
+
+function toInt(value, fallback) {
+    const parsed = Number.parseInt(String(value), 10);
+    return Number.isFinite(parsed) ? parsed : fallback;
+}
+
 export function createVideoDetailsView(config) {
     return defineComponent({
         name: 'VideoDetailsView',
@@ -62,6 +71,53 @@ export function createVideoDetailsView(config) {
             const actionError = ref('');
             const activeActionKey = ref('');
             const authHeaders = createAuthHeaders(config.apiBearerToken || null);
+            const onMercureMessage = function (event) {
+                const message = event.detail;
+                if (!isTaskMessage(message) || !dto.value) {
+                    return;
+                }
+
+                const update = message.payload;
+                if (typeof update.videoId === 'string' && update.videoId !== dto.value.id) {
+                    return;
+                }
+
+                const taskId = typeof update.taskId === 'string' ? update.taskId : '';
+                const presetId = typeof update.presetId === 'string' ? update.presetId : '';
+
+                const nextPresets = (dto.value.presetsWithTasks || []).map((preset) => {
+                    const task = preset.task;
+                    const sameTask = taskId && task && String(task.id) === taskId;
+                    const samePreset = presetId && String(preset.id) === presetId;
+
+                    if (!sameTask && !samePreset) {
+                        return preset;
+                    }
+
+                    const currentTask = task || {
+                        id: taskId || null,
+                        status: 'PENDING',
+                        progress: 0,
+                        createdAt: typeof update.createdAt === 'string' ? update.createdAt : '-',
+                    };
+
+                    return {
+                        ...preset,
+                        task: {
+                            ...currentTask,
+                            id: taskId || currentTask.id || null,
+                            status: typeof update.status === 'string' ? update.status : currentTask.status,
+                            progress: toInt(update.progress, currentTask.progress),
+                            createdAt: typeof update.createdAt === 'string' ? update.createdAt : currentTask.createdAt,
+                        },
+                    };
+                });
+
+                dto.value = {
+                    ...dto.value,
+                    presetsWithTasks: nextPresets,
+                };
+            };
 
             const uuid = computed(() => {
                 if (typeof route.params.uuid === 'string' && route.params.uuid) {
@@ -176,6 +232,11 @@ export function createVideoDetailsView(config) {
 
             onMounted(function () {
                 void loadDetails();
+                window.addEventListener('mercure:message', onMercureMessage);
+            });
+
+            onBeforeUnmount(function () {
+                window.removeEventListener('mercure:message', onMercureMessage);
             });
 
             return {

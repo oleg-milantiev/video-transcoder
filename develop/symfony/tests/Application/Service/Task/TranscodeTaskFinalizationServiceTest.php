@@ -8,6 +8,7 @@ use App\Application\DTO\TranscodeProcessReportDTO;
 use App\Application\DTO\TranscodeReportDTO;
 use Psr\Log\LogLevel;
 use App\Application\Logging\LogServiceInterface;
+use App\Application\Service\Task\TaskRealtimeNotifier;
 use App\Application\Service\Task\TranscodeTaskFinalizationService;
 use App\Domain\Video\Entity\Task;
 use App\Domain\Video\Repository\TaskRepositoryInterface;
@@ -15,6 +16,8 @@ use App\Domain\Video\ValueObject\TaskStatus;
 use App\Infrastructure\Task\TaskCancellationTrigger;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Cache\Adapter\ArrayAdapter;
+use Symfony\Component\Messenger\Envelope;
+use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Uid\UuidV4;
 
 class TranscodeTaskFinalizationServiceTest extends TestCase
@@ -50,7 +53,13 @@ class TranscodeTaskFinalizationServiceTest extends TestCase
         $cancellationTrigger = new TaskCancellationTrigger(new ArrayAdapter());
         $cancellationTrigger->request($taskId);
 
-        $service = new TranscodeTaskFinalizationService($taskRepository, $logService, $cancellationTrigger);
+        $commandBus = $this->createMock(MessageBusInterface::class);
+        $commandBus->expects($this->once())
+            ->method('dispatch')
+            ->willReturn(new Envelope(new \stdClass()));
+        $taskRealtimeNotifier = new TaskRealtimeNotifier($commandBus);
+
+        $service = new TranscodeTaskFinalizationService($taskRepository, $logService, $taskRealtimeNotifier, $cancellationTrigger);
         $service->handleCancellation($originalTask, $report);
 
         $this->assertFalse($cancellationTrigger->isRequested($taskId));
@@ -84,7 +93,13 @@ class TranscodeTaskFinalizationServiceTest extends TestCase
         $cancellationTrigger = new TaskCancellationTrigger(new ArrayAdapter());
         $cancellationTrigger->request($taskId);
 
-        $service = new TranscodeTaskFinalizationService($taskRepository, $logService, $cancellationTrigger);
+        $commandBus = $this->createMock(MessageBusInterface::class);
+        $commandBus->expects($this->once())
+            ->method('dispatch')
+            ->willReturn(new Envelope(new \stdClass()));
+        $taskRealtimeNotifier = new TaskRealtimeNotifier($commandBus);
+
+        $service = new TranscodeTaskFinalizationService($taskRepository, $logService, $taskRealtimeNotifier, $cancellationTrigger);
         $service->handleSuccess($task, 'video/11.mp4', $report);
 
         $this->assertFalse($cancellationTrigger->isRequested($taskId));
@@ -105,7 +120,13 @@ class TranscodeTaskFinalizationServiceTest extends TestCase
             ->method('log')
             ->with('task', $taskId, LogLevel::ERROR, 'Transcoding failed', ['message' => 'boom']);
 
-        $service = new TranscodeTaskFinalizationService($taskRepository, $logService, new TaskCancellationTrigger(new ArrayAdapter()));
+        $commandBus = $this->createMock(MessageBusInterface::class);
+        $commandBus->expects($this->once())
+            ->method('dispatch')
+            ->willReturn(new Envelope(new \stdClass()));
+        $taskRealtimeNotifier = new TaskRealtimeNotifier($commandBus);
+
+        $service = new TranscodeTaskFinalizationService($taskRepository, $logService, $taskRealtimeNotifier, new TaskCancellationTrigger(new ArrayAdapter()));
         $service->handleFailure($task, new \RuntimeException('boom'));
     }
 

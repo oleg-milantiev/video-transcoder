@@ -18,6 +18,14 @@ function parseEventData(rawData) {
     }
 }
 
+function emitRealtimeMessage(payload) {
+    if (!payload || typeof payload !== 'object') {
+        return;
+    }
+
+    window.dispatchEvent(new CustomEvent('mercure:message', { detail: payload }));
+}
+
 export function connectMercure(config, rootElement) {
     if (!('EventSource' in window)) {
         return;
@@ -43,7 +51,9 @@ export function connectMercure(config, rootElement) {
     };
 
     eventSource.onmessage = function (event) {
-        console.log('[mercure] message', parseEventData(event.data));
+        const payload = parseEventData(event.data);
+        emitRealtimeMessage(payload);
+        console.log('[mercure] message', payload);
     };
 
     eventSource.onerror = function () {

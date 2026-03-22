@@ -26,6 +26,7 @@ final readonly class TranscodeProcessService
     public function __construct(
         private TaskRepositoryInterface $taskRepository,
         private LogServiceInterface $logService,
+        private TaskRealtimeNotifier $taskRealtimeNotifier,
         private TaskCancellationTrigger $cancellationTrigger,
         private ProcessRunnerInterface $processRunner,
     ) {
@@ -139,6 +140,7 @@ final readonly class TranscodeProcessService
         $this->logService->log('task', $task->id(), LogLevel::INFO, 'Transcoding progress', [
             'progress' => $value,
         ]);
+        $this->taskRealtimeNotifier->notifyTaskUpdated($task, 'progress');
     }
 
     private function appendLogTail(string $tail, string $chunk): string
