@@ -29,7 +29,7 @@ final readonly class MercureTokenService
 
     public function createUserTopic(UuidV4 $userId): string
     {
-        return rtrim($this->topicPrefix, '/') . '/' . $userId->toRfc4122();
+        return rtrim($this->normalizeUrl((string) $this->topicPrefix), '/') . '/' . $userId->toRfc4122();
     }
 
     public function createSubscriberTokenForUser(UuidV4 $userId): string
@@ -54,12 +54,12 @@ final readonly class MercureTokenService
 
     public function publicHubUrl(): string
     {
-        return $this->publicHubUrl;
+        return $this->normalizeUrl((string) $this->publicHubUrl);
     }
 
     public function internalHubUrl(): string
     {
-        return $this->internalHubUrl;
+        return $this->normalizeUrl((string) $this->internalHubUrl);
     }
 
     private function createJwt(array $claims, string $key): string
@@ -85,5 +85,13 @@ final readonly class MercureTokenService
     private function base64UrlEncode(string $value): string
     {
         return rtrim(strtr(base64_encode($value), '+/', '-_'), '=');
+    }
+
+    private function normalizeUrl(string $value): string
+    {
+        $normalized = trim($value);
+        $normalized = preg_replace('#^((https?)://)((https?)://)+#i', '$1', $normalized) ?? $normalized;
+
+        return $normalized;
     }
 }

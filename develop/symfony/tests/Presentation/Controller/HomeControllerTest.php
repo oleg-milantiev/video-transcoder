@@ -43,7 +43,7 @@ final class HomeControllerTest extends WebTestCase
         self::assertSame('home-user@example.com', $spaRoot->attr('data-user-identifier'));
         self::assertSame('00000000-0000-4000-8000-000000000101', $spaRoot->attr('data-user-id'));
         self::assertNotSame('', (string) $spaRoot->attr('data-api-bearer-token'));
-        self::assertSame('http://localhost:8080/.well-known/mercure', $spaRoot->attr('data-mercure-hub-url'));
+        self::assertSame('http://yc.local:8080/.well-known/mercure', $spaRoot->attr('data-mercure-hub-url'));
         // TODO use env
         self::assertSame('http://yc.local/user/00000000-0000-4000-8000-000000000101', $spaRoot->attr('data-mercure-topic'));
         self::assertNotSame('', (string) $spaRoot->attr('data-mercure-subscriber-token'));
