@@ -18,31 +18,51 @@ class Task
     private Uuid $presetId;
     private Uuid $userId;
 
-    // Constructor for mapping from Doctrine only. Use static::create() for domain
-    // TODO remove it
-    public function __construct(
+    private function __construct(
         Uuid $videoId,
         Uuid $presetId,
         Uuid $userId,
-        ?TaskStatus $status = null,
-        ?Progress $progress = null,
-        ?TaskDates $dates = null,
-        ?Uuid $id = null,
-        array $meta = [],
+        TaskStatus $status,
+        Progress $progress,
+        TaskDates $dates,
+        ?Uuid $id,
+        array $meta,
     ) {
         $this->id = $id;
         $this->videoId = $videoId;
         $this->presetId = $presetId;
-        $this->status = $status ?? TaskStatus::pending();
-        $this->progress = $progress ?? new Progress(0);
-        $this->dates = $dates ?? TaskDates::create();
+        $this->status = $status;
+        $this->progress = $progress;
+        $this->dates = $dates;
         $this->meta = $meta;
         $this->userId = $userId;
     }
 
     public static function create(Uuid $videoId, Uuid $presetId, Uuid $userId): self
     {
-        return new self($videoId, $presetId, $userId);
+        return new self(
+            videoId: $videoId,
+            presetId: $presetId,
+            userId: $userId,
+            status: TaskStatus::pending(),
+            progress: new Progress(0),
+            dates: TaskDates::create(),
+            id: null,
+            meta: [],
+        );
+    }
+
+    public static function reconstitute(
+        Uuid $videoId,
+        Uuid $presetId,
+        Uuid $userId,
+        TaskStatus $status,
+        Progress $progress,
+        TaskDates $dates,
+        Uuid $id,
+        array $meta = [],
+    ): self {
+        return new self($videoId, $presetId, $userId, $status, $progress, $dates, $id, $meta);
     }
 
     public function canStart(?float $videoDuration): bool
@@ -155,8 +175,12 @@ class Task
         return $this->id;
     }
 
-    public function setId(Uuid $id): void
+    public function assignId(Uuid $id): void
     {
+        if ($this->id !== null && !$this->id->equals($id)) {
+            throw new \DomainException('Task id is already assigned and cannot be changed.');
+        }
+
         $this->id = $id;
     }
 

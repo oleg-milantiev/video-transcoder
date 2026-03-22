@@ -101,7 +101,7 @@ final class TaskApiControllerTest extends ApiWebTestCase
 
         $taskId = UuidV4::fromString('15151515-1515-4515-8515-151515151515');
 
-        $task = new TaskFake();
+        $task = TaskFake::create();
 
         $taskRepository = $this->createMock(TaskRepositoryInterface::class);
         $taskRepository->expects($this->once())->method('findById')->with($taskId)->willReturn($task);
@@ -129,8 +129,8 @@ final class TaskApiControllerTest extends ApiWebTestCase
 
         $taskId = UuidV4::fromString('18181818-1818-4818-8818-181818181818');
 
-        $task = new TaskFake();
-        $video = new VideoFake();
+        $task = TaskFake::create();
+        $video = VideoFake::create();
 
         $taskRepository = $this->createMock(TaskRepositoryInterface::class);
         $taskRepository->expects($this->once())->method('findById')->with($taskId)->willReturn($task);
@@ -165,8 +165,8 @@ final class TaskApiControllerTest extends ApiWebTestCase
 
         $taskId = UuidV4::fromString('21212121-2121-4212-8212-212121212121');
 
-        $task = new TaskFake();
-        $video = new VideoFake();
+        $task = TaskFake::create();
+        $video = VideoFake::create();
 
         $taskRepository = $this->createMock(TaskRepositoryInterface::class);
         $taskRepository->expects($this->once())->method('findById')->with($taskId)->willReturn($task);
@@ -207,7 +207,7 @@ final class TaskApiControllerTest extends ApiWebTestCase
         $taskId = UuidV4::fromString('25252525-2525-4252-8252-252525252525');
 
         $task = $this->createProcessingTask();
-        $video = new VideoFake();
+        $video = VideoFake::create();
 
         $taskRepository = $this->createMock(TaskRepositoryInterface::class);
         $taskRepository->expects($this->once())->method('findById')->with($taskId)->willReturn($task);
@@ -248,7 +248,7 @@ final class TaskApiControllerTest extends ApiWebTestCase
             UuidV4::fromString('10101010-1010-4010-8010-101010101010'),
             UuidV4::fromString('00000000-0000-4000-8000-000000000042')
         );
-        $task->setId(UuidV4::fromString('77777777-7777-4777-8777-777777777777'));
+        $task->assignId(UuidV4::fromString('77777777-7777-4777-8777-777777777777'));
         $task->start();
 
         return $task;

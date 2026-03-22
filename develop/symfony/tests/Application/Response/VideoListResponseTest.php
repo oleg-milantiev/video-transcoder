@@ -12,7 +12,7 @@ class VideoListResponseTest extends TestCase
 {
     public function testFromDomainMapsVideosAndPagination(): void
     {
-        $videos = [new VideoFake(), new VideoFake()];
+        $videos = [VideoFake::create(), VideoFake::create()];
         $response = VideoListResponse::fromDomain($videos, total: 12, page: 2, limit: 5);
 
         $this->assertCount(2, $response->items);

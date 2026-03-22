@@ -35,7 +35,6 @@ class VideoRepository extends ServiceEntityRepository implements VideoRepository
         $user = $em->getReference(UserEntity::class, $video->userId());
 
         if ($video->id() === null) {
-            $video->generateId();
             $entity = VideoMapper::toDoctrine($video, $user);
         } else {
             $entity = $this->find($video->id());
@@ -53,7 +52,9 @@ class VideoRepository extends ServiceEntityRepository implements VideoRepository
 
     public function findById(Uuid $id): ?Video
     {
-        return self::mapToDomain($this->find($id));
+        $entity = $this->find($id);
+
+        return $entity ? self::mapToDomain($entity) : null;
     }
 
     protected static function mapToDomain(VideoEntity $entity): Video

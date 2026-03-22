@@ -46,7 +46,7 @@ class StartTranscodeHandlerTest extends TestCase
     public function testCreatesTaskAndDispatchesScheduler(): void
     {
         $videoId = UuidV4::fromString('123e4567-e89b-42d3-a456-426614174100');
-        $video = Video::create(
+        $video = Video::reconstitute(
             new VideoTitle('Source Clip'),
             new FileExtension('mp4'),
             VideoStatus::UPLOADED,
@@ -99,7 +99,7 @@ class StartTranscodeHandlerTest extends TestCase
             ->method('save')
             ->with($this->isInstanceOf(Task::class))
             ->willReturnCallback(static function (Task $task): void {
-                $task->setId(UuidV4::fromString('123e4567-e89b-42d3-a456-426614174321'));
+                $task->assignId(UuidV4::fromString('123e4567-e89b-42d3-a456-426614174321'));
             });
 
         $userRepo = $this->createMock(UserRepositoryInterface::class);

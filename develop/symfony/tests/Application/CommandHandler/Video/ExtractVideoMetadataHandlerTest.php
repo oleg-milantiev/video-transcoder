@@ -10,6 +10,7 @@ use App\Application\CommandHandler\Video\ExtractVideoMetadataHandler;
 use App\Application\Event\ExtractVideoMetadataFail;
 use App\Application\Event\ExtractVideoMetadataStart;
 use App\Application\Event\ExtractVideoMetadataSuccess;
+use App\Domain\Video\ValueObject\VideoDates;
 use Psr\Log\LogLevel;
 use App\Application\Logging\LogServiceInterface;
 use App\Domain\Video\Entity\Video;
@@ -161,12 +162,13 @@ class ExtractVideoMetadataHandlerTest extends TestCase
 
     private function createVideo(): Video
     {
-        return Video::create(
+        return Video::reconstitute(
             title: new VideoTitle('Clip'),
             extension: new FileExtension('mp4'),
             status: VideoStatus::UPLOADED,
             userId: UuidV4::fromString('123e4567-e89b-42d3-a456-426614174105'),
             meta: [],
+            dates: VideoDates::create(),
             id: UuidV4::fromString('123e4567-e89b-42d3-a456-426614174152'),
         );
     }

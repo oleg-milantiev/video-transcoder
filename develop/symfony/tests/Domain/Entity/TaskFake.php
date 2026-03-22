@@ -4,21 +4,24 @@ namespace App\Tests\Domain\Entity;
 
 use App\Domain\Video\Entity\Task;
 use App\Domain\Video\ValueObject\Progress;
+use App\Domain\Video\ValueObject\TaskDates;
 use App\Domain\Video\ValueObject\TaskStatus;
 use Symfony\Component\Uid\UuidV4;
 
-class TaskFake extends Task
+final class TaskFake
 {
-    public function __construct()
+    public static function create(): Task
     {
-        $video = new VideoFake();
+        $video = VideoFake::create();
         $preset = new PresetFake();
-        parent::__construct(
+
+        return Task::reconstitute(
             videoId: $video->id() ?? UuidV4::v4(),
             presetId: $preset->id() ?? UuidV4::v4(),
             userId: $video->userId(),
             status: TaskStatus::pending(),
             progress: new Progress(0),
+            dates: TaskDates::create(),
             id: UuidV4::v4(),
         );
     }

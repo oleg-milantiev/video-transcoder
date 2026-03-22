@@ -18,10 +18,10 @@ class GetTaskListHandlerTest extends TestCase
 {
     public function testHandleReturnsCorrectResponse()
     {
-        $task1 = new TaskFake();
-        $task2 = new TaskFake();
-        $video1 = new VideoFake();
-        $video2 = new VideoFake();
+        $task1 = TaskFake::create();
+        $task2 = TaskFake::create();
+        $video1 = VideoFake::create();
+        $video2 = VideoFake::create();
         $preset1 = new PresetFake();
         $preset2 = new PresetFake();
 

@@ -14,8 +14,8 @@ class TaskListResponseTest extends TestCase
 {
     public function testFromDomainBuildsDtosAndPagination(): void
     {
-        $task = new TaskFake();
-        $video = new VideoFake();
+        $task = TaskFake::create();
+        $video = VideoFake::create();
         $preset = new PresetFake();
 
         $response = TaskListResponse::fromDomain(

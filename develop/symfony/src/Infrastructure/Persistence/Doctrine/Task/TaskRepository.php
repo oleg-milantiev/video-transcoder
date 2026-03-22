@@ -61,7 +61,9 @@ class TaskRepository extends ServiceEntityRepository implements TaskRepositoryIn
         $em->persist($taskEntity);
         $em->flush();
 
-        $task->setId($taskEntity->id);
+        if ($task->id() === null) {
+            $task->assignId($taskEntity->id);
+        }
     }
 
     public function findById(UuidV4 $id): ?Task

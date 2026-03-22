@@ -14,7 +14,7 @@ class TaskMapper
 {
     public static function toDomain(TaskEntity $entity): Task
     {
-        return new Task(
+        return Task::reconstitute(
             videoId: $entity->video->id,
             presetId: $entity->preset->id,
             userId: $entity->user->id,

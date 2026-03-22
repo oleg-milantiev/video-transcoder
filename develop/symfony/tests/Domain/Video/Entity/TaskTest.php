@@ -104,15 +104,11 @@ final class TaskTest extends TestCase
 
     public function testUpdateMetaAddsNewKeysAndKeepsExistingOnes(): void
     {
-        $task = new Task(
-            videoId: $this->videoId(),
-            presetId: $this->presetId(),
-            userId: $this->userId(),
-            meta: [
-                'output' => 'old.mp4',
-                'transcode' => ['runtimeSec' => 12.3],
-            ],
-        );
+        $task = Task::create($this->videoId(), $this->presetId(), $this->userId());
+        $task->updateMeta([
+            'output' => 'old.mp4',
+            'transcode' => ['runtimeSec' => 12.3],
+        ]);
 
         $task->updateMeta(['cancelRequestedAt' => '2026-03-19T10:00:00+00:00']);
         $task->updateMeta(['cancelledByUserId' => 42]);
@@ -126,12 +122,8 @@ final class TaskTest extends TestCase
 
     public function testUpdateMetaOverridesSameTopLevelKey(): void
     {
-        $task = new Task(
-            videoId: $this->videoId(),
-            presetId: $this->presetId(),
-            userId: $this->userId(),
-            meta: ['output' => 'old.mp4'],
-        );
+        $task = Task::create($this->videoId(), $this->presetId(), $this->userId());
+        $task->updateMeta(['output' => 'old.mp4']);
 
         $task->updateMeta(['output' => 'new.mp4']);
 

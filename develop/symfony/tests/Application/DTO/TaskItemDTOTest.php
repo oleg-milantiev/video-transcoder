@@ -27,7 +27,7 @@ class TaskItemDTOTest extends TestCase
     public function testFromDomainUsesProvidedEntities(): void
     {
         $videoId = UuidV4::fromString('22222222-2222-4222-8222-222222222222');
-        $video = Video::create(
+        $video = Video::reconstitute(
             new VideoTitle('Task Source Video'),
             new FileExtension('mkv'),
             VideoStatus::UPLOADED,
@@ -45,7 +45,7 @@ class TaskItemDTOTest extends TestCase
             UuidV4::fromString('77777777-7777-4777-8777-777777777777'),
         );
 
-        $task = new Task(
+        $task = Task::reconstitute(
             videoId: $videoId,
             presetId: UuidV4::fromString('77777777-7777-4777-8777-777777777777'),
             userId: UuidV4::fromString('99999999-9999-4999-8999-999999999999'),

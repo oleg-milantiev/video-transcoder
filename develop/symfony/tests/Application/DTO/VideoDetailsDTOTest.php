@@ -24,7 +24,7 @@ class VideoDetailsDTOTest extends TestCase
             'preview' => true,
             'bitrate' => '5Mbps',
         ];
-        $video = Video::create(
+        $video = Video::reconstitute(
             new VideoTitle('Detailed Video'),
             new FileExtension('mov'),
             VideoStatus::UPLOADED,

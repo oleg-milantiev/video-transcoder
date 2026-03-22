@@ -14,8 +14,8 @@ class GetVideoListHandlerTest extends TestCase
 {
     public function testHandleReturnsCorrectResponse()
     {
-        $video1 = new VideoFake();
-        $video2 = new VideoFake();
+        $video1 = VideoFake::create();
+        $video2 = VideoFake::create();
         $videos = [$video1, $video2];
         $total = 2;
         $page = 1;

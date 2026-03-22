@@ -18,7 +18,7 @@ class VideoItemDTOTest extends TestCase
     public function testFromDomainMapsAllFields(): void
     {
         $uuid = UuidV4::fromString('11111111-1111-4111-8111-111111111111');
-        $video = Video::create(
+        $video = Video::reconstitute(
             new VideoTitle('Demo Video'),
             new FileExtension('mp4'),
             VideoStatus::UPLOADED,

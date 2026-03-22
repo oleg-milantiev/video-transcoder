@@ -9,6 +9,7 @@ use App\Application\CommandHandler\Video\CreateVideoPreviewHandler;
 use App\Application\Event\CreateVideoPreviewFail;
 use App\Application\Event\CreateVideoPreviewStart;
 use App\Application\Event\CreateVideoPreviewSuccess;
+use App\Domain\Video\ValueObject\VideoDates;
 use Psr\Log\LogLevel;
 use App\Application\Logging\LogServiceInterface;
 use App\Domain\Video\Entity\Video;
@@ -118,12 +119,13 @@ class CreateVideoPreviewHandlerTest extends TestCase
 
     private function createVideo(float $duration): Video
     {
-        return Video::create(
+        return Video::reconstitute(
             title: new VideoTitle('Clip'),
             extension: new FileExtension('mp4'),
             status: VideoStatus::UPLOADED,
             userId: UuidV4::fromString('123e4567-e89b-42d3-a456-426614174105'),
             meta: ['duration' => $duration],
+            dates: VideoDates::create(),
             id: UuidV4::fromString('123e4567-e89b-42d3-a456-426614174151'),
         );
     }

@@ -15,7 +15,7 @@ class GetVideoDetailsHandlerTest extends TestCase
 {
     public function testConvertsNumericStatusIntoEnumName(): void
     {
-        $video = new VideoFake();
+        $video = VideoFake::create();
 
         $repository = $this->createMock(VideoRepositoryInterface::class);
         $repository->expects($this->once())

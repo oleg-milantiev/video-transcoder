@@ -18,20 +18,20 @@ class Video
     private Uuid $userId;
     private array $meta;
 
-    public function __construct(
+    private function __construct(
         VideoTitle $title,
         FileExtension $extension,
         VideoStatus $status,
         Uuid $userId,
-        array $meta = [],
-        ?VideoDates $dates = null,
-        ?Uuid $id = null,
+        array $meta,
+        VideoDates $dates,
+        ?Uuid $id,
     ) {
         $this->id = $id;
         $this->title = $title;
         $this->extension = $extension;
         $this->status = $status;
-        $this->dates = $dates ?? VideoDates::create();
+        $this->dates = $dates;
         $this->userId = $userId;
         $this->meta = $meta;
     }
@@ -42,15 +42,20 @@ class Video
         VideoStatus $status,
         Uuid $userId,
         array $meta = [],
-        ?VideoDates $dates = null,
-        ?Uuid $id = null,
     ): self {
-        return new self($title, $extension, $status, $userId, $meta, $dates, $id);
+        return new self($title, $extension, $status, $userId, $meta, VideoDates::create(), null);
     }
 
-    public function generateId(): void
-    {
-        $this->id = Uuid::v4();
+    public static function reconstitute(
+        VideoTitle $title,
+        FileExtension $extension,
+        VideoStatus $status,
+        Uuid $userId,
+        array $meta,
+        VideoDates $dates,
+        Uuid $id,
+    ): self {
+        return new self($title, $extension, $status, $userId, $meta, $dates, $id);
     }
 
     public function id(): ?Uuid

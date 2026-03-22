@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\Application\Service\Task;
 
 use App\Application\Service\Task\TranscodeTaskPreparationService;
+use App\Domain\Video\ValueObject\VideoDates;
 use Psr\Log\LogLevel;
 use App\Application\Logging\LogServiceInterface;
 use App\Domain\Video\Entity\Preset;
@@ -110,12 +111,13 @@ class TranscodeTaskPreparationServiceTest extends TestCase
 
     private function createVideo(float $duration): Video
     {
-        return Video::create(
+        return Video::reconstitute(
             title: new VideoTitle('Clip'),
             extension: new FileExtension('mp4'),
             status: VideoStatus::UPLOADED,
             userId: UuidV4::fromString('123e4567-e89b-42d3-a456-426614174007'),
             meta: ['duration' => $duration],
+            dates: VideoDates::create(),
             id: UuidV4::fromString('123e4567-e89b-42d3-a456-426614174120'),
         );
     }
@@ -134,7 +136,7 @@ class TranscodeTaskPreparationServiceTest extends TestCase
     private function createTask(UuidV4 $videoId, UuidV4 $presetId): Task
     {
         $task = Task::create($videoId, $presetId, UuidV4::fromString('123e4567-e89b-42d3-a456-426614174007'));
-        $task->setId(UuidV4::fromString('123e4567-e89b-42d3-a456-426614174013'));
+        $task->assignId(UuidV4::fromString('123e4567-e89b-42d3-a456-426614174013'));
 
         return $task;
     }

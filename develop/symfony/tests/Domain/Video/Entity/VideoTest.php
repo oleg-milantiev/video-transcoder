@@ -19,7 +19,7 @@ final class VideoTest extends TestCase
         $id = UuidV4::fromString('99999999-9999-4999-8999-999999999999');
         $createdAt = new \DateTimeImmutable('2026-03-19 12:00:00');
 
-        $video = Video::create(
+        $video = Video::reconstitute(
             title: new VideoTitle('Trailer'),
             extension: new FileExtension('mp4'),
             status: VideoStatus::UPLOADED,
@@ -39,7 +39,7 @@ final class VideoTest extends TestCase
         $this->assertNull($video->updatedAt());
     }
 
-    public function testGenerateIdSetsUuidWhenMissing(): void
+    public function testCreateInitializesWithoutIdAndWithDates(): void
     {
         $video = Video::create(
             new VideoTitle('No id video'),
@@ -49,15 +49,12 @@ final class VideoTest extends TestCase
         );
 
         $this->assertNull($video->id());
-
-        $video->generateId();
-
-        $this->assertNotNull($video->id());
+        $this->assertNotNull($video->createdAt());
     }
 
     public function testUpdateMetaMergesTopLevelKeysAndSetsUpdatedAt(): void
     {
-        $video = Video::create(
+        $video = Video::reconstitute(
             title: new VideoTitle('Meta merge'),
             extension: new FileExtension('mkv'),
             status: VideoStatus::UPLOADED,
@@ -77,7 +74,7 @@ final class VideoTest extends TestCase
 
     public function testUpdateMetaOverridesExistingTopLevelKey(): void
     {
-        $video = Video::create(
+        $video = Video::reconstitute(
             new VideoTitle('Replace key'),
             new FileExtension('mp4'),
             VideoStatus::UPLOADED,
@@ -95,12 +92,14 @@ final class VideoTest extends TestCase
     public function testGetSrcFilenameReturnsUuidWithExtension(): void
     {
         $id = UuidV4::fromString('33333333-3333-4333-8333-333333333333');
-        $video = Video::create(
+        $video = Video::reconstitute(
             new VideoTitle('Source file'),
             new FileExtension('avi'),
             VideoStatus::UPLOADED,
             UuidV4::fromString('88888888-8888-4888-8888-888888888888'),
-            id: $id,
+            [],
+            VideoDates::create(),
+            $id,
         );
 
         $this->assertSame($id->toRfc4122() . '.avi', $video->getSrcFilename());
@@ -109,13 +108,14 @@ final class VideoTest extends TestCase
     public function testGetPosterReturnsFilenameWhenPreviewExists(): void
     {
         $id = UuidV4::fromString('44444444-4444-4444-8444-444444444444');
-        $video = Video::create(
+        $video = Video::reconstitute(
             new VideoTitle('Poster test'),
             new FileExtension('mp4'),
             VideoStatus::UPLOADED,
             UuidV4::fromString('99999999-9999-4999-8999-999999999998'),
             ['preview' => true],
-            id: $id,
+            VideoDates::create(),
+            $id,
         );
 
         $this->assertSame($id->toRfc4122() . '.jpg', $video->getPoster());
@@ -123,13 +123,14 @@ final class VideoTest extends TestCase
 
     public function testGetPosterReturnsNullWhenPreviewMissing(): void
     {
-        $video = Video::create(
+        $video = Video::reconstitute(
             new VideoTitle('No poster'),
             new FileExtension('mp4'),
             VideoStatus::UPLOADED,
             UuidV4::fromString('99999999-9999-4999-8999-999999999997'),
             ['preview' => false],
-            id: UuidV4::fromString('55555555-5555-4555-8555-555555555555'),
+            VideoDates::create(),
+            UuidV4::fromString('55555555-5555-4555-8555-555555555555'),
         );
 
         $this->assertNull($video->getPoster());

@@ -13,7 +13,7 @@ class VideoMapper
 {
     public static function toDomain(VideoEntity $entity): Video
     {
-        return Video::create(
+        return Video::reconstitute(
             title: new VideoTitle($entity->title),
             extension: new FileExtension($entity->extension),
             status: VideoStatus::from($entity->status),

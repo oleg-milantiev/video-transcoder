@@ -116,7 +116,7 @@ class TranscodeTaskFinalizationServiceTest extends TestCase
             UuidV4::fromString('123e4567-e89b-42d3-a456-426614174001'),
             UuidV4::fromString('123e4567-e89b-42d3-a456-426614174007')
         );
-        $task->setId($id);
+        $task->assignId($id);
 
         return $task;
     }
