@@ -23,7 +23,11 @@
             <div
                 id="home-spa"
                 data-user-identifier="{{ app.user.userIdentifier|e('html_attr') }}"
+                data-user-id="{{ userId|default('')|e('html_attr') }}"
                 data-api-bearer-token="{{ apiAccessToken|default('')|e('html_attr') }}"
+                data-mercure-hub-url="{{ mercureHubUrl|default('')|e('html_attr') }}"
+                data-mercure-topic="{{ mercureTopic|default('')|e('html_attr') }}"
+                data-mercure-subscriber-token="{{ mercureSubscriberToken|default('')|e('html_attr') }}"
                 data-api-upload-url="{{ path('api_tus')|e('html_attr') }}"
                 data-api-video-list-url="{{ path('api_video_list')|e('html_attr') }}"
                 data-api-task-list-url="{{ path('api_task_list')|e('html_attr') }}"

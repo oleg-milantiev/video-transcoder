@@ -3,6 +3,7 @@
 namespace App\Presentation\Controller;
 
 use App\Infrastructure\Security\ApiTokenService;
+use App\Infrastructure\Security\MercureTokenService;
 use App\Infrastructure\Persistence\Doctrine\User\UserEntity;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
@@ -12,6 +13,7 @@ class HomeController extends AbstractController
 {
     public function __construct(
         private readonly ApiTokenService $tokenService,
+        private readonly MercureTokenService $mercureTokenService,
     ) {
     }
 
@@ -22,14 +24,13 @@ class HomeController extends AbstractController
     public function index(): Response
     {
         $user = $this->getUser();
-        $apiAccessToken = null;
-
-        if ($user instanceof UserEntity && $user->id !== null) {
-            $apiAccessToken = $this->tokenService->createToken($user->id, $user->getUserIdentifier());
-        }
 
         return $this->render('home/index.html.twig', [
-            'apiAccessToken' => $apiAccessToken,
+            'apiAccessToken' => $user ? $this->tokenService->createToken($user->id, $user->getUserIdentifier()) : null,
+            'mercureHubUrl' => $this->mercureTokenService->publicHubUrl(),
+            'mercureSubscriberToken' => $user ? $this->mercureTokenService->createSubscriberTokenForUser($user->id) : null,
+            'mercureTopic' => $user ? $this->mercureTokenService->createUserTopic($user->id) : null,
+            'userId' => $user?->id->toRfc4122(),
         ]);
     }
 }

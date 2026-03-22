@@ -9,7 +9,11 @@
     <div
         id="video-details-spa"
         data-user-identifier="{{ app.user ? app.user.userIdentifier|e('html_attr') : '' }}"
+        data-user-id="{{ userId|default('')|e('html_attr') }}"
         data-api-bearer-token="{{ apiAccessToken|default('')|e('html_attr') }}"
+        data-mercure-hub-url="{{ mercureHubUrl|default('')|e('html_attr') }}"
+        data-mercure-topic="{{ mercureTopic|default('')|e('html_attr') }}"
+        data-mercure-subscriber-token="{{ mercureSubscriberToken|default('')|e('html_attr') }}"
         data-api-video-details-url-template="{{ path('api_video_details', {'id': dummyVideoId})|replace({(dummyVideoId): '__UUID__'})|e('html_attr') }}"
         data-api-video-transcode-url-template="{{ path('api_video_transcode', {'id': dummyVideoId, 'presetId': dummyPresetId})|replace({(dummyVideoId): '__UUID__', (dummyPresetId): '__PRESET_ID__'})|e('html_attr') }}"
         data-api-task-cancel-url-template="{{ path('api_task_cancel', {'id': dummyTaskId})|replace({(dummyTaskId): '__TASK_ID__'})|e('html_attr') }}"

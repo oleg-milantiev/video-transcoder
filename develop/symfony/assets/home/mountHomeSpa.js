@@ -1,12 +1,17 @@
 import { createApp, h } from 'vue';
 import { createRouter, createWebHistory, RouterView } from 'vue-router';
+import { connectMercure } from './connectMercure.js';
 import { createHomeTabsView } from './HomeTabsView.js';
 import { createVideoDetailsView } from './VideoDetailsView.js';
 
 function readConfig(element) {
     return {
         userIdentifier: element.dataset.userIdentifier || '',
+        userId: element.dataset.userId || '',
         apiBearerToken: element.dataset.apiBearerToken || null,
+        mercureHubUrl: element.dataset.mercureHubUrl || '',
+        mercureTopic: element.dataset.mercureTopic || '',
+        mercureSubscriberToken: element.dataset.mercureSubscriberToken || '',
         apiUploadUrl: element.dataset.apiUploadUrl || '',
         apiVideoListUrl: element.dataset.apiVideoListUrl || '',
         apiTaskListUrl: element.dataset.apiTaskListUrl || '',
@@ -31,6 +36,7 @@ export function mountHomeSpa() {
     }
 
     const config = readConfig(rootElement);
+    connectMercure(config, rootElement);
     const HomeTabsView = createHomeTabsView(config);
     const VideoDetailsView = createVideoDetailsView(config);
 

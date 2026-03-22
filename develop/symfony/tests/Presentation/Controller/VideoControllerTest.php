@@ -39,7 +39,12 @@ final class VideoControllerTest extends WebTestCase
         $spaRoot = $crawler->filter('#video-details-spa')->first();
 
         self::assertSame('video-user@example.com', $spaRoot->attr('data-user-identifier'));
+        self::assertSame('00000000-0000-4000-8000-000000000201', $spaRoot->attr('data-user-id'));
         self::assertNotSame('', (string) $spaRoot->attr('data-api-bearer-token'));
+        self::assertSame('http://localhost:8080/.well-known/mercure', $spaRoot->attr('data-mercure-hub-url'));
+        // TODO use env
+        self::assertSame('http://yc.local/user/00000000-0000-4000-8000-000000000201', $spaRoot->attr('data-mercure-topic'));
+        self::assertNotSame('', (string) $spaRoot->attr('data-mercure-subscriber-token'));
         self::assertSame('/api/video/__UUID__', $spaRoot->attr('data-api-video-details-url-template'));
         self::assertSame('/api/video/__UUID__/transcode/__PRESET_ID__', $spaRoot->attr('data-api-video-transcode-url-template'));
         self::assertSame('/api/task/__TASK_ID__/cancel', $spaRoot->attr('data-api-task-cancel-url-template'));
