@@ -14,6 +14,7 @@ framework:
             async_transcode:
                 dsn: '%env(MESSENGER_TRANSPORT_DSN)%'
                 options:
+                    consumer: '%env(HOSTNAME)%'
                     stream: async_transcode
                 retry_strategy:
                     max_retries: 3
