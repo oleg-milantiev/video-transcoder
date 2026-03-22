@@ -36,6 +36,7 @@ services:
     App\Domain\Repository\VideoRepositoryInterface: '@App\Repository\VideoRepository'
     App\Application\Logging\LogServiceInterface: '@App\Infrastructure\Logging\DoctrineLogService'
     App\Infrastructure\Ffmpeg\ProcessRunnerInterface: '@App\Infrastructure\Ffmpeg\SymfonyProcessRunner'
+    App\Application\Service\Mercure\MercurePublisherInterface: '@App\Infrastructure\Mercure\HttpMercurePublisher'
 
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones

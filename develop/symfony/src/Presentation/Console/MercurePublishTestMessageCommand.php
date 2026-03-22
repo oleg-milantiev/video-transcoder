@@ -4,13 +4,16 @@ declare(strict_types=1);
 
 namespace App\Presentation\Console;
 
+use App\Application\Command\Mercure\PublishMercureMessage;
+use App\Application\DTO\MercureMessageDTO;
 use App\Infrastructure\Security\MercureTokenService;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
+use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Uid\UuidV4;
-use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 #[AsCommand(
     name: 'app:mercure:test-publish',
@@ -21,7 +24,8 @@ final class MercurePublishTestMessageCommand extends Command
     private const string TEST_USER_UUID = '123e4567-e89b-42d3-a456-426614174000';
 
     public function __construct(
-        private readonly HttpClientInterface $httpClient,
+        #[Autowire(service: 'messenger.bus.command')]
+        private readonly MessageBusInterface $commandBus,
         private readonly MercureTokenService $mercureTokenService,
     ) {
         parent::__construct();
@@ -30,33 +34,23 @@ final class MercurePublishTestMessageCommand extends Command
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         try {
-            $topic = $this->mercureTokenService->createUserTopic(UuidV4::fromString(self::TEST_USER_UUID));
-            $publisherToken = $this->mercureTokenService->createPublisherTokenForTopic($topic);
+            $userId = UuidV4::fromString(self::TEST_USER_UUID);
+            $topic = $this->mercureTokenService->createUserTopic($userId);
 
-            $payload = [
-                'message' => 'Test message from app:mercure:test-publish',
-                'userId' => self::TEST_USER_UUID,
-                'sentAt' => new \DateTimeImmutable()->format(DATE_ATOM),
-            ];
-
-            $response = $this->httpClient->request('POST', $this->mercureTokenService->internalHubUrl(), [
-                'headers' => [
-                    'Authorization' => 'Bearer ' . $publisherToken,
+            $message = new MercureMessageDTO(
+                action: 'test',
+                entity: 'user',
+                id: $userId,
+                payload: [
+                    'message' => 'Test message from app:me:te',
+                    'sentAt' => new \DateTimeImmutable()->format(DATE_ATOM),
                 ],
-                'body' => [
-                    'topic' => $topic,
-                    'data' => (string) json_encode($payload, JSON_THROW_ON_ERROR),
-                ],
-            ]);
+            );
 
-            $statusCode = $response->getStatusCode();
-            if ($statusCode >= 200 && $statusCode < 300) {
-                $output->writeln('<info>Published test message to topic: ' . $topic . '</info>');
-                return Command::SUCCESS;
-            }
+            $this->commandBus->dispatch(new PublishMercureMessage($message));
+            $output->writeln('<info>Published test message to topic: ' . $topic . '</info>');
 
-            $output->writeln('<error>Failed to publish message. Hub returned status ' . $statusCode . '.</error>');
-            return Command::FAILURE;
+            return Command::SUCCESS;
         } catch (\Throwable $e) {
             $output->writeln('<error>Failed to publish test Mercure message: ' . $e->getMessage() . '</error>');
             return Command::FAILURE;

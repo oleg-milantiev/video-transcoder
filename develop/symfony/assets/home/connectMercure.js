@@ -1,9 +1,7 @@
 function createHubUrl(hubUrl, topic, subscriberToken) {
     const url = new URL(hubUrl, window.location.origin);
     url.searchParams.append('topic', topic);
-    // auth transport via query parameter
-    // TODO cookie
-    url.searchParams.set('authorization', 'Bearer ' + subscriberToken);
+    url.searchParams.set('authorization', subscriberToken);
 
     return url.toString();
 }
