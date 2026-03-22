@@ -249,7 +249,7 @@ final class TaskApiControllerTest extends ApiWebTestCase
             UuidV4::fromString('00000000-0000-4000-8000-000000000042')
         );
         $task->assignId(UuidV4::fromString('77777777-7777-4777-8777-777777777777'));
-        $task->start();
+        $task->start(12.5);
 
         return $task;
     }

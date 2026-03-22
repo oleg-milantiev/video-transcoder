@@ -74,9 +74,9 @@ class Task
         return $videoDuration !== null && $videoDuration > 0.0;
     }
 
-    public function start(): void
+    public function start(?float $videoDuration): void
     {
-        if (!$this->status->canBeStarted()) {
+        if (!$this->canStart($videoDuration)) {
             throw new \DomainException('Task cannot be started.');
         }
 
@@ -97,8 +97,8 @@ class Task
 
     public function updateProgress(Progress $progress): void
     {
-        if ($this->status->isFinished()) {
-            throw new \DomainException('Cannot update progress of finished task.');
+        if ($this->status !== TaskStatus::PROCESSING) {
+            throw new \DomainException('Cannot update progress for task that is not processing.');
         }
 
         $this->progress = $progress;

@@ -33,7 +33,7 @@ final class TaskTest extends TestCase
         $this->assertFalse($task->canStart(0.0));
         $this->assertFalse($task->canStart(-1.0));
 
-        $task->start();
+        $task->start(12.5);
 
         $this->assertFalse($task->canStart(12.5));
     }
@@ -42,7 +42,7 @@ final class TaskTest extends TestCase
     {
         $task = Task::create($this->videoId(), $this->presetId(), $this->userId());
 
-        $task->start();
+        $task->start(12.5);
 
         $this->assertSame(TaskStatus::PROCESSING, $task->status());
         $this->assertNotNull($task->startedAt());
@@ -52,16 +52,16 @@ final class TaskTest extends TestCase
     public function testStartTwiceThrows(): void
     {
         $task = Task::create($this->videoId(), $this->presetId(), $this->userId());
-        $task->start();
+        $task->start(12.5);
 
         $this->expectException(\DomainException::class);
-        $task->start();
+        $task->start(12.5);
     }
 
     public function testUpdateProgressToCompleteMarksTaskCompleted(): void
     {
         $task = Task::create($this->videoId(), $this->presetId(), $this->userId());
-        $task->start();
+        $task->start(12.5);
 
         $task->updateProgress(new Progress(100));
 
@@ -73,7 +73,7 @@ final class TaskTest extends TestCase
     public function testFailMarksTaskFailed(): void
     {
         $task = Task::create($this->videoId(), $this->presetId(), $this->userId());
-        $task->start();
+        $task->start(12.5);
 
         $task->fail();
 
@@ -87,7 +87,7 @@ final class TaskTest extends TestCase
         $this->assertSame(TaskStatus::CANCELLED, $pendingTask->status());
 
         $processingTask = Task::create($this->videoId(), $this->presetId(), $this->userId());
-        $processingTask->start();
+        $processingTask->start(12.5);
         $processingTask->cancel();
         $this->assertSame(TaskStatus::CANCELLED, $processingTask->status());
     }
@@ -95,7 +95,7 @@ final class TaskTest extends TestCase
     public function testCancelCompletedTaskThrows(): void
     {
         $task = Task::create($this->videoId(), $this->presetId(), $this->userId());
-        $task->start();
+        $task->start(12.5);
         $task->updateProgress(new Progress(100));
 
         $this->expectException(\DomainException::class);
@@ -128,6 +128,22 @@ final class TaskTest extends TestCase
         $task->updateMeta(['output' => 'new.mp4']);
 
         $this->assertSame('new.mp4', $task->meta()['output']);
+    }
+
+    public function testStartWithoutValidDurationThrows(): void
+    {
+        $task = Task::create($this->videoId(), $this->presetId(), $this->userId());
+
+        $this->expectException(\DomainException::class);
+        $task->start(null);
+    }
+
+    public function testUpdateProgressBeforeStartThrows(): void
+    {
+        $task = Task::create($this->videoId(), $this->presetId(), $this->userId());
+
+        $this->expectException(\DomainException::class);
+        $task->updateProgress(new Progress(1));
     }
 
     private function videoId(): UuidV4

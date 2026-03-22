@@ -5,8 +5,6 @@
 ### DDD
 Правильное направление зависимостей Domain <- Application <- Infrastructure.
 - [High] Изолировать Domain от Symfony Http/File API: StorageInterface принимает Symfony\Component\HttpFoundation\File\File в develop/symfony/src/Domain/Video/Service/Storage/StorageInterface.php:5; лучше доменный абстрактный тип (например BinaryContent/StoredObject) или порт на уровне Application.
-- [Medium] Убрать persistence-утечки из сущностей: Task имеет публичный конструктор “for Doctrine only” (develop/symfony/src/Domain/Video/Entity/Task.php:21) и setId() (develop/symfony/src/Domain/Video/Entity/Task.php:158), Video генерирует id внутри сущности (develop/symfony/src/Domain/Video/Entity/Video.php:62); лучше единый паттерн создания агрегата + assignment id на границе репозитория.
-- [Medium] Усилить инварианты переходов Task внутри агрегата: сейчас start() не использует проверку длительности (canStart() отдельно в develop/symfony/src/Domain/Video/Entity/Task.php:48 и develop/symfony/src/Domain/Video/Entity/Task.php:57), а updateProgress() разрешен не только для PROCESSING (develop/symfony/src/Domain/Video/Entity/Task.php:78); часть бизнес-правил может обходиться.
 - [Low] Уменьшить primitive obsession в User aggregate: User хранит email, roles, password как сырые примитивы в develop/symfony/src/Domain/User/Entity/User.php:8; стоит ввести VO (Email, RoleSet, возможно PasswordHash) и инварианты (минимум один роль/валидный email).
 - [Low] Закрыть тестовые пробелы по DDD-рискам: нет тестов на createFromCommand/VideoCreateFailed (поиск по тестам не дал совпадений), нет тестов на ошибочный VideoStatus::value(), и мало тестов на запрещенные переходы статусов.
 

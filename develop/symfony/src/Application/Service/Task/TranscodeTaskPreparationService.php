@@ -36,7 +36,7 @@ final readonly class TranscodeTaskPreparationService
         $absoluteOutputPath = $this->storage->getAbsolutePath($relativeOutputPath);
         $this->filesystem->mkdir(\dirname($absoluteOutputPath));
 
-        $task->start();
+        $task->start($video->duration());
         $this->taskRepository->save($task);
         $this->logService->log('task', $task->id(), LogLevel::INFO, 'Transcoding started');
 

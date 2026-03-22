@@ -60,7 +60,7 @@ class TranscodeTaskFinalizationServiceTest extends TestCase
     {
         $taskId = UuidV4::fromString('123e4567-e89b-42d3-a456-426614174211');
         $task = $this->createTask($taskId);
-        $task->start();
+        $task->start(12.5);
         $report = $this->createReport(false);
 
         $taskRepository = $this->createMock(TaskRepositoryInterface::class);
