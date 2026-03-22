@@ -72,7 +72,8 @@ class TaskCrudController extends AbstractCrudController
             AssociationField::new('video'),
             AssociationField::new('preset'),
             ArrayField::new('meta')
-                ->hideOnIndex(),
+                ->setTemplatePath('admin/field/associative_array_detail.html.twig')
+                ->onlyOnDetail(),
             DateTimeField::new('createdAt')->hideOnForm(),
             DateTimeField::new('updatedAt')->hideOnForm(),
             DateTimeField::new('startedAt')->hideOnForm(),

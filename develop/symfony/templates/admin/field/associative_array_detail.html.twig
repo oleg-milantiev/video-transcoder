@@ -1,0 +1,26 @@
+{% macro render_value(value) %}
+    {% if value is iterable %}
+        {% if value is empty %}
+            <span class="text-muted">empty</span>
+        {% else %}
+            <table class="table table-sm table-borderless mb-0">
+                <tbody>
+                {% for key, item in value %}
+                    <tr>
+                        <th class="text-nowrap align-top pe-3">{{ key }}</th>
+                        <td>{{ _self.render_value(item) }}</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        {% endif %}
+    {% elseif value is same as(null) %}
+        <code>null</code>
+    {% elseif value is same as(true) or value is same as(false) %}
+        <code>{{ value ? 'true' : 'false' }}</code>
+    {% else %}
+        <code>{{ value }}</code>
+    {% endif %}
+{% endmacro %}
+
+{{ _self.render_value(field.value ?? []) }}

@@ -70,7 +70,9 @@ class VideoCrudController extends AbstractCrudController
             ChoiceField::new('status')
                 ->setChoices(array_flip(VideoStatus::NAMES)),
             AssociationField::new('user'),
-            ArrayField::new('meta')->onlyOnDetail(),
+            ArrayField::new('meta')
+                ->setTemplatePath('admin/field/associative_array_detail.html.twig')
+                ->onlyOnDetail(),
             DateTimeField::new('createdAt')->hideOnForm(),
             DateTimeField::new('updatedAt')->hideOnForm(),
         ];

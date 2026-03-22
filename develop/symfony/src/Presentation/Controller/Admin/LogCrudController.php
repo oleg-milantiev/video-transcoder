@@ -72,7 +72,9 @@ class LogCrudController extends AbstractCrudController
             TextField::new('level'),
             TextField::new('text'),
             DateTimeField::new('createdAt')->hideOnForm(),
-            ArrayField::new('context')->hideOnIndex(),
+            ArrayField::new('context')
+                ->setTemplatePath('admin/field/associative_array_detail.html.twig')
+                ->onlyOnDetail(),
         ];
     }
 }
