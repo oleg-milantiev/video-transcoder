@@ -36,7 +36,7 @@ Tests are designed to run sequentially (`workers: 1`) and build on data created 
 - Verifies user `oleg@milantiev.com` exists in `Users`
 - Verifies CRUD action availability/limitations per section
 - Creates or updates preset `180p` (`320x180`, codec `h264`, bitrate `1.1` Mbps)
-- Creates or updates preset `4k` (`3840x2160`, codec `h264`, bitrate `8.0` Mbps)
+- Creates or updates preset `4k UHD` (`3840x2160`, codec `h264`, bitrate `8.0` Mbps)
 - Creates/updates tariff `Free` in two explicit steps: first `delay=60`, then updates to `delay=3600` (`instance=1`)
 - Creates or updates tariff `Premium` (`instance=2`, `delay=0`)
 - Assigns tariff `Free` to `oleg@milantiev.com`
@@ -60,44 +60,20 @@ Tests are designed to run sequentially (`workers: 1`) and build on data created 
 - Performs `Sign out` and verifies `Sign in` links are visible again
 - Saves screenshots for each key step
 
-### `05.task.state.flow.js` - TASK_STATE_FLOW coverage
+### `05.task.state.flow.js` - TASK_STATE_FLOW coverage for 4k cancel/restart
 
-> Status: **TBD / not implemented yet**.
-
-Goal: verify key runtime scenarios documented in `TASK_STATE_FLOW.md` on real UI/API behavior,
-including long-running progress, cancellation, and restart.
-
-Planned scope:
-
-- Use long-running preset `4k` (`3840x2160`, `h264`, high bitrate) to keep task in `PROCESSING`
-  long enough for stable progress sampling and cancellation checks
-- Start transcode from `Video Details` for `4k` preset and confirm first transition
-  `PENDING -> PROCESSING`
-- Poll status/progress to confirm:
-  - state is `PROCESSING`
-  - progress is numeric and increases at least once before cancellation
-- Trigger cancellation while task is still `PROCESSING` and verify transition to `CANCELLED`
-- Verify no `Download` action is exposed for cancelled task
-- Trigger transcode again for the same video+preset and verify restart path:
-  - previous cancelled task is reused via domain restart flow (`CANCELLED -> PENDING`)
-  - task goes again to `PROCESSING`
-- Let second run complete and verify final transition to `COMPLETED`
-- Verify `Download` becomes available only for completed state
-
-Planned assertions mapped to `TASK_STATE_FLOW.md`:
-
-- Runtime flow `Happy path`: `PENDING -> PROCESSING -> COMPLETED`
-- Runtime flow `Cancel during processing`: `PROCESSING -> CANCELLED`
-- Runtime flow `Retry path`: cancelled task restarted and completed on next attempt
-- Runtime flow `Start blocked (no transition)`: keep as optional/advanced check (requires
-  controlled invalid duration fixture)
-
-Implementation notes for future test author:
-
-- Keep `workers: 1` and preserve dependency chain with previous specs
-- Prefer explicit waits/polling with reloads for status/progress stability (similar to `04`)
-- Capture screenshots at state milestones (`PROCESSING`, `CANCELLED`, restart, `COMPLETED`)
-- If timing is flaky, increase polling window only for this spec, not globally
+- Logs in as admin and opens `Video Details` for uploaded `2022_10_04_Two_Maxes.mp4`
+- Uses long-running preset `4k UHD` and starts transcoding
+- Waits until task appears in runtime states (`PENDING|PROCESSING|COMPLETED`)
+- Polls progress and reloads page; verifies at least one progress increase before cancellation
+- Sends `Cancel` while task is `PROCESSING`
+- Waits until state becomes `CANCELLED`
+- Verifies cancelled row has no `Download` and exposes `Transcode` for restart
+- Starts transcoding again from the same `4k UHD` row (restart path)
+- Polls status/progress until `COMPLETED` and verifies progress increase during restarted run
+- Verifies `Download` appears for completed task
+- Performs `Sign out` and verifies `Sign in` links are visible again
+- Saves screenshots for each milestone (`start`, `cancel`, `cancelled`, `restart completed`)
 
 ## Execution order
 
@@ -105,14 +81,14 @@ Implementation notes for future test author:
 - `02.upload.video.js`
 - `03.admin.crud.js`
 - `04.transcode.flow.js`
-- `05.task.state.flow.js` (TBD)
+- `05.task.state.flow.js`
 
 ## Data dependencies
 
 - `02` uploads the source video used later by `03` and `04`
-- `03` ensures presets `180p` and `4k`, tariffs (`Free`, `Premium`), and user tariff assignment (`Free`) are ready
+- `03` ensures presets `180p` and `4k UHD`, tariffs (`Free`, `Premium`), and user tariff assignment (`Free`) are ready
 - `04` uses data prepared by `03` and validates full transcode lifecycle for `180p`
-- `05` (TBD) will use `4k` from `03` for long-running state-flow checks (progress/cancel/restart)
+- `05` uses `4k UHD` from `03` for long-running state-flow checks (progress/cancel/restart)
 
 ## Local run in release stack
 

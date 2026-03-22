@@ -96,7 +96,11 @@ final readonly class TranscodeVideoHandler
 
         if (!$task->canStart($video->duration())) {
             $this->eventBus->dispatch(new TranscodeVideoFail('Task cannot be started for transcoding (invalid state or video duration).', $task->id()->toRfc4122()));
-            $this->logService->log('task', $task->id(), LogLevel::WARNING, 'Task cannot be started for transcoding (invalid state or video duration).');
+            $this->logService->log('task', $task->id(), LogLevel::WARNING, 'Task cannot be started for transcoding (invalid state or video duration).', [
+                'duration' => $video->duration(),
+                'status' => $task->status()->name,
+                'startedAt' => $task->startedAt()?->format(DATE_ATOM),
+            ]);
             return;
         }
 
@@ -125,6 +129,7 @@ final readonly class TranscodeVideoHandler
                 taskId: $task->id()->toRfc4122(),
                 videoId: $video->id()->toRfc4122(),
             ));
+            // TODO масло масляное. Выше TranscodeVideoFail уже логирует
             $this->logger->error('TranscodeVideoHandler failed', [
                 'taskId' => $task->id()->toRfc4122(),
                 'videoId' => $video->id()->toRfc4122(),

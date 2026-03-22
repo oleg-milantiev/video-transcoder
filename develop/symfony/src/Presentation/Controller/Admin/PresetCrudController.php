@@ -51,7 +51,9 @@ class PresetCrudController extends AbstractCrudController
             TextField::new('id')
                 ->hideOnForm()
                 ->formatValue(static fn ($value) => is_object($value) && method_exists($value, 'toRfc4122') ? $value->toRfc4122() : (string) $value),
-            TextField::new('title'),
+            TextField::new('title')
+                ->setFormTypeOption('attr.minlength', 3)
+                ->setHelp('At least 3 characters.'),
             IntegerField::new('width'),
             IntegerField::new('height'),
             TextField::new('codec'),

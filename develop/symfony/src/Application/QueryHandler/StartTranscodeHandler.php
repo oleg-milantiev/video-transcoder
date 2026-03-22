@@ -93,7 +93,7 @@ final readonly class StartTranscodeHandler
                 'videoId' => $video->id()?->toRfc4122(),
                 'presetId' => $preset->id()?->toRfc4122(),
                 'userId' => $user->id()?->toRfc4122(),
-                'isRestart' => $task->status()->name === 'PENDING',
+                'isRestart' => $task->status()->name !== 'PENDING',
             ];
             $this->logService->log('task', $task->id(), LogLevel::INFO, 'Transcode requested', $context);
             $this->logService->log('video', $video->id(), LogLevel::INFO, 'Transcode started for video', $context);

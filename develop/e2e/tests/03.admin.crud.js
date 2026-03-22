@@ -164,7 +164,7 @@ test('admin area full smoke with CRUD checks', async ({ page }, testInfo) => {
     bitrate: 1.1,
   }, testInfo);
   await createOrUpdatePreset(page, {
-    title: '4k',
+    title: '4k UHD',
     width: 3840,
     height: 2160,
     codec: 'h264',
