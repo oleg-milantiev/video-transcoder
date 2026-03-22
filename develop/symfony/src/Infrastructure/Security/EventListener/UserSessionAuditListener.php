@@ -25,12 +25,15 @@ final readonly class UserSessionAuditListener
 
         $request = $event->getRequest();
         try {
-            $this->logService->log('user', $user->id, LogLevel::INFO, 'User signed in', [
-                'firewall' => $event->getFirewallName(),
-                'route' => (string) $request->attributes->get('_route', ''),
-                'ip' => $request->getClientIp(),
-                'userAgent' => (string) $request->headers->get('User-Agent', ''),
-            ]);
+            // skip api stateless auth log
+            if ($event->getFirewallName() === 'main') {
+                $this->logService->log('user', $user->id, LogLevel::INFO, 'User signed in', [
+                    'firewall' => $event->getFirewallName(),
+                    'route' => (string)$request->attributes->get('_route', ''),
+                    'ip' => $request->getClientIp(),
+                    'userAgent' => (string)$request->headers->get('User-Agent', ''),
+                ]);
+            }
         } catch (\Throwable) {
             // Audit logging should not block authentication flow.
         }

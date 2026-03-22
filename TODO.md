@@ -8,10 +8,8 @@
 - [Low] Уменьшить primitive obsession в User aggregate: User хранит email, roles, password как сырые примитивы в develop/symfony/src/Domain/User/Entity/User.php:8; стоит ввести VO (Email, RoleSet, возможно PasswordHash) и инварианты (минимум один роль/валидный email).
 - [Low] Закрыть тестовые пробелы по DDD-рискам: нет тестов на createFromCommand/VideoCreateFailed (поиск по тестам не дал совпадений), нет тестов на ошибочный VideoStatus::value(), и мало тестов на запрещенные переходы статусов.
 
-- переходы Task: canBeStarted() допускает FAILED/CANCELLED, но start() не сбрасывает прогресс/мета — риск “грязного” рестарта в Task.
 - Video смешивает доменную модель и storage-представление (getSrcFilename(), getPoster(), meta['duration']) — риск утечки инфраструктурной логики в Video.
 - Domain зависит от Symfony-типов (Uuid*, HttpFoundation\File) — риск слабой переносимости и тестируемости в StorageInterface.
-- Несогласованная стратегия identity (Task::assignId() vs VideoRepository::save() возвращает новый domain-экземпляр) — риск ошибок жизненного цикла агрегатов.
 - Слабая типизация meta: array в Task/Video — риск нарушения инвариантов и неявной связи с application-слоем.
 
 - Medium: В домене есть инфраструктурная зависимость на HTTP-слой Symfony
@@ -56,13 +54,20 @@
 
 ### Шедулер и transcode, облака
 - щас можно бесконечно клацать transcode -> cancel -> transcode -> cancel -> ...
+  - как-то завязать на тариф
 - запуск задач через update lock?
 - шедулер в крон
 - кубер и тераформ масштабирование
 
 ### Frontend
 - автообновление статуса, прогресса и кнопок (с изменением e2e тестов, уход от reload)
-- ? THINK ? websocket или иной путь сообщений на фронт. LongPull? 
+- ? THINK ? показать иконкой "?" + baloon, почему задача не кодируется прям щас
+  - ? в шапку инфо о тарифе. Следующее кодирование через хх ч:м:с. Одновременно Х кодирований
+- ? THINK ? websocket или иной путь сообщений на фронт. LongPull?
+- окончанию загрузки видео:
+  - редирект на карточку видео
+  - background long pull media and poster
+  - всплывалка "Video is ready for transcoding"
   
 ## На потом
 - отказ от rabbit
