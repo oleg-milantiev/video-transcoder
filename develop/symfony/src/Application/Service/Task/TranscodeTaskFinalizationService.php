@@ -3,6 +3,8 @@
 namespace App\Application\Service\Task;
 
 use App\Application\DTO\TranscodeReportDTO;
+use Psr\Log\LogLevel;
+use App\Application\Logging\LogServiceInterface;
 use App\Domain\Video\Entity\Task;
 use App\Domain\Video\Repository\TaskRepositoryInterface;
 use App\Domain\Video\ValueObject\Progress;
@@ -13,6 +15,7 @@ final readonly class TranscodeTaskFinalizationService
 {
     public function __construct(
         private TaskRepositoryInterface $taskRepository,
+        private LogServiceInterface $logService,
         private TaskCancellationTrigger $cancellationTrigger,
     ) {
     }
@@ -32,7 +35,7 @@ final readonly class TranscodeTaskFinalizationService
         ]);
 
         $this->taskRepository->save($cancelledTask);
-        $this->taskRepository->log($cancelledTask->id(), 'info', 'Transcoding cancelled');
+        $this->logService->log('task', $cancelledTask->id(), LogLevel::INFO, 'Transcoding cancelled');
         $this->cancellationTrigger->clear($cancelledTask->id());
     }
 
@@ -48,7 +51,7 @@ final readonly class TranscodeTaskFinalizationService
         ]);
 
         $this->taskRepository->save($task);
-        $this->taskRepository->log($task->id(), 'info', 'Transcoding finished successfully');
+        $this->logService->log('task', $task->id(), LogLevel::INFO, 'Transcoding finished successfully');
         $this->cancellationTrigger->clear($task->id());
     }
 
@@ -59,7 +62,9 @@ final readonly class TranscodeTaskFinalizationService
             $this->taskRepository->save($task);
         }
 
-        $this->taskRepository->log($task->id(), 'error', 'Transcoding failed: '. $exception->getMessage());
+        $this->logService->log('task', $task->id(), LogLevel::ERROR, 'Transcoding failed', [
+            'message' => $exception->getMessage(),
+        ]);
     }
 }
 

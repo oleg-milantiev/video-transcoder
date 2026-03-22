@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\Presentation\Controller\Api;
 
 use App\Application\Exception\QueryException;
+use App\Application\Logging\LogServiceInterface;
 use App\Application\Query\GetTaskListQuery;
 use App\Application\QueryHandler\QueryBus;
 use App\Domain\Video\Entity\Task;
@@ -170,8 +171,11 @@ final class TaskApiControllerTest extends ApiWebTestCase
         $taskRepository = $this->createMock(TaskRepositoryInterface::class);
         $taskRepository->expects($this->once())->method('findById')->with($taskId)->willReturn($task);
         $taskRepository->expects($this->once())->method('save')->with($task);
-        $taskRepository->expects($this->exactly(2))->method('log');
         $this->replaceService(TaskRepositoryInterface::class, $taskRepository);
+
+        $logService = $this->createMock(LogServiceInterface::class);
+        $logService->expects($this->exactly(2))->method('log');
+        $this->replaceService(LogServiceInterface::class, $logService);
 
         $videoRepository = $this->createMock(VideoRepositoryInterface::class);
         $videoRepository->expects($this->once())->method('findById')->with($task->videoId())->willReturn($video);
@@ -208,8 +212,11 @@ final class TaskApiControllerTest extends ApiWebTestCase
         $taskRepository = $this->createMock(TaskRepositoryInterface::class);
         $taskRepository->expects($this->once())->method('findById')->with($taskId)->willReturn($task);
         $taskRepository->expects($this->once())->method('save')->with($task);
-        $taskRepository->expects($this->once())->method('log');
         $this->replaceService(TaskRepositoryInterface::class, $taskRepository);
+
+        $logService = $this->createMock(LogServiceInterface::class);
+        $logService->expects($this->once())->method('log');
+        $this->replaceService(LogServiceInterface::class, $logService);
 
         $videoRepository = $this->createMock(VideoRepositoryInterface::class);
         $videoRepository->expects($this->once())->method('findById')->with($task->videoId())->willReturn($video);

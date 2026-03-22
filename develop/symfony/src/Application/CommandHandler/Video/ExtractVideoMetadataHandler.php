@@ -7,6 +7,8 @@ use App\Application\Command\Video\ExtractVideoMetadata;
 use App\Application\Event\ExtractVideoMetadataFail;
 use App\Application\Event\ExtractVideoMetadataStart;
 use App\Application\Event\ExtractVideoMetadataSuccess;
+use Psr\Log\LogLevel;
+use App\Application\Logging\LogServiceInterface;
 use App\Domain\Video\Exception\VideoMetadataExtractionFailed;
 use App\Domain\Video\Repository\VideoRepositoryInterface;
 use App\Domain\Video\Service\Storage\StorageInterface;
@@ -28,6 +30,7 @@ final readonly class ExtractVideoMetadataHandler
         #[Autowire(service: 'messenger.bus.event')]
         private MessageBusInterface $eventBus,
         private VideoMetadataExtractor $videoMetadataExtractor,
+        private LogServiceInterface $logService,
         private LoggerInterface $logger,
     ) {
     }
@@ -52,12 +55,14 @@ final readonly class ExtractVideoMetadataHandler
             $video->updateMeta($metadata);
             $this->videoRepository->save($video);
 
-            $this->videoRepository->log($video->id(), 'info', 'Metadata extracted');
+            $this->logService->log('video', $video->id(), LogLevel::INFO, 'Metadata extracted');
 
             $this->commandBus->dispatch(new CreateVideoPreview($video));
             $this->eventBus->dispatch(new ExtractVideoMetadataSuccess($videoId));
         } catch (\Exception $e) {
-            $this->videoRepository->log($video->id(), 'error', 'Metadata extraction error: '. $e->getMessage());
+            $this->logService->log('video', $video->id(), LogLevel::ERROR, 'Metadata extraction error', [
+                'message' => $e->getMessage(),
+            ]);
             $this->eventBus->dispatch(new ExtractVideoMetadataFail($e->getMessage(), $videoId));
 
             throw VideoMetadataExtractionFailed::fromVideoId($video->id()->toString(), $e->getMessage());

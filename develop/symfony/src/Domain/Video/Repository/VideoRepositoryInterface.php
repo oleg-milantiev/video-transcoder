@@ -11,5 +11,4 @@ interface VideoRepositoryInterface extends PaginatedRepositoryInterface
 {
     public function save(Video $video): Video;
     public function findById(Uuid $id): ?Video;
-    public function log(Uuid $id, string $level, string $text): void;
 }

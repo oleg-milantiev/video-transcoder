@@ -6,6 +6,8 @@ namespace App\Tests\Application\Service\Task;
 
 use App\Application\DTO\TranscodeProcessReportDTO;
 use App\Application\DTO\TranscodeReportDTO;
+use Psr\Log\LogLevel;
+use App\Application\Logging\LogServiceInterface;
 use App\Application\Service\Task\TranscodeTaskFinalizationService;
 use App\Domain\Video\Entity\Task;
 use App\Domain\Video\Repository\TaskRepositoryInterface;
@@ -40,14 +42,15 @@ class TranscodeTaskFinalizationServiceTest extends TestCase
                     && ($meta['transcode']['report'] ?? null) === $report->toArray();
             }));
 
-        $taskRepository->expects($this->once())
+        $logService = $this->createMock(LogServiceInterface::class);
+        $logService->expects($this->once())
             ->method('log')
-            ->with($taskId, 'info', 'Transcoding cancelled');
+            ->with('task', $taskId, LogLevel::INFO, 'Transcoding cancelled');
 
         $cancellationTrigger = new TaskCancellationTrigger(new ArrayAdapter());
         $cancellationTrigger->request($taskId);
 
-        $service = new TranscodeTaskFinalizationService($taskRepository, $cancellationTrigger);
+        $service = new TranscodeTaskFinalizationService($taskRepository, $logService, $cancellationTrigger);
         $service->handleCancellation($originalTask, $report);
 
         $this->assertFalse($cancellationTrigger->isRequested($taskId));
@@ -73,14 +76,15 @@ class TranscodeTaskFinalizationServiceTest extends TestCase
                     && ($meta['transcode']['report'] ?? null) === $report->toArray();
             }));
 
-        $taskRepository->expects($this->once())
+        $logService = $this->createMock(LogServiceInterface::class);
+        $logService->expects($this->once())
             ->method('log')
-            ->with($taskId, 'info', 'Transcoding finished successfully');
+            ->with('task', $taskId, LogLevel::INFO, 'Transcoding finished successfully');
 
         $cancellationTrigger = new TaskCancellationTrigger(new ArrayAdapter());
         $cancellationTrigger->request($taskId);
 
-        $service = new TranscodeTaskFinalizationService($taskRepository, $cancellationTrigger);
+        $service = new TranscodeTaskFinalizationService($taskRepository, $logService, $cancellationTrigger);
         $service->handleSuccess($task, 'video/11.mp4', $report);
 
         $this->assertFalse($cancellationTrigger->isRequested($taskId));
@@ -96,11 +100,12 @@ class TranscodeTaskFinalizationServiceTest extends TestCase
             ->method('save')
             ->with($this->callback(static fn (Task $savedTask): bool => $savedTask->status() === TaskStatus::FAILED));
 
-        $taskRepository->expects($this->once())
+        $logService = $this->createMock(LogServiceInterface::class);
+        $logService->expects($this->once())
             ->method('log')
-            ->with($taskId, 'error', 'Transcoding failed: boom');
+            ->with('task', $taskId, LogLevel::ERROR, 'Transcoding failed: boom');
 
-        $service = new TranscodeTaskFinalizationService($taskRepository, new TaskCancellationTrigger(new ArrayAdapter()));
+        $service = new TranscodeTaskFinalizationService($taskRepository, $logService, new TaskCancellationTrigger(new ArrayAdapter()));
         $service->handleFailure($task, new \RuntimeException('boom'));
     }
 

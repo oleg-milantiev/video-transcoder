@@ -4,10 +4,13 @@ namespace App\Application\CommandHandler\Video;
 
 use App\Application\Command\Video\CreateVideo;
 use App\Application\Command\Video\ExtractVideoMetadata;
+use App\Application\DTO\VideoItemDTO;
 use App\Application\Event\CreateVideoFail;
 use App\Application\Event\CreateVideoStart;
 use App\Application\Event\CreateVideoSuccess;
 use App\Application\Factory\VideoFactory;
+use Psr\Log\LogLevel;
+use App\Application\Logging\LogServiceInterface;
 use App\Domain\Video\Repository\VideoRepositoryInterface;
 use App\Domain\Video\Service\Storage\StorageInterface;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
@@ -24,6 +27,7 @@ final readonly class CreateVideoHandler
         #[Autowire(service: 'messenger.bus.event')]
         private MessageBusInterface $eventBus,
         private VideoRepositoryInterface $videoRepository,
+        private LogServiceInterface $logService,
         private StorageInterface $storage,
         private VideoFactory $videoFactory,
     ) {
@@ -45,8 +49,8 @@ final readonly class CreateVideoHandler
                 $video->getSrcFilename(),
             );
 
-            $this->videoRepository->log($video->id(), 'info', 'Video created', [
-                'video' => print_r($video, true),
+            $this->logService->log('video', $video->id(), LogLevel::INFO, 'Video created', [
+                'video' => VideoItemDTO::fromDomain($video),
                 'file' => $command->file()->details(),
             ]);
 

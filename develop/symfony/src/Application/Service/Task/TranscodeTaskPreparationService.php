@@ -3,6 +3,8 @@
 namespace App\Application\Service\Task;
 
 use App\Application\DTO\TranscodeStartContextDTO;
+use Psr\Log\LogLevel;
+use App\Application\Logging\LogServiceInterface;
 use App\Domain\Video\Entity\Task;
 use App\Domain\Video\Entity\Video;
 use App\Domain\Video\Repository\PresetRepositoryInterface;
@@ -15,6 +17,7 @@ final readonly class TranscodeTaskPreparationService
     public function __construct(
         private PresetRepositoryInterface $presetRepository,
         private TaskRepositoryInterface $taskRepository,
+        private LogServiceInterface $logService,
         private StorageInterface $storage,
         private Filesystem $filesystem,
     ) {
@@ -24,7 +27,7 @@ final readonly class TranscodeTaskPreparationService
     {
         $preset = $this->presetRepository->findById($task->presetId());
         if (!$preset) {
-            $this->taskRepository->log($task->id(), 'error', 'Preset not found for task');
+            $this->logService->log('task', $task->id(), LogLevel::ERROR, 'Preset not found for task');
             throw new \RuntimeException('Preset not found for task');
         }
 
@@ -35,7 +38,7 @@ final readonly class TranscodeTaskPreparationService
 
         $task->start();
         $this->taskRepository->save($task);
-        $this->taskRepository->log($task->id(), 'info', 'Transcoding started');
+        $this->logService->log('task', $task->id(), LogLevel::INFO, 'Transcoding started');
 
         $inputPath = $this->storage->getAbsolutePath($video->getSrcFilename());
 

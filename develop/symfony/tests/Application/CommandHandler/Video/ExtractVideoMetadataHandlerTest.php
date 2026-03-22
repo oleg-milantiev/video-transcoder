@@ -10,6 +10,8 @@ use App\Application\CommandHandler\Video\ExtractVideoMetadataHandler;
 use App\Application\Event\ExtractVideoMetadataFail;
 use App\Application\Event\ExtractVideoMetadataStart;
 use App\Application\Event\ExtractVideoMetadataSuccess;
+use Psr\Log\LogLevel;
+use App\Application\Logging\LogServiceInterface;
 use App\Domain\Video\Entity\Video;
 use App\Domain\Video\Exception\VideoMetadataExtractionFailed;
 use App\Domain\Video\Repository\VideoRepositoryInterface;
@@ -81,9 +83,10 @@ class ExtractVideoMetadataHandlerTest extends TestCase
             ->with($this->callback(static function (Video $savedVideo): bool {
                 return ($savedVideo->meta()['codec'] ?? null) === 'h264';
             }));
-        $videoRepository->expects($this->once())
+        $logService = $this->createMock(LogServiceInterface::class);
+        $logService->expects($this->once())
             ->method('log')
-            ->with($video->id(), 'info', 'Metadata extracted');
+            ->with('video', $video->id(), LogLevel::INFO, 'Metadata extracted');
 
         $handler = new ExtractVideoMetadataHandler(
             $videoRepository,
@@ -91,6 +94,7 @@ class ExtractVideoMetadataHandlerTest extends TestCase
             $commandBus,
             $eventBus,
             $extractor,
+            $logService,
             $this->createStub(LoggerInterface::class),
         );
 
@@ -127,10 +131,11 @@ class ExtractVideoMetadataHandlerTest extends TestCase
         $commandBus = $this->createMock(MessageBusInterface::class);
         $commandBus->expects($this->never())->method('dispatch');
 
-        $videoRepository = $this->createMock(VideoRepositoryInterface::class);
-        $videoRepository->expects($this->once())
+        $videoRepository = $this->createStub(VideoRepositoryInterface::class);
+        $logService = $this->createMock(LogServiceInterface::class);
+        $logService->expects($this->once())
             ->method('log')
-            ->with($video->id(), 'error', 'Metadata extraction error: ffprobe timeout');
+            ->with('video', $video->id(), LogLevel::ERROR, 'Metadata extraction error: ffprobe timeout');
 
         $handler = new ExtractVideoMetadataHandler(
             $videoRepository,
@@ -138,6 +143,7 @@ class ExtractVideoMetadataHandlerTest extends TestCase
             $commandBus,
             $eventBus,
             $extractor,
+            $logService,
             $this->createStub(LoggerInterface::class),
         );
 

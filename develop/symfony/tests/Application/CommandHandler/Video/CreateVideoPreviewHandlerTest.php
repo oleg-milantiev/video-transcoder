@@ -9,6 +9,8 @@ use App\Application\CommandHandler\Video\CreateVideoPreviewHandler;
 use App\Application\Event\CreateVideoPreviewFail;
 use App\Application\Event\CreateVideoPreviewStart;
 use App\Application\Event\CreateVideoPreviewSuccess;
+use Psr\Log\LogLevel;
+use App\Application\Logging\LogServiceInterface;
 use App\Domain\Video\Entity\Video;
 use App\Domain\Video\Exception\VideoPreviewGenerationFailed;
 use App\Domain\Video\Repository\VideoRepositoryInterface;
@@ -51,9 +53,10 @@ class CreateVideoPreviewHandlerTest extends TestCase
             ->with($this->callback(static function (Video $savedVideo): bool {
                 return ($savedVideo->meta()['preview'] ?? false) === true;
             }));
-        $videoRepository->expects($this->once())
+        $logService = $this->createMock(LogServiceInterface::class);
+        $logService->expects($this->once())
             ->method('log')
-            ->with($video->id(), 'info', 'Preview Created');
+            ->with('video', $video->id(), LogLevel::INFO, 'Preview Created');
 
         $processRunner = $this->createMock(ProcessRunnerInterface::class);
         $processRunner->expects($this->once())
@@ -62,7 +65,7 @@ class CreateVideoPreviewHandlerTest extends TestCase
 
         $generator = new VideoPreviewGenerator($processRunner);
 
-        $handler = new CreateVideoPreviewHandler($storage, $eventBus, $videoRepository, $generator);
+        $handler = new CreateVideoPreviewHandler($storage, $eventBus, $logService, $videoRepository, $generator);
         $handler(new CreateVideoPreview($video));
 
         $this->assertSame([
@@ -88,17 +91,18 @@ class CreateVideoPreviewHandlerTest extends TestCase
                 return new Envelope($message);
             });
 
-        $videoRepository = $this->createMock(VideoRepositoryInterface::class);
-        $videoRepository->expects($this->once())
+        $videoRepository = $this->createStub(VideoRepositoryInterface::class);
+        $logService = $this->createMock(LogServiceInterface::class);
+        $logService->expects($this->once())
             ->method('log')
-            ->with($video->id(), 'error', 'Error Preview creating: ffmpeg boom');
+            ->with('video', $video->id(), LogLevel::ERROR, 'Error Preview creating: ffmpeg boom');
 
         $processRunner = $this->createStub(ProcessRunnerInterface::class);
         $processRunner->method('mustRun')->willThrowException(new \RuntimeException('ffmpeg boom'));
 
         $generator = new VideoPreviewGenerator($processRunner);
 
-        $handler = new CreateVideoPreviewHandler($storage, $eventBus, $videoRepository, $generator);
+        $handler = new CreateVideoPreviewHandler($storage, $eventBus, $logService, $videoRepository, $generator);
 
         $this->expectException(VideoPreviewGenerationFailed::class);
 

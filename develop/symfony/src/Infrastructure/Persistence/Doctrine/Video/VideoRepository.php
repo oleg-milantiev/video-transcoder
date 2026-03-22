@@ -11,7 +11,6 @@ use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\DBAL\Exception;
 use Doctrine\ORM\Exception\ORMException;
 use Doctrine\Persistence\ManagerRegistry;
-use Psr\Log\LoggerInterface;
 use Symfony\Component\Uid\Uuid;
 use Symfony\Component\Uid\UuidV4;
 
@@ -22,10 +21,7 @@ class VideoRepository extends ServiceEntityRepository implements VideoRepository
 {
     use PaginatedRepositoryTrait;
 
-    public function __construct(
-        ManagerRegistry $registry,
-        private readonly LoggerInterface $logger,
-    )
+    public function __construct(ManagerRegistry $registry)
     {
         parent::__construct($registry, VideoEntity::class);
     }
@@ -104,28 +100,5 @@ class VideoRepository extends ServiceEntityRepository implements VideoRepository
         }
 
         return $presetsWithTasks;
-    }
-
-    // You should NOT log into Persistence in prod. Just for debug now
-    public function log(Uuid $id, string $level, string $text, array $context = []): void
-    {
-        $this->logger->log($level, $text, $context);
-
-        $em = $this->getEntityManager();
-        /** @var VideoEntity|null $video */
-        $video = $this->find($id);
-        if (!$video) {
-            throw new \RuntimeException("Video with id $id not found");
-        }
-        $log = $video->log ?? [];
-        $log[] = [
-            'level' => $level,
-            'text' => $text,
-            'timestamp' => new \DateTimeImmutable()->format(DATE_ATOM),
-        ];
-        $video->log = $log;
-        $video->updatedAt = new \DateTimeImmutable();
-        $em->persist($video);
-        $em->flush();
     }
 }

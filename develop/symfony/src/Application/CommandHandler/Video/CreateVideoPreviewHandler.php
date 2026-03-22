@@ -6,6 +6,8 @@ use App\Application\Command\Video\CreateVideoPreview;
 use App\Application\Event\CreateVideoPreviewFail;
 use App\Application\Event\CreateVideoPreviewStart;
 use App\Application\Event\CreateVideoPreviewSuccess;
+use Psr\Log\LogLevel;
+use App\Application\Logging\LogServiceInterface;
 use App\Domain\Video\Exception\VideoPreviewGenerationFailed;
 use App\Domain\Video\Repository\VideoRepositoryInterface;
 use App\Domain\Video\Service\Storage\StorageInterface;
@@ -21,6 +23,7 @@ final readonly class CreateVideoPreviewHandler
         private StorageInterface $storage,
         #[Autowire(service: 'messenger.bus.event')]
         private MessageBusInterface $eventBus,
+        private LogServiceInterface $logService,
         private VideoRepositoryInterface $videoRepository,
         private VideoPreviewGenerator $videoPreviewGenerator,
     ) {
@@ -44,11 +47,13 @@ final readonly class CreateVideoPreviewHandler
             $video->updateMeta(['preview' => true]);
             $this->videoRepository->save($video);
 
-            $this->videoRepository->log($video->id(), 'info', 'Preview Created');
+            $this->logService->log('video', $video->id(), LogLevel::INFO, 'Preview Created');
 
             $this->eventBus->dispatch(new CreateVideoPreviewSuccess($videoId));
         } catch (\Exception $e) {
-            $this->videoRepository->log($video->id(), 'error', 'Error Preview creating: '. $e->getMessage());
+            $this->logService->log('video', $video->id(), LogLevel::ERROR, 'Error Create Preview', [
+                'message' => $e->getMessage(),
+            ]);
             $this->eventBus->dispatch(new CreateVideoPreviewFail($e->getMessage(), $videoId));
 
             throw VideoPreviewGenerationFailed::fromVideoId($video->id()->toString(), $e->getMessage());

@@ -3,6 +3,8 @@
 namespace App\Presentation\Controller\Api;
 
 use App\Application\Exception\QueryException;
+use Psr\Log\LogLevel;
+use App\Application\Logging\LogServiceInterface;
 use App\Application\Query\GetTaskListQuery;
 use App\Application\QueryHandler\QueryBus;
 use App\Application\Response\TaskListResponse;
@@ -31,6 +33,7 @@ class TaskApiController extends AbstractController
         private readonly QueryBus $queryBus,
         private readonly TaskRepositoryInterface $taskRepository,
         private readonly VideoRepositoryInterface $videoRepository,
+        private readonly LogServiceInterface $logService,
         private readonly Security $security,
         private readonly TaskCancellationTrigger $cancellationTrigger,
     ) {
@@ -89,13 +92,15 @@ class TaskApiController extends AbstractController
         $cancelledNow = $task->status() === TaskStatus::PENDING && $task->startedAt() === null;
         if ($cancelledNow) {
             $task->cancel();
-            $this->taskRepository->log($task->id(), 'info', 'Task cancelled before start');
+            $this->logService->log('task', $task->id(), LogLevel::INFO, 'Task cancelled before start');
+        }
+        else {
+            $this->logService->log('task', $task->id(), LogLevel::INFO, 'Cancellation requested in progress');
         }
 
         $this->taskRepository->save($task);
 
         $this->cancellationTrigger->request($task->id());
-        $this->taskRepository->log($task->id(), 'info', 'Cancellation requested by user');
 
         return $this->apiSuccess([
             'task' => [

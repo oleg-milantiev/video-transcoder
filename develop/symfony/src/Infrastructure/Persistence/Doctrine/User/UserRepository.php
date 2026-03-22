@@ -70,24 +70,4 @@ class UserRepository extends ServiceEntityRepository implements PasswordUpgrader
 
         return (int) $result->fetchOne();
     }
-
-    // You should NOT log into Persistence in prod. Just for debug now
-    public function log(Uuid $id, string $level, string $text): void
-    {
-        $em = $this->getEntityManager();
-        /** @var UserEntity|null $user */
-        $user = $this->find($id);
-        if (!$user) {
-            throw new \RuntimeException("User with id $id not found");
-        }
-        $log = $user->log ?? [];
-        $log[] = [
-            'level' => $level,
-            'text' => $text,
-            'timestamp' => new \DateTimeImmutable()->format(DATE_ATOM),
-        ];
-        $user->log = $log;
-        $em->persist($user);
-        $em->flush();
-    }
 }

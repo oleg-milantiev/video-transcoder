@@ -7,6 +7,8 @@ use App\Application\Command\Task\TranscodeVideo;
 use App\Application\Event\TranscodeVideoFail;
 use App\Application\Event\TranscodeVideoStart;
 use App\Application\Event\TranscodeVideoSuccess;
+use Psr\Log\LogLevel;
+use App\Application\Logging\LogServiceInterface;
 use App\Application\Service\Task\TranscodeProcessService;
 use App\Application\Service\Task\TranscodeTaskPreparationService;
 use App\Application\Service\Task\TranscodeTaskFinalizationService;
@@ -31,6 +33,7 @@ final readonly class TranscodeVideoHandler
         private MessageBusInterface $eventBus,
         private TaskRepositoryInterface $taskRepository,
         private VideoRepositoryInterface $videoRepository,
+        private LogServiceInterface $logService,
         private LoggerInterface $logger,
         private LockFactory $lockFactory,
         private TaskCancellationTrigger $cancellationTrigger,
@@ -71,7 +74,7 @@ final readonly class TranscodeVideoHandler
         $video = $this->videoRepository->findById($task->videoId());
         if (!$video) {
             $this->eventBus->dispatch(new TranscodeVideoFail('Video not found for transcoding', $task->id()->toRfc4122()));
-            $this->taskRepository->log($task->id(), 'error', 'Video not found for transcoding');
+            $this->logService->log('task', $task->id(), LogLevel::ERROR, 'Video not found for transcoding');
             throw new \RuntimeException('Video not found for transcoding');
         }
 
@@ -82,7 +85,7 @@ final readonly class TranscodeVideoHandler
                     'cancelledAt' => new \DateTimeImmutable()->format(DATE_ATOM),
                 ]);
                 $this->taskRepository->save($task);
-                $this->taskRepository->log($task->id(), 'info', 'Task cancelled before ffmpeg start');
+                $this->logService->log('task', $task->id(), LogLevel::INFO, 'Task cancelled before ffmpeg start');
             }
 
             $this->cancellationTrigger->clear($task->id());
@@ -93,7 +96,7 @@ final readonly class TranscodeVideoHandler
 
         if (!$task->canStart($video->duration())) {
             $this->eventBus->dispatch(new TranscodeVideoFail('Task cannot be started for transcoding (invalid state or video duration).', $task->id()->toRfc4122()));
-            $this->taskRepository->log($task->id(), 'warning', 'Task cannot be started for transcoding (invalid state or video duration).');
+            $this->logService->log('task', $task->id(), LogLevel::WARNING, 'Task cannot be started for transcoding (invalid state or video duration).');
             return;
         }
 

@@ -37,9 +37,6 @@ class TaskEntity
     #[ORM\Column(type: 'json')]
     public array $meta = [];
 
-    #[ORM\Column(type: 'json', nullable: true, options: ['jsonb' => true])]
-    public ?array $log = null;
-
     #[ORM\ManyToOne(inversedBy: 'tasks')]
     #[ORM\JoinColumn(nullable: false)]
     public ?VideoEntity $video = null;

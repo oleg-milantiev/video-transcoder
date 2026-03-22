@@ -5,6 +5,8 @@ namespace App\Application\Service\Task;
 use App\Application\DTO\TranscodeProcessReportDTO;
 use App\Application\DTO\TranscodeReportDTO;
 use App\Application\DTO\TranscodeStartContextDTO;
+use Psr\Log\LogLevel;
+use App\Application\Logging\LogServiceInterface;
 use App\Domain\Video\Entity\Task;
 use App\Domain\Video\Repository\TaskRepositoryInterface;
 use App\Domain\Video\ValueObject\Progress;
@@ -23,6 +25,7 @@ final readonly class TranscodeProcessService
 
     public function __construct(
         private TaskRepositoryInterface $taskRepository,
+        private LogServiceInterface $logService,
         private TaskCancellationTrigger $cancellationTrigger,
         private ProcessRunnerInterface $processRunner,
     ) {
@@ -133,7 +136,9 @@ final readonly class TranscodeProcessService
     {
         $task->updateProgress(new Progress($value));
         $this->taskRepository->save($task);
-        $this->taskRepository->log($task->id(), 'info', 'Transcoding progress: '. $value .'%');
+        $this->logService->log('task', $task->id(), LogLevel::INFO, 'Transcoding progress', [
+            'progress' => $value,
+        ]);
     }
 
     private function appendLogTail(string $tail, string $chunk): string

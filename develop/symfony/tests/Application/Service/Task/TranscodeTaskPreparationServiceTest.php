@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Tests\Application\Service\Task;
 
 use App\Application\Service\Task\TranscodeTaskPreparationService;
+use Psr\Log\LogLevel;
+use App\Application\Logging\LogServiceInterface;
 use App\Domain\Video\Entity\Preset;
 use App\Domain\Video\Entity\Task;
 use App\Domain\Video\Entity\Video;
@@ -34,9 +36,10 @@ class TranscodeTaskPreparationServiceTest extends TestCase
         $taskRepository->expects($this->once())
             ->method('save')
             ->with($this->callback(static fn (Task $savedTask): bool => $savedTask->status()->name === 'PROCESSING'));
-        $taskRepository->expects($this->once())
+        $logService = $this->createMock(LogServiceInterface::class);
+        $logService->expects($this->once())
             ->method('log')
-            ->with(UuidV4::fromString('123e4567-e89b-42d3-a456-426614174013'), 'info', 'Transcoding started');
+            ->with('task', UuidV4::fromString('123e4567-e89b-42d3-a456-426614174013'), LogLevel::INFO, 'Transcoding started');
 
         $presetRepository = $this->createMock(PresetRepositoryInterface::class);
         $presetRepository->expects($this->once())
@@ -64,7 +67,7 @@ class TranscodeTaskPreparationServiceTest extends TestCase
             ->method('mkdir')
             ->with(sprintf('/var/storage/%s', $video->id()->toRfc4122()));
 
-        $service = new TranscodeTaskPreparationService($presetRepository, $taskRepository, $storage, $filesystem);
+        $service = new TranscodeTaskPreparationService($presetRepository, $taskRepository, $logService, $storage, $filesystem);
         $context = $service->prepare($task, $video);
 
         $this->assertSame(sprintf('%s/%s.mp4', $video->id()->toRfc4122(), '123e4567-e89b-42d3-a456-426614174005'), $context->relativeOutputPath);
@@ -81,10 +84,12 @@ class TranscodeTaskPreparationServiceTest extends TestCase
         $task = $this->createTask($video->id(), UuidV4::fromString('123e4567-e89b-42d3-a456-426614174099'));
 
         $taskRepository = $this->createMock(TaskRepositoryInterface::class);
-        $taskRepository->expects($this->once())
-            ->method('log')
-            ->with(UuidV4::fromString('123e4567-e89b-42d3-a456-426614174013'), 'error', 'Preset not found for task');
         $taskRepository->expects($this->never())->method('save');
+
+        $logService = $this->createMock(LogServiceInterface::class);
+        $logService->expects($this->once())
+            ->method('log')
+            ->with('task', UuidV4::fromString('123e4567-e89b-42d3-a456-426614174013'), LogLevel::ERROR, 'Preset not found for task');
 
         $presetRepository = $this->createMock(PresetRepositoryInterface::class);
         $presetRepository->expects($this->once())
@@ -95,7 +100,7 @@ class TranscodeTaskPreparationServiceTest extends TestCase
         $storage = $this->createStub(StorageInterface::class);
         $filesystem = $this->createStub(Filesystem::class);
 
-        $service = new TranscodeTaskPreparationService($presetRepository, $taskRepository, $storage, $filesystem);
+        $service = new TranscodeTaskPreparationService($presetRepository, $taskRepository, $logService, $storage, $filesystem);
 
         $this->expectException(\RuntimeException::class);
         $this->expectExceptionMessage('Preset not found for task');

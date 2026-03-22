@@ -42,9 +42,6 @@ class VideoEntity
     #[ORM\Column(type: 'json', options: ['jsonb' => true])]
     public array $meta = [];
 
-    #[ORM\Column(type: 'json', nullable: true, options: ['jsonb' => true])]
-    public ?array $log = null;
-
     /**
      * @var Collection<int, TaskEntity>
      */
