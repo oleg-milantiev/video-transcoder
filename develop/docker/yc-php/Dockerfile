@@ -22,6 +22,7 @@ COPY symfony/ /var/www/yc/
 WORKDIR /var/www/yc
 
 ARG DEFAULT_URI
+ARG DATABASE_URL
 RUN composer install --no-interaction --prefer-dist --no-progress --optimize-autoloader
 
 RUN chown -R www-data:www-data /var/www/yc
