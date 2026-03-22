@@ -32,5 +32,6 @@ class DashboardController extends AbstractDashboardController
         yield MenuItem::linkTo(VideoCrudController::class, 'Videos', 'fas fa-video');
         yield MenuItem::linkTo(PresetCrudController::class, 'Presets', 'fas fa-list');
         yield MenuItem::linkTo(TaskCrudController::class, 'Tasks', 'fas fa-tasks');
+        yield MenuItem::linkTo(LogCrudController::class, 'Logs', 'fas fa-file-alt');
     }
 }

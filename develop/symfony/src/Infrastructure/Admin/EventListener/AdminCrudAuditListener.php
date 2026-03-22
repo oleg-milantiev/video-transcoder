@@ -58,7 +58,7 @@ final readonly class AdminCrudAuditListener
 			'entityId' => $entityId?->toRfc4122(),
 			'actorUserId' => $actor->id->toRfc4122(),
 			'actorEmail' => $actor->email,
-			'roles' => $actor->roles,
+			'roles' => implode(', ', $actor->roles),
 			'route' => $request?->attributes->get('_route'),
 			'path' => $request?->getPathInfo(),
 			'ip' => $request?->getClientIp(),
