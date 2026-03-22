@@ -37,7 +37,6 @@ docker compose -p "$PROJECT_NAME" -f docker-compose.release.yml exec -T php \
   chown -R www-data:www-data /var/www/yc/public
 
 # migrations
-# todo check is it ok
 docker compose -p "$PROJECT_NAME" -f docker-compose.release.yml exec -T php \
   php bin/console doctrine:migrations:migrate --no-interaction
 
@@ -48,13 +47,11 @@ PROJECT_VERSION=$PROJECT_VERSION docker compose \
   -f docker-compose.release.yml \
   up -d --wait ffmpeg ffmpeg-transcode
 
-#todo check phpunit and stan are ok
 docker compose -p "$PROJECT_NAME" -f docker-compose.release.yml exec -T php \
   vendor/bin/phpunit tests/
 docker compose -p "$PROJECT_NAME" -f docker-compose.release.yml exec -T php \
   composer stan
 
-# todo check playwright is ok
 docker compose -p "$PROJECT_NAME" -f docker-compose.release.yml exec -T playwright bash -lc "
   cd /work/e2e
   npm install --no-audit --no-fund

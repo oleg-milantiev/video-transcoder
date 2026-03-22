@@ -8,13 +8,12 @@ use Symfony\Component\Uid\Uuid;
 use Symfony\Component\Uid\UuidV4;
 
 #[ORM\Entity]
-#[ORM\Table(name: 'log', indexes: [
-    new ORM\Index(name: 'idx_log_name', columns: ['name']),
-    new ORM\Index(name: 'idx_log_object_id', columns: ['object_id']),
-    new ORM\Index(name: 'idx_log_level', columns: ['level']),
-    new ORM\Index(name: 'idx_log_text', columns: ['text']),
-    new ORM\Index(name: 'idx_log_created_at', columns: ['created_at']),
-])]
+#[ORM\Table(name: 'log')]
+#[ORM\Index(name: 'idx_log_name', columns: ['name'])]
+#[ORM\Index(name: 'idx_log_object_id', columns: ['object_id'])]
+#[ORM\Index(name: 'idx_log_level', columns: ['level'])]
+#[ORM\Index(name: 'idx_log_text', columns: ['text'])]
+#[ORM\Index(name: 'idx_log_created_at', columns: ['created_at'])]
 class LogEntity
 {
     #[ORM\Id]
