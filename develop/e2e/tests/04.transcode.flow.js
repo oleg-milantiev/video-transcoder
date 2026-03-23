@@ -144,9 +144,8 @@ test('transcode flow from video details to downloadable mp4', async ({ page }, t
             break;
         }
 
-        await page.waitForTimeout(5000);
-        await page.reload({ waitUntil: 'domcontentloaded', timeout: NAV_TIMEOUT });
-        await waitForVideoDetailsVisible(page);
+        // wait for realtime progress update (ffmpeg worker publishes every ~5s)
+        await page.waitForTimeout(6000);
     }
 
     expect(completed).toBe(true);

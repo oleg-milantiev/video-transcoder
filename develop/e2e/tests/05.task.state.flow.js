@@ -186,8 +186,8 @@ test('task state flow with 4k preset: progress, cancel, restart, complete', asyn
       break;
     }
 
-    await page.waitForTimeout(3000);
-    await reloadDetails(page);
+    // wait for realtime update (worker emits every ~5s)
+    await page.waitForTimeout(6000);
   }
 
   expect(cancellationSent).toBe(true);
@@ -201,8 +201,8 @@ test('task state flow with 4k preset: progress, cancel, restart, complete', asyn
       break;
     }
 
-    await page.waitForTimeout(3000);
-    await reloadDetails(page);
+    // wait for realtime update (worker emits every ~5s)
+    await page.waitForTimeout(6000);
   }
 
   expect(cancelled).toBe(true);
@@ -239,8 +239,8 @@ test('task state flow with 4k preset: progress, cancel, restart, complete', asyn
       break;
     }
 
-    await page.waitForTimeout(5000);
-    await reloadDetails(page);
+    // wait for realtime update (worker emits every ~5s)
+    await page.waitForTimeout(6000);
   }
 
   expect(completed).toBe(true);
