@@ -5,17 +5,18 @@ framework:
         transports:
             # https://symfony.com/doc/current/messenger.html#transport-configuration
             async:
-                dsn: '%env(MESSENGER_TRANSPORT_DSN)%'
+                dsn: '%env(MESSENGER_TRANSPORT_ASYNC_DSN)%'
                 options:
-                    stream: default
+                    consumer: '%env(HOSTNAME)%'
+                    group: async
                 retry_strategy:
                     max_retries: 3
                     multiplier: 2
             async_transcode:
-                dsn: '%env(MESSENGER_TRANSPORT_DSN)%'
+                dsn: '%env(MESSENGER_TRANSPORT_ASYNC_TRANSCODE_DSN)%'
                 options:
                     consumer: '%env(HOSTNAME)%'
-                    stream: async_transcode
+                    group: async_transcode
                 retry_strategy:
                     max_retries: 3
                     multiplier: 2
