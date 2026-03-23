@@ -1,4 +1,5 @@
 const { test, expect } = require('@playwright/test');
+const { attachConsoleCapture } = require('./_helpers/consoleCapture');
 
 const UI_TIMEOUT = 8000;
 const NAV_TIMEOUT = 15000;
@@ -74,6 +75,9 @@ async function clickDownloadAndVerifyMp4(page, row) {
 }
 
 test('transcode flow from video details to downloadable mp4', async ({ page }, testInfo) => {
+    // start console capture for this test
+    const capture = attachConsoleCapture(page, testInfo, { maxBodyChars: 4000 });
+    await capture.start();
     const adminEmail = process.env.ADMIN_EMAIL || 'oleg@milantiev.com';
     const adminPassword = process.env.ADMIN_PASSWORD || 'admin';
     const uploadedVideoName = '2022_10_04_Two_Maxes.mp4';
@@ -160,4 +164,18 @@ test('transcode flow from video details to downloadable mp4', async ({ page }, t
     await page.getByRole('link', { name: 'Sign out' }).click({ timeout: UI_TIMEOUT });
     await expect(page.getByRole('link', { name: 'Sign in' })).toHaveCount(2, { timeout: UI_TIMEOUT });
     await shot(page, testInfo, '07-sign-out.png');
+
+    // collect SSE messages captured by probe and attach them
+    try {
+        const sseMessages = await page.evaluate(() => (window.__mercure_messages || []));
+        await testInfo.attach('mercure-sse.json', {
+            body: Buffer.from(JSON.stringify(sseMessages, null, 2), 'utf-8'),
+            contentType: 'application/json'
+        });
+    } catch (e) {
+        // ignore
+    }
+
+    // flush and attach console log
+    await capture.flushAndAttach();
 });

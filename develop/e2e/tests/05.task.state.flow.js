@@ -1,4 +1,5 @@
 const { test, expect } = require('@playwright/test');
+const { attachConsoleCapture } = require('./_helpers/consoleCapture');
 
 let uiTimeout = 8000;
 let navTimeout = 15000;
@@ -110,6 +111,9 @@ test('task state flow with 4k preset: progress, cancel, restart, complete', asyn
   const presetTitle = '4k UHD';
 
   await page.goto('/', { waitUntil: 'domcontentloaded', timeout: navTimeout });
+  // start console capture for this test
+  const capture = attachConsoleCapture(page, testInfo, { maxBodyChars: 4000 });
+  await capture.start();
   await page.getByRole('link', { name: 'Sign in' }).last().click({ timeout: uiTimeout });
   await page.locator('#inputEmail').fill(adminEmail);
   await page.locator('#inputPassword').fill(adminPassword);
@@ -250,5 +254,19 @@ test('task state flow with 4k preset: progress, cancel, restart, complete', asyn
   await page.getByRole('link', { name: 'Sign out' }).click({ timeout: uiTimeout });
   await expect(page.getByRole('link', { name: 'Sign in' })).toHaveCount(2, { timeout: uiTimeout });
   await shot(page, testInfo, '07-sign-out.png');
+
+  // collect SSE messages captured by probe and attach them
+  try {
+    const sseMessages = await page.evaluate(() => (window.__mercure_messages || []));
+    await testInfo.attach('mercure-sse.json', {
+      body: Buffer.from(JSON.stringify(sseMessages, null, 2), 'utf-8'),
+      contentType: 'application/json'
+    });
+  } catch (e) {
+    // ignore
+  }
+
+  // flush and attach console log
+  await capture.flushAndAttach();
 });
 
