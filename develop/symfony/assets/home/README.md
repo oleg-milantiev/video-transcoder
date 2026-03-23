@@ -6,7 +6,7 @@ Frontend modules for the Home and Video Details Vue pages.
 
 - `mountHomeSpa.js` - reads data attributes from Twig and mounts Vue router views.
 - `HomeTabsView.js` - orchestration for home tabs (state/actions wiring).
-- `VideoDetailsView.js` - video details page logic.
+- `VideoDetailsView.js` - orchestration for video details (state/actions/realtime wiring).
 
 ## Home tabs layout
 
@@ -28,6 +28,13 @@ Frontend modules for the Home and Video Details Vue pages.
 - `realtime/bindHomeRealtime.js` - subscribes to `app:task` and `app:video` window events.
 - `realtime/appTaskMessage.js` - validates/parses task messages.
 - `realtime/appVideoMessage.js` - validates/parses video messages.
+
+## Video details modules
+
+- `video-details/state.js` - reactive state for details page (`dto`, loading/error, action key).
+- `video-details/actions.js` - API loading, transcode/cancel actions, URL helpers, realtime state updates.
+- `video-details/realtime.js` - subscribes/unsubscribes `app:task` and `app:video` for details page.
+- `VideoDetailsRender.js` - render function for details page UI.
 
 ## Shared helpers
 
