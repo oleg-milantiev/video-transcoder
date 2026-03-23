@@ -1,11 +1,11 @@
 const { test, expect } = require('@playwright/test');
-const { attachConsoleCapture } = require('./_helpers/consoleCapture');
+const { attachConsoleCapture } = require('../consoleCapture');
 
 let uiTimeout = 8000;
 let navTimeout = 15000;
 
 async function shot(page, testInfo, name) {
-  await page.screenshot({ path: testInfo.outputPath(name), fullPage: true });
+  await page.screenshot({ path: testInfo.outputPath(name), fullPage: true, timeout: uiTimeout });
 }
 
 function videoRowByTitle(page, fileName) {
@@ -63,11 +63,11 @@ async function assignTariffToUser(page, userEmail, tariffTitle) {
 
   const tariffSelect = page.locator('select[name$="[tariff]"]').first();
   if ((await tariffSelect.count()) > 0) {
-    await tariffSelect.selectOption({ label: tariffTitle });
+    await tariffSelect.selectOption({ label: tariffTitle }, { timeout: uiTimeout });
   } else {
     const tariffInput = page.getByLabel('Tariff').first();
-    await tariffInput.click();
-    await tariffInput.fill(tariffTitle);
+    await tariffInput.click({ timeout: uiTimeout });
+    await tariffInput.fill(tariffTitle, { timeout: uiTimeout });
     await page.keyboard.press('Enter');
   }
 
@@ -81,8 +81,8 @@ async function readPresetTaskState(page, presetTitle) {
   const row = presetRow(page, presetTitle);
   await expect(row).toBeVisible({ timeout: uiTimeout });
 
-  const status = (await row.locator('td').nth(1).innerText()).trim();
-  const progressText = (await row.locator('td').nth(2).innerText()).trim();
+  const status = (await row.locator('td').nth(1).innerText({ timeout: uiTimeout })).trim();
+  const progressText = (await row.locator('td').nth(2).innerText({ timeout: uiTimeout })).trim();
   const progressMatch = progressText.match(/(\d+)\s*%/);
   const progress = progressMatch ? Number(progressMatch[1]) : -1;
 
@@ -110,163 +110,166 @@ test('task state flow with 4k preset: progress, cancel, restart, complete', asyn
   const uploadedVideoName = '2022_10_04_Two_Maxes.mp4';
   const presetTitle = '4k UHD';
 
-  await page.goto('/', { waitUntil: 'domcontentloaded', timeout: navTimeout });
   // start console capture for this test
   const capture = attachConsoleCapture(page, testInfo, { maxBodyChars: 4000 });
   await capture.start();
-  await page.getByRole('link', { name: 'Sign in' }).last().click({ timeout: uiTimeout });
-  await page.locator('#inputEmail').fill(adminEmail);
-  await page.locator('#inputPassword').fill(adminPassword);
-  await page.getByRole('button', { name: 'Sign in' }).click({ timeout: uiTimeout });
-  await expect(page.getByRole('button', { name: 'Videos' })).toBeVisible({ timeout: uiTimeout });
-  await shot(page, testInfo, '01-login-success.png');
+
+  try {
+    await page.goto('/', { waitUntil: 'domcontentloaded', timeout: navTimeout });
+    await page.getByRole('link', { name: 'Sign in' }).last().click({ timeout: uiTimeout });
+    await page.locator('#inputEmail').fill(adminEmail, { timeout: uiTimeout });
+    await page.locator('#inputPassword').fill(adminPassword, { timeout: uiTimeout });
+    await page.getByRole('button', { name: 'Sign in' }).click({ timeout: uiTimeout });
+    await expect(page.getByRole('button', { name: 'Videos' })).toBeVisible({ timeout: uiTimeout });
+    await shot(page, testInfo, '01-login-success.png');
 
   // Ensure two quick transcodes are allowed in this scenario.
-  await expect(page.getByRole('link', { name: 'Admin', exact: true })).toBeVisible({ timeout: uiTimeout });
-  await page.getByRole('link', { name: 'Admin', exact: true }).click({ timeout: uiTimeout });
-  await assignTariffToUser(page, adminEmail, 'Premium');
-  await shot(page, testInfo, '01b-admin-premium-tariff-assigned.png');
+    await expect(page.getByRole('link', { name: 'Admin', exact: true })).toBeVisible({ timeout: uiTimeout });
+    await page.getByRole('link', { name: 'Admin', exact: true }).click({ timeout: uiTimeout });
+    await assignTariffToUser(page, adminEmail, 'Premium');
+    await shot(page, testInfo, '01b-admin-premium-tariff-assigned.png');
 
   // Re-login to refresh security token context after tariff update.
-  await page.goto('/logout', { waitUntil: 'domcontentloaded', timeout: navTimeout });
-  await expect(page.getByRole('link', { name: 'Sign in' }).first()).toBeVisible({ timeout: uiTimeout });
-  await page.getByRole('link', { name: 'Sign in' }).last().click({ timeout: uiTimeout });
-  await page.locator('#inputEmail').fill(adminEmail);
-  await page.locator('#inputPassword').fill(adminPassword);
-  await page.getByRole('button', { name: 'Sign in' }).click({ timeout: uiTimeout });
-  await expect(page.getByRole('button', { name: 'Videos' })).toBeVisible({ timeout: uiTimeout });
-  await page.goto('/?tab=videos', { waitUntil: 'domcontentloaded', timeout: navTimeout });
+    await page.goto('/logout', { waitUntil: 'domcontentloaded', timeout: navTimeout });
+    await expect(page.getByRole('link', { name: 'Sign in' }).first()).toBeVisible({ timeout: uiTimeout });
+    await page.getByRole('link', { name: 'Sign in' }).last().click({ timeout: uiTimeout });
+    await page.locator('#inputEmail').fill(adminEmail, { timeout: uiTimeout });
+    await page.locator('#inputPassword').fill(adminPassword, { timeout: uiTimeout });
+    await page.getByRole('button', { name: 'Sign in' }).click({ timeout: uiTimeout });
+    await expect(page.getByRole('button', { name: 'Videos' })).toBeVisible({ timeout: uiTimeout });
+    await page.goto('/?tab=videos', { waitUntil: 'domcontentloaded', timeout: navTimeout });
 
-  await page.getByRole('button', { name: 'Videos' }).click({ timeout: uiTimeout });
-  await expect(page.locator('#videosTable')).toBeVisible({ timeout: uiTimeout });
+    await page.getByRole('button', { name: 'Videos' }).click({ timeout: uiTimeout });
+    await expect(page.locator('#videosTable')).toBeVisible({ timeout: uiTimeout });
 
-  const videoRow = videoRowByTitle(page, uploadedVideoName);
-  await expect(videoRow).toBeVisible({ timeout: uiTimeout });
-  await videoRow.click({ timeout: uiTimeout });
+    const videoRow = videoRowByTitle(page, uploadedVideoName);
+    await expect(videoRow).toBeVisible({ timeout: uiTimeout });
+    await videoRow.click({ timeout: uiTimeout });
 
-  await waitForVideoDetailsVisible(page);
-  await expect(presetRow(page, presetTitle)).toBeVisible({ timeout: uiTimeout });
-  await shot(page, testInfo, '02-video-details-with-4k-preset.png');
+    await waitForVideoDetailsVisible(page);
+    await expect(presetRow(page, presetTitle)).toBeVisible({ timeout: uiTimeout });
+    await shot(page, testInfo, '02-video-details-with-4k-preset.png');
 
-  const startButton = presetRow(page, presetTitle).getByRole('button', { name: 'Transcode' });
-  await expect(startButton).toBeVisible({ timeout: uiTimeout });
-  await startButton.click({ timeout: uiTimeout });
+    const startButton = presetRow(page, presetTitle).getByRole('button', { name: 'Transcode' });
+    await expect(startButton).toBeVisible({ timeout: uiTimeout });
+    await startButton.click({ timeout: uiTimeout });
 
-  await expect
-    .poll(async () => (await readPresetTaskState(page, presetTitle)).status, {
-      timeout: uiTimeout,
-      intervals: [1000, 2000, 5000],
-    })
-    .toMatch(/PENDING|PROCESSING|COMPLETED/);
-  await shot(page, testInfo, '03-transcode-started.png');
+    await expect
+      .poll(async () => (await readPresetTaskState(page, presetTitle)).status, {
+        timeout: uiTimeout,
+        intervals: [1000, 2000, 5000],
+      })
+      .toMatch(/PENDING|PROCESSING|COMPLETED/);
+    await shot(page, testInfo, '03-transcode-started.png');
 
-  let prevProgress = -1;
-  let sawProgressIncrease = false;
-  let cancellationSent = false;
+    let prevProgress = -1;
+    let sawProgressIncrease = false;
+    let cancellationSent = false;
 
-  for (let attempt = 1; attempt <= 10; attempt += 1) {
-    const state = await readPresetTaskState(page, presetTitle);
+    for (let attempt = 1; attempt <= 10; attempt += 1) {
+      const state = await readPresetTaskState(page, presetTitle);
 
-    if (prevProgress >= 0 && state.progress > prevProgress) {
-      sawProgressIncrease = true;
+      if (prevProgress >= 0 && state.progress > prevProgress) {
+        sawProgressIncrease = true;
+      }
+      if (state.progress > prevProgress) {
+        prevProgress = state.progress;
+      }
+
+      if (state.status === 'COMPLETED') {
+        throw new Error('4k task completed before cancellation was sent; flow cannot validate cancel-in-processing.');
+      }
+
+      if (state.status === 'PROCESSING') {
+        const cancelButton = presetRow(page, presetTitle).getByRole('button', { name: 'Cancel' });
+        await expect(cancelButton).toBeVisible({ timeout: uiTimeout });
+        await cancelButton.click({ timeout: uiTimeout });
+        cancellationSent = true;
+        break;
+      }
+
+      // wait for realtime update (worker emits every ~5s)
+      await page.waitForTimeout(6000);
     }
-    if (state.progress > prevProgress) {
-      prevProgress = state.progress;
+
+    expect(cancellationSent).toBe(true);
+    await shot(page, testInfo, '04-cancel-request-sent-after-progress-growth.png');
+
+    let cancelled = false;
+    for (let attempt = 1; attempt <= 60; attempt += 1) {
+      const state = await readPresetTaskState(page, presetTitle);
+      if (state.status === 'CANCELLED') {
+        cancelled = true;
+        break;
+      }
+
+      // wait for realtime update (worker emits every ~5s)
+      await page.waitForTimeout(6000);
     }
 
-    if (state.status === 'COMPLETED') {
-      throw new Error('4k task completed before cancellation was sent; flow cannot validate cancel-in-processing.');
+    expect(cancelled).toBe(true);
+    const cancelledRow = presetRow(page, presetTitle);
+    await expect(cancelledRow.getByRole('link', { name: 'Download' })).toHaveCount(0, { timeout: uiTimeout });
+    await expect(cancelledRow.getByRole('button', { name: 'Transcode' })).toBeVisible({ timeout: uiTimeout });
+    await shot(page, testInfo, '05-task-cancelled.png');
+
+    await cancelledRow.getByRole('button', { name: 'Transcode' }).click({ timeout: uiTimeout });
+
+    await expect
+      .poll(async () => (await readPresetTaskState(page, presetTitle)).status, {
+        timeout: 60000,
+        intervals: [1000, 2000, 5000],
+      })
+      .toMatch(/PENDING|PROCESSING|COMPLETED/);
+
+    let prevRestartProgress = -1;
+    let sawRestartProgressIncrease = false;
+    let completed = false;
+
+    for (let attempt = 1; attempt <= 10; attempt += 1) {
+      const state = await readPresetTaskState(page, presetTitle);
+
+      if (prevRestartProgress >= 0 && state.progress > prevRestartProgress) {
+        sawRestartProgressIncrease = true;
+      }
+      if (state.progress > prevRestartProgress) {
+        prevRestartProgress = state.progress;
+      }
+
+      if (state.status === 'COMPLETED') {
+        completed = true;
+        break;
+      }
+
+      // wait for realtime update (worker emits every ~5s)
+      await page.waitForTimeout(6000);
     }
 
-    if (state.status === 'PROCESSING') {
-      const cancelButton = presetRow(page, presetTitle).getByRole('button', { name: 'Cancel' });
-      await expect(cancelButton).toBeVisible({ timeout: uiTimeout });
-      await cancelButton.click({ timeout: uiTimeout });
-      cancellationSent = true;
-      break;
+    expect(completed).toBe(true);
+    expect(sawRestartProgressIncrease).toBe(true);
+
+    const completedRow = presetRow(page, presetTitle);
+    await expect(completedRow.getByRole('link', { name: 'Download' })).toBeVisible({ timeout: uiTimeout });
+    await shot(page, testInfo, '06-restart-completed-with-download.png');
+
+    await expect(page.getByRole('link', { name: 'Sign out' })).toBeVisible({ timeout: uiTimeout });
+    await page.getByRole('link', { name: 'Sign out' }).click({ timeout: uiTimeout });
+    await expect(page.getByRole('link', { name: 'Sign in' })).toHaveCount(2, { timeout: uiTimeout });
+    await shot(page, testInfo, '07-sign-out.png');
+  } finally {
+    // collect SSE messages captured by probe and attach them
+    try {
+      const sseMessages = await page.evaluate(() => (window.__mercure_messages || []));
+      await testInfo.attach('mercure-sse.json', {
+        body: Buffer.from(JSON.stringify(sseMessages, null, 2), 'utf-8'),
+        contentType: 'application/json'
+      });
+    } catch (e) {
+      // ignore
     }
 
-    // wait for realtime update (worker emits every ~5s)
-    await page.waitForTimeout(6000);
+    // flush and attach console log even when the test fails early
+    await capture.flushAndAttach();
   }
-
-  expect(cancellationSent).toBe(true);
-  await shot(page, testInfo, '04-cancel-request-sent-after-progress-growth.png');
-
-  let cancelled = false;
-  for (let attempt = 1; attempt <= 60; attempt += 1) {
-    const state = await readPresetTaskState(page, presetTitle);
-    if (state.status === 'CANCELLED') {
-      cancelled = true;
-      break;
-    }
-
-    // wait for realtime update (worker emits every ~5s)
-    await page.waitForTimeout(6000);
-  }
-
-  expect(cancelled).toBe(true);
-  const cancelledRow = presetRow(page, presetTitle);
-  await expect(cancelledRow.getByRole('link', { name: 'Download' })).toHaveCount(0);
-  await expect(cancelledRow.getByRole('button', { name: 'Transcode' })).toBeVisible({ timeout: uiTimeout });
-  await shot(page, testInfo, '05-task-cancelled.png');
-
-  await cancelledRow.getByRole('button', { name: 'Transcode' }).click({ timeout: uiTimeout });
-
-  await expect
-    .poll(async () => (await readPresetTaskState(page, presetTitle)).status, {
-      timeout: 60000,
-      intervals: [1000, 2000, 5000],
-    })
-    .toMatch(/PENDING|PROCESSING|COMPLETED/);
-
-  let prevRestartProgress = -1;
-  let sawRestartProgressIncrease = false;
-  let completed = false;
-
-  for (let attempt = 1; attempt <= 10; attempt += 1) {
-    const state = await readPresetTaskState(page, presetTitle);
-
-    if (prevRestartProgress >= 0 && state.progress > prevRestartProgress) {
-      sawRestartProgressIncrease = true;
-    }
-    if (state.progress > prevRestartProgress) {
-      prevRestartProgress = state.progress;
-    }
-
-    if (state.status === 'COMPLETED') {
-      completed = true;
-      break;
-    }
-
-    // wait for realtime update (worker emits every ~5s)
-    await page.waitForTimeout(6000);
-  }
-
-  expect(completed).toBe(true);
-  expect(sawRestartProgressIncrease).toBe(true);
-
-  const completedRow = presetRow(page, presetTitle);
-  await expect(completedRow.getByRole('link', { name: 'Download' })).toBeVisible({ timeout: uiTimeout });
-  await shot(page, testInfo, '06-restart-completed-with-download.png');
-
-  await expect(page.getByRole('link', { name: 'Sign out' })).toBeVisible({ timeout: uiTimeout });
-  await page.getByRole('link', { name: 'Sign out' }).click({ timeout: uiTimeout });
-  await expect(page.getByRole('link', { name: 'Sign in' })).toHaveCount(2, { timeout: uiTimeout });
-  await shot(page, testInfo, '07-sign-out.png');
-
-  // collect SSE messages captured by probe and attach them
-  try {
-    const sseMessages = await page.evaluate(() => (window.__mercure_messages || []));
-    await testInfo.attach('mercure-sse.json', {
-      body: Buffer.from(JSON.stringify(sseMessages, null, 2), 'utf-8'),
-      contentType: 'application/json'
-    });
-  } catch (e) {
-    // ignore
-  }
-
-  // flush and attach console log
-  await capture.flushAndAttach();
 });
 

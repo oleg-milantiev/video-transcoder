@@ -1,11 +1,11 @@
 const { test, expect } = require('@playwright/test');
-const { attachConsoleCapture } = require('./_helpers/consoleCapture');
+const { attachConsoleCapture } = require('../consoleCapture');
 
 const UI_TIMEOUT = 8000;
 const NAV_TIMEOUT = 15000;
 
 async function shot(page, testInfo, name) {
-    await page.screenshot({ path: testInfo.outputPath(name), fullPage: true });
+    await page.screenshot({ path: testInfo.outputPath(name), fullPage: true, timeout: UI_TIMEOUT });
 }
 
 function videoRowByTitle(page, fileName) {
@@ -25,8 +25,8 @@ async function readPresetTaskState(page, presetTitle) {
     const row = presetRow(page, presetTitle);
     await expect(row).toBeVisible({ timeout: UI_TIMEOUT });
 
-    const status = (await row.locator('td').nth(1).innerText()).trim();
-    const progressText = (await row.locator('td').nth(2).innerText()).trim();
+    const status = (await row.locator('td').nth(1).innerText({ timeout: UI_TIMEOUT })).trim();
+    const progressText = (await row.locator('td').nth(2).innerText({ timeout: UI_TIMEOUT })).trim();
     const progressMatch = progressText.match(/(\d+)\s*%/);
     const progress = progressMatch ? Number(progressMatch[1]) : -1;
 
@@ -43,7 +43,7 @@ async function clickDownloadAndVerifyMp4(page, row) {
     const downloadLink = row.getByRole('link', { name: 'Download' });
     await expect(downloadLink).toBeVisible({ timeout: UI_TIMEOUT });
 
-    const href = await downloadLink.getAttribute('href');
+    const href = await downloadLink.getAttribute('href', { timeout: UI_TIMEOUT });
     if (!href) {
         throw new Error('Download link href is empty');
     }
@@ -57,6 +57,7 @@ async function clickDownloadAndVerifyMp4(page, row) {
     const response = await page.request.get(downloadUrl, {
         failOnStatusCode: false,
         maxRedirects: 0,
+        timeout: NAV_TIMEOUT,
     });
 
     expect(response.status()).toBeLessThan(400);
@@ -83,99 +84,101 @@ test('transcode flow from video details to downloadable mp4', async ({ page }, t
     const uploadedVideoName = '2022_10_04_Two_Maxes.mp4';
     const presetTitle = '180p';
 
-    // 1) Home + login
-    await page.goto('/', { waitUntil: 'domcontentloaded', timeout: NAV_TIMEOUT });
-    await page.getByRole('link', { name: 'Sign in' }).last().click({ timeout: UI_TIMEOUT });
-    await page.locator('#inputEmail').fill(adminEmail);
-    await page.locator('#inputPassword').fill(adminPassword);
-    await page.getByRole('button', { name: 'Sign in' }).click({ timeout: UI_TIMEOUT });
-    await expect(page.getByRole('button', { name: 'Videos' })).toBeVisible({ timeout: UI_TIMEOUT });
-    await shot(page, testInfo, '01-login-success.png');
+    try {
+        // 1) Home + login
+        await page.goto('/', { waitUntil: 'domcontentloaded', timeout: NAV_TIMEOUT });
+        await page.getByRole('link', { name: 'Sign in' }).last().click({ timeout: UI_TIMEOUT });
+        await page.locator('#inputEmail').fill(adminEmail, { timeout: UI_TIMEOUT });
+        await page.locator('#inputPassword').fill(adminPassword, { timeout: UI_TIMEOUT });
+        await page.getByRole('button', { name: 'Sign in' }).click({ timeout: UI_TIMEOUT });
+        await expect(page.getByRole('button', { name: 'Videos' })).toBeVisible({ timeout: UI_TIMEOUT });
+        await shot(page, testInfo, '01-login-success.png');
 
     // 2) Open Videos tab
-    await page.getByRole('button', { name: 'Videos' }).click({ timeout: UI_TIMEOUT });
-    await expect(page.locator('#videosTable')).toBeVisible({ timeout: UI_TIMEOUT });
-    await shot(page, testInfo, '02-videos-tab-open.png');
+        await page.getByRole('button', { name: 'Videos' }).click({ timeout: UI_TIMEOUT });
+        await expect(page.locator('#videosTable')).toBeVisible({ timeout: UI_TIMEOUT });
+        await shot(page, testInfo, '02-videos-tab-open.png');
 
     // 3) Open previously uploaded video card
-    const row = videoRowByTitle(page, uploadedVideoName);
-    await expect(row).toBeVisible({ timeout: NAV_TIMEOUT });
-    await row.click({ timeout: UI_TIMEOUT });
+        const row = videoRowByTitle(page, uploadedVideoName);
+        await expect(row).toBeVisible({ timeout: NAV_TIMEOUT });
+        await row.click({ timeout: UI_TIMEOUT });
 
     // 4) Verify presets table + preset exists
-    await waitForVideoDetailsVisible(page);
-    const row180p = presetRow(page, presetTitle);
-    await expect(row180p).toBeVisible({ timeout: UI_TIMEOUT });
-    await shot(page, testInfo, '03-video-details-with-presets.png');
+        await waitForVideoDetailsVisible(page);
+        const row180p = presetRow(page, presetTitle);
+        await expect(row180p).toBeVisible({ timeout: UI_TIMEOUT });
+        await shot(page, testInfo, '03-video-details-with-presets.png');
 
     // 5) Verify and click Transcode button
-    const transcodeButton = row180p.getByRole('button', { name: 'Transcode' });
-    await expect(transcodeButton).toBeVisible({ timeout: UI_TIMEOUT });
-    await transcodeButton.click({ timeout: UI_TIMEOUT });
-    await shot(page, testInfo, '04-transcode-clicked.png');
+        const transcodeButton = row180p.getByRole('button', { name: 'Transcode' });
+        await expect(transcodeButton).toBeVisible({ timeout: UI_TIMEOUT });
+        await transcodeButton.click({ timeout: UI_TIMEOUT });
+        await shot(page, testInfo, '04-transcode-clicked.png');
 
     // 6) Verify task appears in running state
-    await expect
-        .poll(
-            async () => {
-                const state = await readPresetTaskState(page, presetTitle);
-                return state.status;
-            },
-            { timeout: NAV_TIMEOUT, intervals: [1000, 2000, 5000] }
-        )
-        .toMatch(/PENDING|PROCESSING|COMPLETED/);
+        await expect
+            .poll(
+                async () => {
+                    const state = await readPresetTaskState(page, presetTitle);
+                    return state.status;
+                },
+                { timeout: NAV_TIMEOUT, intervals: [1000, 2000, 5000] }
+            )
+            .toMatch(/PENDING|PROCESSING|COMPLETED/);
 
     // 7) Poll every 5s, validate progress increase, wait until COMPLETED
-    let prevProgress = -1;
-    let sawProgressIncrease = false;
-    let completed = false;
+        let prevProgress = -1;
+        let sawProgressIncrease = false;
+        let completed = false;
 
-    for (let attempt = 1; attempt <= 10; attempt += 1) {
-        const state = await readPresetTaskState(page, presetTitle);
+        for (let attempt = 1; attempt <= 10; attempt += 1) {
+            const state = await readPresetTaskState(page, presetTitle);
 
-        if (prevProgress >= 0 && state.progress > prevProgress) {
-            sawProgressIncrease = true;
+            if (prevProgress >= 0 && state.progress > prevProgress) {
+                sawProgressIncrease = true;
+            }
+            if (state.progress > prevProgress) {
+                prevProgress = state.progress;
+            }
+
+            if (state.status === 'COMPLETED') {
+                completed = true;
+                break;
+            }
+
+            // wait for realtime progress update (ffmpeg worker publishes every ~5s)
+            await page.waitForTimeout(6000);
         }
-        if (state.progress > prevProgress) {
-            prevProgress = state.progress;
-        }
 
-        if (state.status === 'COMPLETED') {
-            completed = true;
-            break;
-        }
-
-        // wait for realtime progress update (ffmpeg worker publishes every ~5s)
-        await page.waitForTimeout(6000);
-    }
-
-    expect(completed).toBe(true);
-    expect(sawProgressIncrease).toBe(true);
-    await shot(page, testInfo, '05-task-completed.png');
+        expect(completed).toBe(true);
+        expect(sawProgressIncrease).toBe(true);
+        await shot(page, testInfo, '05-task-completed.png');
 
     // 8) Verify Download button and download without errors
-    const completedRow = presetRow(page, presetTitle);
-    await expect(completedRow.getByRole('link', { name: 'Download' })).toBeVisible({ timeout: UI_TIMEOUT });
-    await clickDownloadAndVerifyMp4(page, completedRow);
-    await shot(page, testInfo, '06-download-verified.png');
+        const completedRow = presetRow(page, presetTitle);
+        await expect(completedRow.getByRole('link', { name: 'Download' })).toBeVisible({ timeout: UI_TIMEOUT });
+        await clickDownloadAndVerifyMp4(page, completedRow);
+        await shot(page, testInfo, '06-download-verified.png');
 
     // 9) Sign out
-    await expect(page.getByRole('link', { name: 'Sign out' })).toBeVisible({ timeout: UI_TIMEOUT });
-    await page.getByRole('link', { name: 'Sign out' }).click({ timeout: UI_TIMEOUT });
-    await expect(page.getByRole('link', { name: 'Sign in' })).toHaveCount(2, { timeout: UI_TIMEOUT });
-    await shot(page, testInfo, '07-sign-out.png');
+        await expect(page.getByRole('link', { name: 'Sign out' })).toBeVisible({ timeout: UI_TIMEOUT });
+        await page.getByRole('link', { name: 'Sign out' }).click({ timeout: UI_TIMEOUT });
+        await expect(page.getByRole('link', { name: 'Sign in' })).toHaveCount(2, { timeout: UI_TIMEOUT });
+        await shot(page, testInfo, '07-sign-out.png');
+    } finally {
+        // collect SSE messages captured by probe and attach them
+        try {
+            const sseMessages = await page.evaluate(() => (window.__mercure_messages || []));
+            await testInfo.attach('mercure-sse.json', {
+                body: Buffer.from(JSON.stringify(sseMessages, null, 2), 'utf-8'),
+                contentType: 'application/json'
+            });
+        } catch (e) {
+            // ignore
+        }
 
-    // collect SSE messages captured by probe and attach them
-    try {
-        const sseMessages = await page.evaluate(() => (window.__mercure_messages || []));
-        await testInfo.attach('mercure-sse.json', {
-            body: Buffer.from(JSON.stringify(sseMessages, null, 2), 'utf-8'),
-            contentType: 'application/json'
-        });
-    } catch (e) {
-        // ignore
+        // flush and attach console log even when the test fails early
+        await capture.flushAndAttach();
     }
-
-    // flush and attach console log
-    await capture.flushAndAttach();
 });

@@ -1,4 +1,5 @@
 const fs = require('fs');
+const path = require('path');
 
 function attachConsoleCapture(page, testInfo, opts = {}) {
   const logs = [];
@@ -87,9 +88,20 @@ function attachConsoleCapture(page, testInfo, opts = {}) {
         body: Buffer.from(out, 'utf-8'),
         contentType: 'text/plain'
       });
+
+        const projectName = process.env.PROJECT_NAME || 'local';
+        const artifactsRoot = process.env.E2E_ARTIFACTS_DIR || path.join('/work/release.check', projectName, 'playwright');
+        const manualLogsDir = path.join(artifactsRoot, 'test-results', 'manual-logs');
+        const safeTitle = (testInfo.title || 'unknown-test').replace(/[^a-zA-Z0-9._-]+/g, '_').slice(0, 120);
+
       try {
-        const path = testInfo.outputPath('browser-console.log');
-        fs.writeFileSync(path, out, 'utf-8');
+          const outputLogPath = testInfo.outputPath('browser-console.log');
+          fs.mkdirSync(path.dirname(outputLogPath), { recursive: true });
+          fs.writeFileSync(outputLogPath, out, 'utf-8');
+
+          fs.mkdirSync(manualLogsDir, { recursive: true });
+          const manualLogPath = path.join(manualLogsDir, `${safeTitle}.browser-console.log`);
+          fs.writeFileSync(manualLogPath, out, 'utf-8');
       } catch (e) {
         // ignore
       }
