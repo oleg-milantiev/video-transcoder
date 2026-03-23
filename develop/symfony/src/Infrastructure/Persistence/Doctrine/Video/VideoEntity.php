@@ -2,7 +2,6 @@
 
 namespace App\Infrastructure\Persistence\Doctrine\Video;
 
-use App\Domain\Video\ValueObject\VideoStatus;
 use App\Infrastructure\Persistence\Doctrine\Task\TaskEntity;
 use App\Infrastructure\Persistence\Doctrine\User\UserEntity;
 use Doctrine\Common\Collections\ArrayCollection;
@@ -25,9 +24,6 @@ class VideoEntity
 
     #[ORM\Column(length: 10)]
     public ?string $extension = null;
-
-    #[ORM\Column]
-    public int $status = VideoStatus::UPLOADING->value;
 
     #[ORM\Column]
     public ?\DateTimeImmutable $createdAt = null;

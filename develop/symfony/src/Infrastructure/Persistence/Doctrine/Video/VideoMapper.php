@@ -5,7 +5,6 @@ namespace App\Infrastructure\Persistence\Doctrine\Video;
 use App\Domain\Video\Entity\Video;
 use App\Domain\Video\ValueObject\FileExtension;
 use App\Domain\Video\ValueObject\VideoDates;
-use App\Domain\Video\ValueObject\VideoStatus;
 use App\Domain\Video\ValueObject\VideoTitle;
 use App\Infrastructure\Persistence\Doctrine\User\UserEntity;
 
@@ -16,7 +15,6 @@ class VideoMapper
         return Video::reconstitute(
             title: new VideoTitle($entity->title),
             extension: new FileExtension($entity->extension),
-            status: VideoStatus::from($entity->status),
             userId: $entity->user->id,
             meta: $entity->meta,
             dates: VideoDates::fromPersistence($entity->createdAt, $entity->updatedAt),
@@ -41,7 +39,6 @@ class VideoMapper
         $entity->title = $video->title()->value();
         $entity->extension = $video->extension()->value();
         $entity->user = $user;
-        $entity->status = $video->status()->value;
         $entity->meta = $video->meta();
         $entity->updatedAt = $video->updatedAt();
     }

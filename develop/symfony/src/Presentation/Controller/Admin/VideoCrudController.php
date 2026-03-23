@@ -2,7 +2,6 @@
 
 namespace App\Presentation\Controller\Admin;
 
-use App\Domain\Video\ValueObject\VideoStatus;
 use App\Infrastructure\Persistence\Doctrine\Video\VideoEntity;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Action;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Actions;
@@ -11,10 +10,8 @@ use EasyCorp\Bundle\EasyAdminBundle\Config\Filters;
 use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractCrudController;
 use EasyCorp\Bundle\EasyAdminBundle\Field\ArrayField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\AssociationField;
-use EasyCorp\Bundle\EasyAdminBundle\Field\ChoiceField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\DateTimeField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\TextField;
-use EasyCorp\Bundle\EasyAdminBundle\Filter\ChoiceFilter;
 use EasyCorp\Bundle\EasyAdminBundle\Filter\DateTimeFilter;
 use EasyCorp\Bundle\EasyAdminBundle\Filter\EntityFilter;
 use EasyCorp\Bundle\EasyAdminBundle\Filter\TextFilter;
@@ -38,7 +35,6 @@ class VideoCrudController extends AbstractCrudController
     {
         return $filters
             ->add(TextFilter::new('title'))
-            ->add(ChoiceFilter::new('status')->setChoices(array_flip(VideoStatus::NAMES)))
             ->add(EntityFilter::new('user'))
             ->add(DateTimeFilter::new('createdAt'));
     }
@@ -67,8 +63,6 @@ class VideoCrudController extends AbstractCrudController
                 ->hideOnForm()
                 ->formatValue(static fn ($value) => is_object($value) && method_exists($value, 'toRfc4122') ? $value->toRfc4122() : (string) $value),
             TextField::new('title'),
-            ChoiceField::new('status')
-                ->setChoices(array_flip(VideoStatus::NAMES)),
             AssociationField::new('user'),
             ArrayField::new('meta')
                 ->setTemplatePath('admin/field/associative_array_detail.html.twig')

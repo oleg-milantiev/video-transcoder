@@ -24,7 +24,7 @@ export function renderVideosPane(vm, paneClass) {
         vm.videosLoading ? h('p', { class: 'mb-2 text-muted' }, 'Loading videos...') : null,
         h('table', { id: 'videosTable', class: 'table table-striped w-100 align-middle' }, [
             h('thead', [
-                h('tr', [h('th', 'Poster'), h('th', 'Name'), h('th', 'Status'), h('th', 'Created')]),
+                h('tr', [h('th', 'Poster'), h('th', 'Name'), h('th', 'Created')]),
             ]),
             h(
                 'tbody',
@@ -39,12 +39,11 @@ export function renderVideosPane(vm, paneClass) {
                               [
                                   h('td', [renderPoster(video)]),
                                   h('td', video.title || '-'),
-                                  h('td', video.status || '-'),
                                   h('td', video.createdAt || '-'),
                               ]
                           )
                       )
-                    : [h('tr', [h('td', { colspan: '4', class: 'text-muted text-center' }, 'No videos')])]
+                    : [h('tr', [h('td', { colspan: '3', class: 'text-muted text-center' }, 'No videos')])]
             ),
         ]),
         h('div', { class: 'd-flex justify-content-between align-items-center' }, [

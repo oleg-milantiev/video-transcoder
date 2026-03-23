@@ -6,8 +6,6 @@ namespace App\Tests\Infrastructure\Security\Voter;
 
 use App\Domain\Video\Entity\Video;
 use App\Domain\Video\ValueObject\FileExtension;
-use App\Domain\Video\ValueObject\VideoDates;
-use App\Domain\Video\ValueObject\VideoStatus;
 use App\Domain\Video\ValueObject\VideoTitle;
 use App\Infrastructure\Persistence\Doctrine\User\UserEntity;
 use App\Infrastructure\Security\Voter\VideoAccessVoter;
@@ -94,11 +92,8 @@ final class VideoAccessVoterTest extends TestCase
         return Video::create(
             new VideoTitle('Owner video'),
             new FileExtension('mp4'),
-            VideoStatus::UPLOADED,
             $ownerId,
             [],
-            VideoDates::create(new \DateTimeImmutable('2026-03-19 10:00:00')),
-            UuidV4::fromString('11111111-1111-4111-8111-111111111111'),
         );
     }
 }

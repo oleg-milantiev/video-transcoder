@@ -26,7 +26,6 @@ use App\Domain\Video\ValueObject\Codec;
 use App\Domain\Video\ValueObject\PresetTitle;
 use App\Domain\Video\ValueObject\Resolution;
 use App\Domain\Video\ValueObject\VideoDates;
-use App\Domain\Video\ValueObject\VideoStatus;
 use App\Domain\Video\ValueObject\VideoTitle;
 use App\Domain\Video\ValueObject\FileExtension;
 use App\Infrastructure\Security\Voter\VideoAccessVoter;
@@ -49,7 +48,6 @@ class StartTranscodeHandlerTest extends TestCase
         $video = Video::reconstitute(
             new VideoTitle('Source Clip'),
             new FileExtension('mp4'),
-            VideoStatus::UPLOADED,
             userId: UuidV4::fromString('123e4567-e89b-42d3-a456-426614174077'),
             meta: [],
             dates: VideoDates::create(new \DateTimeImmutable('2026-03-18 12:00:00')),

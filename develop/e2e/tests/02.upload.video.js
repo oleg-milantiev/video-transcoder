@@ -109,7 +109,6 @@ test('upload video and verify details flow', async ({ page }, testInfo) => {
   await expect(videoRow).toBeVisible({ timeout: 15000 });
   await expect(videoRow.locator('td').nth(1)).toContainText(fileName, { timeout: UI_TIMEOUT });
   await expect(videoRow.locator('td').nth(2)).not.toHaveText('-', { timeout: UI_TIMEOUT });
-  await expect(videoRow.locator('td').nth(3)).not.toHaveText('-', { timeout: UI_TIMEOUT });
   await shot(page, testInfo, '03-video-row-in-table.png');
 
   await videoRow.click({ timeout: UI_TIMEOUT });
@@ -117,7 +116,6 @@ test('upload video and verify details flow', async ({ page }, testInfo) => {
 
   await expectDetailsValue(page, 'Title');
   await expectDetailsValue(page, 'Extension');
-  await expectDetailsValue(page, 'Status');
   await expectDetailsValue(page, 'Created At');
   await expectDetailsValue(page, 'User ID');
   await shot(page, testInfo, '04-video-details-filled.png');

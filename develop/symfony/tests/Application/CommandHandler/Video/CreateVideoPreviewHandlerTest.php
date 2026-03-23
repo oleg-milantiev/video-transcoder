@@ -19,7 +19,6 @@ use App\Domain\Video\Exception\VideoPreviewGenerationFailed;
 use App\Domain\Video\Repository\VideoRepositoryInterface;
 use App\Domain\Video\Service\Storage\StorageInterface;
 use App\Domain\Video\ValueObject\FileExtension;
-use App\Domain\Video\ValueObject\VideoStatus;
 use App\Domain\Video\ValueObject\VideoTitle;
 use App\Infrastructure\Ffmpeg\ProcessRunnerInterface;
 use App\Infrastructure\Ffmpeg\VideoPreviewGenerator;
@@ -135,7 +134,6 @@ class CreateVideoPreviewHandlerTest extends TestCase
         return Video::reconstitute(
             title: new VideoTitle('Clip'),
             extension: new FileExtension('mp4'),
-            status: VideoStatus::UPLOADED,
             userId: UuidV4::fromString('123e4567-e89b-42d3-a456-426614174105'),
             meta: ['duration' => $duration],
             dates: VideoDates::create(),

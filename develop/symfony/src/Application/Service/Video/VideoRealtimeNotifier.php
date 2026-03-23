@@ -29,7 +29,6 @@ final readonly class VideoRealtimeNotifier
 
         $payload = array_merge([
             'videoId' => $video->id()->toRfc4122(),
-            'status' => $video->status()->name,
             'poster' => $video->getPoster(),
             'meta' => $video->meta(),
             'createdAt' => $video->createdAt()->format(DATE_ATOM),

@@ -6,7 +6,6 @@ namespace App\Tests\Application\Factory;
 
 use App\Application\Command\Video\CreateVideo;
 use App\Application\Factory\VideoFactory;
-use App\Domain\Video\ValueObject\VideoStatus;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Uid\UuidV4;
 use TusPhp\File;
@@ -25,7 +24,6 @@ final class VideoFactoryTest extends TestCase
 
         $this->assertSame('My Holiday Clip.mp4', $video->title()->value());
         $this->assertSame('mp4', $video->extension()->value());
-        $this->assertSame(VideoStatus::UPLOADED, $video->status());
         $this->assertSame('00000000-0000-4000-8000-000000000042', $video->userId()->toRfc4122());
     }
 

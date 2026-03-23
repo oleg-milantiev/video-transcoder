@@ -9,7 +9,6 @@ use App\Application\DTO\TaskInfoDTO;
 use App\Application\DTO\VideoDetailsDTO;
 use App\Domain\Video\Entity\Video;
 use App\Domain\Video\ValueObject\FileExtension;
-use App\Domain\Video\ValueObject\VideoStatus;
 use App\Domain\Video\ValueObject\VideoTitle;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Uid\UuidV4;
@@ -27,7 +26,6 @@ class VideoDetailsDTOTest extends TestCase
         $video = Video::reconstitute(
             new VideoTitle('Detailed Video'),
             new FileExtension('mov'),
-            VideoStatus::UPLOADED,
             UuidV4::fromString('123e4567-e89b-42d3-a456-426614174007'),
             $meta,
             \App\Domain\Video\ValueObject\VideoDates::create(new \DateTimeImmutable('2026-03-18 08:45:00')),
@@ -45,7 +43,6 @@ class VideoDetailsDTOTest extends TestCase
         $this->assertSame($uuid->toRfc4122(), $dto->id);
         $this->assertSame('Detailed Video', $dto->title);
         $this->assertSame('mov', $dto->extension);
-        $this->assertSame('UPLOADED', $dto->status);
         $this->assertSame('2026-03-18 08:45', $dto->createdAt);
         $this->assertNull($dto->updatedAt);
         $this->assertSame('123e4567-e89b-42d3-a456-426614174007', $dto->userId);

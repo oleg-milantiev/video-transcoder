@@ -9,7 +9,6 @@ use App\Domain\Video\Entity\Task;
 use App\Domain\Video\Entity\Video;
 use App\Domain\Video\ValueObject\FileExtension;
 use App\Domain\Video\ValueObject\VideoDates;
-use App\Domain\Video\ValueObject\VideoStatus;
 use App\Domain\Video\ValueObject\VideoTitle;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Uid\UuidV4;
@@ -22,7 +21,6 @@ final class FlashNotificationFactoryTest extends TestCase
         $video = Video::reconstitute(
             title: new VideoTitle('Clip'),
             extension: new FileExtension('mp4'),
-            status: VideoStatus::UPLOADED,
             userId: UuidV4::fromString('123e4567-e89b-42d3-a456-426614174501'),
             meta: [],
             dates: VideoDates::create(),

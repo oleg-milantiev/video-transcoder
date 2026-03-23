@@ -128,8 +128,6 @@ export function renderVideoDetails(vm) {
                     h('dd', { class: 'col-sm-9' }, vm.dto.title),
                     h('dt', { class: 'col-sm-3' }, 'Extension'),
                     h('dd', { class: 'col-sm-9' }, vm.dto.extension),
-                    h('dt', { class: 'col-sm-3' }, 'Status'),
-                    h('dd', { class: 'col-sm-9' }, vm.dto.status),
                     h('dt', { class: 'col-sm-3' }, 'Created At'),
                     h('dd', { class: 'col-sm-9' }, vm.dto.createdAt),
                     h('dt', { class: 'col-sm-3' }, 'Updated At'),

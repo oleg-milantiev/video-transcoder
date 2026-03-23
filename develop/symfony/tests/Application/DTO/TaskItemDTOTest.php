@@ -16,7 +16,6 @@ use App\Domain\Video\ValueObject\Resolution;
 use App\Domain\Video\ValueObject\TaskStatus;
 use App\Domain\Video\ValueObject\TaskDates;
 use App\Domain\Video\ValueObject\VideoDates;
-use App\Domain\Video\ValueObject\VideoStatus;
 use App\Domain\Video\ValueObject\VideoTitle;
 use App\Domain\Video\ValueObject\FileExtension;
 use PHPUnit\Framework\TestCase;
@@ -30,7 +29,6 @@ class TaskItemDTOTest extends TestCase
         $video = Video::reconstitute(
             new VideoTitle('Task Source Video'),
             new FileExtension('mkv'),
-            VideoStatus::UPLOADED,
             UuidV4::fromString('99999999-9999-4999-8999-999999999999'),
             [],
             VideoDates::create(new \DateTimeImmutable('2026-03-18 09:00:00')),

@@ -21,7 +21,6 @@ use App\Domain\Video\ValueObject\Codec;
 use App\Domain\Video\ValueObject\FileExtension;
 use App\Domain\Video\ValueObject\PresetTitle;
 use App\Domain\Video\ValueObject\Resolution;
-use App\Domain\Video\ValueObject\VideoStatus;
 use App\Domain\Video\ValueObject\VideoTitle;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Messenger\Envelope;
@@ -127,7 +126,6 @@ class TranscodeTaskPreparationServiceTest extends TestCase
         return Video::reconstitute(
             title: new VideoTitle('Clip'),
             extension: new FileExtension('mp4'),
-            status: VideoStatus::UPLOADED,
             userId: UuidV4::fromString('123e4567-e89b-42d3-a456-426614174007'),
             meta: ['duration' => $duration],
             dates: VideoDates::create(),

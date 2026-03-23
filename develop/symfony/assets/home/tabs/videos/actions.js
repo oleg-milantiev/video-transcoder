@@ -100,7 +100,6 @@ export function createVideosTabActions(params) {
 
             return {
                 ...video,
-                status: typeof payload.status === 'string' ? payload.status : video.status,
                 poster: typeof payload.poster === 'string' ? payload.poster : video.poster,
                 meta: payload.meta || video.meta,
                 updatedAt: payload.updatedAt || video.updatedAt,
