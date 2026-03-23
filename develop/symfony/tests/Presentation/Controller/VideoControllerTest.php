@@ -41,9 +41,12 @@ final class VideoControllerTest extends WebTestCase
         self::assertSame('video-user@example.com', $spaRoot->attr('data-user-identifier'));
         self::assertSame('00000000-0000-4000-8000-000000000201', $spaRoot->attr('data-user-id'));
         self::assertNotSame('', (string) $spaRoot->attr('data-api-bearer-token'));
-        self::assertSame('http://yc.local:8080/.well-known/mercure', $spaRoot->attr('data-mercure-hub-url'));
-        // TODO use env
-        self::assertSame('http://yc.local/user/00000000-0000-4000-8000-000000000201', $spaRoot->attr('data-mercure-topic'));
+
+        $expectedHub = getenv('MERCURE_PUBLIC_URL') ?: (getenv('DEFAULT_URI') . ':8080/.well-known/mercure');
+        $expectedTopicPrefix = getenv('MERCURE_TOPIC_PREFIX') ?: (getenv('DEFAULT_URI') . '/user');
+
+        self::assertSame($expectedHub, $spaRoot->attr('data-mercure-hub-url'));
+        self::assertSame($expectedTopicPrefix . '/' . (string) $user->id, $spaRoot->attr('data-mercure-topic'));
         self::assertNotSame('', (string) $spaRoot->attr('data-mercure-subscriber-token'));
         self::assertSame('/api/video/__UUID__', $spaRoot->attr('data-api-video-details-url-template'));
         self::assertSame('/api/video/__UUID__/transcode/__PRESET_ID__', $spaRoot->attr('data-api-video-transcode-url-template'));
