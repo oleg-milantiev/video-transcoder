@@ -15,6 +15,7 @@ final readonly class MercureMessageDTO
         public string $action,
         public string $entity,
         public UuidV4 $id,
+        public UuidV4 $userId,
         public ?array $payload = null,
     ) {
     }

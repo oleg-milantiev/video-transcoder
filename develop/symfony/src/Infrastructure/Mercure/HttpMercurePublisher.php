@@ -20,7 +20,7 @@ final readonly class HttpMercurePublisher implements MercurePublisherInterface
 
     public function publish(MercureMessageDTO $message): void
     {
-        $topic = $this->mercureTokenService->createUserTopic($message->id);
+        $topic = $this->mercureTokenService->createUserTopic($message->userId);
         $publisherToken = $this->mercureTokenService->createPublisherTokenForTopic($topic);
 
         $data = [

@@ -39,7 +39,8 @@ final readonly class VideoRealtimeNotifier
         $this->commandBus->dispatch(new PublishMercureMessage(new MercureMessageDTO(
             action: $action,
             entity: 'video',
-            id: $video->userId(),
+            id: $video->id(),
+            userId: $video->userId(),
             payload: $payload,
         )));
     }
