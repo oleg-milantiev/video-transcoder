@@ -9,6 +9,8 @@ use App\Application\CommandHandler\Video\CreateVideoPreviewHandler;
 use App\Application\Event\CreateVideoPreviewFail;
 use App\Application\Event\CreateVideoPreviewStart;
 use App\Application\Event\CreateVideoPreviewSuccess;
+use App\Application\Command\Mercure\PublishMercureMessage;
+use App\Application\Service\Video\VideoRealtimeNotifier;
 use App\Domain\Video\ValueObject\VideoDates;
 use Psr\Log\LogLevel;
 use App\Application\Logging\LogServiceInterface;
@@ -66,7 +68,14 @@ class CreateVideoPreviewHandlerTest extends TestCase
 
         $generator = new VideoPreviewGenerator($processRunner);
 
-        $handler = new CreateVideoPreviewHandler($storage, $eventBus, $logService, $videoRepository, $generator);
+        $notifierCommandBus = $this->createMock(MessageBusInterface::class);
+        $notifierCommandBus->expects($this->once())
+            ->method('dispatch')
+            ->with($this->isInstanceOf(PublishMercureMessage::class))
+            ->willReturnCallback(static fn (object $message): Envelope => new Envelope($message));
+        $notifier = new VideoRealtimeNotifier($notifierCommandBus);
+
+        $handler = new CreateVideoPreviewHandler($storage, $eventBus, $logService, $videoRepository, $notifier, $generator);
         $handler(new CreateVideoPreview($video));
 
         $this->assertSame([
@@ -103,7 +112,11 @@ class CreateVideoPreviewHandlerTest extends TestCase
 
         $generator = new VideoPreviewGenerator($processRunner);
 
-        $handler = new CreateVideoPreviewHandler($storage, $eventBus, $logService, $videoRepository, $generator);
+        $notifierCommandBus = $this->createMock(MessageBusInterface::class);
+        $notifierCommandBus->expects($this->never())->method('dispatch');
+        $notifier = new VideoRealtimeNotifier($notifierCommandBus);
+
+        $handler = new CreateVideoPreviewHandler($storage, $eventBus, $logService, $videoRepository, $notifier, $generator);
 
         $this->expectException(VideoPreviewGenerationFailed::class);
 

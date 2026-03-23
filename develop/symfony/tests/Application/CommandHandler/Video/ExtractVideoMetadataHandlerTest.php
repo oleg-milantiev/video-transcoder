@@ -7,9 +7,11 @@ namespace App\Tests\Application\CommandHandler\Video;
 use App\Application\Command\Video\CreateVideoPreview;
 use App\Application\Command\Video\ExtractVideoMetadata;
 use App\Application\CommandHandler\Video\ExtractVideoMetadataHandler;
+use App\Application\Command\Mercure\PublishMercureMessage;
 use App\Application\Event\ExtractVideoMetadataFail;
 use App\Application\Event\ExtractVideoMetadataStart;
 use App\Application\Event\ExtractVideoMetadataSuccess;
+use App\Application\Service\Video\VideoRealtimeNotifier;
 use App\Domain\Video\ValueObject\VideoDates;
 use Psr\Log\LogLevel;
 use App\Application\Logging\LogServiceInterface;
@@ -89,12 +91,20 @@ class ExtractVideoMetadataHandlerTest extends TestCase
             ->method('log')
             ->with('video', $video->id(), LogLevel::INFO, 'Metadata extracted');
 
+        $notifierCommandBus = $this->createMock(MessageBusInterface::class);
+        $notifierCommandBus->expects($this->once())
+            ->method('dispatch')
+            ->with($this->isInstanceOf(PublishMercureMessage::class))
+            ->willReturnCallback(static fn (object $message): Envelope => new Envelope($message));
+        $notifier = new VideoRealtimeNotifier($notifierCommandBus);
+
         $handler = new ExtractVideoMetadataHandler(
             $videoRepository,
             $storage,
             $commandBus,
             $eventBus,
             $extractor,
+            $notifier,
             $logService,
             $this->createStub(LoggerInterface::class),
         );
@@ -138,12 +148,17 @@ class ExtractVideoMetadataHandlerTest extends TestCase
             ->method('log')
             ->with('video', $video->id(), LogLevel::ERROR, 'Metadata extraction error', ['message' => 'ffprobe timeout']);
 
+        $notifierCommandBus = $this->createMock(MessageBusInterface::class);
+        $notifierCommandBus->expects($this->never())->method('dispatch');
+        $notifier = new VideoRealtimeNotifier($notifierCommandBus);
+
         $handler = new ExtractVideoMetadataHandler(
             $videoRepository,
             $storage,
             $commandBus,
             $eventBus,
             $extractor,
+            $notifier,
             $logService,
             $this->createStub(LoggerInterface::class),
         );
