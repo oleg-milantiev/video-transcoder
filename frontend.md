@@ -98,3 +98,35 @@
 - QUERY_FAILED
 - INTERNAL_ERROR
 
+
+## app:flash уведомления
+
+Во frontend добавлен глобальный listener на `window` событие `app:flash`.
+
+- Реализация: `develop/symfony/assets/flash/bindFlashNotifications.js`
+- Плагин: `SweetAlert2` в режиме toast
+- Поддержка: HTML в тексте, ссылки, оформление, картинка (`imageUrl`)
+
+Минимальный пример:
+
+```js
+window.dispatchEvent(new CustomEvent('app:flash', {
+  detail: {
+    level: 'success',
+    title: 'Видео готово',
+    html: 'Файл собран. <a href="/download/123">Скачать</a>',
+    imageUrl: '/uploads/previews/123.jpg',
+    timer: 7000,
+    position: 'top-end'
+  }
+}));
+```
+
+Поддерживаемые поля `detail`:
+
+- `level` (`success|info|warning|error|danger`)
+- `title`
+- `html` (или `message`/`text`)
+- `imageUrl` (или `image`), `imageAlt`
+- `timer` (мс)
+- `position` (например `top-end`)

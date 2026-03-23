@@ -61,4 +61,7 @@ return [
     'birpc' => [
         'version' => '4.0.0',
     ],
+    'sweetalert2' => [
+        'version' => '11.26.3',
+    ],
 ];

@@ -8,6 +8,7 @@ use App\Application\DTO\VideoItemDTO;
 use App\Application\Event\CreateVideoFail;
 use App\Application\Event\CreateVideoStart;
 use App\Application\Event\CreateVideoSuccess;
+use App\Application\Factory\FlashNotificationFactory;
 use App\Application\Factory\VideoFactory;
 use App\Application\Service\Video\VideoRealtimeNotifier;
 use Psr\Log\LogLevel;
@@ -32,6 +33,7 @@ final readonly class CreateVideoHandler
         private LogServiceInterface $logService,
         private StorageInterface $storage,
         private VideoFactory $videoFactory,
+        private FlashNotificationFactory $flashNotificationFactory,
     ) {
     }
 
@@ -60,7 +62,9 @@ final readonly class CreateVideoHandler
                 'file' => $command->file()->details(),
             ]);
 
-            $this->notifier->notifyVideoUpdated($video, 'uploaded');
+            $this->notifier->notifyVideoUpdated($video, 'uploaded', [
+                'notification' => $this->flashNotificationFactory->uploadCompleted($video)->toArray(),
+            ]);
 
             $this->commandBus->dispatch(new ExtractVideoMetadata($video));
             $this->eventBus->dispatch(new CreateVideoSuccess(

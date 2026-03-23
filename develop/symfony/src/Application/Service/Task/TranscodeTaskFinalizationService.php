@@ -3,6 +3,7 @@
 namespace App\Application\Service\Task;
 
 use App\Application\DTO\TranscodeReportDTO;
+use App\Application\Factory\FlashNotificationFactory;
 use Psr\Log\LogLevel;
 use App\Application\Logging\LogServiceInterface;
 use App\Domain\Video\Entity\Task;
@@ -17,6 +18,7 @@ final readonly class TranscodeTaskFinalizationService
         private TaskRepositoryInterface $taskRepository,
         private LogServiceInterface $logService,
         private TaskRealtimeNotifier $taskRealtimeNotifier,
+        private FlashNotificationFactory $flashNotificationFactory,
         private TaskCancellationTrigger $cancellationTrigger,
     ) {
     }
@@ -54,7 +56,9 @@ final readonly class TranscodeTaskFinalizationService
 
         $this->taskRepository->save($task);
         $this->logService->log('task', $task->id(), LogLevel::INFO, 'Transcoding finished successfully');
-        $this->taskRealtimeNotifier->notifyTaskUpdated($task, 'completed');
+        $this->taskRealtimeNotifier->notifyTaskUpdated($task, 'completed', [
+            'notification' => $this->flashNotificationFactory->transcodeCompleted($task)->toArray(),
+        ]);
         $this->cancellationTrigger->clear($task->id());
     }
 
@@ -65,6 +69,7 @@ final readonly class TranscodeTaskFinalizationService
             $this->taskRepository->save($task);
             $this->taskRealtimeNotifier->notifyTaskUpdated($task, 'failed', [
                 'error' => $exception->getMessage(),
+                'notification' => $this->flashNotificationFactory->transcodeFailed($task, $exception)->toArray(),
             ]);
         }
 

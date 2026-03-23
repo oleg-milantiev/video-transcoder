@@ -6,6 +6,7 @@ namespace App\Tests\Application\Service\Task;
 
 use App\Application\DTO\TranscodeProcessReportDTO;
 use App\Application\DTO\TranscodeReportDTO;
+use App\Application\Factory\FlashNotificationFactory;
 use Psr\Log\LogLevel;
 use App\Application\Logging\LogServiceInterface;
 use App\Application\Service\Task\TaskRealtimeNotifier;
@@ -59,7 +60,7 @@ class TranscodeTaskFinalizationServiceTest extends TestCase
             ->willReturn(new Envelope(new \stdClass()));
         $taskRealtimeNotifier = new TaskRealtimeNotifier($commandBus);
 
-        $service = new TranscodeTaskFinalizationService($taskRepository, $logService, $taskRealtimeNotifier, $cancellationTrigger);
+        $service = new TranscodeTaskFinalizationService($taskRepository, $logService, $taskRealtimeNotifier, new FlashNotificationFactory(), $cancellationTrigger);
         $service->handleCancellation($originalTask, $report);
 
         $this->assertFalse($cancellationTrigger->isRequested($taskId));
@@ -99,7 +100,7 @@ class TranscodeTaskFinalizationServiceTest extends TestCase
             ->willReturn(new Envelope(new \stdClass()));
         $taskRealtimeNotifier = new TaskRealtimeNotifier($commandBus);
 
-        $service = new TranscodeTaskFinalizationService($taskRepository, $logService, $taskRealtimeNotifier, $cancellationTrigger);
+        $service = new TranscodeTaskFinalizationService($taskRepository, $logService, $taskRealtimeNotifier, new FlashNotificationFactory(), $cancellationTrigger);
         $service->handleSuccess($task, 'video/11.mp4', $report);
 
         $this->assertFalse($cancellationTrigger->isRequested($taskId));
@@ -126,7 +127,7 @@ class TranscodeTaskFinalizationServiceTest extends TestCase
             ->willReturn(new Envelope(new \stdClass()));
         $taskRealtimeNotifier = new TaskRealtimeNotifier($commandBus);
 
-        $service = new TranscodeTaskFinalizationService($taskRepository, $logService, $taskRealtimeNotifier, new TaskCancellationTrigger(new ArrayAdapter()));
+        $service = new TranscodeTaskFinalizationService($taskRepository, $logService, $taskRealtimeNotifier, new FlashNotificationFactory(), new TaskCancellationTrigger(new ArrayAdapter()));
         $service->handleFailure($task, new \RuntimeException('boom'));
     }
 

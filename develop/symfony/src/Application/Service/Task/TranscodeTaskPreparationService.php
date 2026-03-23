@@ -3,6 +3,7 @@
 namespace App\Application\Service\Task;
 
 use App\Application\DTO\TranscodeStartContextDTO;
+use App\Application\Factory\FlashNotificationFactory;
 use Psr\Log\LogLevel;
 use App\Application\Logging\LogServiceInterface;
 use App\Domain\Video\Entity\Task;
@@ -19,6 +20,7 @@ final readonly class TranscodeTaskPreparationService
         private TaskRepositoryInterface $taskRepository,
         private LogServiceInterface $logService,
         private TaskRealtimeNotifier $taskRealtimeNotifier,
+        private FlashNotificationFactory $flashNotificationFactory,
         private StorageInterface $storage,
         private Filesystem $filesystem,
     ) {
@@ -40,7 +42,9 @@ final readonly class TranscodeTaskPreparationService
         $task->start($video->duration());
         $this->taskRepository->save($task);
         $this->logService->log('task', $task->id(), LogLevel::INFO, 'Transcoding started');
-        $this->taskRealtimeNotifier->notifyTaskUpdated($task, 'started');
+        $this->taskRealtimeNotifier->notifyTaskUpdated($task, 'started', [
+            'notification' => $this->flashNotificationFactory->transcodeStarted($task)->toArray(),
+        ]);
 
         $inputPath = $this->storage->getAbsolutePath($video->getSrcFilename());
 
