@@ -9,6 +9,7 @@ use App\Application\Event\CreateVideoFail;
 use App\Application\Event\CreateVideoStart;
 use App\Application\Event\CreateVideoSuccess;
 use App\Application\Factory\VideoFactory;
+use App\Application\Service\Video\VideoRealtimeNotifier;
 use Psr\Log\LogLevel;
 use App\Application\Logging\LogServiceInterface;
 use App\Domain\Video\Repository\VideoRepositoryInterface;
@@ -27,6 +28,7 @@ final readonly class CreateVideoHandler
         #[Autowire(service: 'messenger.bus.event')]
         private MessageBusInterface $eventBus,
         private VideoRepositoryInterface $videoRepository,
+        private VideoRealtimeNotifier $notifier,
         private LogServiceInterface $logService,
         private StorageInterface $storage,
         private VideoFactory $videoFactory,
@@ -57,6 +59,8 @@ final readonly class CreateVideoHandler
                 'videoId' => $video->id()?->toRfc4122(),
                 'file' => $command->file()->details(),
             ]);
+
+            $this->notifier->notifyVideoUpdated($video, 'uploaded');
 
             $this->commandBus->dispatch(new ExtractVideoMetadata($video));
             $this->eventBus->dispatch(new CreateVideoSuccess(

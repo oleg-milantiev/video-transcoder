@@ -53,6 +53,22 @@ export function connectMercure(config, rootElement) {
     eventSource.onmessage = function (event) {
         const payload = parseEventData(event.data);
         emitRealtimeMessage(payload);
+
+        // additional app-level events
+        try {
+            if (payload && typeof payload === 'object') {
+                if (payload.entity === 'video') {
+                    window.dispatchEvent(new CustomEvent('app:video', { detail: payload }));
+                }
+
+                if (payload.payload && payload.payload.notification) {
+                    window.dispatchEvent(new CustomEvent('app:flash', { detail: payload.payload.notification }));
+                }
+            }
+        } catch (e) {
+            // ignore
+        }
+
         console.log('[mercure] message', payload);
     };
 

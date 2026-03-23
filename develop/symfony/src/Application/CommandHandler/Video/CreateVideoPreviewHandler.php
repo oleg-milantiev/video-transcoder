@@ -6,6 +6,7 @@ use App\Application\Command\Video\CreateVideoPreview;
 use App\Application\Event\CreateVideoPreviewFail;
 use App\Application\Event\CreateVideoPreviewStart;
 use App\Application\Event\CreateVideoPreviewSuccess;
+use App\Application\Service\Video\VideoRealtimeNotifier;
 use Psr\Log\LogLevel;
 use App\Application\Logging\LogServiceInterface;
 use App\Domain\Video\Exception\VideoPreviewGenerationFailed;
@@ -25,6 +26,7 @@ final readonly class CreateVideoPreviewHandler
         private MessageBusInterface $eventBus,
         private LogServiceInterface $logService,
         private VideoRepositoryInterface $videoRepository,
+        private VideoRealtimeNotifier $notifier,
         private VideoPreviewGenerator $videoPreviewGenerator,
     ) {
     }
@@ -48,6 +50,7 @@ final readonly class CreateVideoPreviewHandler
             $this->videoRepository->save($video);
 
             $this->logService->log('video', $video->id(), LogLevel::INFO, 'Preview Created');
+            $this->notifier->notifyVideoUpdated($video, 'preview');
 
             $this->eventBus->dispatch(new CreateVideoPreviewSuccess($videoId));
         } catch (\Exception $e) {

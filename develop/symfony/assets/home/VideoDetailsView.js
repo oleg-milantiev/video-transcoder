@@ -73,50 +73,70 @@ export function createVideoDetailsView(config) {
             const authHeaders = createAuthHeaders(config.apiBearerToken || null);
             const onMercureMessage = function (event) {
                 const message = event.detail;
-                if (!isTaskMessage(message) || !dto.value) {
+                if (!message || typeof message !== 'object' || !dto.value) {
                     return;
                 }
 
-                const update = message.payload;
-                if (typeof update.videoId === 'string' && update.videoId !== dto.value.id) {
-                    return;
-                }
-
-                const taskId = typeof update.taskId === 'string' ? update.taskId : '';
-                const presetId = typeof update.presetId === 'string' ? update.presetId : '';
-
-                const nextPresets = (dto.value.presetsWithTasks || []).map((preset) => {
-                    const task = preset.task;
-                    const sameTask = taskId && task && String(task.id) === taskId;
-                    const samePreset = presetId && String(preset.id) === presetId;
-
-                    if (!sameTask && !samePreset) {
-                        return preset;
+                // task updates
+                if (isTaskMessage(message)) {
+                    const update = message.payload;
+                    if (typeof update.videoId === 'string' && update.videoId !== dto.value.id) {
+                        return;
                     }
 
-                    const currentTask = task || {
-                        id: taskId || null,
-                        status: 'PENDING',
-                        progress: 0,
-                        createdAt: typeof update.createdAt === 'string' ? update.createdAt : '-',
+                    const taskId = typeof update.taskId === 'string' ? update.taskId : '';
+                    const presetId = typeof update.presetId === 'string' ? update.presetId : '';
+
+                    const nextPresets = (dto.value.presetsWithTasks || []).map((preset) => {
+                        const task = preset.task;
+                        const sameTask = taskId && task && String(task.id) === taskId;
+                        const samePreset = presetId && String(preset.id) === presetId;
+
+                        if (!sameTask && !samePreset) {
+                            return preset;
+                        }
+
+                        const currentTask = task || {
+                            id: taskId || null,
+                            status: 'PENDING',
+                            progress: 0,
+                            createdAt: typeof update.createdAt === 'string' ? update.createdAt : '-',
+                        };
+
+                        return {
+                            ...preset,
+                            task: {
+                                ...currentTask,
+                                id: taskId || currentTask.id || null,
+                                status: typeof update.status === 'string' ? update.status : currentTask.status,
+                                progress: toInt(update.progress, currentTask.progress),
+                                createdAt: typeof update.createdAt === 'string' ? update.createdAt : currentTask.createdAt,
+                            },
+                        };
+                    });
+
+                    dto.value = {
+                        ...dto.value,
+                        presetsWithTasks: nextPresets,
                     };
 
-                    return {
-                        ...preset,
-                        task: {
-                            ...currentTask,
-                            id: taskId || currentTask.id || null,
-                            status: typeof update.status === 'string' ? update.status : currentTask.status,
-                            progress: toInt(update.progress, currentTask.progress),
-                            createdAt: typeof update.createdAt === 'string' ? update.createdAt : currentTask.createdAt,
-                        },
-                    };
-                });
+                    return;
+                }
 
-                dto.value = {
-                    ...dto.value,
-                    presetsWithTasks: nextPresets,
-                };
+                // video updates
+                if (message.entity === 'video') {
+                    const payload = message.payload || {};
+                    if (typeof payload.videoId === 'string' && payload.videoId !== dto.value.id) {
+                        return;
+                    }
+
+                    dto.value = {
+                        ...dto.value,
+                        poster: typeof payload.poster === 'string' ? payload.poster : dto.value.poster,
+                        meta: payload.meta || dto.value.meta,
+                        updatedAt: payload.updatedAt || dto.value.updatedAt,
+                    };
+                }
             };
 
             const uuid = computed(() => {
@@ -355,11 +375,15 @@ export function createVideoDetailsView(config) {
                         ]),
                     ]),
                 ]),
-                h('h5', { class: 'mb-2' }, 'Presets'),
-                h('table', { class: 'table table-bordered align-middle mb-4' }, [
-                    h('thead', [h('tr', [h('th', 'Preset'), h('th', 'Status'), h('th', 'Progress'), h('th', 'Created'), h('th', 'Actions')])]),
-                    h('tbody', rows.length > 0 ? rows : [h('tr', [h('td', { colspan: '5', class: 'text-muted text-center' }, 'No presets')])]),
-                ]),
+                (this.dto.poster && Object.keys(this.dto.meta || {}).length > 0)
+                    ? h('div', {}, [
+                        h('h5', { class: 'mb-2' }, 'Presets'),
+                        h('table', { class: 'table table-bordered align-middle mb-4' }, [
+                            h('thead', [h('tr', [h('th', 'Preset'), h('th', 'Status'), h('th', 'Progress'), h('th', 'Created'), h('th', 'Actions')])]),
+                            h('tbody', rows.length > 0 ? rows : [h('tr', [h('td', { colspan: '5', class: 'text-muted text-center' }, 'No presets')])]),
+                        ]),
+                    ])
+                    : h('div', { class: 'mb-4 text-muted' }, 'Presets will be available when poster and metadata are ready.'),
                 h('h5', { class: 'mb-2' }, 'Meta'),
                 h(
                     'ul',

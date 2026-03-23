@@ -109,6 +109,34 @@ export function createHomeTabsView(config) {
                 });
             };
 
+            const onVideoMessage = function (event) {
+                const message = event.detail;
+                if (!message || typeof message !== 'object' || message.entity !== 'video') {
+                    return;
+                }
+
+                const payload = message.payload || {};
+                const videoId = typeof payload.videoId === 'string' ? payload.videoId : '';
+                if (!videoId) {
+                    return;
+                }
+
+                // update list item if present
+                videos.value = videos.value.map((video) => {
+                    if (String(video.id || video.uuid) !== videoId && String(video.uuid || video.id) !== videoId) {
+                        return video;
+                    }
+
+                    return {
+                        ...video,
+                        status: typeof payload.status === 'string' ? payload.status : video.status,
+                        poster: typeof payload.poster === 'string' ? payload.poster : video.poster,
+                        meta: payload.meta || video.meta,
+                        updatedAt: payload.updatedAt || video.updatedAt,
+                    };
+                });
+            };
+
             async function fetchList(url, page, limit) {
                 const response = await fetch(buildPageUrl(url, page, limit), {
                     method: 'GET',
@@ -222,11 +250,13 @@ export function createHomeTabsView(config) {
                 ensureTabDataLoaded(initialTab);
                 syncTabToRoute(initialTab);
                 window.addEventListener('mercure:message', onMercureMessage);
+                window.addEventListener('app:video', onVideoMessage);
             });
 
             onBeforeUnmount(function () {
                 cleanup();
                 window.removeEventListener('mercure:message', onMercureMessage);
+                window.removeEventListener('app:video', onVideoMessage);
             });
 
             function setTab(tab) {

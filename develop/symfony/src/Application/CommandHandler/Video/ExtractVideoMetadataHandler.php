@@ -7,6 +7,7 @@ use App\Application\Command\Video\ExtractVideoMetadata;
 use App\Application\Event\ExtractVideoMetadataFail;
 use App\Application\Event\ExtractVideoMetadataStart;
 use App\Application\Event\ExtractVideoMetadataSuccess;
+use App\Application\Service\Video\VideoRealtimeNotifier;
 use Psr\Log\LogLevel;
 use App\Application\Logging\LogServiceInterface;
 use App\Domain\Video\Exception\VideoMetadataExtractionFailed;
@@ -30,6 +31,7 @@ final readonly class ExtractVideoMetadataHandler
         #[Autowire(service: 'messenger.bus.event')]
         private MessageBusInterface $eventBus,
         private VideoMetadataExtractor $videoMetadataExtractor,
+        private VideoRealtimeNotifier $notifier,
         private LogServiceInterface $logService,
         private LoggerInterface $logger,
     ) {
@@ -56,6 +58,7 @@ final readonly class ExtractVideoMetadataHandler
             $this->videoRepository->save($video);
 
             $this->logService->log('video', $video->id(), LogLevel::INFO, 'Metadata extracted');
+            $this->notifier->notifyVideoUpdated($video, 'meta');
 
             $this->commandBus->dispatch(new CreateVideoPreview($video));
             $this->eventBus->dispatch(new ExtractVideoMetadataSuccess($videoId));
