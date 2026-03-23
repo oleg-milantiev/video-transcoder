@@ -1,0 +1,79 @@
+import { h } from 'vue';
+
+function renderPoster(video) {
+    if (video.poster) {
+        return h('img', {
+            src: '/uploads/' + video.poster,
+            alt: 'poster',
+            style: 'width:120px;max-width:100%;height:auto;object-fit:cover;border-radius:6px;',
+        });
+    }
+
+    return h(
+        'div',
+        {
+            style: 'width:120px;height:68px;background:#eee;display:flex;align-items:center;justify-content:center;color:#aaa;font-size:12px;border-radius:6px;',
+        },
+        'No poster'
+    );
+}
+
+export function renderVideosPane(vm, paneClass) {
+    return h('div', { class: paneClass }, [
+        vm.videosError ? h('div', { class: 'alert alert-danger' }, vm.videosError) : null,
+        vm.videosLoading ? h('p', { class: 'mb-2 text-muted' }, 'Loading videos...') : null,
+        h('table', { id: 'videosTable', class: 'table table-striped w-100 align-middle' }, [
+            h('thead', [
+                h('tr', [h('th', 'Poster'), h('th', 'Name'), h('th', 'Status'), h('th', 'Created')]),
+            ]),
+            h(
+                'tbody',
+                vm.videos.length > 0
+                    ? vm.videos.map((video) =>
+                          h(
+                              'tr',
+                              {
+                                  style: 'cursor:pointer;',
+                                  onClick: () => vm.openVideoDetails(video.uuid),
+                              },
+                              [
+                                  h('td', [renderPoster(video)]),
+                                  h('td', video.title || '-'),
+                                  h('td', video.status || '-'),
+                                  h('td', video.createdAt || '-'),
+                              ]
+                          )
+                      )
+                    : [h('tr', [h('td', { colspan: '4', class: 'text-muted text-center' }, 'No videos')])]
+            ),
+        ]),
+        h('div', { class: 'd-flex justify-content-between align-items-center' }, [
+            h(
+                'button',
+                {
+                    type: 'button',
+                    class: 'btn btn-outline-secondary btn-sm',
+                    disabled: vm.videosMeta.page <= 1 || vm.videosLoading,
+                    onClick: () => vm.loadVideos(vm.videosMeta.page - 1),
+                },
+                'Prev'
+            ),
+            h(
+                'span',
+                { class: 'text-muted small' },
+                'Page ' + vm.videosMeta.page + ' / ' + vm.videosMeta.totalPages + ' (total ' + vm.videosMeta.total + ')'
+            ),
+            h(
+                'button',
+                {
+                    type: 'button',
+                    class: 'btn btn-outline-secondary btn-sm',
+                    disabled: vm.videosMeta.page >= vm.videosMeta.totalPages || vm.videosLoading,
+                    onClick: () => vm.loadVideos(vm.videosMeta.page + 1),
+                },
+                'Next'
+            ),
+        ]),
+    ]);
+}
+
