@@ -84,7 +84,7 @@ export function createHomeTabsView(config) {
             const tasksError = ref('');
             const tasksLoaded = ref(false);
             const taskActionKey = ref('');
-            const onMercureMessage = function (event) {
+            const onTaskMessage = function (event) {
                 const message = event.detail;
                 if (!isTaskMessage(message)) {
                     return;
@@ -249,13 +249,13 @@ export function createHomeTabsView(config) {
                 cleanup = initHomeLegacyWidgets(config);
                 ensureTabDataLoaded(initialTab);
                 syncTabToRoute(initialTab);
-                window.addEventListener('mercure:message', onMercureMessage);
+                window.addEventListener('app:task', onTaskMessage);
                 window.addEventListener('app:video', onVideoMessage);
             });
 
             onBeforeUnmount(function () {
                 cleanup();
-                window.removeEventListener('mercure:message', onMercureMessage);
+                window.removeEventListener('app:task', onTaskMessage);
                 window.removeEventListener('app:video', onVideoMessage);
             });
 

@@ -71,72 +71,75 @@ export function createVideoDetailsView(config) {
             const actionError = ref('');
             const activeActionKey = ref('');
             const authHeaders = createAuthHeaders(config.apiBearerToken || null);
-            const onMercureMessage = function (event) {
+            const onTaskMessage = function (event) {
+                const message = event.detail;
+                if (!isTaskMessage(message) || !dto.value) {
+                    return;
+                }
+
+                const update = message.payload;
+                if (typeof update.videoId === 'string' && update.videoId !== dto.value.id) {
+                    return;
+                }
+
+                const taskId = typeof update.taskId === 'string' ? update.taskId : '';
+                const presetId = typeof update.presetId === 'string' ? update.presetId : '';
+
+                const nextPresets = (dto.value.presetsWithTasks || []).map((preset) => {
+                    const task = preset.task;
+                    const sameTask = taskId && task && String(task.id) === taskId;
+                    const samePreset = presetId && String(preset.id) === presetId;
+
+                    if (!sameTask && !samePreset) {
+                        return preset;
+                    }
+
+                    const currentTask = task || {
+                        id: taskId || null,
+                        status: 'PENDING',
+                        progress: 0,
+                        createdAt: typeof update.createdAt === 'string' ? update.createdAt : '-',
+                    };
+
+                    return {
+                        ...preset,
+                        task: {
+                            ...currentTask,
+                            id: taskId || currentTask.id || null,
+                            status: typeof update.status === 'string' ? update.status : currentTask.status,
+                            progress: toInt(update.progress, currentTask.progress),
+                            createdAt: typeof update.createdAt === 'string' ? update.createdAt : currentTask.createdAt,
+                        },
+                    };
+                });
+
+                dto.value = {
+                    ...dto.value,
+                    presetsWithTasks: nextPresets,
+                };
+            };
+
+            const onVideoMessage = function (event) {
                 const message = event.detail;
                 if (!message || typeof message !== 'object' || !dto.value) {
                     return;
                 }
 
-                // task updates
-                if (isTaskMessage(message)) {
-                    const update = message.payload;
-                    if (typeof update.videoId === 'string' && update.videoId !== dto.value.id) {
-                        return;
-                    }
-
-                    const taskId = typeof update.taskId === 'string' ? update.taskId : '';
-                    const presetId = typeof update.presetId === 'string' ? update.presetId : '';
-
-                    const nextPresets = (dto.value.presetsWithTasks || []).map((preset) => {
-                        const task = preset.task;
-                        const sameTask = taskId && task && String(task.id) === taskId;
-                        const samePreset = presetId && String(preset.id) === presetId;
-
-                        if (!sameTask && !samePreset) {
-                            return preset;
-                        }
-
-                        const currentTask = task || {
-                            id: taskId || null,
-                            status: 'PENDING',
-                            progress: 0,
-                            createdAt: typeof update.createdAt === 'string' ? update.createdAt : '-',
-                        };
-
-                        return {
-                            ...preset,
-                            task: {
-                                ...currentTask,
-                                id: taskId || currentTask.id || null,
-                                status: typeof update.status === 'string' ? update.status : currentTask.status,
-                                progress: toInt(update.progress, currentTask.progress),
-                                createdAt: typeof update.createdAt === 'string' ? update.createdAt : currentTask.createdAt,
-                            },
-                        };
-                    });
-
-                    dto.value = {
-                        ...dto.value,
-                        presetsWithTasks: nextPresets,
-                    };
-
+                if (message.entity !== 'video') {
                     return;
                 }
 
-                // video updates
-                if (message.entity === 'video') {
-                    const payload = message.payload || {};
-                    if (typeof payload.videoId === 'string' && payload.videoId !== dto.value.id) {
-                        return;
-                    }
-
-                    dto.value = {
-                        ...dto.value,
-                        poster: typeof payload.poster === 'string' ? payload.poster : dto.value.poster,
-                        meta: payload.meta || dto.value.meta,
-                        updatedAt: payload.updatedAt || dto.value.updatedAt,
-                    };
+                const payload = message.payload || {};
+                if (typeof payload.videoId === 'string' && payload.videoId !== dto.value.id) {
+                    return;
                 }
+
+                dto.value = {
+                    ...dto.value,
+                    poster: typeof payload.poster === 'string' ? payload.poster : dto.value.poster,
+                    meta: payload.meta || dto.value.meta,
+                    updatedAt: payload.updatedAt || dto.value.updatedAt,
+                };
             };
 
             const uuid = computed(() => {
@@ -252,11 +255,13 @@ export function createVideoDetailsView(config) {
 
             onMounted(function () {
                 void loadDetails();
-                window.addEventListener('mercure:message', onMercureMessage);
+                window.addEventListener('app:task', onTaskMessage);
+                window.addEventListener('app:video', onVideoMessage);
             });
 
             onBeforeUnmount(function () {
-                window.removeEventListener('mercure:message', onMercureMessage);
+                window.removeEventListener('app:task', onTaskMessage);
+                window.removeEventListener('app:video', onVideoMessage);
             });
 
             return {
