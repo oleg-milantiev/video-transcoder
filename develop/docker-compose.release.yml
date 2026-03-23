@@ -19,7 +19,7 @@ services:
             - .env
         # todo optimize
         environment:
-            MERCURE_PUBLIC_URL: 'mercure:8080/.well-known/mercure'
+            MERCURE_PUBLIC_URL: 'http://mercure:8080/.well-known/mercure'
             MERCURE_INTERNAL_URL: 'http://mercure:8080/.well-known/mercure'
         depends_on:
             mercure:
@@ -40,7 +40,7 @@ services:
             - .env
         # todo optimize
         environment:
-            MERCURE_PUBLIC_URL: 'mercure:8080/.well-known/mercure'
+            MERCURE_PUBLIC_URL: 'http://mercure:8080/.well-known/mercure'
             MERCURE_INTERNAL_URL: 'http://mercure:8080/.well-known/mercure'
         depends_on:
             mercure:
@@ -66,7 +66,7 @@ services:
             - .env
         # todo optimize
         environment:
-            MERCURE_PUBLIC_URL: 'mercure:8080/.well-known/mercure'
+            MERCURE_PUBLIC_URL: 'http://mercure:8080/.well-known/mercure'
             MERCURE_INTERNAL_URL: 'http://mercure:8080/.well-known/mercure'
         depends_on:
             mercure:
