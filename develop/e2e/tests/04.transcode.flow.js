@@ -74,8 +74,6 @@ async function clickDownloadAndVerifyMp4(page, row) {
 }
 
 test('transcode flow from video details to downloadable mp4', async ({ page }, testInfo) => {
-    test.setTimeout(720000);
-
     const adminEmail = process.env.ADMIN_EMAIL || 'oleg@milantiev.com';
     const adminPassword = process.env.ADMIN_PASSWORD || 'admin';
     const uploadedVideoName = '2022_10_04_Two_Maxes.mp4';
@@ -90,7 +88,6 @@ test('transcode flow from video details to downloadable mp4', async ({ page }, t
     await expect(page.getByRole('button', { name: 'Videos' })).toBeVisible({ timeout: UI_TIMEOUT });
     await shot(page, testInfo, '01-login-success.png');
 
-
     // 2) Open Videos tab
     await page.getByRole('button', { name: 'Videos' }).click({ timeout: UI_TIMEOUT });
     await expect(page.locator('#videosTable')).toBeVisible({ timeout: UI_TIMEOUT });
@@ -98,7 +95,7 @@ test('transcode flow from video details to downloadable mp4', async ({ page }, t
 
     // 3) Open previously uploaded video card
     const row = videoRowByTitle(page, uploadedVideoName);
-    await expect(row).toBeVisible({ timeout: 20000 });
+    await expect(row).toBeVisible({ timeout: NAV_TIMEOUT });
     await row.click({ timeout: UI_TIMEOUT });
 
     // 4) Verify presets table + preset exists
@@ -120,7 +117,7 @@ test('transcode flow from video details to downloadable mp4', async ({ page }, t
                 const state = await readPresetTaskState(page, presetTitle);
                 return state.status;
             },
-            { timeout: 30000, intervals: [1000, 2000, 5000] }
+            { timeout: NAV_TIMEOUT, intervals: [1000, 2000, 5000] }
         )
         .toMatch(/PENDING|PROCESSING|COMPLETED/);
 
@@ -129,7 +126,7 @@ test('transcode flow from video details to downloadable mp4', async ({ page }, t
     let sawProgressIncrease = false;
     let completed = false;
 
-    for (let attempt = 1; attempt <= 90; attempt += 1) {
+    for (let attempt = 1; attempt <= 10; attempt += 1) {
         const state = await readPresetTaskState(page, presetTitle);
 
         if (prevProgress >= 0 && state.progress > prevProgress) {

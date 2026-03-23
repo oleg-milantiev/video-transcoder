@@ -100,11 +100,7 @@ async function reloadDetails(page) {
 }
 
 test('task state flow with 4k preset: progress, cancel, restart, complete', async ({ page }, testInfo) => {
-  test.setTimeout(900000);
-
   // Local timeouts for this long-flow test only.
-  uiTimeout = 12000;
-  navTimeout = 30000;
   page.setDefaultTimeout(uiTimeout);
   page.setDefaultNavigationTimeout(navTimeout);
 
@@ -141,7 +137,7 @@ test('task state flow with 4k preset: progress, cancel, restart, complete', asyn
   await expect(page.locator('#videosTable')).toBeVisible({ timeout: uiTimeout });
 
   const videoRow = videoRowByTitle(page, uploadedVideoName);
-  await expect(videoRow).toBeVisible({ timeout: 20000 });
+  await expect(videoRow).toBeVisible({ timeout: uiTimeout });
   await videoRow.click({ timeout: uiTimeout });
 
   await waitForVideoDetailsVisible(page);
@@ -154,7 +150,7 @@ test('task state flow with 4k preset: progress, cancel, restart, complete', asyn
 
   await expect
     .poll(async () => (await readPresetTaskState(page, presetTitle)).status, {
-      timeout: 60000,
+      timeout: uiTimeout,
       intervals: [1000, 2000, 5000],
     })
     .toMatch(/PENDING|PROCESSING|COMPLETED/);
@@ -164,7 +160,7 @@ test('task state flow with 4k preset: progress, cancel, restart, complete', asyn
   let sawProgressIncrease = false;
   let cancellationSent = false;
 
-  for (let attempt = 1; attempt <= 45; attempt += 1) {
+  for (let attempt = 1; attempt <= 10; attempt += 1) {
     const state = await readPresetTaskState(page, presetTitle);
 
     if (prevProgress >= 0 && state.progress > prevProgress) {
@@ -224,7 +220,7 @@ test('task state flow with 4k preset: progress, cancel, restart, complete', asyn
   let sawRestartProgressIncrease = false;
   let completed = false;
 
-  for (let attempt = 1; attempt <= 180; attempt += 1) {
+  for (let attempt = 1; attempt <= 10; attempt += 1) {
     const state = await readPresetTaskState(page, presetTitle);
 
     if (prevRestartProgress >= 0 && state.progress > prevRestartProgress) {
