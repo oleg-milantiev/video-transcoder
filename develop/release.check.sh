@@ -21,16 +21,16 @@ echo exit
 trap cleanup EXIT
 
 # build + push
-cd /root/video-transcoder/develop/docker/yc-php && ./build.sh
-cd /root/video-transcoder/develop/docker/yc-ffmpeg && ./build.sh
-cd /root/video-transcoder/develop/docker/yc-nginx && ./build.sh
+#cd /root/video-transcoder/develop/docker/yc-php && ./build.sh
+#cd /root/video-transcoder/develop/docker/yc-ffmpeg && ./build.sh
+#cd /root/video-transcoder/develop/docker/yc-nginx && ./build.sh
 
 # release test stack up (without workers)
 cd /root/video-transcoder/develop
 PROJECT_VERSION=$PROJECT_VERSION docker compose \
   -p "$PROJECT_NAME" \
   -f docker-compose.release.yml \
-  up -d --wait nginx php redis postgres playwright
+  up -d --wait nginx php redis postgres playwright mercure
 
 # change uploads permission
 docker compose -p "$PROJECT_NAME" -f docker-compose.release.yml exec -T php \
