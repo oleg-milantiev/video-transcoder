@@ -3,6 +3,10 @@ import { h } from 'vue';
 function createTaskAction(vm, preset) {
     const task = preset.task;
 
+    if (vm.dto.deleted) {
+        return '';
+    }
+
     if (!task || !task.id) {
         return h(
             'button',
@@ -116,16 +120,24 @@ export function renderVideoDetails(vm) {
         h('div', { class: 'card mb-4' }, [
             h('div', { class: 'card-body' }, [
                 vm.dto.poster
-                    ? h('img', {
-                          src: '/uploads/' + vm.dto.poster,
-                          class: 'img-fluid mb-3 rounded',
-                          alt: vm.dto.title,
-                          style: 'max-width: 520px;',
-                      })
+                    ? h('div', {}, [
+                          vm.dto.deleted === true
+                              ? h('div', { class: 'mb-2' }, [
+                                    h('span', { class: 'badge bg-warning text-dark me-2' }, 'Deleted'),
+                                    h('span', { class: 'text-muted' }, 'This video has been deleted'),
+                                ])
+                              : null,
+                          h('img', {
+                              src: '/uploads/' + vm.dto.poster,
+                              class: 'img-fluid mb-3 rounded' + (vm.dto.deleted === true ? ' video-poster--deleted' : ''),
+                              alt: vm.dto.title,
+                              style: 'max-width: 520px;',
+                          }),
+                      ])
                     : null,
                 h('dl', { class: 'row mb-0' }, [
                     h('dt', { class: 'col-sm-3' }, 'Title'),
-                    h('dd', { class: 'col-sm-9' }, vm.dto.title),
+                    h('dd', { class: 'col-sm-9' + (vm.dto.deleted === true ? ' video-title-deleted' : '') }, vm.dto.title),
                     h('dt', { class: 'col-sm-3' }, 'Extension'),
                     h('dd', { class: 'col-sm-9' }, vm.dto.extension),
                     h('dt', { class: 'col-sm-3' }, 'Created At'),

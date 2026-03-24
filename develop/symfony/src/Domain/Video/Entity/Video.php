@@ -142,13 +142,10 @@ class Video
 
     public function getPoster(): ?string
     {
-        if ($this->deleted) {
-            return null;
-        }
-
         if (($this->meta['preview'] ?? false) === true && $this->id) {
             return $this->id->toString() . '.jpg';
         }
+
         return null;
     }
 

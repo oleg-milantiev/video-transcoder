@@ -15,6 +15,7 @@ readonly class VideoDetailsDTO
         public string $userId,
         public array $meta,
         public ?string $poster,
+        public bool $deleted = false,
         /** @var PresetWithTaskDTO[] */
         public array $presetsWithTasks = [],
     ) {}
@@ -30,6 +31,7 @@ readonly class VideoDetailsDTO
             userId: $video->userId()->toRfc4122(),
             meta: self::sanitizeMeta($video->meta()),
             poster: $video->getPoster(),
+            deleted: $video->isDeleted(),
             presetsWithTasks: $presetsWithTasks,
         );
     }

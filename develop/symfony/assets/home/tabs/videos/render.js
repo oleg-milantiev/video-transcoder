@@ -2,10 +2,15 @@ import { h } from 'vue';
 
 function renderPoster(video) {
     if (video.poster) {
+        const isDeleted = video.deleted === true;
+        const style =
+            'width:120px;max-width:100%;height:auto;object-fit:cover;border-radius:6px;' +
+            (isDeleted ? 'filter:saturate(0);opacity:0.5;' : '');
+
         return h('img', {
             src: '/uploads/' + video.poster,
             alt: 'poster',
-            style: 'width:120px;max-width:100%;height:auto;object-fit:cover;border-radius:6px;',
+            style,
         });
     }
 
@@ -97,4 +102,3 @@ export function renderVideosPane(vm, paneClass) {
         ]),
     ]);
 }
-

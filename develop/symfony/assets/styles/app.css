@@ -25,3 +25,9 @@ body {
     text-decoration: line-through;
 }
 
+/* Poster appearance when a video is deleted */
+.video-poster--deleted {
+    filter: grayscale(100%);
+    opacity: 0.5;
+}
+
