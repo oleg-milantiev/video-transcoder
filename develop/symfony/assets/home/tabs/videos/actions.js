@@ -1,3 +1,5 @@
+import { createJsonAuthHeaders, extractApiErrorMessage, parseJsonResponse } from '../../shared.js';
+
 export function createVideosTabActions(params) {
     const { config, authHeader, router, videosState, pageLimit } = params;
 
@@ -87,6 +89,46 @@ export function createVideosTabActions(params) {
         void router.push(config.videoDetailsUrlTemplate.replace('__UUID__', uuid));
     }
 
+    async function deleteVideo(video) {
+        const videoId = String(video && (video.uuid || video.id) ? (video.uuid || video.id) : '');
+        if (!videoId || video.deleted === true) {
+            return;
+        }
+
+        if (!window.confirm('Delete this video?')) {
+            return;
+        }
+
+        videosState.videoDeletePending.value = {
+            ...videosState.videoDeletePending.value,
+            [videoId]: true,
+        };
+
+        try {
+            const response = await fetch(config.apiVideoDeleteUrlTemplate.replace('__UUID__', videoId), {
+                method: 'POST',
+                headers: createJsonAuthHeaders(config.apiBearerToken || null),
+            });
+
+            const payload = await parseJsonResponse(response);
+            if (!response.ok) {
+                throw new Error(extractApiErrorMessage(payload, 'Failed to delete video'));
+            }
+
+            applyVideoRealtimeUpdate({
+                videoId,
+                deleted: true,
+                updatedAt: new Date().toISOString(),
+            });
+        } catch (e) {
+            window.alert(e instanceof Error && e.message ? e.message : 'Failed to delete video');
+        } finally {
+            const nextPending = { ...videosState.videoDeletePending.value };
+            delete nextPending[videoId];
+            videosState.videoDeletePending.value = nextPending;
+        }
+    }
+
     function applyVideoRealtimeUpdate(payload) {
         const videoId = typeof payload.videoId === 'string' ? payload.videoId : '';
         if (!videoId) {
@@ -100,9 +142,10 @@ export function createVideosTabActions(params) {
 
             return {
                 ...video,
-                poster: typeof payload.poster === 'string' ? payload.poster : video.poster,
+                poster: Object.prototype.hasOwnProperty.call(payload, 'poster') ? payload.poster : video.poster,
                 meta: payload.meta || video.meta,
                 updatedAt: payload.updatedAt || video.updatedAt,
+                deleted: payload.deleted === true ? true : video.deleted === true,
             };
         });
     }
@@ -111,7 +154,7 @@ export function createVideosTabActions(params) {
         loadVideos,
         ensureVideosLoaded,
         openVideoDetails,
+        deleteVideo,
         applyVideoRealtimeUpdate,
     };
 }
-

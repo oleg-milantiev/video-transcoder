@@ -21,6 +21,7 @@ trait PaginatedRepositoryTrait
         $entities = $queryBuilder
             ->setFirstResult($limit * ($page - 1))
             ->setMaxResults($limit)
+            ->orderBy('v.deleted', 'ASC')
             ->orderBy('v.createdAt', 'DESC')
             ->getQuery()
             ->getResult();

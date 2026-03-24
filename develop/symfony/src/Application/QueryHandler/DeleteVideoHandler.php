@@ -9,6 +9,7 @@ use App\Application\Exception\TranscodeAccessDeniedException;
 use App\Application\Exception\VideoNotFoundException;
 use App\Application\Logging\LogServiceInterface;
 use App\Application\Query\DeleteVideoQuery;
+use App\Application\Service\Video\VideoRealtimeNotifier;
 use App\Domain\Video\Entity\Task;
 use App\Domain\Video\Repository\TaskRepositoryInterface;
 use App\Domain\Video\Repository\VideoRepositoryInterface;
@@ -28,6 +29,7 @@ final readonly class DeleteVideoHandler
         private VideoRepositoryInterface $videoRepository,
         private TaskRepositoryInterface $taskRepository,
         private LogServiceInterface $logService,
+        private VideoRealtimeNotifier $videoRealtimeNotifier,
         private Security $security,
     ) {
     }
@@ -39,7 +41,7 @@ final readonly class DeleteVideoHandler
             requestedByUserId: $query->requestedByUserId->toRfc4122(),
         ));
 
-        $video = $this->videoRepository->findById($query->videoId, true);
+        $video = $this->videoRepository->findById($query->videoId);
         if ($video === null) {
             $this->eventBus->dispatch(new DeleteVideoFail(
                 error: 'Video not found',
@@ -89,6 +91,9 @@ final readonly class DeleteVideoHandler
             ];
             $this->logService->log('video', $video->id(), LogLevel::INFO, 'Video marked as deleted', $context);
             $this->logService->log('user', $query->requestedByUserId, LogLevel::INFO, 'User deleted video', $context);
+            $this->videoRealtimeNotifier->notifyVideoUpdated($video, 'deleted', [
+                'deleted' => true,
+            ]);
 
             $this->eventBus->dispatch(new DeleteVideoSuccess(
                 videoId: $video->id()->toRfc4122(),

@@ -18,13 +18,33 @@ function renderPoster(video) {
     );
 }
 
+function renderDeleteButton(vm, video) {
+    const videoId = String(video && (video.uuid || video.id) ? (video.uuid || video.id) : '');
+    const isPending = vm.videoDeletePending && vm.videoDeletePending[videoId] === true;
+    const isDeleted = video.deleted === true;
+
+    return h(
+        'button',
+        {
+            type: 'button',
+            class: 'btn btn-sm btn-outline-danger',
+            disabled: isDeleted || isPending,
+            onClick: (event) => {
+                event.stopPropagation();
+                vm.deleteVideo(video);
+            },
+        },
+        isPending ? 'Deleting...' : 'Delete'
+    );
+}
+
 export function renderVideosPane(vm, paneClass) {
     return h('div', { class: paneClass }, [
         vm.videosError ? h('div', { class: 'alert alert-danger' }, vm.videosError) : null,
         vm.videosLoading ? h('p', { class: 'mb-2 text-muted' }, 'Loading videos...') : null,
         h('table', { id: 'videosTable', class: 'table table-striped w-100 align-middle' }, [
             h('thead', [
-                h('tr', [h('th', 'Poster'), h('th', 'Name'), h('th', 'Created')]),
+                h('tr', [h('th', 'Poster'), h('th', 'Name'), h('th', 'Created'), h('th', 'Actions')]),
             ]),
             h(
                 'tbody',
@@ -33,17 +53,19 @@ export function renderVideosPane(vm, paneClass) {
                           h(
                               'tr',
                               {
+                                  class: video.deleted === true ? 'video-row-deleted' : '',
                                   style: 'cursor:pointer;',
                                   onClick: () => vm.openVideoDetails(video.uuid),
                               },
                               [
                                   h('td', [renderPoster(video)]),
-                                  h('td', video.title || '-'),
+                                  h('td', { class: video.deleted === true ? 'video-title-deleted' : '' }, video.title || '-'),
                                   h('td', video.createdAt || '-'),
+                                  h('td', [renderDeleteButton(vm, video)]),
                               ]
                           )
                       )
-                    : [h('tr', [h('td', { colspan: '3', class: 'text-muted text-center' }, 'No videos')])]
+                    : [h('tr', [h('td', { colspan: '4', class: 'text-muted text-center' }, 'No videos')])]
             ),
         ]),
         h('div', { class: 'd-flex justify-content-between align-items-center' }, [

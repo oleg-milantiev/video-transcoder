@@ -31,6 +31,26 @@ class VideoItemDTOTest extends TestCase
         $this->assertSame($uuid->toRfc4122(), $dto->uuid);
         $this->assertSame('Demo Video', $dto->title);
         $this->assertSame('2026-03-18 10:15', $dto->createdAt);
+        $this->assertFalse($dto->deleted);
         $this->assertSame($uuid->toRfc4122() . '.jpg', $dto->poster);
+    }
+
+    public function testFromDomainMapsDeletedVideo(): void
+    {
+        $uuid = UuidV4::fromString('99999999-9999-4999-8999-999999999999');
+        $video = Video::reconstitute(
+            new VideoTitle('Removed Video'),
+            new FileExtension('mp4'),
+            UuidV4::fromString('42424242-4242-4242-8242-424242424242'),
+            ['preview' => true],
+            VideoDates::create(new \DateTimeImmutable('2026-03-18 10:15:00')),
+            $uuid,
+            true,
+        );
+
+        $dto = VideoItemDTO::fromDomain($video);
+
+        $this->assertTrue($dto->deleted);
+        $this->assertNull($dto->poster);
     }
 }

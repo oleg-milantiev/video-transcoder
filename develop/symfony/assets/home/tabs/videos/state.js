@@ -7,6 +7,7 @@ export function createVideosTabState(pageLimit) {
         videosLoading: ref(false),
         videosError: ref(''),
         videosLoaded: ref(false),
+        videoDeletePending: ref({}),
     };
 }
 

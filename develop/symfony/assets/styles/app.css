@@ -17,3 +17,11 @@ body {
     border-radius: 0.375rem;
 }
 
+.video-row-deleted {
+    opacity: 0.55;
+}
+
+.video-title-deleted {
+    text-decoration: line-through;
+}
+

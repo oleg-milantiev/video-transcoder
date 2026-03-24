@@ -10,6 +10,7 @@ readonly class VideoItemDTO
         public string $uuid,
         public string $title,
         public string $createdAt,
+        public bool $deleted,
         public ?string $poster = null,
     ) {}
 
@@ -20,6 +21,7 @@ readonly class VideoItemDTO
             uuid: $video->id()?->toRfc4122() ?? '',
             title: $video->title()->value(),
             createdAt: $video->createdAt()->format('Y-m-d H:i'),
+            deleted: $video->isDeleted(),
             poster: $poster !== null ? $poster : null,
         );
     }

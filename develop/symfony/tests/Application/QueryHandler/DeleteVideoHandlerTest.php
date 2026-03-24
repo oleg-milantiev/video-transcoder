@@ -12,6 +12,7 @@ use App\Application\Exception\VideoNotFoundException;
 use App\Application\Logging\LogServiceInterface;
 use App\Application\Query\DeleteVideoQuery;
 use App\Application\QueryHandler\DeleteVideoHandler;
+use App\Application\Service\Video\VideoRealtimeNotifier;
 use App\Domain\Video\Entity\Task;
 use App\Domain\Video\Entity\Video;
 use App\Domain\Video\Exception\VideoHasTranscodingTasks;
@@ -50,7 +51,7 @@ final class DeleteVideoHandlerTest extends TestCase
         $videoRepository = $this->createMock(VideoRepositoryInterface::class);
         $videoRepository->expects($this->once())
             ->method('findById')
-            ->with($videoId, true)
+            ->with($videoId)
             ->willReturn(null);
 
         $handler = new DeleteVideoHandler(
@@ -58,6 +59,7 @@ final class DeleteVideoHandlerTest extends TestCase
             $videoRepository,
             $this->createStub(TaskRepositoryInterface::class),
             $this->createStub(LogServiceInterface::class),
+            new VideoRealtimeNotifier($this->createStub(MessageBusInterface::class)),
             $this->createStub(Security::class),
         );
 
@@ -102,6 +104,7 @@ final class DeleteVideoHandlerTest extends TestCase
             $videoRepository,
             $this->createStub(TaskRepositoryInterface::class),
             $this->createStub(LogServiceInterface::class),
+            new VideoRealtimeNotifier($this->createStub(MessageBusInterface::class)),
             $security,
         );
 
@@ -145,7 +148,7 @@ final class DeleteVideoHandlerTest extends TestCase
         $videoRepository = $this->createMock(VideoRepositoryInterface::class);
         $videoRepository->expects($this->once())
             ->method('findById')
-            ->with($videoId, true)
+            ->with($videoId)
             ->willReturn($video);
         $videoRepository->expects($this->once())
             ->method('save')
@@ -163,13 +166,21 @@ final class DeleteVideoHandlerTest extends TestCase
         $logService = $this->createMock(LogServiceInterface::class);
         $logService->expects($this->exactly(2))->method('log');
 
+        $notifierCommandBus = $this->createMock(MessageBusInterface::class);
+        $notifierCommandBus->expects($this->once())
+            ->method('dispatch')
+            ->willReturnCallback(static function (object $message): Envelope {
+                return new Envelope($message);
+            });
+        $videoRealtimeNotifier = new VideoRealtimeNotifier($notifierCommandBus);
+
         $security = $this->createMock(Security::class);
         $security->expects($this->once())
             ->method('isGranted')
             ->with(VideoAccessVoter::CAN_DELETE, $video)
             ->willReturn(true);
 
-        $handler = new DeleteVideoHandler($eventBus, $videoRepository, $taskRepository, $logService, $security);
+        $handler = new DeleteVideoHandler($eventBus, $videoRepository, $taskRepository, $logService, $videoRealtimeNotifier, $security);
         $handler(new DeleteVideoQuery($videoId->toRfc4122(), $userId->toRfc4122()));
 
         $this->assertTrue($video->isDeleted());
@@ -218,6 +229,7 @@ final class DeleteVideoHandlerTest extends TestCase
             $videoRepository,
             $taskRepository,
             $this->createStub(LogServiceInterface::class),
+            new VideoRealtimeNotifier($this->createStub(MessageBusInterface::class)),
             $security,
         );
 

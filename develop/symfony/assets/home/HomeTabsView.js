@@ -124,6 +124,8 @@ export function createHomeTabsView(config) {
                 loadVideos: videosActions.loadVideos,
                 loadTasks: tasksActions.loadTasks,
                 openVideoDetails: videosActions.openVideoDetails,
+                deleteVideo: videosActions.deleteVideo,
+                videoDeletePending: videosState.videoDeletePending,
                 getTaskDownloadUrl: tasksActions.getTaskDownloadUrl,
                 cancelTask: tasksActions.cancelTask,
                 taskActionKey: tasksState.taskActionKey,

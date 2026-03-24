@@ -17,6 +17,7 @@ function readConfig(element) {
         apiTaskListUrl: element.dataset.apiTaskListUrl || '',
         apiVideoDetailsUrlTemplate: element.dataset.apiVideoDetailsUrlTemplate || '',
         apiVideoTranscodeUrlTemplate: element.dataset.apiVideoTranscodeUrlTemplate || '',
+        apiVideoDeleteUrlTemplate: element.dataset.apiVideoDeleteUrlTemplate || '',
         apiTaskCancelUrlTemplate: element.dataset.apiTaskCancelUrlTemplate || '',
         videoDetailsUrlTemplate: element.dataset.videoDetailsUrlTemplate || '',
         taskDownloadUrlTemplate: element.dataset.taskDownloadUrlTemplate || '',
