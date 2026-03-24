@@ -129,6 +129,12 @@ class Video
         return $this->meta['duration'] ?? null;
     }
 
+    public function clearSourceKey(): void
+    {
+        $this->meta['sourceKey'] = null;
+        $this->dates = $this->dates->touch();
+    }
+
     private function assertNotDeleted(): void
     {
         if ($this->deleted) {

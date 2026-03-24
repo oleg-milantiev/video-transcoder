@@ -47,7 +47,7 @@ final readonly class DeletedVideoCleanupService
         }
 
         $deleted = $this->storage->delete($sourceKey);
-        $video->updateMeta(['sourceKey' => null]);
+        $video->clearSourceKey();
         $this->videoRepository->save($video);
 
         $this->logService->log(

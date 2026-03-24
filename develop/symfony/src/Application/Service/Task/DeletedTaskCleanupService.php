@@ -74,7 +74,7 @@ final readonly class DeletedTaskCleanupService
         }
 
         $deleted = $this->storage->delete($outputKey);
-        $task->updateMeta(['output' => null]);
+        $task->clearOutput();
         $this->taskRepository->save($task);
 
         $this->logService->log(
@@ -85,7 +85,7 @@ final readonly class DeletedTaskCleanupService
             [
                 'outputKey' => $outputKey,
                 'deletedNow' => $deleted,
-                'videoId' => $task->videoId()->toRfc4122(),
+                'videoId' => $task->videoId()?->toRfc4122(),
             ],
         );
 

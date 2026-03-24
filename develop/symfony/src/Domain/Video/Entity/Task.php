@@ -250,6 +250,12 @@ class Task
         return $this->deleted || $this->status->isDeleted();
     }
 
+    public function clearOutput(): void
+    {
+        $this->meta['output'] = null;
+        $this->touch();
+    }
+
     private function touch(): void
     {
         $this->dates = $this->dates->touch();
