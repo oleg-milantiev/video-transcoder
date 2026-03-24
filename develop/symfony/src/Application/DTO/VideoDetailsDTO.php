@@ -3,6 +3,7 @@
 namespace App\Application\DTO;
 
 use App\Domain\Video\Entity\Video;
+use App\Domain\Video\Service\Storage\StorageInterface;
 
 readonly class VideoDetailsDTO
 {
@@ -20,8 +21,10 @@ readonly class VideoDetailsDTO
         public array $presetsWithTasks = [],
     ) {}
 
-    public static function fromDomain(Video $video, array $presetsWithTasks): self
+    public static function fromDomain(Video $video, array $presetsWithTasks, StorageInterface $storage): self
     {
+        $hasPreview = ($video->meta()['preview'] ?? false) === true;
+
         return new self(
             id: $video->id()->toRfc4122(),
             title: $video->title()->value(),
@@ -30,7 +33,7 @@ readonly class VideoDetailsDTO
             updatedAt: $video->updatedAt()?->format('Y-m-d H:i'),
             userId: $video->userId()->toRfc4122(),
             meta: self::sanitizeMeta($video->meta()),
-            poster: $video->getPoster(),
+            poster: $hasPreview ? $storage->publicUrl($storage->previewKey($video)) : null,
             deleted: $video->isDeleted(),
             presetsWithTasks: $presetsWithTasks,
         );

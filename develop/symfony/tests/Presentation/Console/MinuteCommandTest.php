@@ -31,10 +31,10 @@ final class MinuteCommandTest extends TestCase
             ->willReturnCallback(static fn (object $message): Envelope => new Envelope($message));
 
         $videoRepository = $this->createMock(VideoRepositoryInterface::class);
-        $videoRepository->expects($this->once())->method('findDeletedVideoForCleanup')->willReturn([]);
+        $videoRepository->expects($this->never())->method('findDeletedVideoForCleanup');
 
         $taskRepository = $this->createMock(TaskRepositoryInterface::class);
-        $taskRepository->expects($this->once())->method('findDeletedTaskForCleanup')->willReturn([]);
+        $taskRepository->expects($this->never())->method('findDeletedTaskForCleanup');
 
         $cleanupService = new DeletedMediaCleanupService(
             $videoRepository,

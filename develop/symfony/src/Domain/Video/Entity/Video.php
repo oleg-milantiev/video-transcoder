@@ -129,26 +129,6 @@ class Video
         return $this->meta['duration'] ?? null;
     }
 
-    public function getSrcFilename(): string
-    {
-        $this->assertNotDeleted();
-
-        if ($this->id === null) {
-            throw new \DomainException('Video id is not set, cannot build source filename.');
-        }
-
-        return $this->id->toString() . '.' . $this->extension->value();
-    }
-
-    public function getPoster(): ?string
-    {
-        if (($this->meta['preview'] ?? false) === true && $this->id) {
-            return $this->id->toString() . '.jpg';
-        }
-
-        return null;
-    }
-
     private function assertNotDeleted(): void
     {
         if ($this->deleted) {

@@ -39,12 +39,15 @@ final readonly class CreateVideoPreviewHandler
         try {
             $this->eventBus->dispatch(new CreateVideoPreviewStart($videoId));
 
-            $inputPath = $this->storage->getAbsolutePath($video->getSrcFilename());
-            $outputPath = preg_replace('/\.[^.]+$/', '.jpg', $inputPath);
+            $sourceKey = $this->storage->sourceKey($video);
+            $previewKey = $this->storage->previewKey($video);
+            $inputPath = $this->storage->localPathForRead($sourceKey);
+            $outputPath = $this->storage->localPathForWrite($previewKey);
 
             $duration = $video->duration() ?? 0.0;
             $captureTime = min($duration, 1.0);
             $this->videoPreviewGenerator->generate($inputPath, $outputPath, $captureTime);
+            $this->storage->publishLocalFile($outputPath, $previewKey);
 
             $video->updateMeta(['preview' => true]);
             $this->videoRepository->save($video);

@@ -2,33 +2,26 @@
 
 namespace App\Domain\Video\Service\Storage;
 
-use Symfony\Component\HttpFoundation\File\File;
+use App\Domain\Video\Entity\Preset;
+use App\Domain\Video\Entity\Video;
 
-// TODO use storage MORE
 interface StorageInterface
 {
-    /**
-     * @param File $file
-     * @param string $path
-     * @return string The stored file name/path
-     */
-    public function upload(File $file, string $path): string;
+    public function sourceKey(Video $video): string;
 
-    /**
-     * @param string $path
-     * @return bool
-     */
-    public function delete(string $path): bool;
+    public function previewKey(Video $video): string;
 
-    /**
-     * @param string $path
-     * @return string The public URL of the file
-     */
-    public function getUrl(string $path): string;
+    public function taskOutputKey(Video $video, Preset $preset): string;
 
-    /**
-     * @param string $path
-     * @return string The absolute path to the file
-     */
-    public function getAbsolutePath(string $path): string;
+    public function putFromPath(string $sourcePath, string $key): string;
+
+    public function delete(string $key): bool;
+
+    public function publicUrl(string $key): string;
+
+    public function localPathForRead(string $key): string;
+
+    public function localPathForWrite(string $key): string;
+
+    public function publishLocalFile(string $localPath, string $key): void;
 }

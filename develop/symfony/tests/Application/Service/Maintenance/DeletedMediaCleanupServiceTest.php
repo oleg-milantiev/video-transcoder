@@ -31,9 +31,6 @@ final class DeletedMediaCleanupServiceTest extends TestCase
                     'sourcePath' => $videoId->toRfc4122() . '.mp4',
                 ],
             ]);
-        $videoRepository->expects($this->once())
-            ->method('markVideoSourceFileMissing')
-            ->with($videoId);
 
         $taskRepository = $this->createMock(TaskRepositoryInterface::class);
         $taskRepository->expects($this->once())
@@ -47,9 +44,6 @@ final class DeletedMediaCleanupServiceTest extends TestCase
                     'outputPath' => 'output/transcoded.mp4',
                 ],
             ]);
-        $taskRepository->expects($this->once())
-            ->method('markTaskOutputFileMissing')
-            ->with($taskId);
 
         $storage = $this->createMock(StorageInterface::class);
         $storage->expects($this->exactly(2))

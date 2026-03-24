@@ -11,7 +11,6 @@ use App\Domain\Video\Entity\Video;
 use App\Domain\Video\Repository\PresetRepositoryInterface;
 use App\Domain\Video\Repository\TaskRepositoryInterface;
 use App\Domain\Video\Service\Storage\StorageInterface;
-use Symfony\Component\Filesystem\Filesystem;
 
 final readonly class TranscodeTaskPreparationService
 {
@@ -22,7 +21,6 @@ final readonly class TranscodeTaskPreparationService
         private TaskRealtimeNotifier $taskRealtimeNotifier,
         private FlashNotificationFactory $flashNotificationFactory,
         private StorageInterface $storage,
-        private Filesystem $filesystem,
     ) {
     }
 
@@ -34,10 +32,8 @@ final readonly class TranscodeTaskPreparationService
             throw new \RuntimeException('Preset not found for task');
         }
 
-        // TODO use abstract storage
-        $relativeOutputPath = sprintf('%s/%s.mp4', $video->id()->toRfc4122(), $preset->id()->toRfc4122());
-        $absoluteOutputPath = $this->storage->getAbsolutePath($relativeOutputPath);
-        $this->filesystem->mkdir(\dirname($absoluteOutputPath));
+        $relativeOutputPath = $this->storage->taskOutputKey($video, $preset);
+        $absoluteOutputPath = $this->storage->localPathForWrite($relativeOutputPath);
 
         $task->start($video->duration());
         $this->taskRepository->save($task);
@@ -46,7 +42,7 @@ final readonly class TranscodeTaskPreparationService
             'notification' => $this->flashNotificationFactory->transcodeStarted($task)->toArray(),
         ]);
 
-        $inputPath = $this->storage->getAbsolutePath($video->getSrcFilename());
+        $inputPath = $this->storage->localPathForRead($this->storage->sourceKey($video));
 
         return new TranscodeStartContextDTO(
             task: $task,

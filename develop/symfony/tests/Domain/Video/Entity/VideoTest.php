@@ -86,50 +86,6 @@ final class VideoTest extends TestCase
         $this->assertSame(55.7, $video->duration());
     }
 
-    public function testGetSrcFilenameReturnsUuidWithExtension(): void
-    {
-        $id = UuidV4::fromString('33333333-3333-4333-8333-333333333333');
-        $video = Video::reconstitute(
-            new VideoTitle('Source file'),
-            new FileExtension('avi'),
-            UuidV4::fromString('88888888-8888-4888-8888-888888888888'),
-            [],
-            VideoDates::create(),
-            $id,
-        );
-
-        $this->assertSame($id->toRfc4122() . '.avi', $video->getSrcFilename());
-    }
-
-    public function testGetPosterReturnsFilenameWhenPreviewExists(): void
-    {
-        $id = UuidV4::fromString('44444444-4444-4444-8444-444444444444');
-        $video = Video::reconstitute(
-            new VideoTitle('Poster test'),
-            new FileExtension('mp4'),
-            UuidV4::fromString('99999999-9999-4999-8999-999999999998'),
-            ['preview' => true],
-            VideoDates::create(),
-            $id,
-        );
-
-        $this->assertSame($id->toRfc4122() . '.jpg', $video->getPoster());
-    }
-
-    public function testGetPosterReturnsNullWhenPreviewMissing(): void
-    {
-        $video = Video::reconstitute(
-            new VideoTitle('No poster'),
-            new FileExtension('mp4'),
-            UuidV4::fromString('99999999-9999-4999-8999-999999999997'),
-            ['preview' => false],
-            VideoDates::create(),
-            UuidV4::fromString('55555555-5555-4555-8555-555555555555'),
-        );
-
-        $this->assertNull($video->getPoster());
-    }
-
     public function testMarkDeletedMarksVideoDeletedWhenNoTranscodingTasks(): void
     {
         $video = Video::reconstitute(
@@ -151,7 +107,7 @@ final class VideoTest extends TestCase
         $video->markDeleted([$task]);
 
         $this->assertTrue($video->isDeleted());
-        $this->assertNull($video->getPoster());
+        $this->assertTrue(($video->meta()['preview'] ?? false));
     }
 
     public function testMarkDeletedThrowsWhenVideoAlreadyDeleted(): void

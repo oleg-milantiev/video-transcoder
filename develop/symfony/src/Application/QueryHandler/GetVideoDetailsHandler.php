@@ -9,6 +9,7 @@ use App\Application\Exception\QueryException;
 use App\Application\Query\GetVideoDetailsQuery;
 use App\Application\Query\Repository\VideoDetailsReadRepositoryInterface;
 use App\Domain\Video\Repository\VideoRepositoryInterface;
+use App\Domain\Video\Service\Storage\StorageInterface;
 use App\Domain\Video\ValueObject\TaskStatus;
 use App\Infrastructure\Security\Voter\VideoAccessVoter;
 use Symfony\Bundle\SecurityBundle\Security;
@@ -20,6 +21,7 @@ final readonly class GetVideoDetailsHandler
     public function __construct(
         private VideoRepositoryInterface $videoRepository,
         private VideoDetailsReadRepositoryInterface $videoDetailsReadRepository,
+        private StorageInterface $storage,
         private Security $security,
     ) {}
 
@@ -52,6 +54,6 @@ final readonly class GetVideoDetailsHandler
             );
         }
 
-        return VideoDetailsDTO::fromDomain($video, $presetsWithTasks);
+        return VideoDetailsDTO::fromDomain($video, $presetsWithTasks, $this->storage);
     }
 }

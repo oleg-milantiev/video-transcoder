@@ -6,6 +6,7 @@ namespace App\Tests\Application\DTO;
 
 use App\Application\DTO\VideoItemDTO;
 use App\Domain\Video\Entity\Video;
+use App\Domain\Video\Service\Storage\StorageInterface;
 use App\Domain\Video\ValueObject\FileExtension;
 use App\Domain\Video\ValueObject\VideoDates;
 use App\Domain\Video\ValueObject\VideoTitle;
@@ -26,13 +27,17 @@ class VideoItemDTOTest extends TestCase
             $uuid,
         );
 
-        $dto = VideoItemDTO::fromDomain($video);
+        $storage = $this->createStub(StorageInterface::class);
+        $storage->method('previewKey')->willReturn($uuid->toRfc4122() . '.jpg');
+        $storage->method('publicUrl')->willReturn('/uploads/' . $uuid->toRfc4122() . '.jpg');
+
+        $dto = VideoItemDTO::fromDomain($video, $storage);
 
         $this->assertSame($uuid->toRfc4122(), $dto->uuid);
         $this->assertSame('Demo Video', $dto->title);
         $this->assertSame('2026-03-18 10:15', $dto->createdAt);
         $this->assertFalse($dto->deleted);
-        $this->assertSame($uuid->toRfc4122() . '.jpg', $dto->poster);
+        $this->assertSame('/uploads/' . $uuid->toRfc4122() . '.jpg', $dto->poster);
     }
 
     public function testFromDomainMapsDeletedVideo(): void
@@ -48,9 +53,13 @@ class VideoItemDTOTest extends TestCase
             true,
         );
 
-        $dto = VideoItemDTO::fromDomain($video);
+        $storage = $this->createStub(StorageInterface::class);
+        $storage->method('previewKey')->willReturn($uuid->toRfc4122() . '.jpg');
+        $storage->method('publicUrl')->willReturn('/uploads/' . $uuid->toRfc4122() . '.jpg');
+
+        $dto = VideoItemDTO::fromDomain($video, $storage);
 
         $this->assertTrue($dto->deleted);
-        $this->assertNull($dto->poster);
+        $this->assertSame('/uploads/' . $uuid->toRfc4122() . '.jpg', $dto->poster);
     }
 }

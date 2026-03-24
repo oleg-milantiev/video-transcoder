@@ -6,6 +6,7 @@ use App\Application\Query\GetVideoDetailsQuery;
 use App\Application\QueryHandler\GetVideoDetailsHandler;
 use App\Application\Query\Repository\VideoDetailsReadRepositoryInterface;
 use App\Domain\Video\Repository\VideoRepositoryInterface;
+use App\Domain\Video\Service\Storage\StorageInterface;
 use App\Infrastructure\Security\Voter\VideoAccessVoter;
 use App\Tests\Domain\Entity\VideoFake;
 use PHPUnit\Framework\TestCase;
@@ -45,7 +46,7 @@ class GetVideoDetailsHandlerTest extends TestCase
             ->with(VideoAccessVoter::CAN_VIEW_DETAILS, $video)
             ->willReturn(true);
 
-        $handler = new GetVideoDetailsHandler($repository, $videoDetailsRepository, $security);
+        $handler = new GetVideoDetailsHandler($repository, $videoDetailsRepository, $this->createStub(StorageInterface::class), $security);
         $query = new GetVideoDetailsQuery($video->id()->toRfc4122());
         $dto = $handler($query);
 

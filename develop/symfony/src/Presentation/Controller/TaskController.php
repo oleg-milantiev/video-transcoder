@@ -69,6 +69,6 @@ class TaskController extends AbstractController
         $this->logService->log('video', $video->id(), LogLevel::INFO, 'Video transcode result downloaded', $context);
         $this->logService->log('user', $downloadedByUserId, LogLevel::INFO, 'User downloaded transcode result', $context);
 
-        return $this->redirect($this->storage->getUrl($output));
+        return $this->redirect($this->storage->publicUrl($output));
     }
 }

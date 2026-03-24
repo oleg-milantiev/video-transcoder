@@ -18,7 +18,6 @@ use App\Domain\Video\Service\Storage\StorageInterface;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 use Symfony\Component\Messenger\MessageBusInterface;
-use Symfony\Component\HttpFoundation\File\File;
 
 #[AsMessageHandler(bus: 'messenger.bus.command')]
 final readonly class CreateVideoHandler
@@ -48,13 +47,13 @@ final readonly class CreateVideoHandler
             $video = $this->videoFactory->fromCreateVideo($command);
             $video = $this->videoRepository->save($video);
 
-            $this->storage->upload(
-                new File($command->file()->getFilePath()),
-                $video->getSrcFilename(),
+            $this->storage->putFromPath(
+                $command->file()->getFilePath(),
+                $this->storage->sourceKey($video),
             );
 
             $this->logService->log('video', $video->id(), LogLevel::INFO, 'Video created', [
-                'video' => VideoItemDTO::fromDomain($video),
+                'video' => VideoItemDTO::fromDomain($video, $this->storage),
                 'file' => $command->file()->details(),
             ]);
             $this->logService->log('user', $command->userId(), LogLevel::INFO, 'User uploaded video', [

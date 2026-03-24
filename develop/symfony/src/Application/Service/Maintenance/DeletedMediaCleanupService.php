@@ -31,20 +31,23 @@ final readonly class DeletedMediaCleanupService
 
         $videoFilesDeleted = 0;
         foreach ($videoCandidates as $candidate) {
-            $deleted = $this->storage->delete($candidate->meta()['src']); // TODO может не так назову ключ
+            $sourcePath = $candidate['sourcePath'] ?? null;
+            if (!is_string($sourcePath) || $sourcePath === '') {
+                continue;
+            }
+
+            $deleted = $this->storage->delete($sourcePath);
             if ($deleted) {
                 $videoFilesDeleted++;
             }
 
-            $candidate->updateMeta(['output' => null]);
-            // TODO save
             $this->logService->log(
                 'video',
                 $candidate['videoId'],
                 LogLevel::INFO,
                 $deleted ? 'Deleted source file for removed video' : 'Source file already missing for removed video',
                 [
-                    'path' => $candidate['sourcePath'],
+                    'path' => $sourcePath,
                     'deletedNow' => $deleted,
                 ],
             );
@@ -53,20 +56,23 @@ final readonly class DeletedMediaCleanupService
         $taskCandidates = $this->taskRepository->findDeletedTaskForCleanup($limit);
         $taskFilesDeleted = 0;
         foreach ($taskCandidates as $candidate) {
-            $deleted = $this->storage->delete($candidate->meta()['output']);
+            $outputPath = $candidate['outputPath'] ?? null;
+            if (!is_string($outputPath) || $outputPath === '') {
+                continue;
+            }
+
+            $deleted = $this->storage->delete($outputPath);
             if ($deleted) {
                 $taskFilesDeleted++;
             }
 
-            $candidate->updateMeta(['output' => null]);
-            // TODO save
             $this->logService->log(
                 'task',
                 $candidate['taskId'],
                 LogLevel::INFO,
                 $deleted ? 'Deleted transcoded output for removed task' : 'Transcoded output already missing for removed task',
                 [
-                    'path' => $candidate['outputPath'],
+                    'path' => $outputPath,
                     'deletedNow' => $deleted,
                     'videoId' => $candidate['videoId']->toRfc4122(),
                 ],

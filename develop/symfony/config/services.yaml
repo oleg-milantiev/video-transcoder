@@ -26,13 +26,13 @@ services:
             - '../src/Kernel.php'
 
     # Infrastructure
-    App\Infrastructure\Storage\LocalStorage:
+    App\Infrastructure\Storage\FilesystemStorage:
         arguments:
             $storagePath: '%kernel.project_dir%/public/uploads'
             $publicPath: '/uploads'
 
     # Interface binding
-    App\Domain\Storage\StorageInterface: '@App\Infrastructure\Storage\LocalStorage'
+    App\Domain\Video\Service\Storage\StorageInterface: '@App\Infrastructure\Storage\FilesystemStorage'
     App\Domain\Repository\VideoRepositoryInterface: '@App\Repository\VideoRepository'
     App\Application\Logging\LogServiceInterface: '@App\Infrastructure\Logging\DoctrineLogService'
     App\Infrastructure\Ffmpeg\ProcessRunnerInterface: '@App\Infrastructure\Ffmpeg\SymfonyProcessRunner'

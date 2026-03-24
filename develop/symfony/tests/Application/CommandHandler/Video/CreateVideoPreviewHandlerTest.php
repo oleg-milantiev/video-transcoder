@@ -35,9 +35,28 @@ class CreateVideoPreviewHandlerTest extends TestCase
 
         $storage = $this->createMock(StorageInterface::class);
         $storage->expects($this->once())
-            ->method('getAbsolutePath')
-            ->with($video->getSrcFilename())
+            ->method('sourceKey')
+            ->with($video)
+            ->willReturn('video.mp4');
+        $storage->expects($this->exactly(2))
+            ->method('previewKey')
+            ->with($video)
+            ->willReturn('video.jpg');
+        $storage->expects($this->once())
+            ->method('publicUrl')
+            ->with('video.jpg')
+            ->willReturn('/uploads/video.jpg');
+        $storage->expects($this->once())
+            ->method('localPathForRead')
+            ->with('video.mp4')
             ->willReturn('/tmp/video.mp4');
+        $storage->expects($this->once())
+            ->method('localPathForWrite')
+            ->with('video.jpg')
+            ->willReturn('/tmp/video.jpg');
+        $storage->expects($this->once())
+            ->method('publishLocalFile')
+            ->with('/tmp/video.jpg', 'video.jpg');
 
         $eventBus = $this->createMock(MessageBusInterface::class);
         $events = [];
@@ -72,7 +91,7 @@ class CreateVideoPreviewHandlerTest extends TestCase
             ->method('dispatch')
             ->with($this->isInstanceOf(PublishMercureMessage::class))
             ->willReturnCallback(static fn (object $message): Envelope => new Envelope($message));
-        $notifier = new VideoRealtimeNotifier($notifierCommandBus);
+        $notifier = new VideoRealtimeNotifier($notifierCommandBus, $storage);
 
         $handler = new CreateVideoPreviewHandler($storage, $eventBus, $logService, $videoRepository, $notifier, $generator);
         $handler(new CreateVideoPreview($video));
@@ -88,7 +107,10 @@ class CreateVideoPreviewHandlerTest extends TestCase
         $video = $this->createVideo(0.5);
 
         $storage = $this->createStub(StorageInterface::class);
-        $storage->method('getAbsolutePath')->willReturn('/tmp/video.mp4');
+        $storage->method('sourceKey')->willReturn('video.mp4');
+        $storage->method('previewKey')->willReturn('video.jpg');
+        $storage->method('localPathForRead')->willReturn('/tmp/video.mp4');
+        $storage->method('localPathForWrite')->willReturn('/tmp/video.jpg');
 
         $eventBus = $this->createMock(MessageBusInterface::class);
         $events = [];
@@ -113,7 +135,7 @@ class CreateVideoPreviewHandlerTest extends TestCase
 
         $notifierCommandBus = $this->createMock(MessageBusInterface::class);
         $notifierCommandBus->expects($this->never())->method('dispatch');
-        $notifier = new VideoRealtimeNotifier($notifierCommandBus);
+        $notifier = new VideoRealtimeNotifier($notifierCommandBus, $storage);
 
         $handler = new CreateVideoPreviewHandler($storage, $eventBus, $logService, $videoRepository, $notifier, $generator);
 

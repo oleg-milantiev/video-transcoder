@@ -24,7 +24,6 @@ use App\Domain\Video\ValueObject\Resolution;
 use App\Domain\Video\ValueObject\VideoTitle;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Messenger\Envelope;
-use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Uid\UuidV4;
 
@@ -52,24 +51,22 @@ class TranscodeTaskPreparationServiceTest extends TestCase
             ->willReturn($preset);
 
         $storage = $this->createMock(StorageInterface::class);
-        $storage->expects($this->exactly(2))
-            ->method('getAbsolutePath')
-            ->willReturnCallback(static function (string $path) use ($video): string {
-                if ($path === sprintf('%s/%s.mp4', $video->id()->toRfc4122(), '123e4567-e89b-42d3-a456-426614174005')) {
-                    return '/var/storage/' . $path;
-                }
-
-                if ($path === $video->getSrcFilename()) {
-                    return '/var/storage/' . $path;
-                }
-
-                return '/var/storage/unknown';
-            });
-
-        $filesystem = $this->createMock(Filesystem::class);
-        $filesystem->expects($this->once())
-            ->method('mkdir')
-            ->with(sprintf('/var/storage/%s', $video->id()->toRfc4122()));
+        $storage->expects($this->once())
+            ->method('taskOutputKey')
+            ->with($video, $preset)
+            ->willReturn(sprintf('%s/%s.mp4', $video->id()->toRfc4122(), '123e4567-e89b-42d3-a456-426614174005'));
+        $storage->expects($this->once())
+            ->method('localPathForWrite')
+            ->with(sprintf('%s/%s.mp4', $video->id()->toRfc4122(), '123e4567-e89b-42d3-a456-426614174005'))
+            ->willReturn(sprintf('/var/storage/%s/%s.mp4', $video->id()->toRfc4122(), '123e4567-e89b-42d3-a456-426614174005'));
+        $storage->expects($this->once())
+            ->method('sourceKey')
+            ->with($video)
+            ->willReturn(sprintf('%s.mp4', $video->id()->toRfc4122()));
+        $storage->expects($this->once())
+            ->method('localPathForRead')
+            ->with(sprintf('%s.mp4', $video->id()->toRfc4122()))
+            ->willReturn(sprintf('/var/storage/%s.mp4', $video->id()->toRfc4122()));
 
         $commandBus = $this->createMock(MessageBusInterface::class);
         $commandBus->expects($this->once())
@@ -77,12 +74,12 @@ class TranscodeTaskPreparationServiceTest extends TestCase
             ->willReturn(new Envelope(new \stdClass()));
         $taskRealtimeNotifier = new TaskRealtimeNotifier($commandBus);
 
-        $service = new TranscodeTaskPreparationService($presetRepository, $taskRepository, $logService, $taskRealtimeNotifier, new FlashNotificationFactory(), $storage, $filesystem);
+        $service = new TranscodeTaskPreparationService($presetRepository, $taskRepository, $logService, $taskRealtimeNotifier, new FlashNotificationFactory(), $storage);
         $context = $service->prepare($task, $video);
 
         $this->assertSame(sprintf('%s/%s.mp4', $video->id()->toRfc4122(), '123e4567-e89b-42d3-a456-426614174005'), $context->relativeOutputPath);
         $this->assertSame(sprintf('/var/storage/%s/%s.mp4', $video->id()->toRfc4122(), '123e4567-e89b-42d3-a456-426614174005'), $context->absoluteOutputPath);
-        $this->assertSame('/var/storage/' . $video->getSrcFilename(), $context->inputPath);
+        $this->assertSame(sprintf('/var/storage/%s.mp4', $video->id()->toRfc4122()), $context->inputPath);
         $this->assertSame($task, $context->task);
         $this->assertSame($video, $context->video);
         $this->assertSame($preset, $context->preset);
@@ -108,12 +105,11 @@ class TranscodeTaskPreparationServiceTest extends TestCase
             ->willReturn(null);
 
         $storage = $this->createStub(StorageInterface::class);
-        $filesystem = $this->createStub(Filesystem::class);
         $commandBus = $this->createMock(MessageBusInterface::class);
         $commandBus->expects($this->never())->method('dispatch');
         $taskRealtimeNotifier = new TaskRealtimeNotifier($commandBus);
 
-        $service = new TranscodeTaskPreparationService($presetRepository, $taskRepository, $logService, $taskRealtimeNotifier, new FlashNotificationFactory(), $storage, $filesystem);
+        $service = new TranscodeTaskPreparationService($presetRepository, $taskRepository, $logService, $taskRealtimeNotifier, new FlashNotificationFactory(), $storage);
 
         $this->expectException(\RuntimeException::class);
         $this->expectExceptionMessage('Preset not found for task');

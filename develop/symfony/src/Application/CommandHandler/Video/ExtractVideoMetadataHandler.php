@@ -48,7 +48,7 @@ final readonly class ExtractVideoMetadataHandler
         try {
             $this->eventBus->dispatch(new ExtractVideoMetadataStart($videoId));
 
-            $inputPath = $this->storage->getAbsolutePath($video->getSrcFilename());
+            $inputPath = $this->storage->localPathForRead($this->storage->sourceKey($video));
             $metadata = $this->videoMetadataExtractor->extract($inputPath);
             $this->logger->debug('Extract Video Metadata: data extracted', [
                 'meta' => $metadata,

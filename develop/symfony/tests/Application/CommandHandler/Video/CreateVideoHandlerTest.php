@@ -70,11 +70,11 @@ class CreateVideoHandlerTest extends TestCase
         $videoRepository->method('save')->willReturn($savedVideo);
 
         // instantiate real notifier with a mocked command bus to avoid mocking final class
-        $notifier = new VideoRealtimeNotifier($commandBus);
+        $storage = $this->createStub(StorageInterface::class);
+        $notifier = new VideoRealtimeNotifier($commandBus, $storage);
         $logService = $this->createStub(LogServiceInterface::class);
 
-        $storage = $this->createStub(StorageInterface::class);
-        $storage->method('upload')->willThrowException(new \Exception('IO error'));
+        $storage->method('putFromPath')->willThrowException(new \Exception('IO error'));
 
         // use real VideoFactory and FlashNotificationFactory (they are simple final classes)
         $videoFactory = new VideoFactory();

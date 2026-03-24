@@ -8,6 +8,7 @@ use App\Application\DTO\PresetWithTaskDTO;
 use App\Application\DTO\TaskInfoDTO;
 use App\Application\DTO\VideoDetailsDTO;
 use App\Domain\Video\Entity\Video;
+use App\Domain\Video\Service\Storage\StorageInterface;
 use App\Domain\Video\ValueObject\FileExtension;
 use App\Domain\Video\ValueObject\VideoTitle;
 use PHPUnit\Framework\TestCase;
@@ -38,7 +39,11 @@ class VideoDetailsDTOTest extends TestCase
             task: new TaskInfoDTO('PENDING', 0, '2026-03-18 08:50', '123e4567-e89b-42d3-a456-426614174055'),
         );
 
-        $dto = VideoDetailsDTO::fromDomain($video, [$presetDto]);
+        $storage = $this->createStub(StorageInterface::class);
+        $storage->method('previewKey')->willReturn($uuid->toRfc4122() . '.jpg');
+        $storage->method('publicUrl')->willReturn('/uploads/' . $uuid->toRfc4122() . '.jpg');
+
+        $dto = VideoDetailsDTO::fromDomain($video, [$presetDto], $storage);
 
         $this->assertSame($uuid->toRfc4122(), $dto->id);
         $this->assertSame('Detailed Video', $dto->title);
@@ -47,7 +52,7 @@ class VideoDetailsDTOTest extends TestCase
         $this->assertNull($dto->updatedAt);
         $this->assertSame('123e4567-e89b-42d3-a456-426614174007', $dto->userId);
         $this->assertSame([$presetDto], $dto->presetsWithTasks);
-        $this->assertSame($uuid->toRfc4122() . '.jpg', $dto->poster);
+        $this->assertSame('/uploads/' . $uuid->toRfc4122() . '.jpg', $dto->poster);
         $this->assertArrayHasKey('duration', $dto->meta);
         $this->assertArrayHasKey('bitrate', $dto->meta);
         $this->assertArrayNotHasKey('preview', $dto->meta);

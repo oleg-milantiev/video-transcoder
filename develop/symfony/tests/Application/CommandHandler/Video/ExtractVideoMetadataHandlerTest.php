@@ -37,8 +37,12 @@ class ExtractVideoMetadataHandlerTest extends TestCase
 
         $storage = $this->createMock(StorageInterface::class);
         $storage->expects($this->once())
-            ->method('getAbsolutePath')
-            ->with($video->getSrcFilename())
+            ->method('sourceKey')
+            ->with($video)
+            ->willReturn('source.mp4');
+        $storage->expects($this->once())
+            ->method('localPathForRead')
+            ->with('source.mp4')
             ->willReturn('/tmp/source.mp4');
 
         $processRunner = $this->createMock(ProcessRunnerInterface::class);
@@ -95,7 +99,7 @@ class ExtractVideoMetadataHandlerTest extends TestCase
             ->method('dispatch')
             ->with($this->isInstanceOf(PublishMercureMessage::class))
             ->willReturnCallback(static fn (object $message): Envelope => new Envelope($message));
-        $notifier = new VideoRealtimeNotifier($notifierCommandBus);
+        $notifier = new VideoRealtimeNotifier($notifierCommandBus, $storage);
 
         $handler = new ExtractVideoMetadataHandler(
             $videoRepository,
@@ -121,7 +125,8 @@ class ExtractVideoMetadataHandlerTest extends TestCase
         $video = $this->createVideo();
 
         $storage = $this->createStub(StorageInterface::class);
-        $storage->method('getAbsolutePath')->willReturn('/tmp/source.mp4');
+        $storage->method('sourceKey')->willReturn('source.mp4');
+        $storage->method('localPathForRead')->willReturn('/tmp/source.mp4');
 
         $processRunner = $this->createStub(ProcessRunnerInterface::class);
         $processRunner->method('mustRunAndGetOutput')->willThrowException(new \RuntimeException('ffprobe timeout'));
@@ -149,7 +154,7 @@ class ExtractVideoMetadataHandlerTest extends TestCase
 
         $notifierCommandBus = $this->createMock(MessageBusInterface::class);
         $notifierCommandBus->expects($this->never())->method('dispatch');
-        $notifier = new VideoRealtimeNotifier($notifierCommandBus);
+        $notifier = new VideoRealtimeNotifier($notifierCommandBus, $storage);
 
         $handler = new ExtractVideoMetadataHandler(
             $videoRepository,

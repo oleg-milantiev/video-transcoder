@@ -132,7 +132,7 @@ class TaskRepository extends ServiceEntityRepository implements TaskRepositoryIn
 
         $rows = $conn->executeQuery($sql, ['limit' => $limit], ['limit' => \PDO::PARAM_INT])->fetchAllAssociative();
 
-        return array_map(static function (array $row): ?Task {
+        return array_map(function (array $row): ?Task {
             return $this->findById(UuidV4::fromString($row['id']));
         }, $rows);
     }

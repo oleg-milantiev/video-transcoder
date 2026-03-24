@@ -8,7 +8,7 @@ function renderPoster(video) {
             (isDeleted ? 'filter:saturate(0);opacity:0.5;' : '');
 
         return h('img', {
-            src: '/uploads/' + video.poster,
+            src: video.poster,
             alt: 'poster',
             style,
         });

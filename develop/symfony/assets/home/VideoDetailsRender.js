@@ -128,7 +128,7 @@ export function renderVideoDetails(vm) {
                                 ])
                               : null,
                           h('img', {
-                              src: '/uploads/' + vm.dto.poster,
+                              src: vm.dto.poster,
                               class: 'img-fluid mb-3 rounded' + (vm.dto.deleted === true ? ' video-poster--deleted' : ''),
                               alt: vm.dto.title,
                               style: 'max-width: 520px;',

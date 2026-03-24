@@ -7,6 +7,7 @@ namespace App\Application\Service\Video;
 use App\Application\Command\Mercure\PublishMercureMessage;
 use App\Application\DTO\MercureMessageDTO;
 use App\Domain\Video\Entity\Video;
+use App\Domain\Video\Service\Storage\StorageInterface;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Messenger\MessageBusInterface;
 
@@ -15,6 +16,7 @@ final readonly class VideoRealtimeNotifier
     public function __construct(
         #[Autowire(service: 'messenger.bus.command')]
         private MessageBusInterface $commandBus,
+        private StorageInterface $storage,
     ) {
     }
 
@@ -27,9 +29,11 @@ final readonly class VideoRealtimeNotifier
             return;
         }
 
+        $hasPreview = ($video->meta()['preview'] ?? false) === true;
+
         $payload = array_merge([
             'videoId' => $video->id()->toRfc4122(),
-            'poster' => $video->getPoster(),
+            'poster' => $hasPreview ? $this->storage->publicUrl($this->storage->previewKey($video)) : null,
             'meta' => $video->meta(),
             'createdAt' => $video->createdAt()->format(DATE_ATOM),
             'updatedAt' => $video->updatedAt()?->format(DATE_ATOM),
