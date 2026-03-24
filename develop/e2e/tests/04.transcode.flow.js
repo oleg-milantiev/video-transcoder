@@ -39,6 +39,23 @@ async function waitForVideoDetailsVisible(page) {
     await expect(presetsTable(page)).toBeVisible({ timeout: UI_TIMEOUT });
 }
 
+async function expectFlashPopupTitle(page, titleText, timeout = 30000) {
+    const toastTitle = page.locator('.app-flash-toast .app-flash-title', { hasText: titleText }).last();
+    await expect(toastTitle).toBeVisible({ timeout });
+}
+
+async function clickAndAcceptConfirmDialog(page, clickableLocator, expectedMessagePart) {
+    const dialogPromise = page.waitForEvent('dialog', { timeout: UI_TIMEOUT }).then(async (dialog) => {
+        const message = dialog.message();
+        await dialog.accept();
+        return message;
+    });
+
+    await clickableLocator.click({ timeout: UI_TIMEOUT });
+    const dialogMessage = await dialogPromise;
+    expect(dialogMessage).toContain(expectedMessagePart);
+}
+
 async function clickDownloadAndVerifyMp4(page, row) {
     const downloadLink = row.getByRole('link', { name: 'Download' });
     await expect(downloadLink).toBeVisible({ timeout: UI_TIMEOUT });
@@ -62,8 +79,14 @@ async function clickDownloadAndVerifyMp4(page, row) {
 
     expect(response.status()).toBeLessThan(400);
     const location = (response.headers().location || '').toLowerCase();
+    const locationRaw = response.headers().location || '';
+    let resolvedMp4Url = '';
     if (location) {
         expect(location).toContain('.mp4');
+        resolvedMp4Url = new URL(locationRaw, downloadUrl).toString();
+    } else if (downloadUrl.toLowerCase().includes('.mp4')) {
+        // Fallback for direct-file endpoints without redirect.
+        resolvedMp4Url = downloadUrl;
     }
 
     if (download) {
@@ -71,8 +94,13 @@ async function clickDownloadAndVerifyMp4(page, row) {
         // Some browsers report "canceled" for redirect-to-storage download while response is successful.
         expect(failure === null || failure === 'canceled').toBeTruthy();
         expect(download.suggestedFilename().toLowerCase()).toMatch(/\.mp4$/);
-        return;
     }
+
+    if (!resolvedMp4Url) {
+        throw new Error('Could not resolve final mp4 URL from download response');
+    }
+
+    return resolvedMp4Url;
 }
 
 test('transcode flow from video details to downloadable mp4', async ({ page }, testInfo) => {
@@ -83,6 +111,7 @@ test('transcode flow from video details to downloadable mp4', async ({ page }, t
     const adminPassword = process.env.ADMIN_PASSWORD || 'admin';
     const uploadedVideoName = '2022_10_04_Two_Maxes.mp4';
     const presetTitle = '180p';
+    let downloadedMp4Url = '';
 
     try {
         // 1) Home + login
@@ -114,6 +143,7 @@ test('transcode flow from video details to downloadable mp4', async ({ page }, t
         const transcodeButton = row180p.getByRole('button', { name: 'Transcode' });
         await expect(transcodeButton).toBeVisible({ timeout: UI_TIMEOUT });
         await transcodeButton.click({ timeout: UI_TIMEOUT });
+        await expectFlashPopupTitle(page, 'Transcoding started');
         await shot(page, testInfo, '04-transcode-clicked.png');
 
     // 6) Verify task appears in running state
@@ -153,19 +183,64 @@ test('transcode flow from video details to downloadable mp4', async ({ page }, t
 
         expect(completed).toBe(true);
         expect(sawProgressIncrease).toBe(true);
+        await expectFlashPopupTitle(page, 'Transcoding completed');
         await shot(page, testInfo, '05-task-completed.png');
 
     // 8) Verify Download button and download without errors
         const completedRow = presetRow(page, presetTitle);
         await expect(completedRow.getByRole('link', { name: 'Download' })).toBeVisible({ timeout: UI_TIMEOUT });
-        await clickDownloadAndVerifyMp4(page, completedRow);
+        downloadedMp4Url = await clickDownloadAndVerifyMp4(page, completedRow);
         await shot(page, testInfo, '06-download-verified.png');
 
-    // 9) Sign out
+    // 9) Go back to videos list, delete video, verify deleted state in list
+        await page.goto('/?tab=videos', { waitUntil: 'domcontentloaded', timeout: NAV_TIMEOUT });
+        await page.getByRole('button', { name: 'Videos' }).click({ timeout: UI_TIMEOUT });
+        await expect(page.locator('#videosTable')).toBeVisible({ timeout: UI_TIMEOUT });
+
+        const listRow = videoRowByTitle(page, uploadedVideoName);
+        await expect(listRow).toBeVisible({ timeout: NAV_TIMEOUT });
+
+        await clickAndAcceptConfirmDialog(
+            page,
+            listRow.getByRole('button', { name: 'Delete' }),
+            'Delete this video?'
+        );
+
+        await expect.poll(async () => listRow.locator('td.video-title-deleted').count(), {
+            timeout: NAV_TIMEOUT,
+            intervals: [1000, 2000, 5000],
+        }).toBeGreaterThan(0);
+
+        await expect(listRow.locator('td.video-title-deleted')).toContainText(uploadedVideoName, { timeout: UI_TIMEOUT });
+        // Deleted row must not allow a real delete action anymore.
+        await expect(listRow.locator('button:not([disabled])', { hasText: 'Delete' })).toHaveCount(0);
+        await shot(page, testInfo, '07-video-marked-deleted-in-list.png');
+
+    // 10) Open deleted video details and verify deleted UI state
+        await listRow.click({ timeout: UI_TIMEOUT });
+        await waitForVideoDetailsVisible(page);
+        await expect(page.getByText('This video has been deleted')).toBeVisible({ timeout: UI_TIMEOUT });
+        await expect(page.locator('dd.video-title-deleted')).toContainText(uploadedVideoName, { timeout: UI_TIMEOUT });
+
+        const presetsBody = presetsTable(page).locator('tbody').first();
+        await expect(presetsBody).toContainText('DELETED', { timeout: UI_TIMEOUT });
+        await expect(presetsBody.getByRole('button')).toHaveCount(0);
+        await expect(presetsBody.getByRole('link')).toHaveCount(0);
+        await shot(page, testInfo, '08-video-details-deleted-state.png');
+
+    // 11) Verify direct mp4 URL from earlier download now returns 404
+        expect(downloadedMp4Url).toMatch(/\.mp4(?:$|\?)/i);
+        const deletedFileResponse = await page.request.get(downloadedMp4Url, {
+            failOnStatusCode: false,
+            timeout: NAV_TIMEOUT,
+        });
+        expect(deletedFileResponse.status()).toBe(404);
+
+    // 12) Sign out
         await expect(page.getByRole('link', { name: 'Sign out' })).toBeVisible({ timeout: UI_TIMEOUT });
         await page.getByRole('link', { name: 'Sign out' }).click({ timeout: UI_TIMEOUT });
         await expect(page.getByRole('link', { name: 'Sign in' })).toHaveCount(2, { timeout: UI_TIMEOUT });
-        await shot(page, testInfo, '07-sign-out.png');
+        await shot(page, testInfo, '09-sign-out.png');
     } finally {
         // collect SSE messages captured by probe and attach them
         try {

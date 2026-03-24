@@ -22,7 +22,7 @@ Tests are designed to run sequentially (`workers: 1`) and build on data created 
 - Uploads `2022_10_04_Two_Maxes.mp4` through Uppy file picker
 - Verifies upload completion status in Uppy
 - Opens `Videos` tab and checks uploaded row fields are filled
-- Opens video details and verifies core fields (`Title`, `Extension`, `Status`, `Created At`, `User ID`)
+- Opens video details and verifies core fields (`Title`, `Extension`, `Created At`, `User ID`)
 - Waits for async processing with up to 5 retries (5s delay + page reload)
 - Verifies poster is rendered (loaded image, non-zero natural size)
 - Verifies `Duration` meta field exists and is non-empty after processing
@@ -46,26 +46,34 @@ Tests are designed to run sequentially (`workers: 1`) and build on data created 
 - Returns to main page, performs `Sign out`, and verifies `Sign in` links are visible again
 - Saves screenshots for each key step
 
-### `04.transcode.flow.js` - transcode and download flow
+### `04.transcode.flow.js` - transcode, download and remove flow
 
 - Logs in as admin
 - Opens `Videos`, enters the previously uploaded video `2022_10_04_Two_Maxes.mp4`
 - Verifies `Presets` table is visible on `Video Details`
 - Verifies preset `180p` exists and starts transcoding via `Transcode`
+- Verifies flash popup title `Transcoding started`
 - Verifies task appears with status in `PENDING|PROCESSING|COMPLETED`
-- Polls and reloads page every 5 seconds, confirms progress increases, and waits for `COMPLETED`
+- Polls the task status every ~6 seconds (no page reload), confirms progress increases, and waits for `COMPLETED`
+- Verifies flash popup title `Transcoding completed`
 - Verifies `Download` action is shown for completed task
 - Clicks `Download` and validates successful endpoint response/redirect to `.mp4`
+- Saves the resolved final `.mp4` URL to a local test variable
 - Accepts browser download redirect behavior where Playwright may report download as `canceled`
+- Returns to `Videos`, confirms delete popup (`Delete this video?`), and deletes the video
+- Verifies deleted row state in list: title is styled as deleted and active `Delete` action is unavailable
+- Opens video details and verifies deleted UI (`This video has been deleted`, deleted title, `DELETED` in presets, no actions)
+- Requests previously saved `.mp4` URL and verifies `404`
 - Performs `Sign out` and verifies `Sign in` links are visible again
 - Saves screenshots for each key step
 
 ### `05.task.state.flow.js` - TASK_STATE_FLOW coverage for 4k cancel/restart
 
-- Logs in as admin and opens `Video Details` for uploaded `2022_10_04_Two_Maxes.mp4`
+- Logs in as admin, then re-uploads fixture video as `2022_10_04_Two_Maxes-05.mp4`
+- Opens `Video Details` for this `-05` video
 - Uses long-running preset `4k UHD` and starts transcoding
 - Waits until task appears in runtime states (`PENDING|PROCESSING|COMPLETED`)
-- Polls progress and reloads page; verifies at least one progress increase before cancellation
+- Polls progress (no page reload) and verifies at least one progress increase before cancellation
 - Sends `Cancel` while task is `PROCESSING`
 - Waits until state becomes `CANCELLED`
 - Verifies cancelled row has no `Download` and exposes `Transcode` for restart
@@ -87,8 +95,8 @@ Tests are designed to run sequentially (`workers: 1`) and build on data created 
 
 - `02` uploads the source video used later by `03` and `04`
 - `03` ensures presets `180p` and `4k UHD`, tariffs (`Free`, `Premium`), and user tariff assignment (`Free`) are ready
-- `04` uses data prepared by `03` and validates full transcode lifecycle for `180p`
-- `05` uses `4k UHD` from `03` for long-running state-flow checks (progress/cancel/restart)
+- `04` uses data prepared by `03` and validates full transcode + delete lifecycle for `180p`
+- `05` re-uploads the source fixture as `...-05.mp4` and uses `4k UHD` from `03` for long-running state-flow checks (progress/cancel/restart)
 
 ## Local run in release stack
 
