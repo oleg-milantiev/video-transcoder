@@ -35,7 +35,6 @@ final class DeletedVideoCleanupServiceTest extends TestCase
         $videoRepository = $this->createMock(VideoRepositoryInterface::class);
         $videoRepository->expects($this->once())
             ->method('findDeletedVideoForCleanup')
-            ->with(100)
             ->willReturn([$video]);
 
         $storage = $this->createMock(StorageInterface::class);
