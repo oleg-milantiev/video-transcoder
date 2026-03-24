@@ -3,6 +3,7 @@
 namespace App\Presentation\Console;
 
 use App\Application\Command\Task\StartTaskScheduler;
+use App\Application\Service\Maintenance\DeletedMediaCleanupService;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
@@ -21,6 +22,7 @@ final class MinuteCommand extends Command
     public function __construct(
         #[Autowire(service: 'messenger.bus.command')]
         private readonly MessageBusInterface $commandBus,
+        private readonly DeletedMediaCleanupService $deletedMediaCleanupService,
         private readonly LoggerInterface $logger,
         private readonly LockFactory $lockFactory,
     ) {
@@ -58,6 +60,27 @@ final class MinuteCommand extends Command
                 $output->writeln('<error>Error: ' . $e->getMessage() . '</error>');
                 return Command::FAILURE;
             }
+
+            // TODO заблокировано долгом StorageInterface
+            /*
+            try {
+                $output->writeln('Running deleted media cleanup...');
+                $cleanupResult = $this->deletedMediaCleanupService->cleanup();
+                $this->logger->info('Deleted media cleanup finished', $cleanupResult);
+                if ($cleanupResult['videoCandidates'] > 0 || $cleanupResult['taskCandidates'] > 0) {
+                    $output->writeln(
+                        sprintf(
+                            'Cleanup done: video candidates=%d, task candidates=%d, video files deleted=%d, task files deleted=%d.',
+                            $cleanupResult['videoCandidates'],
+                            $cleanupResult['taskCandidates'],
+                            $cleanupResult['videoFilesDeleted'],
+                            $cleanupResult['taskFilesDeleted'],
+                        )
+                    );
+                }
+            } catch ... TODO
+            */
+
         } finally {
             if ($acquired) {
                 try {
@@ -71,4 +94,3 @@ final class MinuteCommand extends Command
         }
     }
 }
-

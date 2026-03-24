@@ -16,4 +16,9 @@ interface TaskRepositoryInterface extends PaginatedRepositoryInterface
      * @return array<int, Task>
      */
     public function findByVideoId(UuidV4 $videoId): array;
+
+    /**
+     * @return array<int, Task>
+     */
+    public function findDeletedTaskForCleanup(int $limit = 100): array;
 }

@@ -11,7 +11,6 @@ use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\DBAL\Exception;
 use Doctrine\ORM\Exception\ORMException;
 use Doctrine\Persistence\ManagerRegistry;
-use Symfony\Component\Uid\Uuid;
 use Symfony\Component\Uid\UuidV4;
 
 /**
@@ -50,11 +49,38 @@ class VideoRepository extends ServiceEntityRepository implements VideoRepository
         return VideoMapper::toDomain($entity);
     }
 
-    public function findById(Uuid $id): ?Video
+    public function findById(UuidV4 $id): ?Video
     {
         $entity = $this->find($id);
 
         return $entity ? self::mapToDomain($entity) : null;
+    }
+
+    // TODO переделать на удаление по ключу хранения src в мета
+    public function findDeletedVideoForCleanup(int $limit = 100): array
+    {
+        $conn = $this->getEntityManager()->getConnection();
+
+        $sql = <<<'SQL'
+            SELECT id, user_id, extension
+            FROM video
+            WHERE deleted = true
+              AND (meta -> 'cleanup' ->> 'sourceFileMissingAt') IS NULL
+            ORDER BY updated_at NULLS FIRST, created_at
+            LIMIT :limit
+        SQL;
+
+        $rows = $conn->executeQuery($sql, ['limit' => $limit], ['limit' => \PDO::PARAM_INT])->fetchAllAssociative();
+
+        return array_map(static function (array $row): array {
+            $videoId = UuidV4::fromString($row['id']);
+
+            return [
+                'videoId' => $videoId,
+                'userId' => UuidV4::fromString($row['user_id']),
+                'sourcePath' => sprintf('%s.%s', $videoId->toRfc4122(), $row['extension']),
+            ];
+        }, $rows);
     }
 
     protected static function mapToDomain(VideoEntity $entity): Video

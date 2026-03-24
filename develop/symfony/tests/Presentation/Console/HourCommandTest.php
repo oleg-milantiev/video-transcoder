@@ -1,0 +1,53 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Tests\Presentation\Console;
+
+use App\Application\Service\Maintenance\TusCleanupService;
+use App\Presentation\Console\HourCommand;
+use PHPUnit\Framework\TestCase;
+use Psr\Log\LoggerInterface;
+use Symfony\Component\Console\Command\Command;
+use Symfony\Component\Console\Tester\CommandTester;
+use Symfony\Component\Lock\LockFactory;
+use Symfony\Component\Lock\SharedLockInterface;
+use TusPhp\Tus\Server as TusServer;
+
+final class HourCommandTest extends TestCase
+{
+    public function testExecuteRunsTusCleanup(): void
+    {
+        $server = $this->createMock(TusServer::class);
+        $server->expects($this->once())
+            ->method('handleExpiration')
+            ->willReturn([
+                ['name' => 'chunk-a', 'file_path' => '/tmp/tus/chunk-a'],
+                ['name' => 'chunk-b', 'file_path' => '/tmp/tus/chunk-b'],
+            ]);
+
+        $tusCleanupService = new TusCleanupService($server, $this->createStub(LoggerInterface::class));
+
+        $lock = $this->createMock(SharedLockInterface::class);
+        $lock->expects($this->once())->method('acquire')->willReturn(true);
+        $lock->expects($this->once())->method('release');
+
+        $lockFactory = $this->createMock(LockFactory::class);
+        $lockFactory->expects($this->once())
+            ->method('createLock')
+            ->with('app:hour', 4000)
+            ->willReturn($lock);
+
+        $command = new HourCommand(
+            $tusCleanupService,
+            $this->createStub(LoggerInterface::class),
+            $lockFactory,
+        );
+
+        $tester = new CommandTester($command);
+        $exitCode = $tester->execute([]);
+
+        $this->assertSame(Command::SUCCESS, $exitCode);
+        $this->assertStringContainsString('Tus cleanup done: 2 expired uploads removed.', $tester->getDisplay());
+    }
+}
