@@ -14,7 +14,8 @@ readonly class TaskItemDTO
         public string $presetTitle,
         public string $status,
         public int $progress,
-        public string $createdAt
+        public string $createdAt,
+        public bool $deleted = false,
     ) {}
 
     public static function fromDomain(Task $task, Video $video, Preset $preset): self
@@ -29,7 +30,8 @@ readonly class TaskItemDTO
             presetTitle: $preset->title()->value(),
             status: $task->status()->name,
             progress: $task->progress()->value(),
-            createdAt: $task->createdAt()->format('Y-m-d H:i')
+            createdAt: $task->createdAt()->format('Y-m-d H:i'),
+            deleted: $task->isDeleted(),
         );
     }
 }

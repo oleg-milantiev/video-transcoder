@@ -42,7 +42,7 @@ export function renderTasksPane(vm, paneClass) {
                 vm.tasks.length > 0
                     ? vm.tasks.map((task) =>
                           h('tr', [
-                              h('td', task.videoTitle || '-'),
+                              h('td', { class: task.deleted === true ? 'video-title-deleted' : '' }, task.videoTitle || '-'),
                               h('td', task.presetTitle || '-'),
                               h('td', task.status || '-'),
                               h('td', typeof task.progress === 'number' ? String(task.progress) + '%' : '-'),
