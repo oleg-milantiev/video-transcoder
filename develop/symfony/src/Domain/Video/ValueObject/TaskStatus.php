@@ -2,8 +2,6 @@
 
 namespace App\Domain\Video\ValueObject;
 
-use InvalidArgumentException;
-
 enum TaskStatus: int
 {
     case PENDING = 1;
@@ -11,6 +9,7 @@ enum TaskStatus: int
     case COMPLETED = 3;
     case FAILED = 4;
     case CANCELLED = 5;
+    case DELETED = 6;
 
     public const array NAMES = [
         self::PENDING->value => self::PENDING->name,
@@ -18,6 +17,7 @@ enum TaskStatus: int
         self::COMPLETED->value => self::COMPLETED->name,
         self::FAILED->value => self::FAILED->name,
         self::CANCELLED->value => self::CANCELLED->name,
+        self::DELETED->value => self::DELETED->name,
     ];
 
     public static function pending(): TaskStatus
@@ -45,6 +45,11 @@ enum TaskStatus: int
         return self::CANCELLED;
     }
 
+    public static function deleted(): TaskStatus
+    {
+        return self::DELETED;
+    }
+
     public function canBeStarted(): bool
     {
         return $this === self::PENDING || $this === self::CANCELLED || $this === self::FAILED;
@@ -55,8 +60,18 @@ enum TaskStatus: int
         return $this === self::CANCELLED || $this === self::FAILED;
     }
 
+    public function isTranscoding(): bool
+    {
+        return $this === self::PENDING || $this === self::PROCESSING;
+    }
+
+    public function isDeleted(): bool
+    {
+        return $this === self::DELETED;
+    }
+
     public function isFinished(): bool
     {
-        return $this === self::COMPLETED || $this === self::FAILED || $this === self::CANCELLED;
+        return $this === self::COMPLETED || $this === self::FAILED || $this === self::CANCELLED || $this === self::DELETED;
     }
 }

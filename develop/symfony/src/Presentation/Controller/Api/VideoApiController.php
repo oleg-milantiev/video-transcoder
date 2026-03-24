@@ -2,18 +2,21 @@
 
 namespace App\Presentation\Controller\Api;
 
-use App\Application\Exception\QueryException;
 use App\Application\Exception\InvalidUuidException;
+use App\Application\Exception\QueryException;
 use App\Application\Exception\PresetNotFoundException;
 use App\Application\Exception\TaskCreationFailedException;
 use App\Application\Exception\TranscodeAccessDeniedException;
 use App\Application\Exception\UserNotFoundException;
 use App\Application\Exception\VideoNotFoundException;
+use App\Application\Query\DeleteVideoQuery;
 use App\Application\Query\GetVideoDetailsQuery;
 use App\Application\Query\GetVideoListQuery;
 use App\Application\Query\StartTranscodeQuery;
 use App\Application\QueryHandler\QueryBus;
 use App\Application\Response\VideoListResponse;
+use App\Domain\Video\Exception\VideoAlreadyDeleted;
+use App\Domain\Video\Exception\VideoHasTranscodingTasks;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -95,6 +98,36 @@ class VideoApiController extends AbstractController
             return $this->apiError('ACCESS_DENIED', $e->getMessage(), 403);
         } catch (\Throwable $e) {
             return $this->apiError('INTERNAL_ERROR', 'Failed to start transcode', 500);
+        }
+    }
+
+    #[Route('/{id}/delete', name: 'api_video_delete', methods: ['POST'])]
+    public function delete(string $id): Response
+    {
+        try {
+            $query = new DeleteVideoQuery($id, $this->getUser()->id->toRfc4122());
+            $this->queryBus->query($query);
+
+            return $this->apiSuccess([
+                'video' => [
+                    'id' => $query->videoId->toRfc4122(),
+                    'deleted' => true,
+                ],
+            ]);
+        } catch (InvalidUuidException $e) {
+            return $this->apiError('INVALID_VIDEO_ID', $e->getMessage(), 400);
+        } catch (TranscodeAccessDeniedException $e) {
+            return $this->apiError('ACCESS_DENIED', $e->getMessage(), 403);
+        } catch (VideoNotFoundException $e) {
+            return $this->apiError('VIDEO_NOT_FOUND', $e->getMessage(), 404);
+        } catch (VideoAlreadyDeleted $e) {
+            return $this->apiError('VIDEO_ALREADY_DELETED', $e->getMessage(), 409);
+        } catch (VideoHasTranscodingTasks $e) {
+            return $this->apiError('VIDEO_HAS_TRANSCODING_TASKS', $e->getMessage(), 409);
+        } catch (\DomainException $e) {
+            return $this->apiError('DELETE_NOT_ALLOWED', $e->getMessage(), 409);
+        } catch (\Throwable) {
+            return $this->apiError('INTERNAL_ERROR', 'Failed to delete video', 500);
         }
     }
 }

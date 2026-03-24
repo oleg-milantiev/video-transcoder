@@ -2,6 +2,7 @@
 
 namespace App\Domain\Video\Entity;
 
+use App\Domain\Video\Exception\TaskAlreadyDeleted;
 use App\Domain\Video\ValueObject\Progress;
 use App\Domain\Video\ValueObject\TaskDates;
 use App\Domain\Video\ValueObject\TaskStatus;
@@ -14,6 +15,7 @@ class Task
     private Progress $progress;
     private TaskDates $dates;
     private array $meta;
+    private bool $deleted;
     private Uuid $videoId;
     private Uuid $presetId;
     private Uuid $userId;
@@ -27,6 +29,7 @@ class Task
         TaskDates $dates,
         ?Uuid $id,
         array $meta,
+        bool $deleted,
     ) {
         $this->id = $id;
         $this->videoId = $videoId;
@@ -35,6 +38,7 @@ class Task
         $this->progress = $progress;
         $this->dates = $dates;
         $this->meta = $meta;
+        $this->deleted = $deleted;
         $this->userId = $userId;
     }
 
@@ -49,6 +53,7 @@ class Task
             dates: TaskDates::create(),
             id: null,
             meta: [],
+            deleted: false,
         );
     }
 
@@ -61,12 +66,17 @@ class Task
         TaskDates $dates,
         Uuid $id,
         array $meta = [],
+        bool $deleted = false,
     ): self {
-        return new self($videoId, $presetId, $userId, $status, $progress, $dates, $id, $meta);
+        return new self($videoId, $presetId, $userId, $status, $progress, $dates, $id, $meta, $deleted);
     }
 
     public function canStart(?float $videoDuration): bool
     {
+        if ($this->deleted) {
+            return false;
+        }
+
         if (!$this->status->canBeStarted()) {
             return false;
         }
@@ -80,6 +90,8 @@ class Task
 
     public function start(?float $videoDuration): void
     {
+        $this->assertNotDeleted();
+
         if (!$this->canStart($videoDuration)) {
             throw new \DomainException('Task cannot be started.');
         }
@@ -90,6 +102,8 @@ class Task
 
     public function restart(): void
     {
+        $this->assertNotDeleted();
+
         if (!$this->status->canBeRestarted()) {
             throw new \DomainException('Task cannot be restarted.');
         }
@@ -101,6 +115,8 @@ class Task
 
     public function updateProgress(Progress $progress): void
     {
+        $this->assertNotDeleted();
+
         if ($this->status !== TaskStatus::PROCESSING) {
             throw new \DomainException('Cannot update progress for task that is not processing.');
         }
@@ -116,6 +132,8 @@ class Task
 
     public function fail(): void
     {
+        $this->assertNotDeleted();
+
         if ($this->status->isFinished()) {
             throw new \DomainException('Finished task cannot fail.');
         }
@@ -126,11 +144,17 @@ class Task
 
     public function canBeCancelled(): bool
     {
+        if ($this->deleted) {
+            return false;
+        }
+
         return $this->status === TaskStatus::PENDING || $this->status === TaskStatus::PROCESSING;
     }
 
     public function cancel(): void
     {
+        $this->assertNotDeleted();
+
         if (!$this->canBeCancelled()) {
             throw new \DomainException('Task cannot be cancelled.');
         }
@@ -200,6 +224,8 @@ class Task
 
     public function updateMeta(array $meta): void
     {
+        $this->assertNotDeleted();
+
         if ($this->status === TaskStatus::COMPLETED) {
             throw new \DomainException('Completed task metadata cannot be changed.');
         }
@@ -208,8 +234,31 @@ class Task
         $this->touch();
     }
 
+    public function markDeleted(): void
+    {
+        if ($this->deleted || $this->status->isDeleted()) {
+            throw TaskAlreadyDeleted::forTask();
+        }
+
+        $this->deleted = true;
+        $this->status = TaskStatus::deleted();
+        $this->touch();
+    }
+
+    public function isDeleted(): bool
+    {
+        return $this->deleted || $this->status->isDeleted();
+    }
+
     private function touch(): void
     {
         $this->dates = $this->dates->touch();
+    }
+
+    private function assertNotDeleted(): void
+    {
+        if ($this->isDeleted()) {
+            throw TaskAlreadyDeleted::forTask();
+        }
     }
 }

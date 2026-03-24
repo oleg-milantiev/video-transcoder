@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace App\Tests\Domain\Video\Entity;
 
+use App\Domain\Video\Entity\Task;
+use App\Domain\Video\Exception\VideoAlreadyDeleted;
+use App\Domain\Video\Exception\VideoHasTranscodingTasks;
 use App\Domain\Video\Entity\Video;
 use App\Domain\Video\ValueObject\FileExtension;
 use App\Domain\Video\ValueObject\VideoDates;
@@ -125,6 +128,64 @@ final class VideoTest extends TestCase
         );
 
         $this->assertNull($video->getPoster());
+    }
+
+    public function testMarkDeletedMarksVideoDeletedWhenNoTranscodingTasks(): void
+    {
+        $video = Video::reconstitute(
+            new VideoTitle('Delete me'),
+            new FileExtension('mp4'),
+            UuidV4::fromString('99999999-9999-4999-8999-999999999997'),
+            ['preview' => true],
+            VideoDates::create(),
+            UuidV4::fromString('55555555-5555-4555-8555-555555555555'),
+        );
+
+        $task = Task::create(
+            UuidV4::fromString('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'),
+            UuidV4::fromString('bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb'),
+            UuidV4::fromString('cccccccc-cccc-4ccc-8ccc-cccccccccccc'),
+        );
+        $task->markDeleted();
+
+        $video->markDeleted([$task]);
+
+        $this->assertTrue($video->isDeleted());
+        $this->assertNull($video->getPoster());
+    }
+
+    public function testMarkDeletedThrowsWhenVideoAlreadyDeleted(): void
+    {
+        $video = Video::reconstitute(
+            new VideoTitle('Deleted'),
+            new FileExtension('mp4'),
+            UuidV4::fromString('11111111-1111-4111-8111-111111111112'),
+            [],
+            VideoDates::create(),
+            UuidV4::fromString('11111111-1111-4111-8111-111111111113'),
+            true,
+        );
+
+        $this->expectException(VideoAlreadyDeleted::class);
+        $video->markDeleted([]);
+    }
+
+    public function testMarkDeletedThrowsWhenTranscodingTaskExists(): void
+    {
+        $video = Video::create(
+            new VideoTitle('Protected'),
+            new FileExtension('mp4'),
+            UuidV4::fromString('11111111-1111-4111-8111-111111111114'),
+        );
+
+        $task = Task::create(
+            UuidV4::fromString('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'),
+            UuidV4::fromString('bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb'),
+            UuidV4::fromString('cccccccc-cccc-4ccc-8ccc-cccccccccccc'),
+        );
+
+        $this->expectException(VideoHasTranscodingTasks::class);
+        $video->markDeleted([$task]);
     }
 }
 

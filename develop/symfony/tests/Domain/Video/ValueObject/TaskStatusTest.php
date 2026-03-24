@@ -16,6 +16,7 @@ class TaskStatusTest extends TestCase
         $this->assertSame('COMPLETED', TaskStatus::COMPLETED->name);
         $this->assertSame('FAILED', TaskStatus::FAILED->name);
         $this->assertSame('CANCELLED', TaskStatus::CANCELLED->name);
+        $this->assertSame('DELETED', TaskStatus::DELETED->name);
     }
 
     public function testFromValue(): void

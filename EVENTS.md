@@ -57,3 +57,11 @@ Convention:
   - fields: `taskId`, `videoId`, `presetId`, `userId`
 - `App\Application\Event\StartTranscodeFail`
   - fields: `error`, `videoId`, `presetId`, `userId`
+
+### DeleteVideo
+- `App\Application\Event\DeleteVideoStart`
+  - fields: `videoId`, `requestedByUserId`
+- `App\Application\Event\DeleteVideoSuccess`
+  - fields: `videoId`, `requestedByUserId`, `deletedTaskCount`
+- `App\Application\Event\DeleteVideoFail`
+  - fields: `error`, `videoId?`, `requestedByUserId?`

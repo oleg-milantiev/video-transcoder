@@ -84,6 +84,7 @@ final class VideoAccessVoterTest extends TestCase
         return [
             [VideoAccessVoter::CAN_VIEW_DETAILS],
             [VideoAccessVoter::CAN_START_TRANSCODE],
+            [VideoAccessVoter::CAN_DELETE],
         ];
     }
 

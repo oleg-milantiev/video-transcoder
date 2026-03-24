@@ -2,6 +2,8 @@
 
 namespace App\Domain\Video\Entity;
 
+use App\Domain\Video\Exception\VideoAlreadyDeleted;
+use App\Domain\Video\Exception\VideoHasTranscodingTasks;
 use App\Domain\Video\ValueObject\FileExtension;
 use App\Domain\Video\ValueObject\VideoDates;
 use App\Domain\Video\ValueObject\VideoTitle;
@@ -15,12 +17,14 @@ class Video
     private VideoDates $dates;
     private Uuid $userId;
     private array $meta;
+    private bool $deleted;
 
     private function __construct(
         VideoTitle $title,
         FileExtension $extension,
         Uuid $userId,
         array $meta,
+        bool $deleted,
         VideoDates $dates,
         ?Uuid $id,
     ) {
@@ -30,6 +34,7 @@ class Video
         $this->dates = $dates;
         $this->userId = $userId;
         $this->meta = $meta;
+        $this->deleted = $deleted;
     }
 
     public static function create(
@@ -38,7 +43,7 @@ class Video
         Uuid $userId,
         array $meta = [],
     ): self {
-        return new self($title, $extension, $userId, $meta, VideoDates::create(), null);
+        return new self($title, $extension, $userId, $meta, false, VideoDates::create(), null);
     }
 
     public static function reconstitute(
@@ -48,8 +53,9 @@ class Video
         array $meta,
         VideoDates $dates,
         Uuid $id,
+        bool $deleted = false,
     ): self {
-        return new self($title, $extension, $userId, $meta, $dates, $id);
+        return new self($title, $extension, $userId, $meta, $deleted, $dates, $id);
     }
 
     public function id(): ?Uuid
@@ -89,8 +95,33 @@ class Video
 
     public function updateMeta(array $meta): void
     {
+        $this->assertNotDeleted();
         $this->meta = array_merge($this->meta, $meta);
         $this->dates = $this->dates->touch();
+    }
+
+    /**
+     * @param array<int, Task> $tasks
+     */
+    public function markDeleted(array $tasks): void
+    {
+        if ($this->deleted) {
+            throw VideoAlreadyDeleted::forVideo();
+        }
+
+        foreach ($tasks as $task) {
+            if (!$task->isDeleted() && $task->status()->isTranscoding()) {
+                throw VideoHasTranscodingTasks::forVideo();
+            }
+        }
+
+        $this->deleted = true;
+        $this->dates = $this->dates->touch();
+    }
+
+    public function isDeleted(): bool
+    {
+        return $this->deleted;
     }
 
     public function duration(): ?float
@@ -100,6 +131,8 @@ class Video
 
     public function getSrcFilename(): string
     {
+        $this->assertNotDeleted();
+
         if ($this->id === null) {
             throw new \DomainException('Video id is not set, cannot build source filename.');
         }
@@ -109,9 +142,20 @@ class Video
 
     public function getPoster(): ?string
     {
+        if ($this->deleted) {
+            return null;
+        }
+
         if (($this->meta['preview'] ?? false) === true && $this->id) {
             return $this->id->toString() . '.jpg';
         }
         return null;
+    }
+
+    private function assertNotDeleted(): void
+    {
+        if ($this->deleted) {
+            throw VideoAlreadyDeleted::forVideo();
+        }
     }
 }

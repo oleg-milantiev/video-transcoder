@@ -108,6 +108,15 @@ class TaskRepository extends ServiceEntityRepository implements TaskRepositoryIn
         return $entity ? self::mapToDomain($entity) : null;
     }
 
+    public function findByVideoId(UuidV4 $videoId): array
+    {
+        $entities = $this->findBy([
+            'video' => $videoId,
+        ]);
+
+        return array_map(static fn (TaskEntity $entity): Task => self::mapToDomain($entity), $entities);
+    }
+
     /**
      * @throws Exception
      */
@@ -117,13 +126,13 @@ class TaskRepository extends ServiceEntityRepository implements TaskRepositoryIn
 
         $sql = <<<'SQL'
             WITH user_metrics AS (
-                -- Считаем текущую нагрузку пользователя и время последнего запуска
+                -- Считаем текущую нагрузку пользователя и время последнего запуска (включая удалённые)
                 SELECT
                     u.id AS user_id,
                     t.delay,
                     t.instance,
                     COUNT(CASE WHEN task.status = 2 THEN 1 END) AS active_count,
-                    MAX(CASE WHEN task.status IN (2, 3, 4, 5) THEN COALESCE(task.started_at, task.created_at) END) AS last_start_time
+                    MAX(CASE WHEN task.status IN (2, 3, 4, 5, 6) THEN COALESCE(task.started_at, task.created_at) END) AS last_start_time
                 FROM "user" u
                          JOIN tariff t ON u.tariff_id = t.id
                          LEFT JOIN task task ON u.id = task.user_id
@@ -140,7 +149,7 @@ class TaskRepository extends ServiceEntityRepository implements TaskRepositoryIn
                          um.delay
                      FROM task tk
                               JOIN user_metrics um ON tk.user_id = um.user_id
-                     WHERE tk.status = 1 -- PENDING
+                     WHERE tk.status = 1 AND tk.deleted = false -- PENDING, not deleted
                  )
             SELECT id AS task_id, user_id, video_id
             FROM pending_tasks

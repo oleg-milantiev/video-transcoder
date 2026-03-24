@@ -27,6 +27,7 @@ class TaskMapper
             ),
             id: $entity->id,
             meta: $entity->meta,
+            deleted: $entity->deleted,
         );
     }
 
@@ -52,5 +53,6 @@ class TaskMapper
         $entity->preset = $preset;
         $entity->user = $user;
         $entity->meta = $task->meta();
+        $entity->deleted = $task->isDeleted();
     }
 }

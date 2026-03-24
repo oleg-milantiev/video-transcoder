@@ -19,6 +19,7 @@ class VideoMapper
             meta: $entity->meta,
             dates: VideoDates::fromPersistence($entity->createdAt, $entity->updatedAt),
             id: $entity->id,
+            deleted: $entity->deleted,
         );
     }
 
@@ -40,6 +41,7 @@ class VideoMapper
         $entity->extension = $video->extension()->value();
         $entity->user = $user;
         $entity->meta = $video->meta();
+        $entity->deleted = $video->isDeleted();
         $entity->updatedAt = $video->updatedAt();
     }
 }

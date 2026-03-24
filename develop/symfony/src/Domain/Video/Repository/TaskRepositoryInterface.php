@@ -11,4 +11,9 @@ interface TaskRepositoryInterface extends PaginatedRepositoryInterface
     public function findById(UuidV4 $id): ?Task;
     public function findByIdFresh(UuidV4 $id): ?Task;
     public function findForTranscode(UuidV4 $videoId, UuidV4 $presetId, UuidV4 $userId): ?Task;
+
+    /**
+     * @return array<int, Task>
+     */
+    public function findByVideoId(UuidV4 $videoId): array;
 }

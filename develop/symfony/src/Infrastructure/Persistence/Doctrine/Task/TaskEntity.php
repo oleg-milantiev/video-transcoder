@@ -37,6 +37,9 @@ class TaskEntity
     #[ORM\Column(type: 'json')]
     public array $meta = [];
 
+    #[ORM\Column(options: ['default' => false])]
+    public bool $deleted = false;
+
     #[ORM\ManyToOne(inversedBy: 'tasks')]
     #[ORM\JoinColumn(nullable: false)]
     public ?VideoEntity $video = null;

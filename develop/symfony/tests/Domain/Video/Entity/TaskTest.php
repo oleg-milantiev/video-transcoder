@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\Domain\Video\Entity;
 
 use App\Domain\Video\Entity\Task;
+use App\Domain\Video\Exception\TaskAlreadyDeleted;
 use App\Domain\Video\ValueObject\Progress;
 use App\Domain\Video\ValueObject\TaskStatus;
 use PHPUnit\Framework\TestCase;
@@ -175,6 +176,34 @@ final class TaskTest extends TestCase
         $failedAfterStart->start(12.5);
         $failedAfterStart->fail();
         $this->assertFalse($failedAfterStart->canStart(12.5));
+    }
+
+    public function testMarkDeletedSetsDeletedStatus(): void
+    {
+        $task = Task::create($this->videoId(), $this->presetId(), $this->userId());
+
+        $task->markDeleted();
+
+        $this->assertTrue($task->isDeleted());
+        $this->assertSame(TaskStatus::DELETED, $task->status());
+    }
+
+    public function testMarkDeletedTwiceThrows(): void
+    {
+        $task = Task::create($this->videoId(), $this->presetId(), $this->userId());
+        $task->markDeleted();
+
+        $this->expectException(TaskAlreadyDeleted::class);
+        $task->markDeleted();
+    }
+
+    public function testCannotUpdateDeletedTask(): void
+    {
+        $task = Task::create($this->videoId(), $this->presetId(), $this->userId());
+        $task->markDeleted();
+
+        $this->expectException(TaskAlreadyDeleted::class);
+        $task->updateMeta(['x' => 'y']);
     }
 
     private function videoId(): UuidV4

@@ -11,7 +11,10 @@ use App\Domain\Video\Exception\InvalidProgress;
 use App\Domain\Video\Exception\InvalidTaskDates;
 use App\Domain\Video\Exception\InvalidVideoDates;
 use App\Domain\Video\Exception\InvalidVideoTitle;
+use App\Domain\Video\Exception\TaskAlreadyDeleted;
 use App\Domain\Video\Exception\UnsupportedCodec;
+use App\Domain\Video\Exception\VideoAlreadyDeleted;
+use App\Domain\Video\Exception\VideoHasTranscodingTasks;
 use App\Domain\Video\Exception\VideoMetadataExtractionFailed;
 use App\Domain\Video\Exception\VideoPreviewGenerationFailed;
 use PHPUnit\Framework\TestCase;
@@ -109,6 +112,16 @@ final class VideoExceptionTest extends TestCase
 
         $this->assertInstanceOf(\DomainException::class, $exception);
         $this->assertSame('Failed to generate preview for video "video-1": ffmpeg failed', $exception->getMessage());
+    }
+
+    public function testDeleteRelatedMessages(): void
+    {
+        $this->assertSame('Video is already deleted.', VideoAlreadyDeleted::forVideo()->getMessage());
+        $this->assertSame('Task is already deleted.', TaskAlreadyDeleted::forTask()->getMessage());
+        $this->assertSame(
+            'Video has active transcoding tasks and cannot be deleted.',
+            VideoHasTranscodingTasks::forVideo()->getMessage(),
+        );
     }
 }
 

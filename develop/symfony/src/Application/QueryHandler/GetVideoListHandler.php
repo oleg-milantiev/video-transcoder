@@ -11,13 +11,13 @@ use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 final readonly class GetVideoListHandler
 {
     public function __construct(
-        private VideoRepositoryInterface $repository,
+        private VideoRepositoryInterface $videoRepository,
     ) {
     }
 
     public function __invoke(GetVideoListQuery $query): VideoListResponse
     {
-        $result = $this->repository->findAllPaginated($query->page, $query->limit);
+        $result = $this->videoRepository->findAllPaginated($query->page, $query->limit);
 
         return VideoListResponse::fromDomain(
             $result->items,

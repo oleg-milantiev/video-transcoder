@@ -38,6 +38,9 @@ class VideoEntity
     #[ORM\Column(type: 'json', options: ['jsonb' => true])]
     public array $meta = [];
 
+    #[ORM\Column(options: ['default' => false])]
+    public bool $deleted = false;
+
     /**
      * @var Collection<int, TaskEntity>
      */
