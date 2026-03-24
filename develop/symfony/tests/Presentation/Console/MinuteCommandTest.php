@@ -5,11 +5,6 @@ declare(strict_types=1);
 namespace App\Tests\Presentation\Console;
 
 use App\Application\Command\Task\StartTaskScheduler;
-use App\Application\Logging\LogServiceInterface;
-use App\Application\Service\Maintenance\DeletedMediaCleanupService;
-use App\Domain\Video\Repository\TaskRepositoryInterface;
-use App\Domain\Video\Repository\VideoRepositoryInterface;
-use App\Domain\Video\Service\Storage\StorageInterface;
 use App\Presentation\Console\MinuteCommand;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
@@ -22,26 +17,13 @@ use Symfony\Component\Messenger\MessageBusInterface;
 
 final class MinuteCommandTest extends TestCase
 {
-    public function testExecuteDispatchesSchedulerAndRunsCleanup(): void
+    public function testExecuteDispatchesScheduler(): void
     {
         $commandBus = $this->createMock(MessageBusInterface::class);
         $commandBus->expects($this->once())
             ->method('dispatch')
             ->with($this->isInstanceOf(StartTaskScheduler::class))
             ->willReturnCallback(static fn (object $message): Envelope => new Envelope($message));
-
-        $videoRepository = $this->createMock(VideoRepositoryInterface::class);
-        $videoRepository->expects($this->never())->method('findDeletedVideoForCleanup');
-
-        $taskRepository = $this->createMock(TaskRepositoryInterface::class);
-        $taskRepository->expects($this->never())->method('findDeletedTaskForCleanup');
-
-        $cleanupService = new DeletedMediaCleanupService(
-            $videoRepository,
-            $taskRepository,
-            $this->createStub(StorageInterface::class),
-            $this->createStub(LogServiceInterface::class),
-        );
 
         $lock = $this->createMock(SharedLockInterface::class);
         $lock->expects($this->once())->method('acquire')->willReturn(true);
@@ -55,7 +37,6 @@ final class MinuteCommandTest extends TestCase
 
         $command = new MinuteCommand(
             $commandBus,
-            $cleanupService,
             $this->createStub(LoggerInterface::class),
             $lockFactory,
         );

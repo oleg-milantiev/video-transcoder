@@ -56,31 +56,23 @@ class VideoRepository extends ServiceEntityRepository implements VideoRepository
         return $entity ? self::mapToDomain($entity) : null;
     }
 
-    // TODO переделать на удаление по ключу хранения src в мета
-    public function findDeletedVideoForCleanup(int $limit = 100): array
+    public function findDeletedVideoForCleanup(): array
     {
         $conn = $this->getEntityManager()->getConnection();
 
         $sql = <<<'SQL'
-            SELECT id, user_id, extension
+            SELECT id
             FROM video
             WHERE deleted = true
-              AND (meta -> 'cleanup' ->> 'sourceFileMissingAt') IS NULL
+              AND COALESCE(meta::jsonb ->> 'sourceKey', '') <> ''
             ORDER BY updated_at NULLS FIRST, created_at
-            LIMIT :limit
         SQL;
 
-        $rows = $conn->executeQuery($sql, ['limit' => $limit], ['limit' => \PDO::PARAM_INT])->fetchAllAssociative();
+        $rows = $conn->executeQuery($sql)->fetchAllAssociative();
 
-        return array_map(static function (array $row): array {
-            $videoId = UuidV4::fromString($row['id']);
-
-            return [
-                'videoId' => $videoId,
-                'userId' => UuidV4::fromString($row['user_id']),
-                'sourcePath' => sprintf('%s.%s', $videoId->toRfc4122(), $row['extension']),
-            ];
-        }, $rows);
+        return array_values(array_filter(array_map(function (array $row): ?Video {
+            return $this->findById(UuidV4::fromString($row['id']));
+        }, $rows)));
     }
 
     protected static function mapToDomain(VideoEntity $entity): Video

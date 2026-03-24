@@ -47,10 +47,14 @@ final readonly class CreateVideoHandler
             $video = $this->videoFactory->fromCreateVideo($command);
             $video = $this->videoRepository->save($video);
 
-            $this->storage->putFromPath(
+            $sourceKey = $this->storage->putFromPath(
                 $command->file()->getFilePath(),
                 $this->storage->sourceKey($video),
             );
+            $video->updateMeta([
+                'sourceKey' => $sourceKey,
+            ]);
+            $video = $this->videoRepository->save($video);
 
             $this->logService->log('video', $video->id(), LogLevel::INFO, 'Video created', [
                 'video' => VideoItemDTO::fromDomain($video, $this->storage),

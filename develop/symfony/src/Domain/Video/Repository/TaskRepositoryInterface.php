@@ -20,5 +20,5 @@ interface TaskRepositoryInterface extends PaginatedRepositoryInterface
     /**
      * @return array<int, Task>
      */
-    public function findDeletedTaskForCleanup(int $limit = 100): array;
+    public function findDeletedTaskForCleanup(): array;
 }

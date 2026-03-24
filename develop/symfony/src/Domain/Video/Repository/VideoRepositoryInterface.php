@@ -13,5 +13,5 @@ interface VideoRepositoryInterface extends PaginatedRepositoryInterface
     /**
      * @return array<int, Video>
      */
-    public function findDeletedVideoForCleanup(int $limit = 100): array;
+    public function findDeletedVideoForCleanup(): array;
 }

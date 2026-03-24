@@ -117,7 +117,7 @@ class TaskRepository extends ServiceEntityRepository implements TaskRepositoryIn
         return array_map(static fn (TaskEntity $entity): Task => self::mapToDomain($entity), $entities);
     }
 
-    public function findDeletedTaskForCleanup(int $limit = 100): array
+    public function findDeletedTaskForCleanup(): array
     {
         $conn = $this->getEntityManager()->getConnection();
 
@@ -127,10 +127,9 @@ class TaskRepository extends ServiceEntityRepository implements TaskRepositoryIn
             WHERE deleted = true
               AND COALESCE(meta::jsonb ->> 'output', '') <> ''
             ORDER BY updated_at NULLS FIRST, created_at
-            LIMIT :limit
         SQL;
 
-        $rows = $conn->executeQuery($sql, ['limit' => $limit], ['limit' => \PDO::PARAM_INT])->fetchAllAssociative();
+        $rows = $conn->executeQuery($sql)->fetchAllAssociative();
 
         return array_map(function (array $row): ?Task {
             return $this->findById(UuidV4::fromString($row['id']));

@@ -42,6 +42,7 @@ framework:
 
             App\Application\Command\Video\ExtractVideoMetadata: async
             App\Application\Command\Video\CreateVideoPreview: async
+            App\Application\Command\Video\CleanupDeletedVideoMedia: async
 
             Symfony\Component\Mailer\Messenger\SendEmailMessage: async
             Symfony\Component\Notifier\Message\ChatMessage: async

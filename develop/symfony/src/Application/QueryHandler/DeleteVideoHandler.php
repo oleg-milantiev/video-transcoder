@@ -2,6 +2,7 @@
 
 namespace App\Application\QueryHandler;
 
+use App\Application\Command\Video\CleanupDeletedVideoMedia;
 use App\Application\Event\DeleteVideoFail;
 use App\Application\Event\DeleteVideoStart;
 use App\Application\Event\DeleteVideoSuccess;
@@ -24,6 +25,8 @@ use Symfony\Component\Messenger\MessageBusInterface;
 final readonly class DeleteVideoHandler
 {
     public function __construct(
+        #[Autowire(service: 'messenger.bus.command')]
+        private MessageBusInterface $commandBus,
         #[Autowire(service: 'messenger.bus.event')]
         private MessageBusInterface $eventBus,
         private VideoRepositoryInterface $videoRepository,
@@ -94,6 +97,8 @@ final readonly class DeleteVideoHandler
             $this->videoRealtimeNotifier->notifyVideoUpdated($video, 'deleted', [
                 'deleted' => true,
             ]);
+
+            $this->commandBus->dispatch(new CleanupDeletedVideoMedia($video->id()));
 
             $this->eventBus->dispatch(new DeleteVideoSuccess(
                 videoId: $video->id()->toRfc4122(),

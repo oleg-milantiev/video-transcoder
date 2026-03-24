@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Application\CommandHandler\Video;
 
 use App\Application\Command\Video\CreateVideo;
+use App\Application\Command\Video\ExtractVideoMetadata;
 use App\Application\CommandHandler\Video\CreateVideoHandler;
 use App\Application\Event\CreateVideoFail;
 use App\Application\Factory\FlashNotificationFactory;
@@ -25,6 +26,91 @@ use Symfony\Component\Uid\UuidV4 as Uuid;
 
 class CreateVideoHandlerTest extends TestCase
 {
+    public function testStoresSourceKeyInVideoMetaAfterUpload(): void
+    {
+        $userId = new Uuid();
+
+        $file = $this->createStub(TusFile::class);
+        $file->method('getName')->willReturn('video.mp4');
+        $file->method('getFilePath')->willReturn('/tmp/video.mp4');
+        $file->method('details')->willReturn(['metadata' => ['originalName' => 'video.mp4']]);
+
+        $command = new CreateVideo($file, $userId);
+
+        $createdVideo = Video::create(
+            new VideoTitle('video.mp4'),
+            new FileExtension('mp4'),
+            $userId,
+        );
+
+        $savedVideo = Video::reconstitute(
+            new VideoTitle('video.mp4'),
+            new FileExtension('mp4'),
+            $userId,
+            [],
+            VideoDates::create(),
+            new Uuid(),
+        );
+
+        $commandBus = new class implements MessageBusInterface {
+            public array $dispatched = [];
+
+            public function dispatch($message, array $stamps = []): Envelope
+            {
+                $this->dispatched[] = $message;
+
+                return new Envelope($message);
+            }
+        };
+
+        $eventBus = new class implements MessageBusInterface {
+            public function dispatch($message, array $stamps = []): Envelope
+            {
+                return new Envelope($message);
+            }
+        };
+
+        $videoRepository = $this->createMock(VideoRepositoryInterface::class);
+        $saveCall = 0;
+        $videoRepository->expects($this->exactly(2))
+            ->method('save')
+            ->willReturnCallback(static function (Video $video) use ($savedVideo, &$saveCall): Video {
+                $saveCall++;
+
+                return $saveCall === 1 ? $savedVideo : $video;
+            });
+
+        $storage = $this->createMock(StorageInterface::class);
+        $storage->expects($this->once())
+            ->method('putFromPath')
+            ->willReturn('source/user/video.mp4');
+        $storage->method('sourceKey')->willReturn('source/user/video.mp4');
+
+        $notifier = new VideoRealtimeNotifier($commandBus, $storage);
+        $logService = $this->createStub(LogServiceInterface::class);
+
+        $handler = new CreateVideoHandler(
+            $commandBus,
+            $eventBus,
+            $videoRepository,
+            $notifier,
+            $logService,
+            $storage,
+            new VideoFactory(),
+            new FlashNotificationFactory(),
+        );
+
+        $handler->__invoke($command);
+
+        $extractCommands = array_values(array_filter(
+            $commandBus->dispatched,
+            static fn (object $message): bool => $message instanceof ExtractVideoMetadata,
+        ));
+
+        $this->assertCount(1, $extractCommands);
+        $this->assertSame('source/user/video.mp4', $extractCommands[0]->video()->meta()['sourceKey'] ?? null);
+    }
+
     public function testStorageUploadExceptionDispatchesCreateVideoFail(): void
     {
         $userId = new Uuid();

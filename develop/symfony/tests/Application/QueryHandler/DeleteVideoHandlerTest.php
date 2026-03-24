@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\Application\QueryHandler;
 
+use App\Application\Command\Video\CleanupDeletedVideoMedia;
 use App\Application\Event\DeleteVideoFail;
 use App\Application\Event\DeleteVideoStart;
 use App\Application\Event\DeleteVideoSuccess;
@@ -56,6 +57,7 @@ final class DeleteVideoHandlerTest extends TestCase
             ->willReturn(null);
 
         $handler = new DeleteVideoHandler(
+            $this->createStub(MessageBusInterface::class),
             $eventBus,
             $videoRepository,
             $this->createStub(TaskRepositoryInterface::class),
@@ -101,6 +103,7 @@ final class DeleteVideoHandlerTest extends TestCase
             ->willReturn(false);
 
         $handler = new DeleteVideoHandler(
+            $this->createStub(MessageBusInterface::class),
             $eventBus,
             $videoRepository,
             $this->createStub(TaskRepositoryInterface::class),
@@ -167,6 +170,12 @@ final class DeleteVideoHandlerTest extends TestCase
         $logService = $this->createMock(LogServiceInterface::class);
         $logService->expects($this->exactly(2))->method('log');
 
+        $cleanupCommandBus = $this->createMock(MessageBusInterface::class);
+        $cleanupCommandBus->expects($this->once())
+            ->method('dispatch')
+            ->with($this->callback(static fn (object $message): bool => $message instanceof CleanupDeletedVideoMedia && $message->videoId->toRfc4122() === $videoId->toRfc4122()))
+            ->willReturnCallback(static fn (object $message): Envelope => new Envelope($message));
+
         $notifierCommandBus = $this->createMock(MessageBusInterface::class);
         $notifierCommandBus->expects($this->once())
             ->method('dispatch')
@@ -181,7 +190,7 @@ final class DeleteVideoHandlerTest extends TestCase
             ->with(VideoAccessVoter::CAN_DELETE, $video)
             ->willReturn(true);
 
-        $handler = new DeleteVideoHandler($eventBus, $videoRepository, $taskRepository, $logService, $videoRealtimeNotifier, $security);
+        $handler = new DeleteVideoHandler($cleanupCommandBus, $eventBus, $videoRepository, $taskRepository, $logService, $videoRealtimeNotifier, $security);
         $handler(new DeleteVideoQuery($videoId->toRfc4122(), $userId->toRfc4122()));
 
         $this->assertTrue($video->isDeleted());
@@ -226,6 +235,7 @@ final class DeleteVideoHandlerTest extends TestCase
             ->willReturn(true);
 
         $handler = new DeleteVideoHandler(
+            $this->createStub(MessageBusInterface::class),
             $eventBus,
             $videoRepository,
             $taskRepository,
