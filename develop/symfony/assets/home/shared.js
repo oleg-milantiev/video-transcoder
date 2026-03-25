@@ -40,6 +40,19 @@ export function extractApiErrorMessage(payload, fallback) {
 }
 
 export async function parseJsonResponse(response) {
+    if (response && response.status === 401) {
+        try {
+            const current = window.location.pathname + window.location.search + window.location.hash;
+            const loginUrl = new URL('/login', window.location.origin);
+            loginUrl.searchParams.set('_target_path', current);
+            window.location.href = loginUrl.toString();
+            return null;
+        } catch (e) {
+            window.location.href = '/login';
+            return null;
+        }
+    }
+
     try {
         return await response.json();
     } catch (e) {

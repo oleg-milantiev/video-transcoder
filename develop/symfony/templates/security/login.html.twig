@@ -28,6 +28,10 @@
 
             <input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}">
 
+            {% if app.request.query.get('_target_path') is not empty %}
+                <input type="hidden" name="_target_path" value="{{ app.request.query.get('_target_path') }}">
+            {% endif %}
+
             {#
                 Uncomment this section and add a remember_me option below your firewall to activate remember me functionality.
                 See https://symfony.com/doc/current/security/remember_me.html
