@@ -2,6 +2,8 @@
 
 namespace App\Application\Query;
 
+use Symfony\Component\Uid\UuidV4;
+
 final readonly class GetTaskListQuery
 {
     use GetListQueryTrait;
@@ -12,4 +14,5 @@ final readonly class GetTaskListQuery
 
     public int $page;
     public int $limit;
+    public UuidV4 $userId;
 }

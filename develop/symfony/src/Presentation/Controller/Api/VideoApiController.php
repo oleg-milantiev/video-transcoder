@@ -41,7 +41,7 @@ class VideoApiController extends AbstractController
         try {
             /** @var VideoListResponse $videoListResponse */
             $videoListResponse = $this->queryBus->query(
-                new GetVideoListQuery($request)
+                new GetVideoListQuery($request, $this->getUser()->id)
             );
 
             return new JsonResponse($videoListResponse);

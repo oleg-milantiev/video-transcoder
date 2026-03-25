@@ -19,7 +19,7 @@ final readonly class GetVideoListHandler
 
     public function __invoke(GetVideoListQuery $query): VideoListResponse
     {
-        $result = $this->videoRepository->findAllPaginated($query->page, $query->limit);
+        $result = $this->videoRepository->findAllPaginated($query->page, $query->limit, $query->userId);
 
         return VideoListResponse::fromDomain(
             $result->items,

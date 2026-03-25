@@ -47,7 +47,7 @@ class TaskApiController extends AbstractController
         try {
             /** @var TaskListResponse $taskListResponse */
             $taskListResponse = $this->queryBus->query(
-                new GetTaskListQuery($request)
+                new GetTaskListQuery($request, $this->getUser()->id)
             );
 
             return new JsonResponse($taskListResponse);

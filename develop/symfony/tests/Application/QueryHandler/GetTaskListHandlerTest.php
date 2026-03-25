@@ -13,6 +13,7 @@ use App\Tests\Domain\Entity\TaskFake;
 use App\Tests\Domain\Entity\VideoFake;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\Uid\UuidV4;
 
 class GetTaskListHandlerTest extends TestCase
 {
@@ -29,12 +30,13 @@ class GetTaskListHandlerTest extends TestCase
         $total = 2;
         $page = 1;
         $limit = 10;
+        $userId = UuidV4::fromString('11111111-1111-4111-8111-111111111111');
         $paginatedResult = new PaginatedResult($tasks, $total);
 
         $repo = $this->createMock(TaskRepositoryInterface::class);
         $repo->expects($this->once())
             ->method('findAllPaginated')
-            ->with($page, $limit)
+            ->with($page, $limit, $userId)
             ->willReturn($paginatedResult);
 
         $videoRepo = $this->createMock(VideoRepositoryInterface::class);
@@ -69,6 +71,7 @@ class GetTaskListHandlerTest extends TestCase
 
         $request = new Request(['page' => $page, 'limit' => $limit]);
         $query = new GetTaskListQuery($request);
+        $this->initializeUserId($query, $userId);
         $handler = new GetTaskListHandler($repo, $videoRepo, $presetRepo);
         $response = $handler($query);
 
@@ -91,5 +94,11 @@ class GetTaskListHandlerTest extends TestCase
         $this->assertSame($task2->status()->name, $response->items[1]->status);
         $this->assertSame($task2->progress()->value(), $response->items[1]->progress);
         $this->assertSame($task2->createdAt()->format('Y-m-d H:i'), $response->items[1]->createdAt);
+    }
+
+    private function initializeUserId(GetTaskListQuery $query, UuidV4 $userId): void
+    {
+        $property = new \ReflectionProperty(GetTaskListQuery::class, 'userId');
+        $property->setValue($query, $userId);
     }
 }

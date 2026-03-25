@@ -10,6 +10,7 @@ use App\Domain\Video\Service\Storage\StorageInterface;
 use App\Tests\Domain\Entity\VideoFake;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\Uid\UuidV4;
 
 class GetVideoListHandlerTest extends TestCase
 {
@@ -21,21 +22,29 @@ class GetVideoListHandlerTest extends TestCase
         $total = 2;
         $page = 1;
         $limit = 10;
+        $userId = UuidV4::fromString('11111111-1111-4111-8111-111111111111');
         $paginatedResult = new PaginatedResult($videos, $total);
 
         $repo = $this->createMock(VideoRepositoryInterface::class);
         $repo->expects($this->once())
             ->method('findAllPaginated')
-            ->with($page, $limit)
+            ->with($page, $limit, $userId)
             ->willReturn($paginatedResult);
 
         $request = new Request(['page' => $page, 'limit' => $limit]);
         $query = new GetVideoListQuery($request);
+        $this->initializeUserId($query, $userId);
         $handler = new GetVideoListHandler($repo, $this->createStub(StorageInterface::class));
         $response = $handler($query);
 
         $this->assertEquals($total, $response->total);
         $this->assertEquals($page, $response->page);
         $this->assertEquals($limit, $response->limit);
+    }
+
+    private function initializeUserId(GetVideoListQuery $query, UuidV4 $userId): void
+    {
+        $property = new \ReflectionProperty(GetVideoListQuery::class, 'userId');
+        $property->setValue($query, $userId);
     }
 }

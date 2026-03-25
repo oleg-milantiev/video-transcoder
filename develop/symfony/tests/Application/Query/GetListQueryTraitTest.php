@@ -6,6 +6,7 @@ use App\Application\Query\GetListQueryTrait;
 use App\Application\Exception\QueryException;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\Uid\UuidV4;
 
 class DummyListQuery
 {
@@ -15,6 +16,7 @@ class DummyListQuery
     protected const int MAX_PAGE = 50;
     public int $page;
     public int $limit;
+    public UuidV4 $userId;
 }
 
 class GetListQueryTraitTest extends TestCase

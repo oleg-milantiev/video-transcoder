@@ -22,7 +22,7 @@ final readonly class GetTaskListHandler
 
     public function __invoke(GetTaskListQuery $query): TaskListResponse
     {
-        $result = $this->taskRepository->findAllPaginated($query->page, $query->limit);
+        $result = $this->taskRepository->findAllPaginated($query->page, $query->limit, $query->userId);
 
         $combinedItems = [];
         /** @var Task $task */
