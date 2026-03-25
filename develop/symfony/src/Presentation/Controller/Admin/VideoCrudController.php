@@ -14,6 +14,7 @@ use App\Infrastructure\Persistence\Doctrine\Video\VideoEntity;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Action;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Actions;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Crud;
+use EasyCorp\Bundle\EasyAdminBundle\Config\Option\EA;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Filters;
 use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractCrudController;
 use EasyCorp\Bundle\EasyAdminBundle\Field\ArrayField;
@@ -73,7 +74,11 @@ class VideoCrudController extends AbstractCrudController
 
                 return true;
             })
-            ->linkToCrudAction('markDeleted');
+            ->linkToRoute('admin', fn (VideoEntity $entity) => [
+                EA::CRUD_CONTROLLER_FQCN => self::class,
+                EA::CRUD_ACTION => 'markDeleted',
+                EA::ENTITY_ID => $entity->id?->toRfc4122(),
+            ]);
 
         return $actions
             ->add(Crud::PAGE_INDEX, Action::DETAIL)
