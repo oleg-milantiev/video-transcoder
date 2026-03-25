@@ -126,6 +126,7 @@ async function uploadVideoWithCustomName(page, testInfo, sourceFileName, uploadA
 }
 
 test('task state flow with 4k preset: progress, cancel, restart, complete', async ({ page }, testInfo) => {
+  // Step 1 — Configure local timeouts for this long-flow test and admin credentials
   // Local timeouts for this long-flow test only.
   page.setDefaultTimeout(uiTimeout);
   page.setDefaultNavigationTimeout(navTimeout);
@@ -136,11 +137,12 @@ test('task state flow with 4k preset: progress, cancel, restart, complete', asyn
   const uploadedVideoName = '2022_10_04_Two_Maxes-05.mp4';
   const presetTitle = '4k UHD';
 
-  // start console capture for this test
+  // Step 2 — start console capture for this test
   const capture = attachConsoleCapture(page, testInfo, { maxBodyChars: 4000 });
   await capture.start();
 
   try {
+    // Step 3 — Login as admin
     await page.goto('/', { waitUntil: 'domcontentloaded', timeout: navTimeout });
     await page.getByRole('link', { name: 'Sign in' }).last().click({ timeout: uiTimeout });
     await page.locator('#inputEmail').fill(adminEmail, { timeout: uiTimeout });
@@ -149,13 +151,13 @@ test('task state flow with 4k preset: progress, cancel, restart, complete', asyn
     await expect(page.getByRole('button', { name: 'Videos' })).toBeVisible({ timeout: uiTimeout });
     await shot(page, testInfo, '01-login-success.png');
 
-  // Ensure two quick transcodes are allowed in this scenario.
+    // Step 4 — Ensure two quick transcodes are allowed in this scenario (assign Premium tariff)
     await expect(page.getByRole('link', { name: 'Admin', exact: true })).toBeVisible({ timeout: uiTimeout });
     await page.getByRole('link', { name: 'Admin', exact: true }).click({ timeout: uiTimeout });
     await assignTariffToUser(page, adminEmail, 'Premium');
     await shot(page, testInfo, '01b-admin-premium-tariff-assigned.png');
 
-  // Re-login to refresh security token context after tariff update.
+    // Step 5 — Re-login to refresh security token context after tariff update
     await page.goto('/logout', { waitUntil: 'domcontentloaded', timeout: navTimeout });
     await expect(page.getByRole('link', { name: 'Sign in' }).first()).toBeVisible({ timeout: uiTimeout });
     await page.getByRole('link', { name: 'Sign in' }).last().click({ timeout: uiTimeout });
@@ -165,6 +167,7 @@ test('task state flow with 4k preset: progress, cancel, restart, complete', asyn
     await expect(page.getByRole('button', { name: 'Videos' })).toBeVisible({ timeout: uiTimeout });
     await page.goto('/?tab=videos', { waitUntil: 'domcontentloaded', timeout: navTimeout });
 
+    // Step 6 — Upload the test video with a custom name
     await uploadVideoWithCustomName(page, testInfo, sourceVideoFileName, uploadedVideoName);
 
     await page.getByRole('button', { name: 'Videos' }).click({ timeout: uiTimeout });
@@ -174,12 +177,14 @@ test('task state flow with 4k preset: progress, cancel, restart, complete', asyn
     await expect(videoRow).toBeVisible({ timeout: uiTimeout });
     await videoRow.click({ timeout: uiTimeout });
 
+    // Step 7 — Open video details and verify the 4k preset is present
     await waitForVideoDetailsVisible(page);
     await expect(presetRow(page, presetTitle)).toBeVisible({ timeout: uiTimeout });
     await shot(page, testInfo, '02-video-details-with-4k-preset.png');
 
     const startButton = presetRow(page, presetTitle).getByRole('button', { name: 'Transcode' });
     await expect(startButton).toBeVisible({ timeout: uiTimeout });
+    // Step 8 — Start 4k transcode
     await startButton.click({ timeout: uiTimeout });
 
     await expect
@@ -194,6 +199,7 @@ test('task state flow with 4k preset: progress, cancel, restart, complete', asyn
     let sawProgressIncrease = false;
     let cancellationSent = false;
 
+    // Step 9 — Monitor progress; when PROCESSING appears, send Cancel to test cancel-in-processing flow
     for (let attempt = 1; attempt <= 10; attempt += 1) {
       const state = await readPresetTaskState(page, presetTitle);
 
@@ -224,6 +230,7 @@ test('task state flow with 4k preset: progress, cancel, restart, complete', asyn
     await shot(page, testInfo, '04-cancel-request-sent-after-progress-growth.png');
 
     let cancelled = false;
+    // Step 10 — Wait for CANCELLED state to be reached and verify UI shows cancelled status
     for (let attempt = 1; attempt <= 60; attempt += 1) {
       const state = await readPresetTaskState(page, presetTitle);
       if (state.status === 'CANCELLED') {
@@ -241,6 +248,7 @@ test('task state flow with 4k preset: progress, cancel, restart, complete', asyn
     await expect(cancelledRow.getByRole('button', { name: 'Transcode' })).toBeVisible({ timeout: uiTimeout });
     await shot(page, testInfo, '05-task-cancelled.png');
 
+    // Step 11 — Restart the transcode after cancellation
     await cancelledRow.getByRole('button', { name: 'Transcode' }).click({ timeout: uiTimeout });
 
     await expect
@@ -254,6 +262,7 @@ test('task state flow with 4k preset: progress, cancel, restart, complete', asyn
     let sawRestartProgressIncrease = false;
     let completed = false;
 
+    // Step 12 — Wait for completion of restarted task and verify progress increased during run
     for (let attempt = 1; attempt <= 10; attempt += 1) {
       const state = await readPresetTaskState(page, presetTitle);
 
@@ -280,6 +289,7 @@ test('task state flow with 4k preset: progress, cancel, restart, complete', asyn
     await expect(completedRow.getByRole('link', { name: 'Download' })).toBeVisible({ timeout: uiTimeout });
     await shot(page, testInfo, '06-restart-completed-with-download.png');
 
+    // Step 13 — Sign out and finish the test
     await expect(page.getByRole('link', { name: 'Sign out' })).toBeVisible({ timeout: uiTimeout });
     await page.getByRole('link', { name: 'Sign out' }).click({ timeout: uiTimeout });
     await expect(page.getByRole('link', { name: 'Sign in' })).toHaveCount(2, { timeout: uiTimeout });
