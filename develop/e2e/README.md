@@ -29,34 +29,49 @@ Tests are designed to run sequentially (`workers: 1`) and build on data created 
 - Performs `Sign out` and verifies `Sign in` links are visible again
 - Saves screenshots for each key step
 
-### `03.admin.crud.js` - admin area CRUD smoke
- 
+### `03.admin.crud.js` - admin area CRUD smoke (step-by-step)
+
 1. Navigate to the site root and sign in as the admin account (environment: `ADMIN_EMAIL` / `ADMIN_PASSWORD`).
+
 2. Open the EasyAdmin interface (`Admin` link) and verify the presence of sidebar sections: `Users`, `Tariffs`, `Videos`, `Presets`, `Tasks`, `Logs`.
+
 3. Open `Users` and verify the admin user (`oleg@milantiev.com`) is present and that CRUD controls (New/Edit/Detail) are available where expected. Capture a screenshot.
+
 4. Open `Presets` and ensure required presets exist: create or update
    - `180p` — width: 320, height: 180, codec: `h264`, bitrate: `1.1` Mbps
    - `4k UHD` — width: 3840, height: 2160, codec: `h264`, bitrate: `8.0` Mbps
    For each preset, the test creates it if missing and then opens edit to ensure values are persisted. Capture a screenshot per preset.
-5. Open `Tariffs` and ensure tariffs exist and are configured:
+
+5. Create a test user `test@test.com` with password `test` and role `ROLE_USER` via `Users -> New` (if the Create action is available). Fill visible fields and submit. Capture a screenshot.
+
+6. Re-open `Users` and verify that `test@test.com` is present in the users table. Capture a screenshot.
+
+7. Open `Tariffs` and ensure tariffs exist and are configured:
    - Create/update `Free` (first set `delay=60`, then update to `delay=3600`, `instance=1`)
    - Create/update `Premium` (`delay=0`, `instance=2`)
    Capture screenshots after create/update steps.
-6. Assign tariff `Free` to the admin user (`oleg@milantiev.com`) via `Users -> Edit` and confirm the assignment is visible in the users table. Capture a screenshot.
-7. Open `Tasks` and verify the table is present. Locate the first task row and perform the admin-side delete flow for tasks:
-   - Click `Mark deleted` on the first task and accept the confirmation dialog.
-   - Re-open `Tasks` to refresh the index and verify the first task row is styled as deleted (the row's video/title cell gets the `video-title-deleted` class — rendered as strikethrough) and that the `Mark deleted` action is no longer available for that task. Capture a screenshot.
-8. Open `Videos` and verify the uploaded video from `02.upload.video.js` is present in the list. Open the video's details and verify core fields (Title, Extension, Created At, User ID). Capture a screenshot.
-9. While on the `Videos` index (after verifying details), perform the admin-side delete flow for this video:
+
+8. Assign tariff `Free` to the admin user (`oleg@milantiev.com`) via `Users -> Edit` and confirm the assignment is visible in the users table. Capture a screenshot.
+
+9. Open `Tasks` and verify the table is present. Locate the first task row that exposes a `Mark deleted` action (if any) and perform the admin-side delete flow:
+   - Click `Mark deleted` on that task and accept the confirmation dialog.
+   - Re-open `Tasks` to refresh the index and verify the affected task row is styled as deleted (the row's video/title cell gets the `video-title-deleted` class — rendered as strikethrough) and that the `Mark deleted` action is no longer available for that task. Capture a screenshot.
+
+10. Open `Videos` and verify the uploaded video from `02.upload.video.js` is present in the list. Open the video's details and verify core fields (Title, Extension, Created At, User ID). Capture a screenshot.
+
+11. While on the `Videos` index (after verifying details), perform the admin-side delete flow for this video:
    - Click `Mark deleted` on the video row and accept the confirmation dialog.
    - Re-open `Videos` and verify the video row shows the deleted style (`video-title-deleted`) and that the `Mark deleted` action is no longer available. Capture a screenshot.
-10. Re-open `Tasks` (again) and perform final consistency checks:
-	- Ensure task rows reflect the deleted state (strikethrough) and that no `Mark deleted` actions remain for listed tasks.
-	- Confirm the Tasks list still behaves read-only for CRUD where expected (no New/Edit/Delete actions available in CRUD toolbar). Capture a screenshot.
-11. Open `Logs` and verify the view is read-only (no New/Edit actions), that filter controls are visible, and that the logs table contains rows. Capture a screenshot.
-12. Return to the main site, verify UI elements (`Upload`, `Sign out`) and perform `Sign out`. Verify `Sign in` links are visible again. Capture a final screenshot.
 
-Throughout the flow the test saves screenshots for each key milestone and validates UI state changes (action availability, row styling, and persisted field values).
+12. Re-open `Tasks` (again) and perform final consistency checks:
+   - Ensure task rows reflect the deleted state where applicable and that no `Mark deleted` actions remain for listed tasks.
+   - Confirm the Tasks list still behaves read-only for CRUD where expected (no New/Edit/Delete actions available in CRUD toolbar). Capture a screenshot.
+
+13. Open `Logs` and verify the view is read-only (no New/Edit actions), that filter controls are visible, and that the logs table contains rows. Capture a screenshot.
+
+14. Return to the main site, verify UI elements (`Upload`, `Sign out`) and perform `Sign out`. Verify `Sign in` links are visible again. Capture a final screenshot.
+
+15. Throughout the flow the test saves screenshots for each key milestone and validates UI state changes (action availability, row styling, and persisted field values).
 
 ### `04.transcode.flow.js` - transcode, download and remove flow
 

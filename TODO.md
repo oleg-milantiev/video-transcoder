@@ -5,9 +5,6 @@
 - frontend
   - каскад уведомлений
 - e2e
-  - 03 admin
-    - тестирование удаления task и video
-    - добавление нового common user
   - 04+ все дальнейшие тесты от common-user
 - DDD
   - убрать из домена Symfony-Uuid.

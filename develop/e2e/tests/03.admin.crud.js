@@ -171,7 +171,34 @@ test('admin area full smoke with CRUD checks', async ({ page }, testInfo) => {
   await expect(usersTbody).toContainText('oleg@milantiev.com', { timeout: UI_TIMEOUT });
   await shot(page, testInfo, '02-admin-users-and-menu.png');
 
-  // Step 5 — Ensure required Presets exist (create or update if missing)
+  // Step 5 — Create a test user with email test@test.com, password 'test' and ROLE_USER
+  await openAdminSection(page, 'Users', '/admin/user');
+  // click new if available
+  if ((await page.locator('a.action-new').count()) > 0) {
+    await page.locator('a.action-new').click({ timeout: UI_TIMEOUT });
+    // Fill available fields if present
+    const emailInput = page.getByLabel('Email').first();
+    if ((await emailInput.count()) > 0) {
+      await emailInput.fill('test@test.com');
+    }
+    const passwordInput = page.getByLabel('Password').first();
+    if ((await passwordInput.count()) > 0) {
+      await passwordInput.fill('test');
+    }
+    const rolesInput = page.getByLabel('Roles').first();
+    if ((await rolesInput.count()) > 0) {
+      await rolesInput.fill('ROLE_USER');
+    }
+    await submitCrudForm(page);
+  }
+
+  // Step 6 — Verify that the new user test@test.com is present in Users list
+  await openAdminSection(page, 'Users', '/admin/user');
+  const usersTbodyAfterCreate = mainTableBodyForHeading(page, 'Users');
+  await expect(usersTbodyAfterCreate).toContainText('test@test.com', { timeout: UI_TIMEOUT });
+  await shot(page, testInfo, '02b-user-test-created.png');
+
+  // Step 7 — Ensure required Presets exist (create or update if missing)
   await createOrUpdatePreset(page, {
     title: '180p',
     width: 320,
@@ -186,13 +213,13 @@ test('admin area full smoke with CRUD checks', async ({ page }, testInfo) => {
     codec: 'h264',
     bitrate: 8.0,
   }, testInfo);
-  // Step 6 — Ensure Tariffs exist and configure them; then assign a tariff to the admin user
+  // Step 8 — Ensure Tariffs exist and configure them; then assign a tariff to the admin user
   await createOrUpdateTariffByTitle(page, 'Free', 60, 1, testInfo, '07-tariff-free-initial.png');
   await createOrUpdateTariffByTitle(page, 'Free', 3600, 1, testInfo, '07b-tariff-free-updated-to-hour.png');
   await createOrUpdateTariffByTitle(page, 'Premium', 0, 2, testInfo, '07c-tariff-premium-present.png');
   await assignTariffToUser(page, adminEmail, 'Free', testInfo);
 
-  // Step 7 - go to Tasks and mark the first task deleted, then verify UI updates.
+  // Step 9 - go to Tasks and mark the first task deleted, then verify UI updates.
   await openAdminSection(page, 'Tasks', '/admin/task');
   const tasksTbodyPre = mainTableBodyForHeading(page, 'Tasks');
   const tasksRows = tasksTbodyPre.locator('tr');
@@ -228,7 +255,7 @@ test('admin area full smoke with CRUD checks', async ({ page }, testInfo) => {
     await shot(page, testInfo, '02-tasks-no-mark-deleted-action.png');
   }
 
-  // Step 8 — Verify uploaded Videos are listed and details page is available (no create action)
+  // Step 10 — Verify uploaded Videos are listed and details page is available (no create action)
   await openAdminSection(page, 'Videos', '/admin/video');
   await expect(page.locator('a.action-new')).toHaveCount(0, { timeout: UI_TIMEOUT });
   const videosTbody = mainTableBodyForHeading(page, 'Videos');
@@ -236,7 +263,7 @@ test('admin area full smoke with CRUD checks', async ({ page }, testInfo) => {
   await expect(videosTbody.locator('a.action-detail').first()).toBeVisible({ timeout: UI_TIMEOUT });
   await shot(page, testInfo, '03-admin-videos-uploaded-file.png');
 
-  // Step 9 - Mark video as deleted and verify UI updates in Videos
+  // Step 11 - Mark video as deleted and verify UI updates in Videos
   const videoRow = videosTbody.locator('tr', { hasText: uploadedVideoName }).first();
   await expect(videoRow).toBeVisible({ timeout: UI_TIMEOUT });
   const markDeletedVideoLink = videoRow.getByRole('link', { name: 'Mark deleted' }).first();
@@ -256,14 +283,14 @@ test('admin area full smoke with CRUD checks', async ({ page }, testInfo) => {
     await shot(page, testInfo, '03-video-no-mark-deleted-action.png');
   }
 
-  // Step 10 — Verify Tasks section is read-only (no new/edit/delete actions allowed)
+  // Step 12 — Verify Tasks section is read-only (no new/edit/delete actions allowed)
   await openAdminSection(page, 'Tasks', '/admin/task');
   await expect(page.locator('a.action-new')).toHaveCount(0, { timeout: UI_TIMEOUT });
   await expect(page.locator('a.action-edit')).toHaveCount(0, { timeout: UI_TIMEOUT });
   await expect(page.locator('a.action-delete')).toHaveCount(0, { timeout: UI_TIMEOUT });
   await shot(page, testInfo, '04-admin-tasks-crud-constraints.png');
 
-  // Step 11 - ensure all tasks are marked deleted (strikethrough) by Video deletion. No 'Mark deleted' actions remain
+  // Step 13 - ensure all tasks are marked deleted (strikethrough) by Video deletion. No 'Mark deleted' actions remain
   await openAdminSection(page, 'Tasks', '/admin/task');
   const tasksTbodyFinal = mainTableBodyForHeading(page, 'Tasks');
   await expect.poll(async () => tasksTbodyFinal.locator('tr').count(), { timeout: UI_TIMEOUT }).toBeGreaterThan(0);
@@ -276,7 +303,7 @@ test('admin area full smoke with CRUD checks', async ({ page }, testInfo) => {
   }
   await shot(page, testInfo, '04-admin-tasks-all-deleted.png');
 
-  // Step 12 — Verify Logs view is read-only and filtering controls are present
+  // Step 14 — Verify Logs view is read-only and filtering controls are present
   await openAdminSection(page, 'Logs', '/admin/log');
   await expect(page.locator('a.action-new')).toHaveCount(0, { timeout: UI_TIMEOUT });
   await expect(page.locator('a.action-edit')).toHaveCount(0, { timeout: UI_TIMEOUT });
@@ -290,7 +317,7 @@ test('admin area full smoke with CRUD checks', async ({ page }, testInfo) => {
   await expect.poll(async () => logsTbody.locator('tr').count(), { timeout: UI_TIMEOUT }).toBeGreaterThan(0);
   await shot(page, testInfo, '05-admin-logs-readonly-with-filters.png');
 
-  // Step 13 — Return to the site home, verify UI and sign out
+  // Step 15 — Return to the site home, verify UI and sign out
   await page.goto('/', { waitUntil: 'domcontentloaded', timeout: NAV_TIMEOUT });
   await expect(page.getByRole('button', { name: 'Upload' })).toBeVisible({ timeout: UI_TIMEOUT });
   await expect(page.getByRole('link', { name: 'Sign out' })).toBeVisible({ timeout: UI_TIMEOUT });
