@@ -10,13 +10,13 @@ use App\Application\QueryHandler\QueryBus;
 use App\Domain\Video\Exception\TaskAlreadyDeleted;
 use App\Domain\Video\ValueObject\TaskStatus;
 use App\Infrastructure\Persistence\Doctrine\Task\TaskEntity;
+use EasyCorp\Bundle\EasyAdminBundle\Attribute\AdminRoute;
 use EasyCorp\Bundle\EasyAdminBundle\Context\AdminContext;
 use EasyCorp\Bundle\EasyAdminBundle\Router\AdminUrlGenerator;
 use Symfony\Component\HttpFoundation\Response;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Action;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Actions;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Crud;
-use EasyCorp\Bundle\EasyAdminBundle\Config\Option\EA;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Filters;
 use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractCrudController;
 use EasyCorp\Bundle\EasyAdminBundle\Field\ArrayField;
@@ -68,11 +68,8 @@ class TaskCrudController extends AbstractCrudController
             ->displayIf(static function (TaskEntity $entity) {
                 return !in_array($entity->status, [TaskStatus::PROCESSING->value, TaskStatus::DELETED->value], true);
             })
-            ->linkToRoute('admin', fn (TaskEntity $entity) => [
-                EA::CRUD_CONTROLLER_FQCN => self::class,
-                EA::CRUD_ACTION => 'markDeleted',
-                EA::ENTITY_ID => $entity->id?->toRfc4122(),
-            ]);
+            ->askConfirmation()
+            ->linkToCrudAction('markDeleted');
 
         return $actions
             ->add(Crud::PAGE_INDEX, Action::DETAIL)
@@ -109,6 +106,7 @@ class TaskCrudController extends AbstractCrudController
         ];
     }
 
+    #[AdminRoute(path: '/{entityId}/mark_deleted', name: 'admin_task_mark_deleted')]
     public function markDeleted(AdminContext $context): Response
     {
         $entityId = $context->getEntity()->getPrimaryKeyValue();

@@ -11,10 +11,10 @@ use App\Domain\Video\ValueObject\TaskStatus;
 use App\Domain\Video\Exception\VideoAlreadyDeleted;
 use App\Domain\Video\Exception\VideoHasTranscodingTasks;
 use App\Infrastructure\Persistence\Doctrine\Video\VideoEntity;
+use EasyCorp\Bundle\EasyAdminBundle\Attribute\AdminRoute;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Action;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Actions;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Crud;
-use EasyCorp\Bundle\EasyAdminBundle\Config\Option\EA;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Filters;
 use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractCrudController;
 use EasyCorp\Bundle\EasyAdminBundle\Field\ArrayField;
@@ -74,11 +74,8 @@ class VideoCrudController extends AbstractCrudController
 
                 return true;
             })
-            ->linkToRoute('admin', fn (VideoEntity $entity) => [
-                EA::CRUD_CONTROLLER_FQCN => self::class,
-                EA::CRUD_ACTION => 'markDeleted',
-                EA::ENTITY_ID => $entity->id?->toRfc4122(),
-            ]);
+            ->askConfirmation()
+            ->linkToCrudAction('markDeleted');
 
         return $actions
             ->add(Crud::PAGE_INDEX, Action::DETAIL)
@@ -153,6 +150,7 @@ class VideoCrudController extends AbstractCrudController
         return $urlGenerator->generateUrl();
     }
 
+    #[AdminRoute(path: '/{entityId}/mark_deleted', name: 'admin_video_mark_deleted')]
     public function markDeleted(AdminContext $context): Response
     {
         $entityId = $context->getEntity()->getPrimaryKeyValue();
