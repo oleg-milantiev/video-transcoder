@@ -40,6 +40,18 @@ async function submitCrudForm(page) {
   await page.getByRole('button', { name: 'Update', exact: true }).click({ timeout: UI_TIMEOUT });
 }
 
+// Helper to click an element that opens a confirmation dialog and accept it.
+async function clickAndAcceptConfirmDialog(page, clickableLocator) {
+  const dialogPromise = page.waitForEvent('dialog', { timeout: UI_TIMEOUT }).then(async (dialog) => {
+    const message = dialog.message();
+    await dialog.accept();
+    return message;
+  });
+
+  await clickableLocator.click({ timeout: UI_TIMEOUT });
+  return await dialogPromise;
+}
+
 async function createOrUpdateTariffByTitle(page, title, delay, instance, testInfo, screenshotName) {
   await openAdminSection(page, 'Tariffs', '/admin/tariff');
 
@@ -180,7 +192,23 @@ test('admin area full smoke with CRUD checks', async ({ page }, testInfo) => {
   await createOrUpdateTariffByTitle(page, 'Premium', 0, 2, testInfo, '07c-tariff-premium-present.png');
   await assignTariffToUser(page, adminEmail, 'Free', testInfo);
 
-  // Step 7 — Verify uploaded Videos are listed and details page is available (no create action)
+  // Step 7 - go to Tasks and mark the first task deleted, then verify UI updates.
+  await openAdminSection(page, 'Tasks', '/admin/task');
+  const tasksTbodyPre = mainTableBodyForHeading(page, 'Tasks');
+  const firstTaskRowPre = tasksTbodyPre.locator('tr').first();
+  await expect(firstTaskRowPre).toBeVisible({ timeout: UI_TIMEOUT });
+  // Click 'Mark deleted' on the first task and accept confirmation
+  const markDeletedTaskLink = firstTaskRowPre.getByRole('link', { name: 'Mark deleted' }).first();
+  await expect(markDeletedTaskLink).toBeVisible({ timeout: UI_TIMEOUT });
+  await clickAndAcceptConfirmDialog(page, markDeletedTaskLink);
+  // Re-open Tasks index to refresh list and verify the first task shows as deleted (strikethrough)
+  await openAdminSection(page, 'Tasks', '/admin/task');
+  const tasksTbodyAfterTaskDelete = mainTableBodyForHeading(page, 'Tasks');
+  const firstTaskRowAfter = tasksTbodyAfterTaskDelete.locator('tr').first();
+  await expect(firstTaskRowAfter.locator('td.video-title-deleted')).toHaveCount(1, { timeout: UI_TIMEOUT });
+  await expect(firstTaskRowAfter.getByRole('link', { name: 'Mark deleted' })).toHaveCount(0, { timeout: UI_TIMEOUT });
+
+  // Step 8 — Verify uploaded Videos are listed and details page is available (no create action)
   await openAdminSection(page, 'Videos', '/admin/video');
   await expect(page.locator('a.action-new')).toHaveCount(0, { timeout: UI_TIMEOUT });
   const videosTbody = mainTableBodyForHeading(page, 'Videos');
@@ -188,14 +216,40 @@ test('admin area full smoke with CRUD checks', async ({ page }, testInfo) => {
   await expect(videosTbody.locator('a.action-detail').first()).toBeVisible({ timeout: UI_TIMEOUT });
   await shot(page, testInfo, '03-admin-videos-uploaded-file.png');
 
-  // Step 8 — Verify Tasks section is read-only (no new/edit/delete actions allowed)
+  // Step 9 - Mark video as deleted and verify UI updates in Videos
+  const videoRow = videosTbody.locator('tr', { hasText: uploadedVideoName }).first();
+  await expect(videoRow).toBeVisible({ timeout: UI_TIMEOUT });
+  const markDeletedVideoLink = videoRow.getByRole('link', { name: 'Mark deleted' }).first();
+  await expect(markDeletedVideoLink).toBeVisible({ timeout: UI_TIMEOUT });
+  await clickAndAcceptConfirmDialog(page, markDeletedVideoLink);
+  // Re-open Videos index to refresh and verify video row is strikethrough and action removed
+  await openAdminSection(page, 'Videos', '/admin/video');
+  const videosTbodyAfter = mainTableBodyForHeading(page, 'Videos');
+  const videoRowAfter = videosTbodyAfter.locator('tr', { hasText: uploadedVideoName }).first();
+  await expect(videoRowAfter.locator('td.video-title-deleted')).toHaveCount(1, { timeout: UI_TIMEOUT });
+  await expect(videoRowAfter.getByRole('link', { name: 'Mark deleted' })).toHaveCount(0, { timeout: UI_TIMEOUT });
+
+  // Step 10 — Verify Tasks section is read-only (no new/edit/delete actions allowed)
   await openAdminSection(page, 'Tasks', '/admin/task');
   await expect(page.locator('a.action-new')).toHaveCount(0, { timeout: UI_TIMEOUT });
   await expect(page.locator('a.action-edit')).toHaveCount(0, { timeout: UI_TIMEOUT });
   await expect(page.locator('a.action-delete')).toHaveCount(0, { timeout: UI_TIMEOUT });
   await shot(page, testInfo, '04-admin-tasks-crud-constraints.png');
 
-  // Step 9 — Verify Logs view is read-only and filtering controls are present
+  // Step 11 - ensure all tasks are marked deleted (strikethrough) by Video deletion. No 'Mark deleted' actions remain
+  await openAdminSection(page, 'Tasks', '/admin/task');
+  const tasksTbodyFinal = mainTableBodyForHeading(page, 'Tasks');
+  await expect.poll(async () => tasksTbodyFinal.locator('tr').count(), { timeout: UI_TIMEOUT }).toBeGreaterThan(0);
+  const taskRows = tasksTbodyFinal.locator('tr');
+  const taskCount = await taskRows.count();
+  for (let i = 0; i < taskCount; i += 1) {
+    const r = taskRows.nth(i);
+    await expect(r.locator('td.video-title-deleted')).toHaveCount(1, { timeout: UI_TIMEOUT });
+    await expect(r.getByRole('link', { name: 'Mark deleted' })).toHaveCount(0, { timeout: UI_TIMEOUT });
+  }
+  await shot(page, testInfo, '04-admin-tasks-all-deleted.png');
+
+  // Step 12 — Verify Logs view is read-only and filtering controls are present
   await openAdminSection(page, 'Logs', '/admin/log');
   await expect(page.locator('a.action-new')).toHaveCount(0, { timeout: UI_TIMEOUT });
   await expect(page.locator('a.action-edit')).toHaveCount(0, { timeout: UI_TIMEOUT });
@@ -209,7 +263,7 @@ test('admin area full smoke with CRUD checks', async ({ page }, testInfo) => {
   await expect.poll(async () => logsTbody.locator('tr').count(), { timeout: UI_TIMEOUT }).toBeGreaterThan(0);
   await shot(page, testInfo, '05-admin-logs-readonly-with-filters.png');
 
-  // Step 10 — Return to the site home, verify UI and sign out
+  // Step 13 — Return to the site home, verify UI and sign out
   await page.goto('/', { waitUntil: 'domcontentloaded', timeout: NAV_TIMEOUT });
   await expect(page.getByRole('button', { name: 'Upload' })).toBeVisible({ timeout: UI_TIMEOUT });
   await expect(page.getByRole('link', { name: 'Sign out' })).toBeVisible({ timeout: UI_TIMEOUT });
