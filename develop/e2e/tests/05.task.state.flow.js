@@ -1,3 +1,5 @@
+const fs = require('fs');
+const path = require('path');
 const { test, expect } = require('@playwright/test');
 const { attachConsoleCapture } = require('../consoleCapture');
 
@@ -8,8 +10,11 @@ async function shot(page, testInfo, name) {
   await page.screenshot({ path: testInfo.outputPath(name), fullPage: true, timeout: uiTimeout });
 }
 
-function videoRowByTitle(page, fileName) {
-  return page.locator('#videosTable tbody tr', { hasText: fileName }).first();
+function activeVideoRowByTitle(page, fileName) {
+  return page
+    .locator('#videosTable tbody tr', { hasText: fileName })
+    .filter({ hasNot: page.locator('td.video-title-deleted') })
+    .first();
 }
 
 function presetsTable(page) {
@@ -95,9 +100,29 @@ async function waitForVideoDetailsVisible(page) {
   await expect(presetsTable(page)).toBeVisible({ timeout: uiTimeout });
 }
 
-async function reloadDetails(page) {
-  await page.reload({ waitUntil: 'domcontentloaded', timeout: navTimeout });
-  await waitForVideoDetailsVisible(page);
+async function uploadVideoWithCustomName(page, testInfo, sourceFileName, uploadAsName) {
+  const uploadFilePath = path.join('/work/e2e', sourceFileName);
+  const fileBuffer = fs.readFileSync(uploadFilePath);
+
+  await page.getByRole('button', { name: 'Upload' }).click({ timeout: uiTimeout });
+  await expect(page.locator('#drag-drop-area .uppy-Dashboard')).toBeVisible({ timeout: 30000 });
+
+  const fileChooserPromise = page.waitForEvent('filechooser');
+  await page.locator('#drag-drop-area .uppy-Dashboard-browse').click({ timeout: uiTimeout });
+  const fileChooser = await fileChooserPromise;
+  await fileChooser.setFiles({
+    name: uploadAsName,
+    mimeType: 'video/mp4',
+    buffer: fileBuffer,
+  });
+
+  await expect(page.locator('#drag-drop-area .uppy-StatusBar-content[role="status"][title="Complete"]')).toBeVisible({
+    timeout: 30000,
+  });
+  await shot(page, testInfo, '01c-reupload-with-05-name.png');
+
+  await page.getByRole('button', { name: 'Videos' }).click({ timeout: uiTimeout });
+  await expect(activeVideoRowByTitle(page, uploadAsName)).toBeVisible({ timeout: navTimeout });
 }
 
 test('task state flow with 4k preset: progress, cancel, restart, complete', async ({ page }, testInfo) => {
@@ -107,7 +132,8 @@ test('task state flow with 4k preset: progress, cancel, restart, complete', asyn
 
   const adminEmail = process.env.ADMIN_EMAIL || 'oleg@milantiev.com';
   const adminPassword = process.env.ADMIN_PASSWORD || 'admin';
-  const uploadedVideoName = '2022_10_04_Two_Maxes.mp4';
+  const sourceVideoFileName = '2022_10_04_Two_Maxes.mp4';
+  const uploadedVideoName = '2022_10_04_Two_Maxes-05.mp4';
   const presetTitle = '4k UHD';
 
   // start console capture for this test
@@ -139,10 +165,12 @@ test('task state flow with 4k preset: progress, cancel, restart, complete', asyn
     await expect(page.getByRole('button', { name: 'Videos' })).toBeVisible({ timeout: uiTimeout });
     await page.goto('/?tab=videos', { waitUntil: 'domcontentloaded', timeout: navTimeout });
 
+    await uploadVideoWithCustomName(page, testInfo, sourceVideoFileName, uploadedVideoName);
+
     await page.getByRole('button', { name: 'Videos' }).click({ timeout: uiTimeout });
     await expect(page.locator('#videosTable')).toBeVisible({ timeout: uiTimeout });
 
-    const videoRow = videoRowByTitle(page, uploadedVideoName);
+    const videoRow = activeVideoRowByTitle(page, uploadedVideoName);
     await expect(videoRow).toBeVisible({ timeout: uiTimeout });
     await videoRow.click({ timeout: uiTimeout });
 
