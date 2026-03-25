@@ -171,34 +171,7 @@ test('admin area full smoke with CRUD checks', async ({ page }, testInfo) => {
   await expect(usersTbody).toContainText('oleg@milantiev.com', { timeout: UI_TIMEOUT });
   await shot(page, testInfo, '02-admin-users-and-menu.png');
 
-  // Step 5 — Create a test user with email test@test.com, password 'test' and ROLE_USER
-  await openAdminSection(page, 'Users', '/admin/user');
-  // click new if available
-  if ((await page.locator('a.action-new').count()) > 0) {
-    await page.locator('a.action-new').click({ timeout: UI_TIMEOUT });
-    // Fill available fields if present
-    const emailInput = page.getByLabel('Email').first();
-    if ((await emailInput.count()) > 0) {
-      await emailInput.fill('test@test.com');
-    }
-    const passwordInput = page.getByLabel('Password').first();
-    if ((await passwordInput.count()) > 0) {
-      await passwordInput.fill('test');
-    }
-    const rolesInput = page.getByLabel('Roles').first();
-    if ((await rolesInput.count()) > 0) {
-      await rolesInput.fill('ROLE_USER');
-    }
-    await submitCrudForm(page);
-  }
-
-  // Step 6 — Verify that the new user test@test.com is present in Users list
-  await openAdminSection(page, 'Users', '/admin/user');
-  const usersTbodyAfterCreate = mainTableBodyForHeading(page, 'Users');
-  await expect(usersTbodyAfterCreate).toContainText('test@test.com', { timeout: UI_TIMEOUT });
-  await shot(page, testInfo, '02b-user-test-created.png');
-
-  // Step 7 — Ensure required Presets exist (create or update if missing)
+  // Step 5 — Ensure required Presets exist (create or update if missing)
   await createOrUpdatePreset(page, {
     title: '180p',
     width: 320,
@@ -213,11 +186,38 @@ test('admin area full smoke with CRUD checks', async ({ page }, testInfo) => {
     codec: 'h264',
     bitrate: 8.0,
   }, testInfo);
-  // Step 8 — Ensure Tariffs exist and configure them; then assign a tariff to the admin user
+
+  // Step 6 — Ensure Tariffs exist and configure them; then assign a tariff to the admin user
   await createOrUpdateTariffByTitle(page, 'Free', 60, 1, testInfo, '07-tariff-free-initial.png');
   await createOrUpdateTariffByTitle(page, 'Free', 3600, 1, testInfo, '07b-tariff-free-updated-to-hour.png');
   await createOrUpdateTariffByTitle(page, 'Premium', 0, 2, testInfo, '07c-tariff-premium-present.png');
   await assignTariffToUser(page, adminEmail, 'Free', testInfo);
+
+  // Step 7 — Create a test user with email test@test.com, password 'test', ROLE_USER and Free tariff
+  await openAdminSection(page, 'Users', '/admin/user');
+  await page.locator('a.action-new').click({ timeout: UI_TIMEOUT });
+  const emailInput = page.getByLabel('Email').first();
+  await emailInput.fill('test@test.com', { timeout: UI_TIMEOUT });
+  const passwordInput = page.getByLabel('Password').first();
+  await passwordInput.fill('test', { timeout: UI_TIMEOUT });
+
+  const tariffSelect = page.locator('select[name$="[tariff]"]').first();
+  if ((await tariffSelect.count()) > 0) {
+    await tariffSelect.selectOption({ label: 'Free' }, { timeout: UI_TIMEOUT });
+  } else {
+    const tariffInput = page.getByLabel('Tariff').first();
+    await tariffInput.click({ timeout: UI_TIMEOUT });
+    await tariffInput.fill('Free', { timeout: UI_TIMEOUT });
+    await page.keyboard.press('Enter');
+  }
+
+  await submitCrudForm(page, { timeout: UI_TIMEOUT });
+
+  // Step 8 — Verify that the new user test@test.com is present in Users list
+  await openAdminSection(page, 'Users', '/admin/user');
+  const usersTbodyAfterCreate = mainTableBodyForHeading(page, 'Users');
+  await expect(usersTbodyAfterCreate).toContainText('test@test.com', { timeout: UI_TIMEOUT });
+  await shot(page, testInfo, '02b-user-test-created.png');
 
   // Step 9 - go to Tasks and mark the first task deleted, then verify UI updates.
   await openAdminSection(page, 'Tasks', '/admin/task');
