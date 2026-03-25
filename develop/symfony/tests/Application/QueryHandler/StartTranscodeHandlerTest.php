@@ -116,7 +116,7 @@ class StartTranscodeHandlerTest extends TestCase
         $logService->expects($this->exactly(3))->method('log');
 
         $handler = new StartTranscodeHandler($commandBus, $eventBus, $videoRepo, $presetRepo, $taskRepo, $userRepo, $logService, $security);
-        $query = new StartTranscodeQuery($videoId->toRfc4122(), $preset->id()->toRfc4122(), $user->id()->toRfc4122());
+        $query = new StartTranscodeQuery($videoId->toRfc4122(), $preset->id()->toRfc4122(), $user->id());
         $dto = $handler($query);
 
         $this->assertInstanceOf(TaskItemDTO::class, $dto);
@@ -163,7 +163,7 @@ class StartTranscodeHandlerTest extends TestCase
             $handler(new StartTranscodeQuery(
                 '123e4567-e89b-42d3-a456-426614174101',
                 '123e4567-e89b-42d3-a456-426614174001',
-                '123e4567-e89b-42d3-a456-426614174001'
+                UuidV4::fromString('123e4567-e89b-42d3-a456-426614174001')
             ));
         } finally {
             $this->assertSame([

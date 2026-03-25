@@ -70,8 +70,7 @@ class GetTaskListHandlerTest extends TestCase
             });
 
         $request = new Request(['page' => $page, 'limit' => $limit]);
-        $query = new GetTaskListQuery($request);
-        $this->initializeUserId($query, $userId);
+        $query = new GetTaskListQuery($request, $userId);
         $handler = new GetTaskListHandler($repo, $videoRepo, $presetRepo);
         $response = $handler($query);
 

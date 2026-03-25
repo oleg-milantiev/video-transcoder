@@ -32,8 +32,7 @@ class GetVideoListHandlerTest extends TestCase
             ->willReturn($paginatedResult);
 
         $request = new Request(['page' => $page, 'limit' => $limit]);
-        $query = new GetVideoListQuery($request);
-        $this->initializeUserId($query, $userId);
+        $query = new GetVideoListQuery($request, $userId);
         $handler = new GetVideoListHandler($repo, $this->createStub(StorageInterface::class));
         $response = $handler($query);
 
