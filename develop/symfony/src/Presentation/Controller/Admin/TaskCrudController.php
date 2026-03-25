@@ -40,6 +40,7 @@ class TaskCrudController extends AbstractCrudController
         return $filters
             ->add(ChoiceFilter::new('status')->setChoices(array_flip(TaskStatus::NAMES)))
             ->add(NumericFilter::new('progress'))
+            ->add(EntityFilter::new('user'))
             ->add(EntityFilter::new('video'))
             ->add(EntityFilter::new('preset'))
             ->add(DateTimeFilter::new('createdAt'))
@@ -69,6 +70,7 @@ class TaskCrudController extends AbstractCrudController
                     'max' => 100,
                 ],
             ]),
+            AssociationField::new('user'),
             AssociationField::new('video'),
             AssociationField::new('preset'),
             ArrayField::new('meta')
