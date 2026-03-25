@@ -60,5 +60,7 @@ docker compose -p "$PROJECT_NAME" -f docker-compose.release.yml exec -T playwrig
   E2E_ARTIFACTS_DIR=/work/release.check/$PROJECT_NAME/playwright \
   ADMIN_EMAIL=oleg@milantiev.com \
   ADMIN_PASSWORD=admin \
+  FRONTEND_EMAIL=test@test.com \
+  FRONTEND_PASSWORD=test \
   npx playwright test --project=chromium
 "

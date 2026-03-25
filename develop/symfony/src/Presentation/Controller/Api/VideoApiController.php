@@ -17,6 +17,7 @@ use App\Application\QueryHandler\QueryBus;
 use App\Application\Response\VideoListResponse;
 use App\Domain\Video\Exception\VideoAlreadyDeleted;
 use App\Domain\Video\Exception\VideoHasTranscodingTasks;
+use Psr\Log\LoggerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -32,6 +33,7 @@ class VideoApiController extends AbstractController
 
     public function __construct(
         private readonly QueryBus $queryBus,
+        private readonly LoggerInterface $logger,
     ) {
     }
 
@@ -76,7 +78,7 @@ class VideoApiController extends AbstractController
     {
         try {
             $taskDto = $this->queryBus->query(
-                new StartTranscodeQuery($id, $presetId, $this->getUser()->id->toRfc4122())
+                new StartTranscodeQuery($id, $presetId, $this->getUser()->id)
             );
 
             return $this->apiSuccess(['task' => (array) $taskDto]);
@@ -97,6 +99,7 @@ class VideoApiController extends AbstractController
         } catch (\DomainException $e) {
             return $this->apiError('ACCESS_DENIED', $e->getMessage(), 403);
         } catch (\Throwable $e) {
+            $this->logger->critical('Failed to start transcode', ['exception' => $e]);
             return $this->apiError('INTERNAL_ERROR', 'Failed to start transcode', 500);
         }
     }
@@ -126,7 +129,8 @@ class VideoApiController extends AbstractController
             return $this->apiError('VIDEO_HAS_TRANSCODING_TASKS', $e->getMessage(), 409);
         } catch (\DomainException $e) {
             return $this->apiError('DELETE_NOT_ALLOWED', $e->getMessage(), 409);
-        } catch (\Throwable) {
+        } catch (\Throwable $e) {
+            $this->logger->critical('Failed to delete video', ['exception' => $e]);
             return $this->apiError('INTERNAL_ERROR', 'Failed to delete video', 500);
         }
     }

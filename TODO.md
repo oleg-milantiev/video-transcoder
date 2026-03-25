@@ -5,6 +5,7 @@
 - frontend
   - каскад уведомлений
   - 401 так и не обработался
+  - убрать delete с видео, если не canBeDeleted (например, внутри есть задачи в pending / processing)
 - e2e
   - 04+ все дальнейшие тесты от common-user
 - DDD
