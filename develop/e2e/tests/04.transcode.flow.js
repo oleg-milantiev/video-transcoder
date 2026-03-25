@@ -1,3 +1,5 @@
+const fs = require('fs');
+const path = require('path');
 const { test, expect } = require('@playwright/test');
 const { attachConsoleCapture } = require('../consoleCapture');
 
@@ -103,13 +105,37 @@ async function clickDownloadAndVerifyMp4(page, row) {
     return resolvedMp4Url;
 }
 
+async function uploadVideoWithCustomName(page, testInfo, sourceFileName, uploadAsName) {
+    const uploadFilePath = path.join('/work/e2e', sourceFileName);
+    const fileBuffer = fs.readFileSync(uploadFilePath);
+
+    await page.getByRole('button', { name: 'Upload' }).click({ timeout: UI_TIMEOUT });
+    await expect(page.locator('#drag-drop-area .uppy-Dashboard')).toBeVisible({ timeout: 30000 });
+
+    const fileChooserPromise = page.waitForEvent('filechooser');
+    await page.locator('#drag-drop-area .uppy-Dashboard-browse').click({ timeout: UI_TIMEOUT });
+    const fileChooser = await fileChooserPromise;
+    await fileChooser.setFiles({
+        name: uploadAsName,
+        mimeType: 'video/mp4',
+        buffer: fileBuffer,
+    });
+
+    await expect(page.locator('#drag-drop-area .uppy-StatusBar-content[role="status"][title="Complete"]')).toBeVisible({ timeout: 30000 });
+    await shot(page, testInfo, '01c-upload-with-04-name.png');
+
+    await page.getByRole('button', { name: 'Videos' }).click({ timeout: UI_TIMEOUT });
+    await expect(page.locator('#videosTable')).toBeVisible({ timeout: NAV_TIMEOUT });
+}
+
 test('transcode flow from video details to downloadable mp4', async ({ page }, testInfo) => {
     // start console capture for this test
     const capture = attachConsoleCapture(page, testInfo, { maxBodyChars: 4000 });
     await capture.start();
     const adminEmail = process.env.ADMIN_EMAIL || 'oleg@milantiev.com';
     const adminPassword = process.env.ADMIN_PASSWORD || 'admin';
-    const uploadedVideoName = '2022_10_04_Two_Maxes.mp4';
+    const sourceVideoFileName = '2022_10_04_Two_Maxes.mp4';
+    const uploadedVideoName = '2022_10_04_Two_Maxes-04.mp4';
     const presetTitle = '180p';
     let downloadedMp4Url = '';
 
@@ -123,7 +149,8 @@ test('transcode flow from video details to downloadable mp4', async ({ page }, t
         await expect(page.getByRole('button', { name: 'Videos' })).toBeVisible({ timeout: UI_TIMEOUT });
         await shot(page, testInfo, '01-login-success.png');
 
-    // 2) Open Videos tab
+    // 2) Upload the same source video under a -04 suffix and open Videos tab
+        await uploadVideoWithCustomName(page, testInfo, sourceVideoFileName, uploadedVideoName);
         await page.getByRole('button', { name: 'Videos' }).click({ timeout: UI_TIMEOUT });
         await expect(page.locator('#videosTable')).toBeVisible({ timeout: UI_TIMEOUT });
         await shot(page, testInfo, '02-videos-tab-open.png');
