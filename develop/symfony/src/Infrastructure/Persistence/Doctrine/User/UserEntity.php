@@ -46,6 +46,13 @@ class UserEntity implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(nullable: true)]
     public ?string $password = null;
 
+    /**
+     * Transient plain password used only for forms — not persisted.
+     *
+     * @var string|null
+     */
+    public ?string $plainPassword = null;
+
     #[ORM\ManyToOne(targetEntity: TariffEntity::class)]
     #[ORM\JoinColumn(name: "tariff_id", referencedColumnName: "id", nullable: true)]
     public ?TariffEntity $tariff = null;
@@ -116,7 +123,7 @@ class UserEntity implements UserInterface, PasswordAuthenticatedUserInterface
     public function eraseCredentials(): void
     {
         // If you store any temporary, sensitive data on the user, clear it here
-        // $this->plainPassword = null;
+        $this->plainPassword = null;
     }
 
     public function __toString(): string
