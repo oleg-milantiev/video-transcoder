@@ -9,9 +9,9 @@ use App\Application\Event\DeleteVideoSuccess;
 use App\Application\Exception\TranscodeAccessDeniedException;
 use App\Application\Exception\VideoNotFoundException;
 use App\Application\Logging\LogServiceInterface;
+use App\Application\Query\DeleteTaskQuery;
 use App\Application\Query\DeleteVideoQuery;
 use App\Application\Service\Video\VideoRealtimeNotifier;
-use App\Domain\Video\Entity\Task;
 use App\Domain\Video\Repository\TaskRepositoryInterface;
 use App\Domain\Video\Repository\VideoRepositoryInterface;
 use App\Infrastructure\Security\Voter\VideoAccessVoter;
@@ -34,6 +34,7 @@ final readonly class DeleteVideoHandler
         private LogServiceInterface $logService,
         private VideoRealtimeNotifier $videoRealtimeNotifier,
         private Security $security,
+        private QueryBus $queryBus,
     ) {
     }
 
@@ -73,16 +74,20 @@ final readonly class DeleteVideoHandler
             $tasks = $this->taskRepository->findByVideoId($video->id());
             $video->markDeleted($tasks);
 
-            // TODO move to video entity?
             $deletedTaskCount = 0;
-            /** @var Task $task */
             foreach ($tasks as $task) {
                 if ($task->isDeleted()) {
                     continue;
                 }
 
-                $task->markDeleted();
-                $this->taskRepository->save($task);
+                if ($task->id() === null) {
+                    throw new \RuntimeException('Task id is required for deletion.');
+                }
+
+                $this->queryBus->query(new DeleteTaskQuery(
+                    $task->id()->toRfc4122(),
+                    $query->requestedByUserId->toRfc4122(),
+                ));
                 $deletedTaskCount++;
             }
 

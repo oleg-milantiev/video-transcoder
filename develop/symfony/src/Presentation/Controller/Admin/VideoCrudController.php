@@ -2,7 +2,14 @@
 
 namespace App\Presentation\Controller\Admin;
 
+use App\Application\Exception\InvalidUuidException;
+use App\Application\Exception\TranscodeAccessDeniedException;
+use App\Application\Exception\VideoNotFoundException;
+use App\Application\Query\DeleteVideoQuery;
+use App\Application\QueryHandler\QueryBus;
 use App\Domain\Video\ValueObject\TaskStatus;
+use App\Domain\Video\Exception\VideoAlreadyDeleted;
+use App\Domain\Video\Exception\VideoHasTranscodingTasks;
 use App\Infrastructure\Persistence\Doctrine\Video\VideoEntity;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Action;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Actions;
@@ -24,6 +31,7 @@ class VideoCrudController extends AbstractCrudController
 {
     public function __construct(
         private readonly AdminUrlGenerator $adminUrlGenerator,
+        private readonly QueryBus $queryBus,
     ) {
     }
 
@@ -52,6 +60,10 @@ class VideoCrudController extends AbstractCrudController
     {
         $markDeleted = Action::new('markDeleted', 'Mark deleted', 'fas fa-trash')
             ->displayIf(static function (VideoEntity $entity) {
+                if ($entity->deleted) {
+                    return false;
+                }
+
                 foreach ($entity->tasks as $task) {
                     $status = $task->status ?? null;
                     if (in_array($status, [TaskStatus::PROCESSING->value, TaskStatus::DELETED->value], true)) {
@@ -138,7 +150,22 @@ class VideoCrudController extends AbstractCrudController
 
     public function markDeleted(AdminContext $context): Response
     {
-        $this->addFlash('warning', 'Mark deleted action is not implemented yet.');
+        $entityId = $context->getEntity()->getPrimaryKeyValue();
+        $user = $this->getUser();
+
+        try {
+            $query = new DeleteVideoQuery((string) $entityId, $user->id->toRfc4122());
+            $this->queryBus->query($query);
+            $this->addFlash('success', 'Video marked as deleted.');
+        } catch (InvalidUuidException $e) {
+            $this->addFlash('danger', sprintf('Invalid video id: %s', $e->getMessage()));
+        } catch (TranscodeAccessDeniedException|VideoNotFoundException $e) {
+            $this->addFlash('danger', $e->getMessage());
+        } catch (VideoAlreadyDeleted|VideoHasTranscodingTasks|\DomainException $e) {
+            $this->addFlash('warning', $e->getMessage());
+        } catch (\Throwable) {
+            $this->addFlash('danger', 'Failed to mark video as deleted.');
+        }
 
         return $this->redirect($this->adminUrlGenerator->unsetAll()->setController(self::class)->setAction(Crud::PAGE_INDEX)->generateUrl());
     }

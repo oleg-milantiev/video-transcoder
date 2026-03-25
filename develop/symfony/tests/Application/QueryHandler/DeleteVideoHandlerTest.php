@@ -11,8 +11,10 @@ use App\Application\Event\DeleteVideoSuccess;
 use App\Application\Exception\TranscodeAccessDeniedException;
 use App\Application\Exception\VideoNotFoundException;
 use App\Application\Logging\LogServiceInterface;
+use App\Application\Query\DeleteTaskQuery;
 use App\Application\Query\DeleteVideoQuery;
 use App\Application\QueryHandler\DeleteVideoHandler;
+use App\Application\QueryHandler\QueryBus;
 use App\Application\Service\Video\VideoRealtimeNotifier;
 use App\Domain\Video\Entity\Task;
 use App\Domain\Video\Entity\Video;
@@ -64,6 +66,7 @@ final class DeleteVideoHandlerTest extends TestCase
             $this->createStub(LogServiceInterface::class),
             new VideoRealtimeNotifier($this->createStub(MessageBusInterface::class), $this->createStub(StorageInterface::class)),
             $this->createStub(Security::class),
+            $this->createStub(QueryBus::class),
         );
 
         $this->expectException(VideoNotFoundException::class);
@@ -110,6 +113,7 @@ final class DeleteVideoHandlerTest extends TestCase
             $this->createStub(LogServiceInterface::class),
             new VideoRealtimeNotifier($this->createStub(MessageBusInterface::class), $this->createStub(StorageInterface::class)),
             $security,
+            $this->createStub(QueryBus::class),
         );
 
         $this->expectException(TranscodeAccessDeniedException::class);
@@ -163,9 +167,15 @@ final class DeleteVideoHandlerTest extends TestCase
             ->method('findByVideoId')
             ->with($videoId)
             ->willReturn([$task]);
-        $taskRepository->expects($this->once())
-            ->method('save')
-            ->with($this->callback(static fn (Task $value): bool => $value->isDeleted()));
+
+        $queryBus = $this->createMock(QueryBus::class);
+        $queryBus->expects($this->once())
+            ->method('query')
+            ->with($this->callback(static function (object $query) use ($task, $userId): bool {
+                return $query instanceof DeleteTaskQuery
+                    && $query->taskId->toRfc4122() === $task->id()?->toRfc4122()
+                    && $query->requestedByUserId->toRfc4122() === $userId->toRfc4122();
+            }));
 
         $logService = $this->createMock(LogServiceInterface::class);
         $logService->expects($this->exactly(2))->method('log');
@@ -190,11 +200,10 @@ final class DeleteVideoHandlerTest extends TestCase
             ->with(VideoAccessVoter::CAN_DELETE, $video)
             ->willReturn(true);
 
-        $handler = new DeleteVideoHandler($cleanupCommandBus, $eventBus, $videoRepository, $taskRepository, $logService, $videoRealtimeNotifier, $security);
+        $handler = new DeleteVideoHandler($cleanupCommandBus, $eventBus, $videoRepository, $taskRepository, $logService, $videoRealtimeNotifier, $security, $queryBus);
         $handler(new DeleteVideoQuery($videoId->toRfc4122(), $userId->toRfc4122()));
 
         $this->assertTrue($video->isDeleted());
-        $this->assertTrue($task->isDeleted());
         $this->assertContains(DeleteVideoSuccess::class, array_map(
             static fn (object $event): string => $event::class,
             $eventBus->events,
@@ -242,6 +251,7 @@ final class DeleteVideoHandlerTest extends TestCase
             $this->createStub(LogServiceInterface::class),
             new VideoRealtimeNotifier($this->createStub(MessageBusInterface::class), $this->createStub(StorageInterface::class)),
             $security,
+            $this->createStub(QueryBus::class),
         );
 
         $this->expectException(VideoHasTranscodingTasks::class);

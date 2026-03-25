@@ -1,0 +1,11 @@
+{% extends '@!EasyAdmin/crud/index.html.twig' %}
+
+{% block entity_row_attributes %}
+    {{ parent() }}
+    {% set instance = entity.instance ?? null %}
+    {% set deletedFlag = instance is not null and (instance.deleted ?? false) %}
+    {% set deletedByStatus = instance is not null and (instance.status ?? null) == 6 %}
+    {% if deletedFlag or deletedByStatus %}
+        data-deleted-row="1" style="text-decoration: line-through; opacity: .65;"
+    {% endif %}
+{% endblock %}
