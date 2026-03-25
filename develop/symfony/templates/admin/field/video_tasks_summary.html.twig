@@ -1,0 +1,19 @@
+{% set data = field.formattedValue ?? field.value ?? {} %}
+{% set presets = data.presets ?? [] %}
+
+{% if presets is empty %}
+    <span class="text-muted">No tasks</span>
+{% else %}
+    <ul class="mb-0 ps-3">
+        {% for preset in presets %}
+            <li>
+                {% if preset.url is defined and preset.url %}
+                    <a href="{{ preset.url }}">{{ preset.title }}</a>
+                {% else %}
+                    {{ preset.title }}
+                {% endif %}
+            </li>
+        {% endfor %}
+    </ul>
+{% endif %}
+
