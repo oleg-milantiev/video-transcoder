@@ -73,6 +73,7 @@ final readonly class DeleteVideoHandler
             $tasks = $this->taskRepository->findByVideoId($video->id());
             $video->markDeleted($tasks);
 
+            // TODO move to video entity?
             $deletedTaskCount = 0;
             /** @var Task $task */
             foreach ($tasks as $task) {

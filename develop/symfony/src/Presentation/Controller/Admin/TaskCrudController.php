@@ -4,6 +4,9 @@ namespace App\Presentation\Controller\Admin;
 
 use App\Domain\Video\ValueObject\TaskStatus;
 use App\Infrastructure\Persistence\Doctrine\Task\TaskEntity;
+use EasyCorp\Bundle\EasyAdminBundle\Context\AdminContext;
+use EasyCorp\Bundle\EasyAdminBundle\Router\AdminUrlGenerator;
+use Symfony\Component\HttpFoundation\Response;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Action;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Actions;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Crud;
@@ -22,6 +25,10 @@ use EasyCorp\Bundle\EasyAdminBundle\Filter\NumericFilter;
 
 class TaskCrudController extends AbstractCrudController
 {
+    public function __construct(
+        private readonly AdminUrlGenerator $adminUrlGenerator,
+    ) {
+    }
     public static function getEntityFqcn(): string
     {
         return TaskEntity::class;
@@ -49,8 +56,16 @@ class TaskCrudController extends AbstractCrudController
 
     public function configureActions(Actions $actions): Actions
     {
+        $markDeleted = Action::new('markDeleted', 'Mark deleted', 'fas fa-trash')
+            ->displayIf(static function (TaskEntity $entity) {
+                return !in_array($entity->status, [TaskStatus::PROCESSING->value, TaskStatus::DELETED->value], true);
+            })
+            ->linkToCrudAction('markDeleted');
+
         return $actions
             ->add(Crud::PAGE_INDEX, Action::DETAIL)
+            ->add(Crud::PAGE_INDEX, $markDeleted)
+            ->add(Crud::PAGE_DETAIL, $markDeleted)
             ->disable(Action::NEW)
             ->disable(Action::DELETE)
             ->disable(Action::EDIT);
@@ -80,5 +95,12 @@ class TaskCrudController extends AbstractCrudController
             DateTimeField::new('updatedAt')->hideOnForm(),
             DateTimeField::new('startedAt')->hideOnForm(),
         ];
+    }
+
+    public function markDeleted(AdminContext $context): Response
+    {
+        $this->addFlash('warning', 'Mark deleted action is not implemented yet.');
+
+        return $this->redirect($this->adminUrlGenerator->unsetAll()->setController(self::class)->setAction(Crud::PAGE_INDEX)->generateUrl());
     }
 }

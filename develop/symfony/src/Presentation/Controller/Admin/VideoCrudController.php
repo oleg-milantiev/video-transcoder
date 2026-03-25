@@ -2,6 +2,7 @@
 
 namespace App\Presentation\Controller\Admin;
 
+use App\Domain\Video\ValueObject\TaskStatus;
 use App\Infrastructure\Persistence\Doctrine\Video\VideoEntity;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Action;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Actions;
@@ -16,6 +17,8 @@ use EasyCorp\Bundle\EasyAdminBundle\Filter\DateTimeFilter;
 use EasyCorp\Bundle\EasyAdminBundle\Filter\EntityFilter;
 use EasyCorp\Bundle\EasyAdminBundle\Filter\TextFilter;
 use EasyCorp\Bundle\EasyAdminBundle\Router\AdminUrlGenerator;
+use EasyCorp\Bundle\EasyAdminBundle\Context\AdminContext;
+use Symfony\Component\HttpFoundation\Response;
 
 class VideoCrudController extends AbstractCrudController
 {
@@ -47,19 +50,25 @@ class VideoCrudController extends AbstractCrudController
 
     public function configureActions(Actions $actions): Actions
     {
+        $markDeleted = Action::new('markDeleted', 'Mark deleted', 'fas fa-trash')
+            ->displayIf(static function (VideoEntity $entity) {
+                foreach ($entity->tasks as $task) {
+                    $status = $task->status ?? null;
+                    if (in_array($status, [TaskStatus::PROCESSING->value, TaskStatus::DELETED->value], true)) {
+                        return false;
+                    }
+                }
+
+                return true;
+            })
+            ->linkToCrudAction('markDeleted');
+
         return $actions
             ->add(Crud::PAGE_INDEX, Action::DETAIL)
             ->disable(Action::NEW)
-            ->update(Crud::PAGE_INDEX, Action::DELETE, function (Action $action) {
-                return $action->displayIf(static function (VideoEntity $entity) {
-                    return $entity->tasks->isEmpty();
-                });
-            })
-            ->update(Crud::PAGE_DETAIL, Action::DELETE, function (Action $action) {
-                return $action->displayIf(static function (VideoEntity $entity) {
-                    return $entity->tasks->isEmpty();
-                });
-            });
+            ->disable(Action::DELETE)
+            ->add(Crud::PAGE_INDEX, $markDeleted)
+            ->add(Crud::PAGE_DETAIL, $markDeleted);
     }
 
     public function configureFields(string $pageName): iterable
@@ -69,7 +78,7 @@ class VideoCrudController extends AbstractCrudController
                 ->hideOnForm()
                 ->formatValue(static fn ($value) => is_object($value) && method_exists($value, 'toRfc4122') ? $value->toRfc4122() : (string) $value),
             TextField::new('title'),
-            AssociationField::new('user'),
+            AssociationField::new('user')->onlyOnIndex(),
             ArrayField::new('meta')
                 ->setTemplatePath('admin/field/associative_array_detail.html.twig')
                 ->onlyOnDetail(),
@@ -125,5 +134,12 @@ class VideoCrudController extends AbstractCrudController
 //        }
 
         return $urlGenerator->generateUrl();
+    }
+
+    public function markDeleted(AdminContext $context): Response
+    {
+        $this->addFlash('warning', 'Mark deleted action is not implemented yet.');
+
+        return $this->redirect($this->adminUrlGenerator->unsetAll()->setController(self::class)->setAction(Crud::PAGE_INDEX)->generateUrl());
     }
 }
