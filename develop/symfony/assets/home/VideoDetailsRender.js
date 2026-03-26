@@ -137,7 +137,26 @@ export function renderVideoDetails(vm) {
                     : null,
                 h('dl', { class: 'row mb-0' }, [
                     h('dt', { class: 'col-sm-3' }, 'Title'),
-                    h('dd', { class: 'col-sm-9' + (vm.dto.deleted === true ? ' video-title-deleted' : '') }, vm.dto.title),
+                    h(
+                        'dd',
+                        { class: 'col-sm-9' + (vm.dto.deleted === true ? ' video-title-deleted' : '') },
+                        [
+                            h('span', {}, vm.dto.title),
+                            // Edit icon button (pencil). Opens rename modal via vm.openRenameModal
+                            vm.dto.deleted
+                                ? null
+                                : h(
+                                      'button',
+                                      {
+                                          type: 'button',
+                                          class: 'btn btn-link p-0 ms-2',
+                                          title: 'Rename video',
+                                          onClick: vm.openRenameModal,
+                                      },
+                                      '✏️'
+                                  ),
+                        ]
+                    ),
                     h('dt', { class: 'col-sm-3' }, 'Extension'),
                     h('dd', { class: 'col-sm-9' }, vm.dto.extension),
                     h('dt', { class: 'col-sm-3' }, 'Created At'),

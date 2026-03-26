@@ -7,6 +7,7 @@ import {
     replaceTemplateValue,
     toInt,
 } from '../shared.js';
+import Swal from '../../vendor/sweetalert2/sweetalert2.index.js';
 
 function formatMetaValue(value) {
     if (value === null || value === undefined) {
@@ -65,6 +66,74 @@ export function createVideoDetailsActions(params) {
             state.error.value = normalizeErrorMessage(e, 'Failed to load video details');
         } finally {
             state.loading.value = false;
+        }
+    }
+
+    async function openRenameModal() {
+        if (!state.dto.value) {
+            return;
+        }
+
+        const currentTitle = state.dto.value.title || '';
+
+        const { value: newTitle } = await Swal.fire({
+            title: 'Rename video',
+            input: 'text',
+            inputLabel: 'Enter new video title',
+            inputValue: currentTitle,
+            showCancelButton: true,
+            confirmButtonText: 'Submit',
+            inputAttributes: {
+                autocapitalize: 'off',
+            },
+            preConfirm: (value) => {
+                if (!value || String(value).trim() === '') {
+                    Swal.showValidationMessage('Title must not be empty');
+                    return false;
+                }
+
+                return String(value).trim();
+            },
+        });
+
+        if (newTitle === undefined || newTitle === null) {
+            // dismissed or cancelled
+            return;
+        }
+
+        // Send PATCH to /video/{uuid} to update title. Controller not implemented yet but frontend behaviour required.
+        const url = replaceTemplateValue(config.apiVideoDetailsUrlTemplate, '__UUID__', uuid.value);
+
+        state.activeActionKey.value = 'rename';
+        state.actionError.value = '';
+
+        try {
+            const response = await fetch(url, {
+                method: 'PATCH',
+                headers: createJsonAuthHeaders(config.apiBearerToken || null),
+                credentials: 'same-origin',
+                body: JSON.stringify({ title: newTitle }),
+            });
+
+            const payload = await parseJsonResponse(response);
+
+            if (!response.ok) {
+                const msg = extractApiErrorMessage(payload, 'Failed to rename video');
+                state.actionError.value = msg;
+                // show error inside modal
+                await Swal.fire({ title: 'Error', text: msg, icon: 'error' });
+                return;
+            }
+
+            // On success simply close modal — we already awaited Swal result; update will come via SSE later
+            // Optionally show a small success toast
+            await Swal.fire({ title: 'Renamed', text: 'Rename request accepted', icon: 'success', timer: 1200, showConfirmButton: false });
+        } catch (e) {
+            const msg = normalizeErrorMessage(e, 'Failed to rename video');
+            state.actionError.value = msg;
+            await Swal.fire({ title: 'Error', text: msg, icon: 'error' });
+        } finally {
+            state.activeActionKey.value = '';
         }
     }
 
@@ -197,6 +266,7 @@ export function createVideoDetailsActions(params) {
         taskDownloadUrl,
         goHome,
         formatMetaValue,
+        openRenameModal,
         applyTaskRealtimeUpdate,
         applyVideoRealtimeUpdate,
     };

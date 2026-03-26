@@ -43,6 +43,7 @@ export function createVideoDetailsView(config) {
                 taskDownloadUrl: actions.taskDownloadUrl,
                 formatMetaValue: actions.formatMetaValue,
                 goHome: actions.goHome,
+                openRenameModal: actions.openRenameModal,
             };
         },
         render() {
