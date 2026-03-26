@@ -3,10 +3,11 @@
 namespace App\Infrastructure\Logging;
 
 use App\Application\Logging\LogServiceInterface;
+use App\Domain\Shared\ValueObject\Uuid;
 use App\Infrastructure\Persistence\Doctrine\Log\LogEntity;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
-use Symfony\Component\Uid\Uuid;
+use Symfony\Component\Uid\Uuid as SymfonyUuid;
 
 final readonly class DoctrineLogService implements LogServiceInterface
 {
@@ -22,7 +23,7 @@ final readonly class DoctrineLogService implements LogServiceInterface
 
         $entity = new LogEntity();
         $entity->name = $name;
-        $entity->objectId = $objectId;
+        $entity->objectId = SymfonyUuid::fromString($objectId->toRfc4122());
         $entity->level = $level;
         $entity->text = $text;
         $entity->context = $context;

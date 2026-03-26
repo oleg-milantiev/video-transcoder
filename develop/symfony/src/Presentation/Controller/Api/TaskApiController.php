@@ -8,6 +8,7 @@ use App\Application\Logging\LogServiceInterface;
 use App\Application\Query\GetTaskListQuery;
 use App\Application\QueryHandler\QueryBus;
 use App\Application\Response\TaskListResponse;
+use App\Domain\Shared\ValueObject\Uuid;
 use App\Domain\Video\Repository\TaskRepositoryInterface;
 use App\Domain\Video\Repository\VideoRepositoryInterface;
 use App\Domain\Video\ValueObject\TaskStatus;
@@ -47,7 +48,7 @@ class TaskApiController extends AbstractController
         try {
             /** @var TaskListResponse $taskListResponse */
             $taskListResponse = $this->queryBus->query(
-                new GetTaskListQuery($request, $this->getUser()->id)
+                new GetTaskListQuery($request, Uuid::fromString($this->getUser()->id->toRfc4122()))
             );
 
             return new JsonResponse($taskListResponse);
@@ -69,7 +70,7 @@ class TaskApiController extends AbstractController
             return $this->apiError('INVALID_TASK_ID', 'Invalid task id', 400);
         }
 
-        $task = $this->taskRepository->findById($taskId);
+        $task = $this->taskRepository->findById(Uuid::fromString($taskId->toRfc4122()));
         if (!$task) {
             return $this->apiError('TASK_NOT_FOUND', 'Task not found', 404);
         }
@@ -92,7 +93,7 @@ class TaskApiController extends AbstractController
         ]);
 
         $cancelledNow = $task->status() === TaskStatus::PENDING && $task->startedAt() === null;
-        $requestedByUserId = $this->getUser()->id;
+        $requestedByUserId = Uuid::fromString($this->getUser()->id->toRfc4122());
 
         if ($cancelledNow) {
             $task->cancel();

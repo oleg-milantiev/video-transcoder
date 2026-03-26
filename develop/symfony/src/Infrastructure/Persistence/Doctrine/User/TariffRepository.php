@@ -2,11 +2,12 @@
 
 namespace App\Infrastructure\Persistence\Doctrine\User;
 
+use App\Domain\Shared\ValueObject\Uuid;
 use App\Domain\User\Entity\Tariff;
 use App\Domain\User\Repository\TariffRepositoryInterface;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
-use Symfony\Component\Uid\UuidV4 as Uuid;
+use Symfony\Component\Uid\UuidV4 as SymfonyUuid;
 
 /**
  * @extends ServiceEntityRepository<TariffEntity>
@@ -27,7 +28,7 @@ class TariffRepository extends ServiceEntityRepository implements TariffReposito
 
     public function findById(Uuid $id): ?Tariff
     {
-        $entity = $this->find($id);
+        $entity = $this->find(SymfonyUuid::fromString($id->toRfc4122()));
         return $entity ? TariffMapper::toDomain($entity) : null;
     }
 
@@ -39,7 +40,7 @@ class TariffRepository extends ServiceEntityRepository implements TariffReposito
 
     public function delete(Tariff $tariff): void
     {
-        $entity = $this->getEntityManager()->getReference(TariffEntity::class, $tariff->id());
+        $entity = $this->getEntityManager()->getReference(TariffEntity::class, SymfonyUuid::fromString($tariff->id()->toRfc4122()));
         $this->getEntityManager()->remove($entity);
         $this->getEntityManager()->flush();
     }

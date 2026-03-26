@@ -2,12 +2,12 @@
 
 namespace App\Infrastructure\Persistence\Doctrine\Shared\Repository;
 
+use App\Domain\Shared\ValueObject\Uuid;
 use App\Domain\Video\DTO\PaginatedResult;
-use Symfony\Component\Uid\UuidV4;
 
 trait PaginatedRepositoryTrait
 {
-    public function findAllPaginated(int $page, int $limit, UuidV4 $userId): PaginatedResult
+    public function findAllPaginated(int $page, int $limit, Uuid $userId): PaginatedResult
     {
         $queryBuilder = $this
             ->createQueryBuilder('v')

@@ -2,11 +2,11 @@
 
 namespace App\Domain\Video\Entity;
 
+use App\Domain\Shared\ValueObject\Uuid;
 use App\Domain\Video\Exception\TaskAlreadyDeleted;
 use App\Domain\Video\ValueObject\Progress;
 use App\Domain\Video\ValueObject\TaskDates;
 use App\Domain\Video\ValueObject\TaskStatus;
-use Symfony\Component\Uid\UuidV4 as Uuid;
 
 class Task
 {

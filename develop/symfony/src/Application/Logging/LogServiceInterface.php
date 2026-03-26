@@ -2,7 +2,7 @@
 
 namespace App\Application\Logging;
 
-use Symfony\Component\Uid\Uuid;
+use App\Domain\Shared\ValueObject\Uuid;
 
 interface LogServiceInterface
 {

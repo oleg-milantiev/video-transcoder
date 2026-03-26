@@ -7,7 +7,7 @@ use App\Domain\Video\Exception\VideoHasTranscodingTasks;
 use App\Domain\Video\ValueObject\FileExtension;
 use App\Domain\Video\ValueObject\VideoDates;
 use App\Domain\Video\ValueObject\VideoTitle;
-use Symfony\Component\Uid\UuidV4 as Uuid;
+use App\Domain\Shared\ValueObject\Uuid;
 
 class Video
 {

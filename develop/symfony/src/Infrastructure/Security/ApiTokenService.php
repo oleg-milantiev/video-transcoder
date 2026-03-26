@@ -2,8 +2,8 @@
 
 namespace App\Infrastructure\Security;
 
+use App\Domain\Shared\ValueObject\Uuid;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
-use Symfony\Component\Uid\UuidV4;
 
 final readonly class ApiTokenService
 {
@@ -16,7 +16,7 @@ final readonly class ApiTokenService
     ) {
     }
 
-    public function createToken(UuidV4 $userId, string $identifier): string
+    public function createToken(Uuid $userId, string $identifier): string
     {
         $payload = [
             'sub' => $userId->toRfc4122(),
@@ -59,7 +59,7 @@ final readonly class ApiTokenService
         $identifier = $payload['identifier'] ?? null;
         $exp = $payload['exp'] ?? null;
 
-        if (!is_string($sub) || !UuidV4::isValid($sub) || !is_string($identifier) || !is_int($exp)) {
+        if (!is_string($sub) || !Uuid::isValid($sub) || !is_string($identifier) || !is_int($exp)) {
             throw new \InvalidArgumentException('Invalid token claims.');
         }
 

@@ -2,7 +2,9 @@
 
 namespace App\Infrastructure\Persistence\Doctrine\User;
 
+use App\Domain\Shared\ValueObject\Uuid;
 use App\Domain\User\Entity\User;
+use Symfony\Component\Uid\UuidV4 AS SymfonyUuid;
 
 class UserMapper
 {
@@ -13,7 +15,7 @@ class UserMapper
             roles: $entity->roles,
             password: $entity->password,
             tariff: $entity->tariff ? TariffMapper::toDomain($entity->tariff) : null,
-            id: $entity->id,
+            id: $entity->id ? Uuid::fromString($entity->id->toRfc4122()) : null,
         );
     }
 
@@ -21,7 +23,7 @@ class UserMapper
     {
         $entity = new UserEntity();
         if ($user->id() !== null) {
-            $entity->id = $user->id();
+            $entity->id = SymfonyUuid::fromString($user->id()->toRfc4122());
         }
         $entity->email = $user->email();
         $entity->roles = $user->roles();

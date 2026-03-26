@@ -15,6 +15,7 @@ use App\Application\Query\GetVideoListQuery;
 use App\Application\Query\StartTranscodeQuery;
 use App\Application\QueryHandler\QueryBus;
 use App\Application\Response\VideoListResponse;
+use App\Domain\Shared\ValueObject\Uuid;
 use App\Domain\Video\Exception\VideoAlreadyDeleted;
 use App\Domain\Video\Exception\VideoHasTranscodingTasks;
 use Psr\Log\LoggerInterface;
@@ -43,7 +44,7 @@ class VideoApiController extends AbstractController
         try {
             /** @var VideoListResponse $videoListResponse */
             $videoListResponse = $this->queryBus->query(
-                new GetVideoListQuery($request, $this->getUser()->id)
+                new GetVideoListQuery($request, Uuid::fromString($this->getUser()->id->toRfc4122()))
             );
 
             return new JsonResponse($videoListResponse);
@@ -78,7 +79,7 @@ class VideoApiController extends AbstractController
     {
         try {
             $taskDto = $this->queryBus->query(
-                new StartTranscodeQuery($id, $presetId, $this->getUser()->id)
+                new StartTranscodeQuery($id, $presetId, $this->getUser()->id->toRfc4122())
             );
 
             return $this->apiSuccess(['task' => (array) $taskDto]);

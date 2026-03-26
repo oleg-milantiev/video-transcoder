@@ -2,10 +2,10 @@
 
 namespace App\Domain\User\Entity;
 
+use App\Domain\Shared\ValueObject\Uuid;
 use App\Domain\User\ValueObject\TariffDelay;
 use App\Domain\User\ValueObject\TariffInstance;
 use App\Domain\User\ValueObject\TariffTitle;
-use Symfony\Component\Uid\UuidV4 as Uuid;
 
 class Tariff
 {

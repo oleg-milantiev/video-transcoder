@@ -3,6 +3,7 @@
 namespace App\Presentation\Controller;
 
 use App\Application\Logging\LogServiceInterface;
+use App\Domain\Shared\ValueObject\Uuid;
 use App\Domain\Video\Repository\TaskRepositoryInterface;
 use App\Domain\Video\Repository\VideoRepositoryInterface;
 use App\Domain\Video\Service\Storage\StorageInterface;
@@ -35,7 +36,7 @@ class TaskController extends AbstractController
             throw $this->createNotFoundException('Task not found');
         }
 
-        $task = $this->taskRepository->findById($taskId);
+        $task = $this->taskRepository->findById(Uuid::fromString($taskId->toRfc4122()));
         if (!$task) {
             throw $this->createNotFoundException('Task not found');
         }
@@ -58,7 +59,8 @@ class TaskController extends AbstractController
             throw $this->createNotFoundException('Output file not found');
         }
 
-        $downloadedByUserId = $this->getUser()->id;
+        // TODO таки надо это на уровне abstractController getUser заменить!
+        $downloadedByUserId = Uuid::fromString($this->getUser()->id->toRfc4122());
         $context = [
             'taskId' => $task->id()->toRfc4122(),
             'videoId' => $video->id()?->toRfc4122(),

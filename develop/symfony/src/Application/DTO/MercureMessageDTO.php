@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Application\DTO;
 
-use Symfony\Component\Uid\UuidV4;
+use App\Domain\Shared\ValueObject\Uuid;
 
 final readonly class MercureMessageDTO
 {
@@ -14,8 +14,8 @@ final readonly class MercureMessageDTO
     public function __construct(
         public string $action,
         public string $entity,
-        public UuidV4 $id,
-        public UuidV4 $userId,
+        public Uuid $id,
+        public Uuid $userId,
         public ?array $payload = null,
     ) {
     }

@@ -2,12 +2,13 @@
 
 namespace App\Infrastructure\Persistence\Doctrine\User;
 
+use App\Domain\Shared\ValueObject\Uuid;
 use App\Domain\User\Entity\User;
 use App\Domain\User\Repository\UserRepositoryInterface;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\DBAL\Exception;
 use Doctrine\Persistence\ManagerRegistry;
-use Symfony\Component\Uid\UuidV4 as Uuid;
+use Symfony\Component\Uid\UuidV4 AS SymfonyUuid;
 use Symfony\Component\Security\Core\Exception\UnsupportedUserException;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\PasswordUpgraderInterface;
@@ -43,7 +44,7 @@ class UserRepository extends ServiceEntityRepository implements PasswordUpgrader
 
     public function findById(Uuid $id): ?User
     {
-        $entity = $this->find($id);
+        $entity = $this->find(SymfonyUuid::fromString($id->toRfc4122()));
 
         return $entity ? UserMapper::toDomain($entity) : null;
     }

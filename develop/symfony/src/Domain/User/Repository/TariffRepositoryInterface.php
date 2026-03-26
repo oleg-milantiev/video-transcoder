@@ -2,8 +2,8 @@
 
 namespace App\Domain\User\Repository;
 
+use App\Domain\Shared\ValueObject\Uuid;
 use App\Domain\User\Entity\Tariff;
-use Symfony\Component\Uid\UuidV4 as Uuid;
 
 interface TariffRepositoryInterface
 {

@@ -2,8 +2,8 @@
 
 namespace App\Domain\Video\Repository;
 
+use App\Domain\Shared\ValueObject\Uuid;
 use App\Domain\Video\Entity\Preset;
-use Symfony\Component\Uid\UuidV4 as Uuid;
 
 interface PresetRepositoryInterface
 {

@@ -3,18 +3,18 @@
 namespace App\Application\Query;
 
 use App\Application\Exception\InvalidUuidException;
-use Symfony\Component\Uid\UuidV4;
+use App\Domain\Shared\ValueObject\Uuid;
 
 final readonly class DeleteVideoQuery
 {
-    public UuidV4 $videoId;
-    public UuidV4 $requestedByUserId;
+    public Uuid $videoId;
+    public Uuid $requestedByUserId;
 
     public function __construct(string $videoId, string $requestedByUserId)
     {
         try {
-            $this->videoId = UuidV4::fromString($videoId);
-            $this->requestedByUserId = UuidV4::fromString($requestedByUserId);
+            $this->videoId = Uuid::fromString($videoId);
+            $this->requestedByUserId = Uuid::fromString($requestedByUserId);
         } catch (\Throwable $e) {
             throw new InvalidUuidException('Invalid UUID', previous: $e);
         }

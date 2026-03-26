@@ -2,6 +2,7 @@
 
 namespace App\Infrastructure\Persistence\Doctrine\Task;
 
+use App\Domain\Shared\ValueObject\Uuid;
 use App\Domain\Video\Entity\Task;
 use App\Domain\Video\ValueObject\Progress;
 use App\Domain\Video\ValueObject\TaskDates;
@@ -9,15 +10,16 @@ use App\Domain\Video\ValueObject\TaskStatus;
 use App\Infrastructure\Persistence\Doctrine\Preset\PresetEntity;
 use App\Infrastructure\Persistence\Doctrine\User\UserEntity;
 use App\Infrastructure\Persistence\Doctrine\Video\VideoEntity;
+use Symfony\Component\Uid\UuidV4 AS SymfonyUuid;
 
 class TaskMapper
 {
     public static function toDomain(TaskEntity $entity): Task
     {
         return Task::reconstitute(
-            videoId: $entity->video->id,
-            presetId: $entity->preset->id,
-            userId: $entity->user->id,
+            videoId: Uuid::fromString($entity->video->id->toRfc4122()),
+            presetId: Uuid::fromString($entity->preset->id->toRfc4122()),
+            userId: Uuid::fromString($entity->user->id->toRfc4122()),
             status: TaskStatus::from($entity->status),
             progress: new Progress($entity->progress),
             dates: TaskDates::fromPersistence(
@@ -25,7 +27,7 @@ class TaskMapper
                 $entity->startedAt,
                 $entity->updatedAt,
             ),
-            id: $entity->id,
+            id: Uuid::fromString($entity->id->toRfc4122()),
             meta: $entity->meta,
             deleted: $entity->deleted,
         );
@@ -35,7 +37,7 @@ class TaskMapper
     {
         $entity = new TaskEntity();
         if ($task->id() !== null) {
-            $entity->id = $task->id();
+            $entity->id = SymfonyUuid::fromString($task->id()->toRfc4122());
         }
         self::hydrate($entity, $task, $video, $preset, $user);
         $entity->createdAt = $task->createdAt();

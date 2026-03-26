@@ -4,6 +4,7 @@ namespace App\Infrastructure\Persistence\Doctrine\Task;
 
 use App\Application\DTO\ScheduledTaskDTO;
 use App\Application\Query\Repository\ScheduledTaskReadRepositoryInterface;
+use App\Domain\Shared\ValueObject\Uuid;
 use App\Domain\User\Repository\UserRepositoryInterface;
 use App\Domain\Video\Entity\Task;
 use App\Domain\Video\Repository\PresetRepositoryInterface;
@@ -17,7 +18,7 @@ use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\DBAL\Exception;
 use Doctrine\ORM\Exception\ORMException;
 use Doctrine\Persistence\ManagerRegistry;
-use Symfony\Component\Uid\UuidV4;
+use Symfony\Component\Uid\UuidV4 AS SymfonyUuid;
 
 /**
  * @extends ServiceEntityRepository<TaskEntity>
@@ -43,15 +44,15 @@ class TaskRepository extends ServiceEntityRepository implements TaskRepositoryIn
     {
         $em = $this->getEntityManager();
 
-        $videoRef = $em->getReference(VideoEntity::class, $task->videoId());
-        $presetRef = $em->getReference(PresetEntity::class, $task->presetId());
-        $userRef = $em->getReference(UserEntity::class, $task->userId());
+        $videoRef = $em->getReference(VideoEntity::class, SymfonyUuid::fromString($task->videoId()->toRfc4122()));
+        $presetRef = $em->getReference(PresetEntity::class, SymfonyUuid::fromString($task->presetId()->toRfc4122()));
+        $userRef = $em->getReference(UserEntity::class, SymfonyUuid::fromString($task->userId()->toRfc4122()));
 
         if ($task->id() === null) {
             $taskEntity = TaskMapper::toDoctrine($task, $videoRef, $presetRef, $userRef);
         } else {
             /** @var TaskEntity|null $taskEntity */
-            $taskEntity = $this->find($task->id());
+            $taskEntity = $this->find(SymfonyUuid::fromString($task->id()->toRfc4122()));
             if (!$taskEntity) {
                 throw new \RuntimeException(sprintf('Task with id %s not found', $task->id()->toRfc4122()));
             }
@@ -62,13 +63,13 @@ class TaskRepository extends ServiceEntityRepository implements TaskRepositoryIn
         $em->flush();
 
         if ($task->id() === null) {
-            $task->assignId($taskEntity->id);
+            $task->assignId(Uuid::fromString($taskEntity->id->toRfc4122()));
         }
     }
 
-    public function findById(UuidV4 $id): ?Task
+    public function findById(Uuid $id): ?Task
     {
-        $entity = $this->find($id);
+        $entity = $this->find(SymfonyUuid::fromString($id->toRfc4122()));
 
         return $entity ? self::mapToDomain($entity) : null;
     }
@@ -76,12 +77,12 @@ class TaskRepository extends ServiceEntityRepository implements TaskRepositoryIn
     /**
      * @throws ORMException
      */
-    public function findByIdFresh(UuidV4 $id): ?Task
+    public function findByIdFresh(Uuid $id): ?Task
     {
         $em = $this->getEntityManager();
 
         /** @var TaskEntity|null $entity */
-        $entity = $this->find($id);
+        $entity = $this->find(SymfonyUuid::fromString($id->toRfc4122()));
         if (!$entity) {
             return null;
         }
@@ -91,7 +92,7 @@ class TaskRepository extends ServiceEntityRepository implements TaskRepositoryIn
         return self::mapToDomain($entity);
     }
 
-    public function findForTranscode(UuidV4 $videoId, UuidV4 $presetId, UuidV4 $userId): ?Task
+    public function findForTranscode(Uuid $videoId, Uuid $presetId, Uuid $userId): ?Task
     {
         $qb = $this->createQueryBuilder('task')
             ->andWhere('IDENTITY(task.video) = :videoId')
@@ -108,10 +109,10 @@ class TaskRepository extends ServiceEntityRepository implements TaskRepositoryIn
         return $entity ? self::mapToDomain($entity) : null;
     }
 
-    public function findByVideoId(UuidV4 $videoId): array
+    public function findByVideoId(Uuid $videoId): array
     {
         $entities = $this->findBy([
-            'video' => $videoId,
+            'video' => SymfonyUuid::fromString($videoId->toRfc4122()),
         ]);
 
         return array_map(static fn (TaskEntity $entity): Task => self::mapToDomain($entity), $entities);
@@ -132,7 +133,7 @@ class TaskRepository extends ServiceEntityRepository implements TaskRepositoryIn
         $rows = $conn->executeQuery($sql)->fetchAllAssociative();
 
         return array_map(function (array $row): ?Task {
-            return $this->findById(UuidV4::fromString($row['id']));
+            return $this->findById(Uuid::fromString($row['id']));
         }, $rows);
     }
 
@@ -187,9 +188,9 @@ class TaskRepository extends ServiceEntityRepository implements TaskRepositoryIn
 
         return array_map(
             static fn (array $row): ScheduledTaskDTO => new ScheduledTaskDTO(
-                UuidV4::fromString($row['task_id']),
-                UuidV4::fromString($row['user_id']),
-                UuidV4::fromString($row['video_id']),
+                Uuid::fromString($row['task_id']),
+                Uuid::fromString($row['user_id']),
+                Uuid::fromString($row['video_id']),
             ),
             $stmt->fetchAllAssociative(),
         );

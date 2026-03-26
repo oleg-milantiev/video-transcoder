@@ -2,14 +2,14 @@
 
 namespace App\Application\DTO;
 
-use Symfony\Component\Uid\UuidV4;
+use App\Domain\Shared\ValueObject\Uuid;
 
 final readonly class ScheduledTaskDTO
 {
     public function __construct(
-        public UuidV4 $taskId,
-        public UuidV4 $userId,
-        public UuidV4 $videoId,
+        public Uuid $taskId,
+        public Uuid $userId,
+        public Uuid $videoId,
     ) {
     }
 }

@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\Security;
 
+use App\Domain\Shared\ValueObject\Uuid;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
-use Symfony\Component\Uid\UuidV4;
 
 final readonly class MercureTokenService
 {
@@ -27,12 +27,12 @@ final readonly class MercureTokenService
     ) {
     }
 
-    public function createUserTopic(UuidV4 $userId): string
+    public function createUserTopic(Uuid $userId): string
     {
-        return rtrim($this->normalizeUrl((string) $this->topicPrefix), '/') . '/' . $userId->toRfc4122();
+        return rtrim($this->normalizeUrl($this->topicPrefix), '/') . '/' . $userId->toRfc4122();
     }
 
-    public function createSubscriberTokenForUser(UuidV4 $userId): string
+    public function createSubscriberTokenForUser(Uuid $userId): string
     {
         $topic = $this->createUserTopic($userId);
 
@@ -54,12 +54,12 @@ final readonly class MercureTokenService
 
     public function publicHubUrl(): string
     {
-        return $this->normalizeUrl((string) $this->publicHubUrl);
+        return $this->normalizeUrl($this->publicHubUrl);
     }
 
     public function internalHubUrl(): string
     {
-        return $this->normalizeUrl((string) $this->internalHubUrl);
+        return $this->normalizeUrl($this->internalHubUrl);
     }
 
     private function createJwt(array $claims, string $key): string

@@ -2,7 +2,7 @@
 
 namespace App\Application\Query;
 
-use Symfony\Component\Uid\UuidV4;
+use App\Domain\Shared\ValueObject\Uuid;
 
 final readonly class GetTaskListQuery
 {
@@ -14,5 +14,5 @@ final readonly class GetTaskListQuery
 
     public int $page;
     public int $limit;
-    public UuidV4 $userId;
+    public Uuid $userId;
 }

@@ -3,6 +3,7 @@
 namespace App\Presentation\Controller\Api;
 
 use App\Application\Logging\LogServiceInterface;
+use App\Domain\Shared\ValueObject\Uuid;
 use App\Infrastructure\Persistence\Doctrine\User\UserEntity;
 use App\Infrastructure\Security\ApiTokenService;
 use Psr\Log\LogLevel;
@@ -64,7 +65,7 @@ final class AuthApiController extends AbstractController
             return new JsonResponse(['error' => 'Invalid credentials.'], Response::HTTP_UNAUTHORIZED);
         }
 
-        $this->logService->log('user', $user->id, LogLevel::INFO, 'User signed in via API token', [
+        $this->logService->log('user', Uuid::fromString($user->id->toRfc4122()), LogLevel::INFO, 'User signed in via API token', [
             'email' => $user->getUserIdentifier(),
             'ip' => $request->getClientIp(),
             'route' => (string) $request->attributes->get('_route', 'api_auth_token'),

@@ -2,11 +2,13 @@
 
 namespace App\Infrastructure\Persistence\Doctrine\Preset;
 
+use App\Domain\Shared\ValueObject\Uuid;
 use App\Domain\Video\Entity\Preset;
 use App\Domain\Video\ValueObject\Bitrate;
 use App\Domain\Video\ValueObject\Codec;
 use App\Domain\Video\ValueObject\PresetTitle;
 use App\Domain\Video\ValueObject\Resolution;
+use Symfony\Component\Uid\UuidV4 AS SymfonyUuid;
 
 class PresetMapper
 {
@@ -17,7 +19,7 @@ class PresetMapper
             resolution: new Resolution($entity->width, $entity->height),
             codec: new Codec($entity->codec),
             bitrate: new Bitrate($entity->bitrate),
-            id: $entity->id,
+            id: Uuid::fromString($entity->id->toRfc4122()),
         );
     }
 
@@ -25,7 +27,7 @@ class PresetMapper
     {
         $entity = new PresetEntity();
         if ($preset->id() !== null) {
-            $entity->id = $preset->id();
+            $entity->id = SymfonyUuid::fromString($preset->id()->toRfc4122());
         }
         $entity->title = $preset->title()->value();
         $entity->width = $preset->resolution()->width();

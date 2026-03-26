@@ -2,11 +2,13 @@
 
 namespace App\Infrastructure\Persistence\Doctrine\Video;
 
+use App\Domain\Shared\ValueObject\Uuid;
 use App\Domain\Video\Entity\Video;
 use App\Domain\Video\ValueObject\FileExtension;
 use App\Domain\Video\ValueObject\VideoDates;
 use App\Domain\Video\ValueObject\VideoTitle;
 use App\Infrastructure\Persistence\Doctrine\User\UserEntity;
+use Symfony\Component\Uid\UuidV4 AS SymfonyUuid;
 
 class VideoMapper
 {
@@ -15,10 +17,10 @@ class VideoMapper
         return Video::reconstitute(
             title: new VideoTitle($entity->title),
             extension: new FileExtension($entity->extension),
-            userId: $entity->user->id,
+            userId: Uuid::fromString($entity->user->id->toRfc4122()),
             meta: $entity->meta,
             dates: VideoDates::fromPersistence($entity->createdAt, $entity->updatedAt),
-            id: $entity->id,
+            id: Uuid::fromString($entity->id->toRfc4122()),
             deleted: $entity->deleted,
         );
     }
@@ -27,7 +29,7 @@ class VideoMapper
     {
         $entity = new VideoEntity();
         if ($video->id() !== null) {
-            $entity->id = $video->id();
+            $entity->id = SymfonyUuid::fromString($video->id()->toRfc4122());
         }
         self::hydrate($entity, $video, $user);
         $entity->createdAt = $video->createdAt();

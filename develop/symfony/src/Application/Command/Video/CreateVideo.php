@@ -2,14 +2,14 @@
 
 namespace App\Application\Command\Video;
 
+use App\Domain\Shared\ValueObject\Uuid;
 use TusPhp\File;
-use Symfony\Component\Uid\UuidV4;
 
 final readonly class CreateVideo
 {
     public function __construct(
         private File $file,
-        private UuidV4 $userId,
+        private Uuid $userId,
     ) {
     }
 
@@ -17,7 +17,7 @@ final readonly class CreateVideo
     {
         return $this->file;
     }
-    public function userId(): UuidV4
+    public function userId(): Uuid
     {
         return $this->userId;
     }

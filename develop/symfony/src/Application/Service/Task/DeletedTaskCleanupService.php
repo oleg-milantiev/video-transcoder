@@ -5,11 +5,11 @@ declare(strict_types=1);
 namespace App\Application\Service\Task;
 
 use App\Application\Logging\LogServiceInterface;
+use App\Domain\Shared\ValueObject\Uuid;
 use App\Domain\Video\Entity\Task;
 use App\Domain\Video\Repository\TaskRepositoryInterface;
 use App\Domain\Video\Service\Storage\StorageInterface;
 use Psr\Log\LogLevel;
-use Symfony\Component\Uid\UuidV4;
 
 final readonly class DeletedTaskCleanupService
 {
@@ -43,7 +43,7 @@ final readonly class DeletedTaskCleanupService
     /**
      * @return array{candidates:int, filesDeleted:int}
      */
-    public function cleanupByVideoId(UuidV4 $videoId): array
+    public function cleanupByVideoId(Uuid $videoId): array
     {
         $tasks = $this->taskRepository->findByVideoId($videoId);
 

@@ -3,6 +3,7 @@
 namespace App\Infrastructure\Persistence\Doctrine\Video;
 
 use App\Application\Query\Repository\VideoDetailsReadRepositoryInterface;
+use App\Domain\Shared\ValueObject\Uuid;
 use App\Domain\Video\Entity\Video;
 use App\Domain\Video\Repository\VideoRepositoryInterface;
 use App\Infrastructure\Persistence\Doctrine\Shared\Repository\PaginatedRepositoryTrait;
@@ -11,7 +12,7 @@ use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\DBAL\Exception;
 use Doctrine\ORM\Exception\ORMException;
 use Doctrine\Persistence\ManagerRegistry;
-use Symfony\Component\Uid\UuidV4;
+use Symfony\Component\Uid\UuidV4 AS SymfonyUuid;
 
 /**
  * @extends ServiceEntityRepository<VideoEntity>
@@ -31,12 +32,12 @@ class VideoRepository extends ServiceEntityRepository implements VideoRepository
     public function save(Video $video): Video
     {
         $em = $this->getEntityManager();
-        $user = $em->getReference(UserEntity::class, $video->userId());
+        $user = $em->getReference(UserEntity::class, SymfonyUuid::fromString($video->userId()->toRfc4122()));
 
         if ($video->id() === null) {
             $entity = VideoMapper::toDoctrine($video, $user);
         } else {
-            $entity = $this->find($video->id());
+            $entity = $this->find(SymfonyUuid::fromString($video->id()->toRfc4122()));
             if (!$entity) {
                 throw new \RuntimeException(sprintf('Video with id %s not found', $video->id()));
             }
@@ -49,9 +50,9 @@ class VideoRepository extends ServiceEntityRepository implements VideoRepository
         return VideoMapper::toDomain($entity);
     }
 
-    public function findById(UuidV4 $id): ?Video
+    public function findById(Uuid $id): ?Video
     {
-        $entity = $this->find($id);
+        $entity = $this->find(SymfonyUuid::fromString($id->toRfc4122()));
 
         return $entity ? self::mapToDomain($entity) : null;
     }
@@ -71,7 +72,7 @@ class VideoRepository extends ServiceEntityRepository implements VideoRepository
         $rows = $conn->executeQuery($sql)->fetchAllAssociative();
 
         return array_values(array_filter(array_map(function (array $row): ?Video {
-            return $this->findById(UuidV4::fromString($row['id']));
+            return $this->findById(Uuid::fromString($row['id']));
         }, $rows)));
     }
 
@@ -83,7 +84,7 @@ class VideoRepository extends ServiceEntityRepository implements VideoRepository
     /**
      * @throws Exception
      */
-    public function getDetailsByVideoId(UuidV4 $videoId): array
+    public function getDetailsByVideoId(Uuid $videoId): array
     {
         $conn = $this->getEntityManager()->getConnection();
 

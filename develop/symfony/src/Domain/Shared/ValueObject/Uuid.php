@@ -57,9 +57,18 @@ class Uuid
         return $this->value;
     }
 
-    public function equals(self $other): bool
+    public function toRfc4122(): string
     {
-        return $this->value === $other->value;
+        return $this->value;
+    }
+
+    public function equals(self|string|\Stringable $other): bool
+    {
+        if ($other instanceof self) {
+            return $this->value === $other->value;
+        }
+
+        return $this->value === (string) $other;
     }
 
     public function __toString(): string

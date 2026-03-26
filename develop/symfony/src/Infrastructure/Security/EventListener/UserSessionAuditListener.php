@@ -3,6 +3,7 @@
 namespace App\Infrastructure\Security\EventListener;
 
 use App\Application\Logging\LogServiceInterface;
+use App\Domain\Shared\ValueObject\Uuid;
 use App\Infrastructure\Persistence\Doctrine\User\UserEntity;
 use Psr\Log\LogLevel;
 use Symfony\Component\EventDispatcher\Attribute\AsEventListener;
@@ -27,7 +28,7 @@ final readonly class UserSessionAuditListener
         try {
             // skip api stateless auth log
             if ($event->getFirewallName() === 'main') {
-                $this->logService->log('user', $user->id, LogLevel::INFO, 'User signed in', [
+                $this->logService->log('user', Uuid::fromString($user->id->toRfc4122()), LogLevel::INFO, 'User signed in', [
                     'firewall' => $event->getFirewallName(),
                     'route' => (string)$request->attributes->get('_route', ''),
                     'ip' => $request->getClientIp(),
@@ -49,7 +50,7 @@ final readonly class UserSessionAuditListener
 
         $request = $event->getRequest();
         try {
-            $this->logService->log('user', $user->id, LogLevel::INFO, 'User signed out', [
+            $this->logService->log('user', Uuid::fromString($user->id->toRfc4122()), LogLevel::INFO, 'User signed out', [
                 'route' => (string) $request->attributes->get('_route', ''),
                 'ip' => $request->getClientIp(),
                 'userAgent' => (string) $request->headers->get('User-Agent', ''),

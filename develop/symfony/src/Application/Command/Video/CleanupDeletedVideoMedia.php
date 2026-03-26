@@ -2,11 +2,11 @@
 
 namespace App\Application\Command\Video;
 
-use Symfony\Component\Uid\UuidV4;
+use App\Domain\Shared\ValueObject\Uuid;
 
 final readonly class CleanupDeletedVideoMedia
 {
-    public function __construct(public UuidV4 $videoId)
+    public function __construct(public Uuid $videoId)
     {
     }
 }

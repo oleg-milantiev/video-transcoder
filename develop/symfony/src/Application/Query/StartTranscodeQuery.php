@@ -3,24 +3,23 @@
 namespace App\Application\Query;
 
 use App\Application\Exception\InvalidUuidException;
-use Symfony\Component\Uid\UuidV4;
+use App\Domain\Shared\ValueObject\Uuid;
 
 final readonly class StartTranscodeQuery
 {
-    public UuidV4 $uuid;
-    public UuidV4 $presetId;
-    public UuidV4 $userId;
+    public Uuid $uuid;
+    public Uuid $presetId;
+    public Uuid $userId;
 
-    public function __construct(string $uuid, string $presetId, UuidV4 $userId)
+    public function __construct(string $uuid, string $presetId, string $userId)
     {
         try {
-            $this->uuid = UuidV4::fromString($uuid);
-            $this->presetId = UuidV4::fromString($presetId);
+            $this->uuid = Uuid::fromString($uuid);
+            $this->presetId = Uuid::fromString($presetId);
+            $this->userId = Uuid::fromString($userId);
         } catch (\Throwable $e) {
             throw new InvalidUuidException('Invalid UUID', previous: $e);
         }
-
-        $this->userId = $userId;
     }
 }
 

@@ -6,6 +6,7 @@ namespace App\Infrastructure\Mercure;
 
 use App\Application\DTO\MercureMessageDTO;
 use App\Application\Service\Mercure\MercurePublisherInterface;
+use App\Domain\Shared\ValueObject\Uuid;
 use App\Infrastructure\Security\MercureTokenService;
 use Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
@@ -20,7 +21,7 @@ final readonly class HttpMercurePublisher implements MercurePublisherInterface
 
     public function publish(MercureMessageDTO $message): void
     {
-        $topic = $this->mercureTokenService->createUserTopic($message->userId);
+        $topic = $this->mercureTokenService->createUserTopic(Uuid::fromString($message->userId->toRfc4122()));
         $publisherToken = $this->mercureTokenService->createPublisherTokenForTopic($topic);
 
         $data = [

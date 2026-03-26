@@ -3,12 +3,12 @@
 namespace App\Application\Query;
 
 use App\Application\Exception\QueryException;
+use App\Domain\Shared\ValueObject\Uuid;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\Uid\UuidV4;
 
 trait GetListQueryTrait
 {
-    public function __construct(Request $request, UuidV4 $userId)
+    public function __construct(Request $request, Uuid $userId)
     {
         $page = $request->query->getInt('page', 1);
         $limit = $request->query->getInt('limit', self::DEFAULT_LIMIT);

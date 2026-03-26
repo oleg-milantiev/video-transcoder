@@ -2,6 +2,7 @@
 
 namespace App\Presentation\Controller;
 
+use App\Domain\Shared\ValueObject\Uuid;
 use App\Infrastructure\Security\ApiTokenService;
 use App\Infrastructure\Security\MercureTokenService;
 use App\Infrastructure\Persistence\Doctrine\User\UserEntity;
@@ -24,13 +25,14 @@ class HomeController extends AbstractController
     public function index(): Response
     {
         $user = $this->getUser();
+        $userId = Uuid::fromString($user->id->toRfc4122());
 
         return $this->render('home/index.html.twig', [
-            'apiAccessToken' => $user ? $this->tokenService->createToken($user->id, $user->getUserIdentifier()) : null,
+            'apiAccessToken' => $user ? $this->tokenService->createToken($userId, $user->getUserIdentifier()) : null,
             'mercureHubUrl' => $this->mercureTokenService->publicHubUrl(),
-            'mercureSubscriberToken' => $user ? $this->mercureTokenService->createSubscriberTokenForUser($user->id) : null,
-            'mercureTopic' => $user ? $this->mercureTokenService->createUserTopic($user->id) : null,
-            'userId' => $user?->id->toRfc4122(),
+            'mercureSubscriberToken' => $user ? $this->mercureTokenService->createSubscriberTokenForUser($userId) : null,
+            'mercureTopic' => $user ? $this->mercureTokenService->createUserTopic($userId) : null,
+            'userId' => $userId->toRfc4122(),
         ]);
     }
 }

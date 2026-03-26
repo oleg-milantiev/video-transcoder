@@ -2,11 +2,11 @@
 
 namespace App\Domain\Video\Entity;
 
+use App\Domain\Shared\ValueObject\Uuid;
 use App\Domain\Video\ValueObject\Bitrate;
 use App\Domain\Video\ValueObject\Codec;
 use App\Domain\Video\ValueObject\PresetTitle;
 use App\Domain\Video\ValueObject\Resolution;
-use Symfony\Component\Uid\UuidV4 as Uuid;
 
 class Preset
 {

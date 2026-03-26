@@ -3,6 +3,7 @@
 namespace App\Infrastructure\Upload\EventListener;
 
 use App\Application\Command\Video\CreateVideo;
+use App\Domain\Shared\ValueObject\Uuid;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\EventDispatcher\Attribute\AsEventListener;
@@ -27,7 +28,7 @@ readonly class TusPostFinishListener
     {
         $this->commandBus->dispatch(new CreateVideo(
             file: $event->getFile(),
-            userId: $this->security->getUser()->id,
+            userId: Uuid::fromString($this->security->getUser()->id->toRfc4122()),
         ));
     }
 }

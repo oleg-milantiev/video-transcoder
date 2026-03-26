@@ -2,7 +2,7 @@
 
 namespace App\Domain\User\Entity;
 
-use Symfony\Component\Uid\UuidV4 as Uuid;
+use App\Domain\Shared\ValueObject\Uuid;
 
 class User
 {
