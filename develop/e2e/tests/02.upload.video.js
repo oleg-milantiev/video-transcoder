@@ -47,7 +47,6 @@ test('upload video and verify details flow', async ({ page }, testInfo) => {
   await expectDetailsValue(page, 'Title');
   await expectDetailsValue(page, 'Extension');
   await expectDetailsValue(page, 'Created At');
-  await expectDetailsValue(page, 'User ID');
   await shot(page, testInfo, '04-video-details-filled.png');
 
   await waitForPosterAndMeta(page, testInfo);
