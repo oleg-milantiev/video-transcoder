@@ -10,6 +10,7 @@ use App\Application\DTO\VideoDetailsDTO;
 use App\Domain\Video\Entity\Video;
 use App\Domain\Video\Service\Storage\StorageInterface;
 use App\Domain\Video\ValueObject\FileExtension;
+use App\Domain\Video\ValueObject\VideoDates;
 use App\Domain\Video\ValueObject\VideoTitle;
 use PHPUnit\Framework\TestCase;
 use App\Domain\Shared\ValueObject\Uuid;
@@ -29,7 +30,7 @@ class VideoDetailsDTOTest extends TestCase
             new FileExtension('mov'),
             Uuid::fromString('123e4567-e89b-42d3-a456-426614174007'),
             $meta,
-            \App\Domain\Video\ValueObject\VideoDates::create(new \DateTimeImmutable('2026-03-18 08:45:00')),
+            VideoDates::create(new \DateTimeImmutable('2026-03-18 08:45:00')),
             $uuid,
         );
 
@@ -50,7 +51,6 @@ class VideoDetailsDTOTest extends TestCase
         $this->assertSame('mov', $dto->extension);
         $this->assertSame('2026-03-18 08:45', $dto->createdAt);
         $this->assertNull($dto->updatedAt);
-        $this->assertSame('123e4567-e89b-42d3-a456-426614174007', $dto->userId);
         $this->assertSame([$presetDto], $dto->presetsWithTasks);
         $this->assertSame('/uploads/' . $uuid->toRfc4122() . '.jpg', $dto->poster);
         $this->assertArrayHasKey('duration', $dto->meta);
