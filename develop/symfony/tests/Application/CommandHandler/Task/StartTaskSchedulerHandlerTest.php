@@ -16,7 +16,7 @@ use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Messenger\Envelope;
 use Symfony\Component\Messenger\MessageBusInterface;
-use Symfony\Component\Uid\UuidV4;
+use App\Domain\Shared\ValueObject\Uuid;
 
 class StartTaskSchedulerHandlerTest extends TestCase
 {
@@ -25,9 +25,9 @@ class StartTaskSchedulerHandlerTest extends TestCase
         $taskRepository = $this->createStub(ScheduledTaskReadRepositoryInterface::class);
         $taskRepository->method('getScheduled')->willReturn([
             new ScheduledTaskDTO(
-                UuidV4::fromString('123e4567-e89b-42d3-a456-426614174110'),
-                UuidV4::fromString('123e4567-e89b-42d3-a456-426614174107'),
-                UuidV4::fromString('123e4567-e89b-42d3-a456-426614174141')
+                Uuid::fromString('123e4567-e89b-42d3-a456-426614174110'),
+                Uuid::fromString('123e4567-e89b-42d3-a456-426614174107'),
+                Uuid::fromString('123e4567-e89b-42d3-a456-426614174141')
             ),
         ]);
 
@@ -67,9 +67,9 @@ class StartTaskSchedulerHandlerTest extends TestCase
         $taskRepository = $this->createStub(ScheduledTaskReadRepositoryInterface::class);
         $taskRepository->method('getScheduled')->willReturn([
             new ScheduledTaskDTO(
-                UuidV4::fromString('123e4567-e89b-42d3-a456-426614174111'),
-                UuidV4::fromString('123e4567-e89b-42d3-a456-426614174108'),
-                UuidV4::fromString('123e4567-e89b-42d3-a456-426614174142')
+                Uuid::fromString('123e4567-e89b-42d3-a456-426614174111'),
+                Uuid::fromString('123e4567-e89b-42d3-a456-426614174108'),
+                Uuid::fromString('123e4567-e89b-42d3-a456-426614174142')
             ),
         ]);
 

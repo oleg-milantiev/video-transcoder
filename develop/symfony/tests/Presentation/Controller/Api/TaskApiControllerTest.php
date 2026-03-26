@@ -8,6 +8,7 @@ use App\Application\Exception\QueryException;
 use App\Application\Logging\LogServiceInterface;
 use App\Application\Query\GetTaskListQuery;
 use App\Application\QueryHandler\QueryBus;
+use App\Domain\Shared\ValueObject\Uuid;
 use App\Domain\Video\Entity\Task;
 use App\Domain\Video\Repository\TaskRepositoryInterface;
 use App\Domain\Video\Repository\VideoRepositoryInterface;
@@ -15,7 +16,7 @@ use App\Infrastructure\Security\Voter\VideoAccessVoter;
 use App\Tests\Domain\Entity\TaskFake;
 use App\Tests\Domain\Entity\VideoFake;
 use Symfony\Bundle\SecurityBundle\Security;
-use Symfony\Component\Uid\UuidV4;
+use Symfony\Component\Uid\UuidV4 as SymfonyUuid;
 
 final class TaskApiControllerTest extends ApiWebTestCase
 {
@@ -75,9 +76,9 @@ final class TaskApiControllerTest extends ApiWebTestCase
 
     public function testCancelReturnsNotFoundWhenTaskDoesNotExist(): void
     {
-        $client = $this->createBearerAuthenticatedClient(userId: UuidV4::fromString('00000000-0000-4000-8000-000000000042'));
+        $client = $this->createBearerAuthenticatedClient(userId: SymfonyUuid::fromString('00000000-0000-4000-8000-000000000042'));
 
-        $taskId = UuidV4::fromString('40404040-4040-4040-8040-404040404040');
+        $taskId = Uuid::fromString('40404040-4040-4040-8040-404040404040');
 
         $taskRepository = $this->createMock(TaskRepositoryInterface::class);
         $taskRepository->expects($this->once())->method('findById')->with($taskId)->willReturn(null);
@@ -97,9 +98,9 @@ final class TaskApiControllerTest extends ApiWebTestCase
 
     public function testCancelReturnsNotFoundWhenVideoDoesNotExist(): void
     {
-        $client = $this->createBearerAuthenticatedClient(userId: UuidV4::fromString('00000000-0000-4000-8000-000000000042'));
+        $client = $this->createBearerAuthenticatedClient(userId: SymfonyUuid::fromString('00000000-0000-4000-8000-000000000042'));
 
-        $taskId = UuidV4::fromString('15151515-1515-4515-8515-151515151515');
+        $taskId = Uuid::fromString('15151515-1515-4515-8515-151515151515');
 
         $task = TaskFake::create();
 
@@ -125,9 +126,9 @@ final class TaskApiControllerTest extends ApiWebTestCase
 
     public function testCancelReturnsForbiddenWhenAccessIsDenied(): void
     {
-        $client = $this->createBearerAuthenticatedClient(userId: UuidV4::fromString('00000000-0000-4000-8000-000000000042'));
+        $client = $this->createBearerAuthenticatedClient(userId: SymfonyUuid::fromString('00000000-0000-4000-8000-000000000042'));
 
-        $taskId = UuidV4::fromString('18181818-1818-4818-8818-181818181818');
+        $taskId = Uuid::fromString('18181818-1818-4818-8818-181818181818');
 
         $task = TaskFake::create();
         $video = VideoFake::create();
@@ -161,9 +162,9 @@ final class TaskApiControllerTest extends ApiWebTestCase
 
     public function testCancelPendingTaskCancelsImmediately(): void
     {
-        $client = $this->createBearerAuthenticatedClient(userId: UuidV4::fromString('00000000-0000-4000-8000-000000000042'));
+        $client = $this->createBearerAuthenticatedClient(userId: SymfonyUuid::fromString('00000000-0000-4000-8000-000000000042'));
 
-        $taskId = UuidV4::fromString('21212121-2121-4212-8212-212121212121');
+        $taskId = Uuid::fromString('21212121-2121-4212-8212-212121212121');
 
         $task = TaskFake::create();
         $video = VideoFake::create();
@@ -202,9 +203,9 @@ final class TaskApiControllerTest extends ApiWebTestCase
 
     public function testCancelProcessingTaskMarksRequestWithoutImmediateCancel(): void
     {
-        $client = $this->createBearerAuthenticatedClient(userId: UuidV4::fromString('00000000-0000-4000-8000-000000000042'));
+        $client = $this->createBearerAuthenticatedClient(userId: SymfonyUuid::fromString('00000000-0000-4000-8000-000000000042'));
 
-        $taskId = UuidV4::fromString('25252525-2525-4252-8252-252525252525');
+        $taskId = Uuid::fromString('25252525-2525-4252-8252-252525252525');
 
         $task = $this->createProcessingTask();
         $video = VideoFake::create();
@@ -244,11 +245,11 @@ final class TaskApiControllerTest extends ApiWebTestCase
     private function createProcessingTask(): Task
     {
         $task = Task::create(
-            UuidV4::fromString('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'),
-            UuidV4::fromString('10101010-1010-4010-8010-101010101010'),
-            UuidV4::fromString('00000000-0000-4000-8000-000000000042')
+            Uuid::fromString('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'),
+            Uuid::fromString('10101010-1010-4010-8010-101010101010'),
+            Uuid::fromString('00000000-0000-4000-8000-000000000042')
         );
-        $task->assignId(UuidV4::fromString('77777777-7777-4777-8777-777777777777'));
+        $task->assignId(Uuid::fromString('77777777-7777-4777-8777-777777777777'));
         $task->start(12.5);
 
         return $task;

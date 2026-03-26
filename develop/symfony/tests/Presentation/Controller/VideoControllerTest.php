@@ -7,7 +7,7 @@ namespace App\Tests\Presentation\Controller;
 use App\Infrastructure\Persistence\Doctrine\User\UserEntity;
 use App\Tests\Presentation\Controller\Api\InMemoryTestUserProvider;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
-use Symfony\Component\Uid\UuidV4;
+use Symfony\Component\Uid\UuidV4 as SymfonyUuid;
 
 final class VideoControllerTest extends WebTestCase
 {
@@ -24,7 +24,7 @@ final class VideoControllerTest extends WebTestCase
         $client = static::createClient();
 
         $user = new UserEntity();
-        $user->id = UuidV4::fromString('00000000-0000-4000-8000-000000000201');
+        $user->id = SymfonyUuid::fromString('00000000-0000-4000-8000-000000000201');
         $user->email = 'video-user@example.com';
         $user->roles = ['ROLE_USER'];
 
@@ -46,7 +46,7 @@ final class VideoControllerTest extends WebTestCase
         $expectedTopicPrefix = getenv('MERCURE_TOPIC_PREFIX') ?: (getenv('DEFAULT_URI') . '/user');
 
         self::assertSame($expectedHub, $spaRoot->attr('data-mercure-hub-url'));
-        self::assertSame($expectedTopicPrefix . '/' . (string) $user->id, $spaRoot->attr('data-mercure-topic'));
+        self::assertSame($expectedTopicPrefix . '/' . $user->id, $spaRoot->attr('data-mercure-topic'));
         self::assertNotSame('', (string) $spaRoot->attr('data-mercure-subscriber-token'));
         self::assertSame('/api/video/__UUID__', $spaRoot->attr('data-api-video-details-url-template'));
         self::assertSame('/api/video/__UUID__/transcode/__PRESET_ID__', $spaRoot->attr('data-api-video-transcode-url-template'));

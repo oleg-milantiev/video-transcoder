@@ -11,8 +11,9 @@ use App\Application\Query\GetVideoDetailsQuery;
 use App\Application\Query\GetVideoListQuery;
 use App\Application\Query\StartTranscodeQuery;
 use App\Application\QueryHandler\QueryBus;
+use App\Domain\Shared\ValueObject\Uuid;
 use App\Domain\Video\Exception\VideoHasTranscodingTasks;
-use Symfony\Component\Uid\UuidV4;
+use Symfony\Component\Uid\UuidV4 as SymfonyUuid;
 
 final class VideoApiControllerTest extends ApiWebTestCase
 {
@@ -135,7 +136,7 @@ final class VideoApiControllerTest extends ApiWebTestCase
     public function testTranscodeReturnsTaskPayload(): void
     {
         $client = $this->createBearerAuthenticatedClient(
-            userId: UuidV4::fromString('00000000-0000-4000-8000-000000000042'),
+            userId: SymfonyUuid::fromString('00000000-0000-4000-8000-000000000042'),
             roles: ['ROLE_ADMIN'],
         );
 
@@ -241,10 +242,10 @@ final class VideoApiControllerTest extends ApiWebTestCase
     public function testDeleteReturnsSuccessPayload(): void
     {
         $client = $this->createBearerAuthenticatedClient(
-            userId: UuidV4::fromString('00000000-0000-4000-8000-000000000042'),
+            userId: SymfonyUuid::fromString('00000000-0000-4000-8000-000000000042'),
             roles: ['ROLE_ADMIN'],
         );
-        $videoId = UuidV4::fromString('11111111-1111-4111-8111-111111111111');
+        $videoId = Uuid::fromString('11111111-1111-4111-8111-111111111111');
 
         $queryBus = $this->createMock(QueryBus::class);
         $queryBus->expects($this->once())
@@ -298,7 +299,7 @@ final class VideoApiControllerTest extends ApiWebTestCase
     public function testDeleteReturnsConflictWhenVideoHasTranscodingTasks(): void
     {
         $client = $this->createBearerAuthenticatedClient(roles: ['ROLE_ADMIN']);
-        $videoId = UuidV4::fromString('11111111-1111-4111-8111-111111111111');
+        $videoId = Uuid::fromString('11111111-1111-4111-8111-111111111111');
 
         $queryBus = $this->createMock(QueryBus::class);
         $queryBus->expects($this->once())
@@ -324,7 +325,7 @@ final class VideoApiControllerTest extends ApiWebTestCase
     public function testDeleteReturnsForbiddenOnAccessDenied(): void
     {
         $client = $this->createBearerAuthenticatedClient();
-        $videoId = UuidV4::fromString('11111111-1111-4111-8111-111111111111');
+        $videoId = Uuid::fromString('11111111-1111-4111-8111-111111111111');
 
         $queryBus = $this->createMock(QueryBus::class);
         $queryBus->expects($this->once())

@@ -25,14 +25,14 @@ use App\Domain\Video\ValueObject\VideoTitle;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Messenger\Envelope;
 use Symfony\Component\Messenger\MessageBusInterface;
-use Symfony\Component\Uid\UuidV4;
+use App\Domain\Shared\ValueObject\Uuid;
 
 class TranscodeTaskPreparationServiceTest extends TestCase
 {
     public function testPrepareReturnsContextAndMarksTaskStarted(): void
     {
         $video = $this->createVideo(12.5);
-        $preset = $this->createPreset(UuidV4::fromString('123e4567-e89b-42d3-a456-426614174005'));
+        $preset = $this->createPreset(Uuid::fromString('123e4567-e89b-42d3-a456-426614174005'));
         $task = $this->createTask($video->id(), $preset->id());
 
         $taskRepository = $this->createMock(TaskRepositoryInterface::class);
@@ -42,12 +42,12 @@ class TranscodeTaskPreparationServiceTest extends TestCase
         $logService = $this->createMock(LogServiceInterface::class);
         $logService->expects($this->once())
             ->method('log')
-            ->with('task', UuidV4::fromString('123e4567-e89b-42d3-a456-426614174013'), LogLevel::INFO, 'Transcoding started');
+            ->with('task', Uuid::fromString('123e4567-e89b-42d3-a456-426614174013'), LogLevel::INFO, 'Transcoding started');
 
         $presetRepository = $this->createMock(PresetRepositoryInterface::class);
         $presetRepository->expects($this->once())
             ->method('findById')
-            ->with(UuidV4::fromString('123e4567-e89b-42d3-a456-426614174005'))
+            ->with(Uuid::fromString('123e4567-e89b-42d3-a456-426614174005'))
             ->willReturn($preset);
 
         $storage = $this->createMock(StorageInterface::class);
@@ -88,7 +88,7 @@ class TranscodeTaskPreparationServiceTest extends TestCase
     public function testPrepareLogsAndThrowsWhenPresetNotFound(): void
     {
         $video = $this->createVideo(10.0);
-        $task = $this->createTask($video->id(), UuidV4::fromString('123e4567-e89b-42d3-a456-426614174099'));
+        $task = $this->createTask($video->id(), Uuid::fromString('123e4567-e89b-42d3-a456-426614174099'));
 
         $taskRepository = $this->createMock(TaskRepositoryInterface::class);
         $taskRepository->expects($this->never())->method('save');
@@ -96,12 +96,12 @@ class TranscodeTaskPreparationServiceTest extends TestCase
         $logService = $this->createMock(LogServiceInterface::class);
         $logService->expects($this->once())
             ->method('log')
-            ->with('task', UuidV4::fromString('123e4567-e89b-42d3-a456-426614174013'), LogLevel::ERROR, 'Preset not found for task');
+            ->with('task', Uuid::fromString('123e4567-e89b-42d3-a456-426614174013'), LogLevel::ERROR, 'Preset not found for task');
 
         $presetRepository = $this->createMock(PresetRepositoryInterface::class);
         $presetRepository->expects($this->once())
             ->method('findById')
-            ->with(UuidV4::fromString('123e4567-e89b-42d3-a456-426614174099'))
+            ->with(Uuid::fromString('123e4567-e89b-42d3-a456-426614174099'))
             ->willReturn(null);
 
         $storage = $this->createStub(StorageInterface::class);
@@ -122,14 +122,14 @@ class TranscodeTaskPreparationServiceTest extends TestCase
         return Video::reconstitute(
             title: new VideoTitle('Clip'),
             extension: new FileExtension('mp4'),
-            userId: UuidV4::fromString('123e4567-e89b-42d3-a456-426614174007'),
+            userId: Uuid::fromString('123e4567-e89b-42d3-a456-426614174007'),
             meta: ['duration' => $duration],
             dates: VideoDates::create(),
-            id: UuidV4::fromString('123e4567-e89b-42d3-a456-426614174120'),
+            id: Uuid::fromString('123e4567-e89b-42d3-a456-426614174120'),
         );
     }
 
-    private function createPreset(UuidV4 $id): Preset
+    private function createPreset(Uuid $id): Preset
     {
         return new Preset(
             title: new PresetTitle('HD 720'),
@@ -140,10 +140,10 @@ class TranscodeTaskPreparationServiceTest extends TestCase
         );
     }
 
-    private function createTask(UuidV4 $videoId, UuidV4 $presetId): Task
+    private function createTask(Uuid $videoId, Uuid $presetId): Task
     {
-        $task = Task::create($videoId, $presetId, UuidV4::fromString('123e4567-e89b-42d3-a456-426614174007'));
-        $task->assignId(UuidV4::fromString('123e4567-e89b-42d3-a456-426614174013'));
+        $task = Task::create($videoId, $presetId, Uuid::fromString('123e4567-e89b-42d3-a456-426614174007'));
+        $task->assignId(Uuid::fromString('123e4567-e89b-42d3-a456-426614174013'));
 
         return $task;
     }

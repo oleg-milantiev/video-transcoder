@@ -10,7 +10,7 @@ use App\Domain\Video\ValueObject\Codec;
 use App\Domain\Video\ValueObject\PresetTitle;
 use App\Domain\Video\ValueObject\Resolution;
 use PHPUnit\Framework\TestCase;
-use Symfony\Component\Uid\UuidV4;
+use App\Domain\Shared\ValueObject\Uuid;
 
 final class PresetTest extends TestCase
 {
@@ -38,7 +38,7 @@ final class PresetTest extends TestCase
             new Resolution(1280, 720),
             new Codec('h264'),
             new Bitrate(3.0),
-            UuidV4::fromString('11111111-1111-4111-8111-111111111111'),
+            Uuid::fromString('11111111-1111-4111-8111-111111111111'),
         );
 
         $preset->rename(new PresetTitle('Updated'));

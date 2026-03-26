@@ -10,7 +10,7 @@ use App\Domain\Video\Service\Storage\StorageInterface;
 use App\Tests\Domain\Entity\VideoFake;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\Uid\UuidV4;
+use App\Domain\Shared\ValueObject\Uuid;
 
 class GetVideoListHandlerTest extends TestCase
 {
@@ -22,7 +22,7 @@ class GetVideoListHandlerTest extends TestCase
         $total = 2;
         $page = 1;
         $limit = 10;
-        $userId = UuidV4::fromString('11111111-1111-4111-8111-111111111111');
+        $userId = Uuid::fromString('11111111-1111-4111-8111-111111111111');
         $paginatedResult = new PaginatedResult($videos, $total);
 
         $repo = $this->createMock(VideoRepositoryInterface::class);
@@ -41,7 +41,7 @@ class GetVideoListHandlerTest extends TestCase
         $this->assertEquals($limit, $response->limit);
     }
 
-    private function initializeUserId(GetVideoListQuery $query, UuidV4 $userId): void
+    private function initializeUserId(GetVideoListQuery $query, Uuid $userId): void
     {
         $property = new \ReflectionProperty(GetVideoListQuery::class, 'userId');
         $property->setValue($query, $userId);

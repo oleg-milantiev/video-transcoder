@@ -22,7 +22,7 @@ class UuidTest extends TestCase
 
     public function testFromStringCreatesValidUuid(): void
     {
-        $uuidString = '123e4567-e89b-12d3-a456-426614174000';
+        $uuidString = '123e4567-e89b-42d3-a456-426614174000';
         $uuid = Uuid::fromString($uuidString);
 
         $this->assertEquals($uuidString, $uuid->toString());

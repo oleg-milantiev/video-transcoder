@@ -9,7 +9,7 @@ use App\Domain\Video\Exception\TaskAlreadyDeleted;
 use App\Domain\Video\ValueObject\Progress;
 use App\Domain\Video\ValueObject\TaskStatus;
 use PHPUnit\Framework\TestCase;
-use Symfony\Component\Uid\UuidV4;
+use App\Domain\Shared\ValueObject\Uuid;
 
 final class TaskTest extends TestCase
 {
@@ -206,19 +206,19 @@ final class TaskTest extends TestCase
         $task->updateMeta(['x' => 'y']);
     }
 
-    private function videoId(): UuidV4
+    private function videoId(): Uuid
     {
-        return UuidV4::fromString('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa');
+        return Uuid::fromString('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa');
     }
 
-    private function presetId(): UuidV4
+    private function presetId(): Uuid
     {
-        return UuidV4::fromString('bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb');
+        return Uuid::fromString('bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb');
     }
 
-    private function userId(): UuidV4
+    private function userId(): Uuid
     {
-        return UuidV4::fromString('cccccccc-cccc-4ccc-8ccc-cccccccccccc');
+        return Uuid::fromString('cccccccc-cccc-4ccc-8ccc-cccccccccccc');
     }
 }
 

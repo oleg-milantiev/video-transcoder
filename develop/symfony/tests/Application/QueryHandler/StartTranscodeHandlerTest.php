@@ -35,7 +35,7 @@ use Symfony\Component\Messenger\Envelope;
 use Symfony\Component\Messenger\Exception\ExceptionInterface;
 use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Messenger\Stamp\HandledStamp;
-use Symfony\Component\Uid\UuidV4;
+use App\Domain\Shared\ValueObject\Uuid;
 
 class StartTranscodeHandlerTest extends TestCase
 {
@@ -44,11 +44,11 @@ class StartTranscodeHandlerTest extends TestCase
      */
     public function testCreatesTaskAndDispatchesScheduler(): void
     {
-        $videoId = UuidV4::fromString('123e4567-e89b-42d3-a456-426614174100');
+        $videoId = Uuid::fromString('123e4567-e89b-42d3-a456-426614174100');
         $video = Video::reconstitute(
             new VideoTitle('Source Clip'),
             new FileExtension('mp4'),
-            userId: UuidV4::fromString('123e4567-e89b-42d3-a456-426614174077'),
+            userId: Uuid::fromString('123e4567-e89b-42d3-a456-426614174077'),
             meta: [],
             dates: VideoDates::create(new \DateTimeImmutable('2026-03-18 12:00:00')),
             id: $videoId,
@@ -59,7 +59,7 @@ class StartTranscodeHandlerTest extends TestCase
             new Resolution(1280, 720),
             new Codec('h264'),
             new Bitrate(50.0),
-            id: UuidV4::fromString('123e4567-e89b-42d3-a456-426614174005'),
+            id: Uuid::fromString('123e4567-e89b-42d3-a456-426614174005'),
         );
 
         $user = new User('user@example.com', ['ROLE_USER'], id: $video->userId());
@@ -97,7 +97,7 @@ class StartTranscodeHandlerTest extends TestCase
             ->method('save')
             ->with($this->isInstanceOf(Task::class))
             ->willReturnCallback(static function (Task $task): void {
-                $task->assignId(UuidV4::fromString('123e4567-e89b-42d3-a456-426614174321'));
+                $task->assignId(Uuid::fromString('123e4567-e89b-42d3-a456-426614174321'));
             });
 
         $userRepo = $this->createMock(UserRepositoryInterface::class);
@@ -116,7 +116,7 @@ class StartTranscodeHandlerTest extends TestCase
         $logService->expects($this->exactly(3))->method('log');
 
         $handler = new StartTranscodeHandler($commandBus, $eventBus, $videoRepo, $presetRepo, $taskRepo, $userRepo, $logService, $security);
-        $query = new StartTranscodeQuery($videoId->toRfc4122(), $preset->id()->toRfc4122(), $user->id());
+        $query = new StartTranscodeQuery($videoId->toRfc4122(), $preset->id()->toRfc4122(), $user->id()->toRfc4122());
         $dto = $handler($query);
 
         $this->assertInstanceOf(TaskItemDTO::class, $dto);
@@ -163,7 +163,7 @@ class StartTranscodeHandlerTest extends TestCase
             $handler(new StartTranscodeQuery(
                 '123e4567-e89b-42d3-a456-426614174101',
                 '123e4567-e89b-42d3-a456-426614174001',
-                UuidV4::fromString('123e4567-e89b-42d3-a456-426614174001')
+                '123e4567-e89b-42d3-a456-426614174001'
             ));
         } finally {
             $this->assertSame([

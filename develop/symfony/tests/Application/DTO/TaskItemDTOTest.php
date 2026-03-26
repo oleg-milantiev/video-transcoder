@@ -19,17 +19,17 @@ use App\Domain\Video\ValueObject\VideoDates;
 use App\Domain\Video\ValueObject\VideoTitle;
 use App\Domain\Video\ValueObject\FileExtension;
 use PHPUnit\Framework\TestCase;
-use Symfony\Component\Uid\UuidV4;
+use App\Domain\Shared\ValueObject\Uuid;
 
 class TaskItemDTOTest extends TestCase
 {
     public function testFromDomainUsesProvidedEntities(): void
     {
-        $videoId = UuidV4::fromString('22222222-2222-4222-8222-222222222222');
+        $videoId = Uuid::fromString('22222222-2222-4222-8222-222222222222');
         $video = Video::reconstitute(
             new VideoTitle('Task Source Video'),
             new FileExtension('mkv'),
-            UuidV4::fromString('99999999-9999-4999-8999-999999999999'),
+            Uuid::fromString('99999999-9999-4999-8999-999999999999'),
             [],
             VideoDates::create(new \DateTimeImmutable('2026-03-18 09:00:00')),
             $videoId,
@@ -40,17 +40,17 @@ class TaskItemDTOTest extends TestCase
             new Resolution(1920, 1080),
             new Codec('h264'),
             new Bitrate(50.0),
-            UuidV4::fromString('77777777-7777-4777-8777-777777777777'),
+            Uuid::fromString('77777777-7777-4777-8777-777777777777'),
         );
 
         $task = Task::reconstitute(
             videoId: $videoId,
-            presetId: UuidV4::fromString('77777777-7777-4777-8777-777777777777'),
-            userId: UuidV4::fromString('99999999-9999-4999-8999-999999999999'),
+            presetId: Uuid::fromString('77777777-7777-4777-8777-777777777777'),
+            userId: Uuid::fromString('99999999-9999-4999-8999-999999999999'),
             status: TaskStatus::processing(),
             progress: new Progress(75),
             dates: TaskDates::fromPersistence(new \DateTimeImmutable('2026-03-18 10:00:00'), null, null),
-            id: UuidV4::fromString('55555555-5555-4555-8555-555555555555'),
+            id: Uuid::fromString('55555555-5555-4555-8555-555555555555'),
         );
 
         $dto = TaskItemDTO::fromDomain($task, $video, $preset);

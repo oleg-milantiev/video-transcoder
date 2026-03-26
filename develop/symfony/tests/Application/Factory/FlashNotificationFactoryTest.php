@@ -11,7 +11,7 @@ use App\Domain\Video\ValueObject\FileExtension;
 use App\Domain\Video\ValueObject\VideoDates;
 use App\Domain\Video\ValueObject\VideoTitle;
 use PHPUnit\Framework\TestCase;
-use Symfony\Component\Uid\UuidV4;
+use App\Domain\Shared\ValueObject\Uuid;
 
 final class FlashNotificationFactoryTest extends TestCase
 {
@@ -21,10 +21,10 @@ final class FlashNotificationFactoryTest extends TestCase
         $video = Video::reconstitute(
             title: new VideoTitle('Clip'),
             extension: new FileExtension('mp4'),
-            userId: UuidV4::fromString('123e4567-e89b-42d3-a456-426614174501'),
+            userId: Uuid::fromString('123e4567-e89b-42d3-a456-426614174501'),
             meta: [],
             dates: VideoDates::create(),
-            id: UuidV4::fromString('123e4567-e89b-42d3-a456-426614174502'),
+            id: Uuid::fromString('123e4567-e89b-42d3-a456-426614174502'),
         );
 
         $dto = $factory->uploadCompleted($video);
@@ -49,11 +49,11 @@ final class FlashNotificationFactoryTest extends TestCase
     private function createTask(): Task
     {
         $task = Task::create(
-            UuidV4::fromString('123e4567-e89b-42d3-a456-426614174503'),
-            UuidV4::fromString('123e4567-e89b-42d3-a456-426614174504'),
-            UuidV4::fromString('123e4567-e89b-42d3-a456-426614174505'),
+            Uuid::fromString('123e4567-e89b-42d3-a456-426614174503'),
+            Uuid::fromString('123e4567-e89b-42d3-a456-426614174504'),
+            Uuid::fromString('123e4567-e89b-42d3-a456-426614174505'),
         );
-        $task->assignId(UuidV4::fromString('123e4567-e89b-42d3-a456-426614174506'));
+        $task->assignId(Uuid::fromString('123e4567-e89b-42d3-a456-426614174506'));
 
         return $task;
     }

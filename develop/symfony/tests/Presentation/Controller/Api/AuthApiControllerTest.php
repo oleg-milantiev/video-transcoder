@@ -8,7 +8,7 @@ use App\Application\Logging\LogServiceInterface;
 use App\Infrastructure\Persistence\Doctrine\User\UserEntity;
 use App\Infrastructure\Security\ApiTokenService;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
-use Symfony\Component\Uid\UuidV4;
+use Symfony\Component\Uid\UuidV4 as SymfonyUuid;
 
 final class AuthApiControllerTest extends ApiWebTestCase
 {
@@ -54,7 +54,7 @@ final class AuthApiControllerTest extends ApiWebTestCase
         $client = static::createClient();
 
         $existingUser = new UserEntity();
-        $existingUser->id = UuidV4::fromString('00000000-0000-4000-8000-000000000007');
+        $existingUser->id = SymfonyUuid::fromString('00000000-0000-4000-8000-000000000007');
         $existingUser->email = 'known@example.com';
         $existingUser->roles = ['ROLE_USER'];
 
@@ -80,7 +80,7 @@ final class AuthApiControllerTest extends ApiWebTestCase
         $client = static::createClient();
 
         $user = new UserEntity();
-        $user->id = UuidV4::fromString('00000000-0000-4000-8000-000000000008');
+        $user->id = SymfonyUuid::fromString('00000000-0000-4000-8000-000000000008');
         $user->email = 'known@example.com';
         $user->password = 'hash';
         $user->roles = ['ROLE_USER'];
@@ -114,7 +114,7 @@ final class AuthApiControllerTest extends ApiWebTestCase
         $client = static::createClient();
 
         $user = new UserEntity();
-        $user->id = UuidV4::fromString('00000000-0000-4000-8000-000000000009');
+        $user->id = SymfonyUuid::fromString('00000000-0000-4000-8000-000000000009');
         $user->email = 'known@example.com';
         $user->password = 'hash';
         $user->roles = ['ROLE_USER'];

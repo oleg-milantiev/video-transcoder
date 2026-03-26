@@ -19,13 +19,13 @@ use PHPUnit\Framework\TestCase;
 use Symfony\Component\Cache\Adapter\ArrayAdapter;
 use Symfony\Component\Messenger\Envelope;
 use Symfony\Component\Messenger\MessageBusInterface;
-use Symfony\Component\Uid\UuidV4;
+use App\Domain\Shared\ValueObject\Uuid;
 
 class TranscodeTaskFinalizationServiceTest extends TestCase
 {
     public function testHandleCancellationUsesFreshTaskAndPersistsCancelledReport(): void
     {
-        $taskId = UuidV4::fromString('123e4567-e89b-42d3-a456-426614174210');
+        $taskId = Uuid::fromString('123e4567-e89b-42d3-a456-426614174210');
         $originalTask = $this->createTask($taskId);
         $freshTask = $this->createTask($taskId);
         $report = $this->createReport(true);
@@ -68,7 +68,7 @@ class TranscodeTaskFinalizationServiceTest extends TestCase
 
     public function testHandleSuccessStoresOutputAndCompletesTask(): void
     {
-        $taskId = UuidV4::fromString('123e4567-e89b-42d3-a456-426614174211');
+        $taskId = Uuid::fromString('123e4567-e89b-42d3-a456-426614174211');
         $task = $this->createTask($taskId);
         $task->start(12.5);
         $report = $this->createReport(false);
@@ -108,7 +108,7 @@ class TranscodeTaskFinalizationServiceTest extends TestCase
 
     public function testHandleFailureFailsActiveTaskAndLogsError(): void
     {
-        $taskId = UuidV4::fromString('123e4567-e89b-42d3-a456-426614174212');
+        $taskId = Uuid::fromString('123e4567-e89b-42d3-a456-426614174212');
         $task = $this->createTask($taskId);
 
         $taskRepository = $this->createMock(TaskRepositoryInterface::class);
@@ -131,12 +131,12 @@ class TranscodeTaskFinalizationServiceTest extends TestCase
         $service->handleFailure($task, new \RuntimeException('boom'));
     }
 
-    private function createTask(UuidV4 $id): Task
+    private function createTask(Uuid $id): Task
     {
         $task = Task::create(
-            UuidV4::fromString('123e4567-e89b-42d3-a456-426614174199'),
-            UuidV4::fromString('123e4567-e89b-42d3-a456-426614174001'),
-            UuidV4::fromString('123e4567-e89b-42d3-a456-426614174007')
+            Uuid::fromString('123e4567-e89b-42d3-a456-426614174199'),
+            Uuid::fromString('123e4567-e89b-42d3-a456-426614174001'),
+            Uuid::fromString('123e4567-e89b-42d3-a456-426614174007')
         );
         $task->assignId($id);
 

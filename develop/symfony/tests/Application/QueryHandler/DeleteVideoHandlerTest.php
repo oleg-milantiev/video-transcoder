@@ -33,14 +33,14 @@ use PHPUnit\Framework\TestCase;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\Messenger\Envelope;
 use Symfony\Component\Messenger\MessageBusInterface;
-use Symfony\Component\Uid\UuidV4;
+use App\Domain\Shared\ValueObject\Uuid;
 
 final class DeleteVideoHandlerTest extends TestCase
 {
     public function testThrowsWhenVideoNotFound(): void
     {
-        $videoId = UuidV4::fromString('11111111-1111-4111-8111-111111111111');
-        $userId = UuidV4::fromString('22222222-2222-4222-8222-222222222222');
+        $videoId = Uuid::fromString('11111111-1111-4111-8111-111111111111');
+        $userId = Uuid::fromString('22222222-2222-4222-8222-222222222222');
 
         $eventBus = new class implements MessageBusInterface {
             public array $events = [];
@@ -82,8 +82,8 @@ final class DeleteVideoHandlerTest extends TestCase
 
     public function testThrowsWhenAccessDenied(): void
     {
-        $videoId = UuidV4::fromString('11111111-1111-4111-8111-111111111111');
-        $userId = UuidV4::fromString('22222222-2222-4222-8222-222222222222');
+        $videoId = Uuid::fromString('11111111-1111-4111-8111-111111111111');
+        $userId = Uuid::fromString('22222222-2222-4222-8222-222222222222');
         $video = $this->createVideo($videoId, $userId);
 
         $eventBus = new class implements MessageBusInterface {
@@ -129,18 +129,18 @@ final class DeleteVideoHandlerTest extends TestCase
 
     public function testMarksVideoAndTasksAsDeleted(): void
     {
-        $videoId = UuidV4::fromString('11111111-1111-4111-8111-111111111111');
-        $userId = UuidV4::fromString('22222222-2222-4222-8222-222222222222');
+        $videoId = Uuid::fromString('11111111-1111-4111-8111-111111111111');
+        $userId = Uuid::fromString('22222222-2222-4222-8222-222222222222');
         $video = $this->createVideo($videoId, $userId);
 
         $task = Task::reconstitute(
             videoId: $videoId,
-            presetId: UuidV4::fromString('33333333-3333-4333-8333-333333333333'),
+            presetId: Uuid::fromString('33333333-3333-4333-8333-333333333333'),
             userId: $userId,
             status: TaskStatus::COMPLETED,
             progress: new Progress(100),
             dates: TaskDates::create(),
-            id: UuidV4::fromString('44444444-4444-4444-8444-444444444444'),
+            id: Uuid::fromString('44444444-4444-4444-8444-444444444444'),
         );
 
         $eventBus = new class implements MessageBusInterface {
@@ -212,12 +212,12 @@ final class DeleteVideoHandlerTest extends TestCase
 
     public function testThrowsWhenVideoHasActiveTask(): void
     {
-        $videoId = UuidV4::fromString('11111111-1111-4111-8111-111111111111');
-        $userId = UuidV4::fromString('22222222-2222-4222-8222-222222222222');
+        $videoId = Uuid::fromString('11111111-1111-4111-8111-111111111111');
+        $userId = Uuid::fromString('22222222-2222-4222-8222-222222222222');
         $video = $this->createVideo($videoId, $userId);
         $activeTask = Task::create(
             $videoId,
-            UuidV4::fromString('33333333-3333-4333-8333-333333333333'),
+            Uuid::fromString('33333333-3333-4333-8333-333333333333'),
             $userId,
         );
 
@@ -265,7 +265,7 @@ final class DeleteVideoHandlerTest extends TestCase
         }
     }
 
-    private function createVideo(UuidV4 $videoId, UuidV4 $userId): Video
+    private function createVideo(Uuid $videoId, Uuid $userId): Video
     {
         return Video::reconstitute(
             new VideoTitle('Delete me'),

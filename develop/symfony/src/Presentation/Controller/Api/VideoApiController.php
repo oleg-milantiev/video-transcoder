@@ -136,4 +136,3 @@ class VideoApiController extends AbstractController
         }
     }
 }
-

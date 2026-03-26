@@ -12,13 +12,13 @@ use App\Domain\Video\Service\Storage\StorageInterface;
 use App\Domain\Video\ValueObject\FileExtension;
 use App\Domain\Video\ValueObject\VideoTitle;
 use PHPUnit\Framework\TestCase;
-use Symfony\Component\Uid\UuidV4;
+use App\Domain\Shared\ValueObject\Uuid;
 
 class VideoDetailsDTOTest extends TestCase
 {
     public function testFromDomainSanitizesMetaAndKeepsPresets(): void
     {
-        $uuid = UuidV4::fromString('33333333-3333-4333-8333-333333333333');
+        $uuid = Uuid::fromString('33333333-3333-4333-8333-333333333333');
         $meta = [
             'duration' => 120,
             'preview' => true,
@@ -27,7 +27,7 @@ class VideoDetailsDTOTest extends TestCase
         $video = Video::reconstitute(
             new VideoTitle('Detailed Video'),
             new FileExtension('mov'),
-            UuidV4::fromString('123e4567-e89b-42d3-a456-426614174007'),
+            Uuid::fromString('123e4567-e89b-42d3-a456-426614174007'),
             $meta,
             \App\Domain\Video\ValueObject\VideoDates::create(new \DateTimeImmutable('2026-03-18 08:45:00')),
             $uuid,

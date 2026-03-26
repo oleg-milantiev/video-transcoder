@@ -7,7 +7,7 @@ namespace App\Tests\Presentation\Controller;
 use App\Infrastructure\Persistence\Doctrine\User\UserEntity;
 use App\Tests\Presentation\Controller\Api\InMemoryTestUserProvider;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
-use Symfony\Component\Uid\UuidV4;
+use Symfony\Component\Uid\UuidV4 as SymfonyUuid;
 
 final class HomeControllerTest extends WebTestCase
 {
@@ -26,7 +26,7 @@ final class HomeControllerTest extends WebTestCase
         $client = static::createClient();
 
         $user = new UserEntity();
-        $user->id = UuidV4::fromString('00000000-0000-4000-8000-000000000101');
+        $user->id = SymfonyUuid::fromString('00000000-0000-4000-8000-000000000101');
         $user->email = 'home-user@example.com';
         $user->roles = ['ROLE_USER'];
 

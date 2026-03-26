@@ -27,7 +27,7 @@ use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Messenger\Envelope;
 use Symfony\Component\Messenger\MessageBusInterface;
-use Symfony\Component\Uid\UuidV4;
+use App\Domain\Shared\ValueObject\Uuid;
 
 class ExtractVideoMetadataHandlerTest extends TestCase
 {
@@ -184,10 +184,10 @@ class ExtractVideoMetadataHandlerTest extends TestCase
         return Video::reconstitute(
             title: new VideoTitle('Clip'),
             extension: new FileExtension('mp4'),
-            userId: UuidV4::fromString('123e4567-e89b-42d3-a456-426614174105'),
+            userId: Uuid::fromString('123e4567-e89b-42d3-a456-426614174105'),
             meta: [],
             dates: VideoDates::create(),
-            id: UuidV4::fromString('123e4567-e89b-42d3-a456-426614174152'),
+            id: Uuid::fromString('123e4567-e89b-42d3-a456-426614174152'),
         );
     }
 }

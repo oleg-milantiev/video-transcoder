@@ -73,7 +73,7 @@ final class AuthApiController extends AbstractController
 
         return new JsonResponse([
             'tokenType' => 'Bearer',
-            'accessToken' => $this->tokenService->createToken($user->id, $user->getUserIdentifier()),
+            'accessToken' => $this->tokenService->createToken(Uuid::fromString($user->id->toRfc4122()), $user->getUserIdentifier()),
             'expiresIn' => $this->tokenService->ttlSeconds(),
         ]);
     }

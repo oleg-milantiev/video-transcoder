@@ -22,13 +22,13 @@ use PHPUnit\Framework\TestCase;
 use Symfony\Component\Messenger\Envelope;
 use Symfony\Component\Messenger\MessageBusInterface;
 use TusPhp\File as TusFile;
-use Symfony\Component\Uid\UuidV4 as Uuid;
+use App\Domain\Shared\ValueObject\Uuid;
 
 class CreateVideoHandlerTest extends TestCase
 {
     public function testStoresSourceKeyInVideoMetaAfterUpload(): void
     {
-        $userId = new Uuid();
+        $userId = Uuid::generate();
 
         $file = $this->createStub(TusFile::class);
         $file->method('getName')->willReturn('video.mp4');
@@ -49,7 +49,7 @@ class CreateVideoHandlerTest extends TestCase
             $userId,
             [],
             VideoDates::create(),
-            new Uuid(),
+            Uuid::generate(),
         );
 
         $commandBus = new class implements MessageBusInterface {
@@ -113,7 +113,7 @@ class CreateVideoHandlerTest extends TestCase
 
     public function testStorageUploadExceptionDispatchesCreateVideoFail(): void
     {
-        $userId = new Uuid();
+        $userId = Uuid::generate();
 
         // Mock TusPhp/File
         $file = $this->createStub(TusFile::class);
@@ -136,7 +136,7 @@ class CreateVideoHandlerTest extends TestCase
             $userId,
             [],
             VideoDates::create(),
-            new Uuid(),
+            Uuid::generate(),
         );
 
         $commandBus = $this->createStub(MessageBusInterface::class);

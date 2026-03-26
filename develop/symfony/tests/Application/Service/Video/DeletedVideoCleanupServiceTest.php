@@ -13,14 +13,14 @@ use App\Domain\Video\ValueObject\FileExtension;
 use App\Domain\Video\ValueObject\VideoDates;
 use App\Domain\Video\ValueObject\VideoTitle;
 use PHPUnit\Framework\TestCase;
-use Symfony\Component\Uid\UuidV4;
+use App\Domain\Shared\ValueObject\Uuid;
 
 final class DeletedVideoCleanupServiceTest extends TestCase
 {
     public function testCleanupUsesSourceKeyFromMeta(): void
     {
-        $userId = UuidV4::fromString('11111111-1111-4111-8111-111111111111');
-        $videoId = UuidV4::fromString('22222222-2222-4222-8222-222222222222');
+        $userId = Uuid::fromString('11111111-1111-4111-8111-111111111111');
+        $videoId = Uuid::fromString('22222222-2222-4222-8222-222222222222');
 
         $video = Video::reconstitute(
             title: new VideoTitle('Cleanup me'),

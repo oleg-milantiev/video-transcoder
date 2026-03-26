@@ -21,14 +21,14 @@ use App\Domain\Video\ValueObject\TaskStatus;
 use App\Domain\Video\ValueObject\VideoDates;
 use App\Domain\Video\ValueObject\VideoTitle;
 use PHPUnit\Framework\TestCase;
-use Symfony\Component\Uid\UuidV4;
+use App\Domain\Shared\ValueObject\Uuid;
 
 final class CleanupDeletedVideoMediaHandlerTest extends TestCase
 {
     public function testHandlerCleansVideoAndTasksForDeletedVideo(): void
     {
-        $videoId = UuidV4::fromString('11111111-1111-4111-8111-111111111111');
-        $userId = UuidV4::fromString('22222222-2222-4222-8222-222222222222');
+        $videoId = Uuid::fromString('11111111-1111-4111-8111-111111111111');
+        $userId = Uuid::fromString('22222222-2222-4222-8222-222222222222');
 
         $video = Video::reconstitute(
             title: new VideoTitle('deleted'),
@@ -42,12 +42,12 @@ final class CleanupDeletedVideoMediaHandlerTest extends TestCase
 
         $task = Task::reconstitute(
             videoId: $videoId,
-            presetId: UuidV4::fromString('33333333-3333-4333-8333-333333333333'),
+            presetId: Uuid::fromString('33333333-3333-4333-8333-333333333333'),
             userId: $userId,
             status: TaskStatus::deleted(),
             progress: new Progress(100),
             dates: TaskDates::create(),
-            id: UuidV4::fromString('44444444-4444-4444-8444-444444444444'),
+            id: Uuid::fromString('44444444-4444-4444-8444-444444444444'),
             meta: ['output' => 'output/deleted.mp4'],
             deleted: true,
         );

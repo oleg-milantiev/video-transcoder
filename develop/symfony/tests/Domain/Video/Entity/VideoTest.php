@@ -12,19 +12,19 @@ use App\Domain\Video\ValueObject\FileExtension;
 use App\Domain\Video\ValueObject\VideoDates;
 use App\Domain\Video\ValueObject\VideoTitle;
 use PHPUnit\Framework\TestCase;
-use Symfony\Component\Uid\UuidV4;
+use App\Domain\Shared\ValueObject\Uuid;
 
 final class VideoTest extends TestCase
 {
     public function testCreateInitializesAllFields(): void
     {
-        $id = UuidV4::fromString('99999999-9999-4999-8999-999999999999');
+        $id = Uuid::fromString('99999999-9999-4999-8999-999999999999');
         $createdAt = new \DateTimeImmutable('2026-03-19 12:00:00');
 
         $video = Video::reconstitute(
             title: new VideoTitle('Trailer'),
             extension: new FileExtension('mp4'),
-            userId: UuidV4::fromString('77777777-7777-4777-8777-777777777777'),
+            userId: Uuid::fromString('77777777-7777-4777-8777-777777777777'),
             meta: ['duration' => 11.5],
             dates: VideoDates::create($createdAt),
             id: $id,
@@ -44,7 +44,7 @@ final class VideoTest extends TestCase
         $video = Video::create(
             new VideoTitle('No id video'),
             new FileExtension('mov'),
-            UuidV4::fromString('55555555-5555-4555-8555-555555555550'),
+            Uuid::fromString('55555555-5555-4555-8555-555555555550'),
         );
 
         $this->assertNull($video->id());
@@ -56,10 +56,10 @@ final class VideoTest extends TestCase
         $video = Video::reconstitute(
             title: new VideoTitle('Meta merge'),
             extension: new FileExtension('mkv'),
-            userId: UuidV4::fromString('22222222-2222-4222-8222-222222222220'),
+            userId: Uuid::fromString('22222222-2222-4222-8222-222222222220'),
             meta: ['duration' => 100.2, 'quality' => 'hd'],
             dates: VideoDates::create(new \DateTimeImmutable('2026-03-19 10:00:00')),
-            id: UuidV4::fromString('11111111-1111-4111-8111-111111111111'),
+            id: Uuid::fromString('11111111-1111-4111-8111-111111111111'),
         );
 
         $video->updateMeta(['preview' => true]);
@@ -75,10 +75,10 @@ final class VideoTest extends TestCase
         $video = Video::reconstitute(
             new VideoTitle('Replace key'),
             new FileExtension('mp4'),
-            UuidV4::fromString('22222222-2222-4222-8222-222222222221'),
+            Uuid::fromString('22222222-2222-4222-8222-222222222221'),
             ['duration' => 50.0],
             VideoDates::create(new \DateTimeImmutable('2026-03-19 10:00:00')),
-            UuidV4::fromString('22222222-2222-4222-8222-222222222222'),
+            Uuid::fromString('22222222-2222-4222-8222-222222222222'),
         );
 
         $video->updateMeta(['duration' => 55.7]);
@@ -91,16 +91,16 @@ final class VideoTest extends TestCase
         $video = Video::reconstitute(
             new VideoTitle('Delete me'),
             new FileExtension('mp4'),
-            UuidV4::fromString('99999999-9999-4999-8999-999999999997'),
+            Uuid::fromString('99999999-9999-4999-8999-999999999997'),
             ['preview' => true],
             VideoDates::create(),
-            UuidV4::fromString('55555555-5555-4555-8555-555555555555'),
+            Uuid::fromString('55555555-5555-4555-8555-555555555555'),
         );
 
         $task = Task::create(
-            UuidV4::fromString('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'),
-            UuidV4::fromString('bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb'),
-            UuidV4::fromString('cccccccc-cccc-4ccc-8ccc-cccccccccccc'),
+            Uuid::fromString('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'),
+            Uuid::fromString('bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb'),
+            Uuid::fromString('cccccccc-cccc-4ccc-8ccc-cccccccccccc'),
         );
         $task->markDeleted();
 
@@ -115,10 +115,10 @@ final class VideoTest extends TestCase
         $video = Video::reconstitute(
             new VideoTitle('Deleted'),
             new FileExtension('mp4'),
-            UuidV4::fromString('11111111-1111-4111-8111-111111111112'),
+            Uuid::fromString('11111111-1111-4111-8111-111111111112'),
             [],
             VideoDates::create(),
-            UuidV4::fromString('11111111-1111-4111-8111-111111111113'),
+            Uuid::fromString('11111111-1111-4111-8111-111111111113'),
             true,
         );
 
@@ -131,13 +131,13 @@ final class VideoTest extends TestCase
         $video = Video::create(
             new VideoTitle('Protected'),
             new FileExtension('mp4'),
-            UuidV4::fromString('11111111-1111-4111-8111-111111111114'),
+            Uuid::fromString('11111111-1111-4111-8111-111111111114'),
         );
 
         $task = Task::create(
-            UuidV4::fromString('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'),
-            UuidV4::fromString('bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb'),
-            UuidV4::fromString('cccccccc-cccc-4ccc-8ccc-cccccccccccc'),
+            Uuid::fromString('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'),
+            Uuid::fromString('bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb'),
+            Uuid::fromString('cccccccc-cccc-4ccc-8ccc-cccccccccccc'),
         );
 
         $this->expectException(VideoHasTranscodingTasks::class);

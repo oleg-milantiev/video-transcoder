@@ -7,7 +7,7 @@ namespace App\Tests\Application\Factory;
 use App\Application\Command\Video\CreateVideo;
 use App\Application\Factory\VideoFactory;
 use PHPUnit\Framework\TestCase;
-use Symfony\Component\Uid\UuidV4;
+use App\Domain\Shared\ValueObject\Uuid;
 use TusPhp\File;
 
 final class VideoFactoryTest extends TestCase
@@ -20,7 +20,7 @@ final class VideoFactoryTest extends TestCase
             details: ['metadata' => ['originalName' => 'My Holiday Clip.mp4']],
         );
 
-        $video = $factory->fromCreateVideo(new CreateVideo($file, UuidV4::fromString('00000000-0000-4000-8000-000000000042')));
+        $video = $factory->fromCreateVideo(new CreateVideo($file, Uuid::fromString('00000000-0000-4000-8000-000000000042')));
 
         $this->assertSame('My Holiday Clip.mp4', $video->title()->value());
         $this->assertSame('mp4', $video->extension()->value());
@@ -35,7 +35,7 @@ final class VideoFactoryTest extends TestCase
             details: [],
         );
 
-        $video = $factory->fromCreateVideo(new CreateVideo($file, UuidV4::fromString('00000000-0000-4000-8000-000000000007')));
+        $video = $factory->fromCreateVideo(new CreateVideo($file, Uuid::fromString('00000000-0000-4000-8000-000000000007')));
 
         $this->assertSame('server-name.mkv', $video->title()->value());
         $this->assertSame('mkv', $video->extension()->value());
