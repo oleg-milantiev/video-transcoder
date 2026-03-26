@@ -1,0 +1,3 @@
+* * * * * php /var/www/yc/bin/console -vv app:minute >> /proc/1/fd/1 2>&1
+0 * * * * php /var/www/yc/bin/console -vv app:hour >> /proc/1/fd/1 2>&1
+0 0 * * * php /var/www/yc/bin/console -vv app:day >> /proc/1/fd/1 2>&1
