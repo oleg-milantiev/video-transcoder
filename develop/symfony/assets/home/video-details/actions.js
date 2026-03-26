@@ -97,12 +97,10 @@ export function createVideoDetailsActions(params) {
         });
 
         if (newTitle === undefined || newTitle === null) {
-            // dismissed or cancelled
             return;
         }
 
-        // Send PATCH to /video/{uuid} to update title. Controller not implemented yet but frontend behaviour required.
-        const url = replaceTemplateValue(config.apiVideoDetailsUrlTemplate, '__UUID__', uuid.value);
+        const url = replaceTemplateValue(config.apiVideoPatchUrlTemplate || config.apiVideoDetailsUrlTemplate, '__UUID__', uuid.value);
 
         state.activeActionKey.value = 'rename';
         state.actionError.value = '';
