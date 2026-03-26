@@ -145,6 +145,7 @@ export function createVideosTabActions(params) {
             return {
                 ...video,
                 poster: Object.prototype.hasOwnProperty.call(payload, 'poster') ? payload.poster : video.poster,
+                title: typeof payload.title === 'string' ? payload.title : video.title,
                 meta: payload.meta || video.meta,
                 updatedAt: payload.updatedAt || video.updatedAt,
                 deleted: payload.deleted === true ? true : video.deleted === true,

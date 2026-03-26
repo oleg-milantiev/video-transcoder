@@ -252,6 +252,7 @@ export function createVideoDetailsActions(params) {
         state.dto.value = {
             ...state.dto.value,
             poster: typeof payload.poster === 'string' ? payload.poster : state.dto.value.poster,
+            title: typeof payload.title === 'string' ? payload.title : state.dto.value.title,
             meta: payload.meta || state.dto.value.meta,
             updatedAt: payload.updatedAt || state.dto.value.updatedAt,
         };
