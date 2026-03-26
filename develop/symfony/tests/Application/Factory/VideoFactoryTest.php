@@ -22,7 +22,7 @@ final class VideoFactoryTest extends TestCase
 
         $video = $factory->fromCreateVideo(new CreateVideo($file, Uuid::fromString('00000000-0000-4000-8000-000000000042')));
 
-        $this->assertSame('My Holiday Clip.mp4', $video->title()->value());
+        $this->assertSame('My Holiday Clip', $video->title()->value());
         $this->assertSame('mp4', $video->extension()->value());
         $this->assertSame('00000000-0000-4000-8000-000000000042', $video->userId()->toRfc4122());
     }
@@ -37,7 +37,7 @@ final class VideoFactoryTest extends TestCase
 
         $video = $factory->fromCreateVideo(new CreateVideo($file, Uuid::fromString('00000000-0000-4000-8000-000000000007')));
 
-        $this->assertSame('server-name.mkv', $video->title()->value());
+        $this->assertSame('server-name', $video->title()->value());
         $this->assertSame('mkv', $video->extension()->value());
         $this->assertSame('00000000-0000-4000-8000-000000000007', $video->userId()->toRfc4122());
     }
