@@ -7,13 +7,6 @@
 - phpUnit (+stan)
 - e2e
 
-## Sprint 0.0.1
-
-- frontend
-  - каскад уведомлений
-  - 401 так и не обработался
-  - убрать delete с видео, если не canBeDeleted (например, внутри есть задачи в pending / processing)
-
 ## Sprint 0.0.2
 
 - синхронизировать docker-compose и docker-compose.release
@@ -26,6 +19,10 @@
   - e2e 05 перевести на test@test.com
 - DDD
   - cлабая типизация meta: array в Task/Video — риск нарушения инвариантов и неявной связи с application-слоем.
+- frontend
+  - каскад уведомлений
+  - 401 так и не обработался
+  - убрать delete с видео, если не canBeDeleted (например, внутри есть задачи в pending / processing)
  
 ## Sprint 0.0.3
  
