@@ -135,7 +135,7 @@ test('task state flow with 4k preset: progress, cancel, restart, complete', asyn
   const adminPassword = process.env.ADMIN_PASSWORD || 'admin';
   const sourceVideoFileName = '2022_10_04_Two_Maxes.mp4';
   const uploadedVideoName = '2022_10_04_Two_Maxes-05.mp4';
-  const presetTitle = '4k UHD';
+  const presetTitle = 'FHD';
 
   // Step 2 — start console capture for this test
   const capture = attachConsoleCapture(page, testInfo, { maxBodyChars: 4000 });
