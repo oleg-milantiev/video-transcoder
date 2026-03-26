@@ -257,7 +257,7 @@ final class VideoApiControllerTest extends ApiWebTestCase
             }));
         $this->replaceService(QueryBus::class, $queryBus);
 
-        $client->request('POST', '/api/video/' . $videoId->toRfc4122() . '/delete');
+        $client->request('DELETE', '/api/video/' . $videoId->toRfc4122());
 
         self::assertResponseStatusCodeSame(200);
         self::assertSame([
@@ -281,7 +281,7 @@ final class VideoApiControllerTest extends ApiWebTestCase
         $queryBus->expects($this->never())->method('query');
         $this->replaceService(QueryBus::class, $queryBus);
 
-        $client->request('POST', '/api/video/not-a-uuid/delete');
+        $client->request('DELETE', '/api/video/not-a-uuid');
 
         self::assertResponseStatusCodeSame(400);
         self::assertSame([
@@ -307,7 +307,7 @@ final class VideoApiControllerTest extends ApiWebTestCase
             ->willThrowException(VideoHasTranscodingTasks::forVideo());
         $this->replaceService(QueryBus::class, $queryBus);
 
-        $client->request('POST', '/api/video/' . $videoId->toRfc4122() . '/delete');
+        $client->request('DELETE', '/api/video/' . $videoId->toRfc4122());
 
         self::assertResponseStatusCodeSame(409);
         self::assertSame([
@@ -333,7 +333,7 @@ final class VideoApiControllerTest extends ApiWebTestCase
             ->willThrowException(new TranscodeAccessDeniedException('Access denied'));
         $this->replaceService(QueryBus::class, $queryBus);
 
-        $client->request('POST', '/api/video/' . $videoId->toRfc4122() . '/delete');
+        $client->request('DELETE', '/api/video/' . $videoId->toRfc4122());
 
         self::assertResponseStatusCodeSame(403);
         self::assertSame([

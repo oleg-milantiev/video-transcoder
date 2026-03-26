@@ -108,7 +108,7 @@ export function createVideosTabActions(params) {
 
         try {
             const response = await fetch(config.apiVideoDeleteUrlTemplate.replace('__UUID__', videoId), {
-                method: 'POST',
+                method: 'DELETE',
                 headers: createJsonAuthHeaders(config.apiBearerToken || null),
             });
 

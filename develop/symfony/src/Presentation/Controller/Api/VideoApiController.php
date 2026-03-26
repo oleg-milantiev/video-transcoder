@@ -131,11 +131,11 @@ class VideoApiController extends AbstractController
         }
     }
 
-    #[Route('/{id}/delete', name: 'api_video_delete', methods: ['POST'])]
-    public function delete(string $id): Response
+    #[Route('/{uuid}', name: 'api_video_delete', methods: ['DELETE'])]
+    public function delete(string $uuid): Response
     {
         try {
-            $query = new DeleteVideoQuery($id, $this->getUser()->id->toRfc4122());
+            $query = new DeleteVideoQuery($uuid, $this->getUser()->id->toRfc4122());
             $this->queryBus->query($query);
 
             return $this->apiSuccess([

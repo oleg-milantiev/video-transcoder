@@ -33,7 +33,7 @@
                 data-api-task-list-url="{{ path('api_task_list')|e('html_attr') }}"
                 data-api-video-details-url-template="{{ path('api_video_details', {'id': dummyUuid})|replace({(dummyUuid): '__UUID__'})|e('html_attr') }}"
                 data-api-video-transcode-url-template="{{ path('api_video_transcode', {'id': dummyUuid, 'presetId': dummyPresetId})|replace({(dummyUuid): '__UUID__', (dummyPresetId): '__PRESET_ID__'})|e('html_attr') }}"
-                data-api-video-delete-url-template="{{ path('api_video_delete', {'id': dummyUuid})|replace({(dummyUuid): '__UUID__'})|e('html_attr') }}"
+                data-api-video-delete-url-template="{{ path('api_video_delete', {'uuid': dummyUuid})|replace({(dummyUuid): '__UUID__'})|e('html_attr') }}"
                 data-api-video-patch-url-template="{{ path('api_video_patch', {'id': dummyUuid})|replace({(dummyUuid): '__UUID__'})|e('html_attr') }}"
                 data-api-task-cancel-url-template="{{ path('api_task_cancel', {'id': dummyTaskId})|replace({(dummyTaskId): '__TASK_ID__'})|e('html_attr') }}"
                 data-video-details-url-template="{{ path('video_details', {'uuid': dummyUuid})|replace({(dummyUuid): '__UUID__'})|e('html_attr') }}"
