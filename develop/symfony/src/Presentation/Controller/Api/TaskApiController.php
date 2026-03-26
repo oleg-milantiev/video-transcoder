@@ -23,7 +23,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
-use Symfony\Component\Uid\UuidV4;
+use Symfony\Component\Uid\UuidV4 as SymfonyUuid;
 
 #[Route('/api/task')]
 #[IsGranted('IS_AUTHENTICATED_FULLY')]
@@ -64,8 +64,9 @@ class TaskApiController extends AbstractController
     #[Route('/{id}/cancel', name: 'api_task_cancel', requirements: ['id' => '[0-9a-fA-F-]{36}'], methods: ['POST'])]
     public function cancel(string $id): Response
     {
+        // TODO move to TaskCancelQuery
         try {
-            $taskId = UuidV4::fromString($id);
+            $taskId = SymfonyUuid::fromString($id);
         } catch (\Throwable) {
             return $this->apiError('INVALID_TASK_ID', 'Invalid task id', 400);
         }

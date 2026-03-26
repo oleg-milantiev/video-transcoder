@@ -7,7 +7,7 @@ use App\Infrastructure\Persistence\Doctrine\Preset\PresetEntity;
 use App\Infrastructure\Persistence\Doctrine\Video\VideoEntity;
 use App\Infrastructure\Persistence\Doctrine\User\UserEntity;
 use Doctrine\ORM\Mapping as ORM;
-use Symfony\Component\Uid\UuidV4 as Uuid;
+use Symfony\Component\Uid\UuidV4 as SymfonyUuid;
 
 #[ORM\Entity(repositoryClass: TaskRepository::class)]
 #[ORM\Table(name: 'task')]
@@ -17,7 +17,7 @@ class TaskEntity
     #[ORM\Column(type: 'uuid', unique: true)]
     #[ORM\GeneratedValue(strategy: 'CUSTOM')]
     #[ORM\CustomIdGenerator(class: 'doctrine.uuid_generator')]
-    public ?Uuid $id = null;
+    public ?SymfonyUuid $id = null;
 
     #[ORM\Column(length: 50)]
     public int $status = TaskStatus::PENDING->value;

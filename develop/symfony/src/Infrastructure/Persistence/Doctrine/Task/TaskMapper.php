@@ -10,7 +10,7 @@ use App\Domain\Video\ValueObject\TaskStatus;
 use App\Infrastructure\Persistence\Doctrine\Preset\PresetEntity;
 use App\Infrastructure\Persistence\Doctrine\User\UserEntity;
 use App\Infrastructure\Persistence\Doctrine\Video\VideoEntity;
-use Symfony\Component\Uid\UuidV4 AS SymfonyUuid;
+use Symfony\Component\Uid\UuidV4 as SymfonyUuid;
 
 class TaskMapper
 {

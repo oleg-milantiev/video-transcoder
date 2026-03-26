@@ -3,7 +3,7 @@
 namespace App\Infrastructure\Persistence\Doctrine\User;
 
 use Doctrine\ORM\Mapping as ORM;
-use Symfony\Component\Uid\UuidV4 as Uuid;
+use Symfony\Component\Uid\UuidV4 as SymfonyUuid;
 
 #[ORM\Entity(repositoryClass: TariffRepository::class)]
 #[ORM\Table(name: 'tariff')]
@@ -13,7 +13,7 @@ class TariffEntity
     #[ORM\Column(type: 'uuid', unique: true)]
     #[ORM\GeneratedValue(strategy: 'CUSTOM')]
     #[ORM\CustomIdGenerator(class: 'doctrine.uuid_generator')]
-    public ?Uuid $id = null;
+    public ?SymfonyUuid $id = null;
 
     #[ORM\Column(length: 255)]
     public string $title;

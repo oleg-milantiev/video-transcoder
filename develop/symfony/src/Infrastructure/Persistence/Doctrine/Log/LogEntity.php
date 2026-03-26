@@ -4,8 +4,7 @@ namespace App\Infrastructure\Persistence\Doctrine\Log;
 
 use Doctrine\ORM\Mapping as ORM;
 use Psr\Log\LogLevel;
-use Symfony\Component\Uid\Uuid;
-use Symfony\Component\Uid\UuidV4;
+use Symfony\Component\Uid\UuidV4 as SymfonyUuid;
 
 #[ORM\Entity]
 #[ORM\Table(name: 'log')]
@@ -20,13 +19,13 @@ class LogEntity
     #[ORM\Column(type: 'uuid', unique: true)]
     #[ORM\GeneratedValue(strategy: 'CUSTOM')]
     #[ORM\CustomIdGenerator(class: 'doctrine.uuid_generator')]
-    public ?UuidV4 $id = null;
+    public ?SymfonyUuid $id = null;
 
     #[ORM\Column(length: 100)]
     public string $name;
 
     #[ORM\Column(type: 'uuid')]
-    public ?Uuid $objectId = null;
+    public ?SymfonyUuid $objectId = null;
 
     #[ORM\Column(length: 20)]
     public string $level;

@@ -3,6 +3,7 @@
 namespace App\Infrastructure\Admin\EventListener;
 
 use App\Application\Logging\LogServiceInterface;
+use App\Domain\Shared\ValueObject\Uuid;
 use App\Infrastructure\Persistence\Doctrine\User\UserEntity;
 use EasyCorp\Bundle\EasyAdminBundle\Event\AfterEntityDeletedEvent;
 use EasyCorp\Bundle\EasyAdminBundle\Event\AfterEntityPersistedEvent;
@@ -11,7 +12,6 @@ use Psr\Log\LogLevel;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\EventDispatcher\Attribute\AsEventListener;
 use Symfony\Component\HttpFoundation\RequestStack;
-use Symfony\Component\Uid\Uuid;
 
 final readonly class AdminCrudAuditListener
 {
@@ -50,7 +50,7 @@ final readonly class AdminCrudAuditListener
 		$request = $this->requestStack->getCurrentRequest();
 		$shortClass = new \ReflectionClass($entity)->getShortName();
 		$entityName = strtolower((string) preg_replace('/Entity$/', '', $shortClass));
-		$entityId = $this->extractUuidId($entity);
+		$entityId = $entity->id;
 
 		$context = [
 			'action' => $action,
@@ -70,33 +70,7 @@ final readonly class AdminCrudAuditListener
 		$this->logService->log('admin', $actor->id, LogLevel::INFO, $message, $context);
 
 		if ($entityId !== null) {
-			$this->logService->log($entityName, $entityId, LogLevel::INFO, $message, $context);
+			$this->logService->log($entityName, Uuid::fromString($entityId->toRfc4122()), LogLevel::INFO, $message, $context);
 		}
-	}
-
-	private function extractUuidId(object $entity): ?Uuid
-	{
-		if (property_exists($entity, 'id')) {
-			$property = new \ReflectionProperty($entity, 'id');
-			if ($property->isPublic()) {
-				$id = $property->getValue($entity);
-				if ($id instanceof Uuid) {
-					return $id;
-				}
-			}
-		}
-
-		if (method_exists($entity, 'getId')) {
-			$id = $entity->getId();
-			if ($id instanceof Uuid) {
-				return $id;
-			}
-
-			if (is_string($id) && Uuid::isValid($id)) {
-				return Uuid::fromString($id);
-			}
-		}
-
-		return null;
 	}
 }

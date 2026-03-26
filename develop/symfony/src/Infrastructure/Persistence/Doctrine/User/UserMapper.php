@@ -4,7 +4,7 @@ namespace App\Infrastructure\Persistence\Doctrine\User;
 
 use App\Domain\Shared\ValueObject\Uuid;
 use App\Domain\User\Entity\User;
-use Symfony\Component\Uid\UuidV4 AS SymfonyUuid;
+use Symfony\Component\Uid\UuidV4 as SymfonyUuid;
 
 class UserMapper
 {

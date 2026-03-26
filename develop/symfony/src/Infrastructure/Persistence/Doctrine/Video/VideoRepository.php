@@ -12,7 +12,7 @@ use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\DBAL\Exception;
 use Doctrine\ORM\Exception\ORMException;
 use Doctrine\Persistence\ManagerRegistry;
-use Symfony\Component\Uid\UuidV4 AS SymfonyUuid;
+use Symfony\Component\Uid\UuidV4 as SymfonyUuid;
 
 /**
  * @extends ServiceEntityRepository<VideoEntity>

@@ -8,7 +8,7 @@ use App\Domain\Video\ValueObject\FileExtension;
 use App\Domain\Video\ValueObject\VideoDates;
 use App\Domain\Video\ValueObject\VideoTitle;
 use App\Infrastructure\Persistence\Doctrine\User\UserEntity;
-use Symfony\Component\Uid\UuidV4 AS SymfonyUuid;
+use Symfony\Component\Uid\UuidV4 as SymfonyUuid;
 
 class VideoMapper
 {
