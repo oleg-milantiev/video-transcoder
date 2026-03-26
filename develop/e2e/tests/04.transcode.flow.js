@@ -1,139 +1,28 @@
-const fs = require('fs');
-const path = require('path');
 const { test, expect } = require('@playwright/test');
 const { attachConsoleCapture } = require('../consoleCapture');
-
-const UI_TIMEOUT = 8000;
-const NAV_TIMEOUT = 15000;
-
-async function shot(page, testInfo, name) {
-    await page.screenshot({ path: testInfo.outputPath(name), fullPage: true, timeout: UI_TIMEOUT });
-}
-
-function videoRowByTitle(page, fileName) {
-    return page.locator('#videosTable tbody tr', { hasText: fileName }).first();
-}
-
-function presetsTable(page) {
-    const heading = page.getByRole('heading', { name: 'Presets' }).first();
-    return heading.locator('xpath=following-sibling::table[1]');
-}
-
-function presetRow(page, presetTitle) {
-    return presetsTable(page).locator('tbody tr', { hasText: presetTitle }).first();
-}
-
-async function readPresetTaskState(page, presetTitle) {
-    const row = presetRow(page, presetTitle);
-    await expect(row).toBeVisible({ timeout: UI_TIMEOUT });
-
-    const status = (await row.locator('td').nth(1).innerText({ timeout: UI_TIMEOUT })).trim();
-    const progressText = (await row.locator('td').nth(2).innerText({ timeout: UI_TIMEOUT })).trim();
-    const progressMatch = progressText.match(/(\d+)\s*%/);
-    const progress = progressMatch ? Number(progressMatch[1]) : -1;
-
-    return { status, progress };
-}
-
-async function waitForVideoDetailsVisible(page) {
-    await expect(page.getByRole('heading', { name: 'Video Details' })).toBeVisible({ timeout: UI_TIMEOUT });
-    await expect(page.getByRole('heading', { name: 'Presets' })).toBeVisible({ timeout: UI_TIMEOUT });
-    await expect(presetsTable(page)).toBeVisible({ timeout: UI_TIMEOUT });
-}
-
-async function expectFlashPopupTitle(page, titleText, timeout = 30000) {
-    const toastTitle = page.locator('.app-flash-toast .app-flash-title', { hasText: titleText }).last();
-    await expect(toastTitle).toBeVisible({ timeout });
-}
-
-async function clickAndAcceptConfirmDialog(page, clickableLocator, expectedMessagePart) {
-    const dialogPromise = page.waitForEvent('dialog', { timeout: UI_TIMEOUT }).then(async (dialog) => {
-        const message = dialog.message();
-        await dialog.accept();
-        return message;
-    });
-
-    await clickableLocator.click({ timeout: UI_TIMEOUT });
-    const dialogMessage = await dialogPromise;
-    expect(dialogMessage).toContain(expectedMessagePart);
-}
-
-async function clickDownloadAndVerifyMp4(page, row) {
-    const downloadLink = row.getByRole('link', { name: 'Download' });
-    await expect(downloadLink).toBeVisible({ timeout: UI_TIMEOUT });
-
-    const href = await downloadLink.getAttribute('href', { timeout: UI_TIMEOUT });
-    if (!href) {
-        throw new Error('Download link href is empty');
-    }
-
-    const downloadPromise = page.waitForEvent('download', { timeout: 15000 }).catch(() => null);
-    await downloadLink.click({ timeout: UI_TIMEOUT });
-
-    const download = await downloadPromise;
-
-    const downloadUrl = new URL(href, page.url()).toString();
-    const response = await page.request.get(downloadUrl, {
-        failOnStatusCode: false,
-        maxRedirects: 0,
-        timeout: NAV_TIMEOUT,
-    });
-
-    expect(response.status()).toBeLessThan(400);
-    const location = (response.headers().location || '').toLowerCase();
-    const locationRaw = response.headers().location || '';
-    let resolvedMp4Url = '';
-    if (location) {
-        expect(location).toContain('.mp4');
-        resolvedMp4Url = new URL(locationRaw, downloadUrl).toString();
-    } else if (downloadUrl.toLowerCase().includes('.mp4')) {
-        // Fallback for direct-file endpoints without redirect.
-        resolvedMp4Url = downloadUrl;
-    }
-
-    if (download) {
-        const failure = await download.failure();
-        // Some browsers report "canceled" for redirect-to-storage download while response is successful.
-        expect(failure === null || failure === 'canceled').toBeTruthy();
-        expect(download.suggestedFilename().toLowerCase()).toMatch(/\.mp4$/);
-    }
-
-    if (!resolvedMp4Url) {
-        throw new Error('Could not resolve final mp4 URL from download response');
-    }
-
-    return resolvedMp4Url;
-}
-
-async function uploadVideoWithCustomName(page, testInfo, sourceFileName, uploadAsName) {
-    const uploadFilePath = path.join('/work/e2e', sourceFileName);
-    const fileBuffer = fs.readFileSync(uploadFilePath);
-
-    await page.getByRole('button', { name: 'Upload' }).click({ timeout: UI_TIMEOUT });
-    await expect(page.locator('#drag-drop-area .uppy-Dashboard')).toBeVisible({ timeout: 30000 });
-
-    const fileChooserPromise = page.waitForEvent('filechooser');
-    await page.locator('#drag-drop-area .uppy-Dashboard-browse').click({ timeout: UI_TIMEOUT });
-    const fileChooser = await fileChooserPromise;
-    await fileChooser.setFiles({
-        name: uploadAsName,
-        mimeType: 'video/mp4',
-        buffer: fileBuffer,
-    });
-
-    await expect(page.locator('#drag-drop-area .uppy-StatusBar-content[role="status"][title="Complete"]')).toBeVisible({ timeout: 30000 });
-    await shot(page, testInfo, '01c-upload-with-04-name.png');
-
-    await page.getByRole('button', { name: 'Videos' }).click({ timeout: UI_TIMEOUT });
-    await expect(page.locator('#videosTable')).toBeVisible({ timeout: NAV_TIMEOUT });
-}
+const {
+    UI_TIMEOUT,
+    NAV_TIMEOUT,
+    loginAsAdmin,
+    uploadFixtureAsName,
+    openVideosTab,
+    expectVideosTableVisible,
+    videoRowByTitle,
+    waitForVideoDetailsVisible,
+    presetRow,
+    readPresetTaskState,
+    expectFlashPopupTitle,
+    clickAndAcceptConfirm,
+    clickDownloadAndVerifyMp4,
+    presetsTable,
+    logoutToPublic,
+    shot,
+} = require('../helpers');
 
 test('transcode flow from video details to downloadable mp4', async ({ page }, testInfo) => {
     // start console capture for this test
     const capture = attachConsoleCapture(page, testInfo, { maxBodyChars: 4000 });
     await capture.start();
-    const adminEmail = process.env.ADMIN_EMAIL || 'oleg@milantiev.com';
-    const adminPassword = process.env.ADMIN_PASSWORD || 'admin';
     const sourceVideoFileName = '2022_10_04_Two_Maxes.mp4';
     const uploadedVideoName = '2022_10_04_Two_Maxes-04.mp4';
     const presetTitle = '180p';
@@ -141,18 +30,15 @@ test('transcode flow from video details to downloadable mp4', async ({ page }, t
 
     try {
         // 1) Home + login
-        await page.goto('/', { waitUntil: 'domcontentloaded', timeout: NAV_TIMEOUT });
-        await page.getByRole('link', { name: 'Sign in' }).last().click({ timeout: UI_TIMEOUT });
-        await page.locator('#inputEmail').fill(adminEmail, { timeout: UI_TIMEOUT });
-        await page.locator('#inputPassword').fill(adminPassword, { timeout: UI_TIMEOUT });
-        await page.getByRole('button', { name: 'Sign in' }).click({ timeout: UI_TIMEOUT });
+        await loginAsAdmin(page);
         await expect(page.getByRole('button', { name: 'Videos' })).toBeVisible({ timeout: UI_TIMEOUT });
         await shot(page, testInfo, '01-login-success.png');
 
     // 2) Upload the same source video under a -04 suffix and open Videos tab
-        await uploadVideoWithCustomName(page, testInfo, sourceVideoFileName, uploadedVideoName);
-        await page.getByRole('button', { name: 'Videos' }).click({ timeout: UI_TIMEOUT });
-        await expect(page.locator('#videosTable')).toBeVisible({ timeout: UI_TIMEOUT });
+        await uploadFixtureAsName(page, sourceVideoFileName, uploadedVideoName);
+        await shot(page, testInfo, '01c-upload-with-04-name.png');
+        await openVideosTab(page);
+        await expectVideosTableVisible(page);
         await shot(page, testInfo, '02-videos-tab-open.png');
 
     // 3) Open previously uploaded video card
@@ -227,7 +113,7 @@ test('transcode flow from video details to downloadable mp4', async ({ page }, t
         const listRow = videoRowByTitle(page, uploadedVideoName);
         await expect(listRow).toBeVisible({ timeout: NAV_TIMEOUT });
 
-        await clickAndAcceptConfirmDialog(
+        await clickAndAcceptConfirm(
             page,
             listRow.getByRole('button', { name: 'Delete' }),
             'Delete this video?'
@@ -264,9 +150,7 @@ test('transcode flow from video details to downloadable mp4', async ({ page }, t
         expect(deletedFileResponse.status()).toBe(404);
 
     // 12) Sign out
-        await expect(page.getByRole('link', { name: 'Sign out' })).toBeVisible({ timeout: UI_TIMEOUT });
-        await page.getByRole('link', { name: 'Sign out' }).click({ timeout: UI_TIMEOUT });
-        await expect(page.getByRole('link', { name: 'Sign in' })).toHaveCount(2, { timeout: UI_TIMEOUT });
+        await logoutToPublic(page);
         await shot(page, testInfo, '09-sign-out.png');
     } finally {
         // collect SSE messages captured by probe and attach them

@@ -1,138 +1,33 @@
-const fs = require('fs');
-const path = require('path');
 const { test, expect } = require('@playwright/test');
 const { attachConsoleCapture } = require('../consoleCapture');
-
-let uiTimeout = 8000;
-let navTimeout = 15000;
-
-async function shot(page, testInfo, name) {
-  await page.screenshot({ path: testInfo.outputPath(name), fullPage: true, timeout: uiTimeout });
-}
-
-function activeVideoRowByTitle(page, fileName) {
-  return page
-    .locator('#videosTable tbody tr', { hasText: fileName })
-    .filter({ hasNot: page.locator('td.video-title-deleted') })
-    .first();
-}
-
-function presetsTable(page) {
-  const heading = page.getByRole('heading', { name: 'Presets' }).first();
-  return heading.locator('xpath=following-sibling::table[1]');
-}
-
-function presetRow(page, presetTitle) {
-  return presetsTable(page).locator('tbody tr', { hasText: presetTitle }).first();
-}
-
-function adminMenuLink(page, pathSuffix) {
-  return page.locator(`a[href$="${pathSuffix}"]`).first();
-}
-
-function mainTableBodyForHeading(page, heading) {
-  return page.locator('article', { has: page.getByRole('heading', { name: heading }) }).locator('table tbody').first();
-}
-
-async function openAdminSection(page, sectionName, pathSuffix) {
-  await adminMenuLink(page, pathSuffix).click({ timeout: uiTimeout });
-  await expect(page).toHaveURL(/\/admin/, { timeout: navTimeout });
-  await expect(page.getByRole('heading', { name: sectionName }).first()).toBeVisible({ timeout: uiTimeout });
-  await expect(mainTableBodyForHeading(page, sectionName)).toBeVisible({ timeout: uiTimeout });
-}
-
-async function submitCrudForm(page) {
-  const createButton = page.getByRole('button', { name: 'Create', exact: true });
-  if ((await createButton.count()) > 0) {
-    await createButton.click({ timeout: uiTimeout });
-    return;
-  }
-
-  const saveChangesButton = page.getByRole('button', { name: 'Save changes', exact: true });
-  if ((await saveChangesButton.count()) > 0) {
-    await saveChangesButton.click({ timeout: uiTimeout });
-    return;
-  }
-
-  await page.getByRole('button', { name: 'Update', exact: true }).click({ timeout: uiTimeout });
-}
-
-async function assignTariffToUser(page, userEmail, tariffTitle) {
-  await openAdminSection(page, 'Users', '/admin/user');
-
-  const usersTbody = mainTableBodyForHeading(page, 'Users');
-  const userRow = usersTbody.locator('tr', { hasText: userEmail }).first();
-  await expect(userRow).toBeVisible({ timeout: uiTimeout });
-
-  await userRow.locator('a.action-edit').click({ timeout: uiTimeout });
-
-  const tariffSelect = page.locator('select[name$="[tariff]"]').first();
-  if ((await tariffSelect.count()) > 0) {
-    await tariffSelect.selectOption({ label: tariffTitle }, { timeout: uiTimeout });
-  } else {
-    const tariffInput = page.getByLabel('Tariff').first();
-    await tariffInput.click({ timeout: uiTimeout });
-    await tariffInput.fill(tariffTitle, { timeout: uiTimeout });
-    await page.keyboard.press('Enter');
-  }
-
-  await submitCrudForm(page);
-  await expect(mainTableBodyForHeading(page, 'Users').locator('tr', { hasText: userEmail }).first()).toContainText(tariffTitle, {
-    timeout: uiTimeout,
-  });
-}
-
-async function readPresetTaskState(page, presetTitle) {
-  const row = presetRow(page, presetTitle);
-  await expect(row).toBeVisible({ timeout: uiTimeout });
-
-  const status = (await row.locator('td').nth(1).innerText({ timeout: uiTimeout })).trim();
-  const progressText = (await row.locator('td').nth(2).innerText({ timeout: uiTimeout })).trim();
-  const progressMatch = progressText.match(/(\d+)\s*%/);
-  const progress = progressMatch ? Number(progressMatch[1]) : -1;
-
-  return { status, progress };
-}
-
-async function waitForVideoDetailsVisible(page) {
-  await expect(page.getByRole('heading', { name: 'Video Details' })).toBeVisible({ timeout: uiTimeout });
-  await expect(page.getByRole('heading', { name: 'Presets' })).toBeVisible({ timeout: uiTimeout });
-  await expect(presetsTable(page)).toBeVisible({ timeout: uiTimeout });
-}
-
-async function uploadVideoWithCustomName(page, testInfo, sourceFileName, uploadAsName) {
-  const uploadFilePath = path.join('/work/e2e', sourceFileName);
-  const fileBuffer = fs.readFileSync(uploadFilePath);
-
-  await page.getByRole('button', { name: 'Upload' }).click({ timeout: uiTimeout });
-  await expect(page.locator('#drag-drop-area .uppy-Dashboard')).toBeVisible({ timeout: 30000 });
-
-  const fileChooserPromise = page.waitForEvent('filechooser');
-  await page.locator('#drag-drop-area .uppy-Dashboard-browse').click({ timeout: uiTimeout });
-  const fileChooser = await fileChooserPromise;
-  await fileChooser.setFiles({
-    name: uploadAsName,
-    mimeType: 'video/mp4',
-    buffer: fileBuffer,
-  });
-
-  await expect(page.locator('#drag-drop-area .uppy-StatusBar-content[role="status"][title="Complete"]')).toBeVisible({
-    timeout: 30000,
-  });
-  await shot(page, testInfo, '01c-reupload-with-05-name.png');
-
-  await page.getByRole('button', { name: 'Videos' }).click({ timeout: uiTimeout });
-  await expect(activeVideoRowByTitle(page, uploadAsName)).toBeVisible({ timeout: navTimeout });
-}
+const {
+  UI_TIMEOUT,
+  NAV_TIMEOUT,
+  getAdminCredentials,
+  openHome,
+  openSignIn,
+  fillSignInCredentials,
+  submitSignIn,
+  openAdminDashboardFromHome,
+  assignTariffToUser,
+  uploadFixtureAsName,
+  openVideosTab,
+  expectVideosTableVisible,
+  activeVideoRowByTitle,
+  waitForVideoDetailsVisible,
+  presetRow,
+  readPresetTaskState,
+  logoutToPublic,
+  shot,
+} = require('../helpers');
 
 test('task state flow with 4k preset: progress, cancel, restart, complete', async ({ page }, testInfo) => {
   // Step 1 — Configure local timeouts for this long-flow test and admin credentials
   // Local timeouts for this long-flow test only.
-  page.setDefaultTimeout(uiTimeout);
-  page.setDefaultNavigationTimeout(navTimeout);
+  page.setDefaultTimeout(UI_TIMEOUT);
+  page.setDefaultNavigationTimeout(NAV_TIMEOUT);
 
-  const adminEmail = process.env.ADMIN_EMAIL || 'oleg@milantiev.com';
-  const adminPassword = process.env.ADMIN_PASSWORD || 'admin';
+  const { adminEmail, adminPassword } = getAdminCredentials();
   const sourceVideoFileName = '2022_10_04_Two_Maxes.mp4';
   const uploadedVideoName = '2022_10_04_Two_Maxes-05.mp4';
   const presetTitle = 'FHD';
@@ -143,53 +38,50 @@ test('task state flow with 4k preset: progress, cancel, restart, complete', asyn
 
   try {
     // Step 3 — Login as admin
-    await page.goto('/', { waitUntil: 'domcontentloaded', timeout: navTimeout });
-    await page.getByRole('link', { name: 'Sign in' }).last().click({ timeout: uiTimeout });
-    await page.locator('#inputEmail').fill(adminEmail, { timeout: uiTimeout });
-    await page.locator('#inputPassword').fill(adminPassword, { timeout: uiTimeout });
-    await page.getByRole('button', { name: 'Sign in' }).click({ timeout: uiTimeout });
-    await expect(page.getByRole('button', { name: 'Videos' })).toBeVisible({ timeout: uiTimeout });
+    await openHome(page);
+    await openSignIn(page);
+    await fillSignInCredentials(page, adminEmail, adminPassword);
+    await submitSignIn(page);
+    await expect(page.getByRole('button', { name: 'Videos' })).toBeVisible({ timeout: UI_TIMEOUT });
     await shot(page, testInfo, '01-login-success.png');
 
     // Step 4 — Ensure two quick transcodes are allowed in this scenario (assign Premium tariff)
-    await expect(page.getByRole('link', { name: 'Admin', exact: true })).toBeVisible({ timeout: uiTimeout });
-    await page.getByRole('link', { name: 'Admin', exact: true }).click({ timeout: uiTimeout });
+    await openAdminDashboardFromHome(page);
     await assignTariffToUser(page, adminEmail, 'Premium');
     await shot(page, testInfo, '01b-admin-premium-tariff-assigned.png');
 
     // Step 5 — Re-login to refresh security token context after tariff update
-    await page.goto('/logout', { waitUntil: 'domcontentloaded', timeout: navTimeout });
-    await expect(page.getByRole('link', { name: 'Sign in' }).first()).toBeVisible({ timeout: uiTimeout });
-    await page.getByRole('link', { name: 'Sign in' }).last().click({ timeout: uiTimeout });
-    await page.locator('#inputEmail').fill(adminEmail, { timeout: uiTimeout });
-    await page.locator('#inputPassword').fill(adminPassword, { timeout: uiTimeout });
-    await page.getByRole('button', { name: 'Sign in' }).click({ timeout: uiTimeout });
-    await expect(page.getByRole('button', { name: 'Videos' })).toBeVisible({ timeout: uiTimeout });
-    await page.goto('/?tab=videos', { waitUntil: 'domcontentloaded', timeout: navTimeout });
+    await page.goto('/logout', { waitUntil: 'domcontentloaded', timeout: NAV_TIMEOUT });
+    await openSignIn(page);
+    await fillSignInCredentials(page, adminEmail, adminPassword);
+    await submitSignIn(page);
+    await expect(page.getByRole('button', { name: 'Videos' })).toBeVisible({ timeout: UI_TIMEOUT });
+    await page.goto('/?tab=videos', { waitUntil: 'domcontentloaded', timeout: NAV_TIMEOUT });
 
     // Step 6 — Upload the test video with a custom name
-    await uploadVideoWithCustomName(page, testInfo, sourceVideoFileName, uploadedVideoName);
+    await uploadFixtureAsName(page, sourceVideoFileName, uploadedVideoName);
+    await shot(page, testInfo, '01c-reupload-with-05-name.png');
 
-    await page.getByRole('button', { name: 'Videos' }).click({ timeout: uiTimeout });
-    await expect(page.locator('#videosTable')).toBeVisible({ timeout: uiTimeout });
+    await openVideosTab(page);
+    await expectVideosTableVisible(page);
 
     const videoRow = activeVideoRowByTitle(page, uploadedVideoName);
-    await expect(videoRow).toBeVisible({ timeout: uiTimeout });
-    await videoRow.click({ timeout: uiTimeout });
+    await expect(videoRow).toBeVisible({ timeout: UI_TIMEOUT });
+    await videoRow.click({ timeout: UI_TIMEOUT });
 
     // Step 7 — Open video details and verify the 4k preset is present
     await waitForVideoDetailsVisible(page);
-    await expect(presetRow(page, presetTitle)).toBeVisible({ timeout: uiTimeout });
+    await expect(presetRow(page, presetTitle)).toBeVisible({ timeout: UI_TIMEOUT });
     await shot(page, testInfo, '02-video-details-with-4k-preset.png');
 
     const startButton = presetRow(page, presetTitle).getByRole('button', { name: 'Transcode' });
-    await expect(startButton).toBeVisible({ timeout: uiTimeout });
+    await expect(startButton).toBeVisible({ timeout: UI_TIMEOUT });
     // Step 8 — Start 4k transcode
-    await startButton.click({ timeout: uiTimeout });
+    await startButton.click({ timeout: UI_TIMEOUT });
 
     await expect
       .poll(async () => (await readPresetTaskState(page, presetTitle)).status, {
-        timeout: uiTimeout,
+        timeout: UI_TIMEOUT,
         intervals: [1000, 2000, 5000],
       })
       .toMatch(/PENDING|PROCESSING|COMPLETED/);
@@ -216,8 +108,8 @@ test('task state flow with 4k preset: progress, cancel, restart, complete', asyn
 
       if (state.status === 'PROCESSING') {
         const cancelButton = presetRow(page, presetTitle).getByRole('button', { name: 'Cancel' });
-        await expect(cancelButton).toBeVisible({ timeout: uiTimeout });
-        await cancelButton.click({ timeout: uiTimeout });
+        await expect(cancelButton).toBeVisible({ timeout: UI_TIMEOUT });
+        await cancelButton.click({ timeout: UI_TIMEOUT });
         cancellationSent = true;
         break;
       }
@@ -244,12 +136,12 @@ test('task state flow with 4k preset: progress, cancel, restart, complete', asyn
 
     expect(cancelled).toBe(true);
     const cancelledRow = presetRow(page, presetTitle);
-    await expect(cancelledRow.getByRole('link', { name: 'Download' })).toHaveCount(0, { timeout: uiTimeout });
-    await expect(cancelledRow.getByRole('button', { name: 'Transcode' })).toBeVisible({ timeout: uiTimeout });
+    await expect(cancelledRow.getByRole('link', { name: 'Download' })).toHaveCount(0, { timeout: UI_TIMEOUT });
+    await expect(cancelledRow.getByRole('button', { name: 'Transcode' })).toBeVisible({ timeout: UI_TIMEOUT });
     await shot(page, testInfo, '05-task-cancelled.png');
 
     // Step 11 — Restart the transcode after cancellation
-    await cancelledRow.getByRole('button', { name: 'Transcode' }).click({ timeout: uiTimeout });
+    await cancelledRow.getByRole('button', { name: 'Transcode' }).click({ timeout: UI_TIMEOUT });
 
     await expect
       .poll(async () => (await readPresetTaskState(page, presetTitle)).status, {
@@ -286,13 +178,11 @@ test('task state flow with 4k preset: progress, cancel, restart, complete', asyn
     expect(sawRestartProgressIncrease).toBe(true);
 
     const completedRow = presetRow(page, presetTitle);
-    await expect(completedRow.getByRole('link', { name: 'Download' })).toBeVisible({ timeout: uiTimeout });
+    await expect(completedRow.getByRole('link', { name: 'Download' })).toBeVisible({ timeout: UI_TIMEOUT });
     await shot(page, testInfo, '06-restart-completed-with-download.png');
 
     // Step 13 — Sign out and finish the test
-    await expect(page.getByRole('link', { name: 'Sign out' })).toBeVisible({ timeout: uiTimeout });
-    await page.getByRole('link', { name: 'Sign out' }).click({ timeout: uiTimeout });
-    await expect(page.getByRole('link', { name: 'Sign in' })).toHaveCount(2, { timeout: uiTimeout });
+    await logoutToPublic(page);
     await shot(page, testInfo, '07-sign-out.png');
   } finally {
     // collect SSE messages captured by probe and attach them

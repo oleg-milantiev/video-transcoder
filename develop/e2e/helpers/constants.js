@@ -1,0 +1,10 @@
+const UI_TIMEOUT = 8000;
+const NAV_TIMEOUT = 15000;
+const UPLOAD_TIMEOUT = 30000;
+
+module.exports = {
+  UI_TIMEOUT,
+  NAV_TIMEOUT,
+  UPLOAD_TIMEOUT,
+};
+

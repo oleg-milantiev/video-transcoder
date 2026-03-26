@@ -2,6 +2,27 @@
 
 This directory contains release smoke tests running against the release Docker Compose stack.
 
+## Helpers and test style
+
+- Shared UI interactions and selectors are centralized in `helpers/`.
+- Tests in `tests/` should read like scenario steps and avoid low-level locators.
+- Prefer helper calls such as:
+  - `createOrUpdateTariffByTitle(page, 'Free', 60, 1, testInfo, '07-tariff-free-initial.png')`
+  - `openAdminSection(page, 'Users', '/admin/user')`
+  - `assignTariffToUser(page, adminEmail, 'Free', testInfo)`
+
+### Helper modules
+
+- `helpers/auth.js` - login/logout, credentials, sign-in form steps
+- `helpers/mainApp.js` - Upload/Videos/Tasks navigation and table helpers
+- `helpers/upload.js` - Uppy upload actions (fixture upload, upload-as-name)
+- `helpers/video.js` - Video Details, Presets table, task state and flash checks
+- `helpers/admin.js` - EasyAdmin navigation and CRUD helpers (users/presets/tariffs)
+- `helpers/dialogs.js` - native dialog + modal confirm acceptance
+- `helpers/download.js` - download and final mp4 URL verification
+- `helpers/screenshot.js` - consistent screenshot capture
+- `helpers/constants.js` - shared timeouts
+
 ## What is covered
 
 Tests are designed to run sequentially (`workers: 1`) and build on data created by previous specs.
@@ -39,7 +60,7 @@ Tests are designed to run sequentially (`workers: 1`) and build on data created 
 
 4. Open `Presets` and ensure required presets exist: create or update
    - `180p` — width: 320, height: 180, codec: `h264`, bitrate: `1.1` Mbps
-   - `4k UHD` — width: 3840, height: 2160, codec: `h264`, bitrate: `8.0` Mbps
+   - `FHD` — width: 1920, height: 1280, codec: `h264`, bitrate: `5.0` Mbps
    For each preset, the test creates it if missing and then opens edit to ensure values are persisted. Capture a screenshot per preset.
 
 5. Create a test user `test@test.com` with password `test` and role `ROLE_USER` via `Users -> New` (if the Create action is available). Fill visible fields and submit. Capture a screenshot.
@@ -94,11 +115,11 @@ Tests are designed to run sequentially (`workers: 1`) and build on data created 
 - Performs `Sign out` and verifies `Sign in` links are visible again
 - Saves screenshots for each key step
 
-### `05.task.state.flow.js` - TASK_STATE_FLOW coverage for 4k cancel/restart
+### `05.task.state.flow.js` - TASK_STATE_FLOW coverage for FHD cancel/restart
 
 - Logs in as admin, then re-uploads fixture video as `2022_10_04_Two_Maxes-05.mp4`
 - Opens `Video Details` for this `-05` video
-- Uses long-running preset `4k UHD` and starts transcoding
+- Uses long-running preset `FHD` and starts transcoding
 - Waits until task appears in runtime states (`PENDING|PROCESSING|COMPLETED`)
 - Polls progress (no page reload) and verifies at least one progress increase before cancellation
 - Sends `Cancel` while task is `PROCESSING`
@@ -121,9 +142,9 @@ Tests are designed to run sequentially (`workers: 1`) and build on data created 
 ## Data dependencies
 
 - `02` uploads the original source video fixture used by `03` for admin checks.
-- `03` ensures presets `180p` and `4k UHD`, tariffs (`Free`, `Premium`), and user tariff assignment (`Free`) are ready. Additionally, `03` performs admin-side `Mark deleted` actions on the first Task and on the specific Video and verifies UI changes.
+- `03` ensures presets `180p` and `FHD`, tariffs (`Free`, `Premium`), and user tariff assignment (`Free`) are ready. Additionally, `03` performs admin-side `Mark deleted` actions on the first Task and on the specific Video and verifies UI changes.
 - `04` uploads the source fixture a second time as `2022_10_04_Two_Maxes-04.mp4` and validates the full transcode + delete lifecycle for the `-04` video using preset `180p`.
-- `05` re-uploads the source fixture as `2022_10_04_Two_Maxes-05.mp4` and uses `4k UHD` from `03` for long-running state-flow checks (progress/cancel/restart).
+- `05` re-uploads the source fixture as `2022_10_04_Two_Maxes-05.mp4` and uses `FHD` from `03` for long-running state-flow checks (progress/cancel/restart).
 
 ## Local run in release stack
 
