@@ -144,8 +144,6 @@ export function renderVideoDetails(vm) {
                     h('dd', { class: 'col-sm-9' }, vm.dto.createdAt),
                     h('dt', { class: 'col-sm-3' }, 'Updated At'),
                     h('dd', { class: 'col-sm-9' }, vm.dto.updatedAt || '-'),
-                    h('dt', { class: 'col-sm-3' }, 'User ID'),
-                    h('dd', { class: 'col-sm-9' }, String(vm.dto.userId)),
                 ]),
             ]),
         ]),
