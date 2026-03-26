@@ -65,3 +65,11 @@ Convention:
   - fields: `videoId`, `requestedByUserId`, `deletedTaskCount`
 - `App\Application\Event\DeleteVideoFail`
   - fields: `error`, `videoId?`, `requestedByUserId?`
+
+### PatchVideo
+- `App\Application\Event\PatchVideoStart`
+  - fields: `videoId`, `requestedByUserId`, `title` 
+- `App\Application\Event\PatchVideoSuccess`
+  - fields: `videoId`, `requestedByUserId`, `wasTitle`, `nowTitle`
+- `App\Application\Event\PatchVideoFail`
+  - fields: `error`, `videoId?`

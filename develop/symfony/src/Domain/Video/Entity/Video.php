@@ -135,6 +135,13 @@ class Video
         $this->dates = $this->dates->touch();
     }
 
+    public function changeTitle(VideoTitle $title): void
+    {
+        $this->assertNotDeleted();
+        $this->title = $title;
+        $this->dates = $this->dates->touch();
+    }
+
     private function assertNotDeleted(): void
     {
         if ($this->deleted) {

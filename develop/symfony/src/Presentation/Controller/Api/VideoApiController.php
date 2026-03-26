@@ -105,6 +105,32 @@ class VideoApiController extends AbstractController
         }
     }
 
+    #[Route('/{id}', name: 'api_video_patch', requirements: ['id' => '[0-9a-fA-F-]{36}'], methods: ['PATCH'])]
+    public function patch(string $id, Request $request): Response
+    {
+        $payload = json_decode($request->getContent() ?: '{}', true);
+        $title = isset($payload['title']) ? (string)$payload['title'] : null;
+
+        if ($title === null) {
+            return $this->apiError('INVALID_PAYLOAD', 'Missing title', 400);
+        }
+
+        try {
+            $this->queryBus->query(new \App\Application\Query\PatchVideoQuery($id, $title, $this->getUser()->id->toRfc4122()));
+
+            return $this->apiSuccess([]);
+        } catch (InvalidUuidException $e) {
+            return $this->apiError('INVALID_VIDEO_ID', $e->getMessage(), 400);
+        } catch (VideoNotFoundException $e) {
+            return $this->apiError('VIDEO_NOT_FOUND', $e->getMessage(), 404);
+        } catch (\DomainException $e) {
+            return $this->apiError('ACCESS_DENIED', $e->getMessage(), 403);
+        } catch (\Throwable $e) {
+            $this->logger->critical('Failed to patch video', ['exception' => $e]);
+            return $this->apiError('INTERNAL_ERROR', 'Failed to patch video', 500);
+        }
+    }
+
     #[Route('/{id}/delete', name: 'api_video_delete', methods: ['POST'])]
     public function delete(string $id): Response
     {
