@@ -4,6 +4,9 @@ namespace App\Infrastructure\Persistence\Doctrine\User;
 
 use App\Domain\Shared\ValueObject\Uuid;
 use App\Domain\User\Entity\User;
+use App\Domain\User\ValueObject\PasswordHash;
+use App\Domain\User\ValueObject\UserEmail;
+use App\Domain\User\ValueObject\UserRoles;
 use Symfony\Component\Uid\UuidV4 as SymfonyUuid;
 
 class UserMapper
@@ -11,9 +14,9 @@ class UserMapper
     public static function toDomain(UserEntity $entity): User
     {
         return new User(
-            email: $entity->email,
-            roles: $entity->roles,
-            password: $entity->password,
+            email: new UserEmail($entity->email ?? ''),
+            roles: new UserRoles($entity->roles),
+            password: $entity->password !== null ? new PasswordHash($entity->password) : null,
             tariff: $entity->tariff ? TariffMapper::toDomain($entity->tariff) : null,
             id: $entity->id ? Uuid::fromString($entity->id->toRfc4122()) : null,
         );
@@ -25,8 +28,8 @@ class UserMapper
         if ($user->id() !== null) {
             $entity->id = SymfonyUuid::fromString($user->id()->toRfc4122());
         }
-        $entity->email = $user->email();
-        $entity->roles = $user->roles();
+        $entity->email = $user->email()->value();
+        $entity->roles = $user->roles()->values();
         $entity->password = $user->password();
         $entity->tariff = $user->tariff() ? TariffMapper::toDoctrine($user->tariff()) : null;
 

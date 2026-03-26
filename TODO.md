@@ -6,9 +6,6 @@
   - каскад уведомлений
   - 401 так и не обработался
   - убрать delete с видео, если не canBeDeleted (например, внутри есть задачи в pending / processing)
-- DDD
-  - убрать из домена Symfony-Uuid.
-  - User в VO (Email, RoleSet, возможно PasswordHash) и инварианты (минимум один роль/валидный email).
 
 ## Sprint 0.0.2
 

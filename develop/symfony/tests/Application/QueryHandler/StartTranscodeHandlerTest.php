@@ -15,6 +15,8 @@ use App\Application\QueryHandler\StartTranscodeHandler;
 use App\Application\DTO\TaskItemDTO;
 use App\Domain\User\Entity\User;
 use App\Domain\User\Repository\UserRepositoryInterface;
+use App\Domain\User\ValueObject\UserEmail;
+use App\Domain\User\ValueObject\UserRoles;
 use App\Domain\Video\Entity\Preset;
 use App\Domain\Video\Entity\Task;
 use App\Domain\Video\Entity\Video;
@@ -62,7 +64,11 @@ class StartTranscodeHandlerTest extends TestCase
             id: Uuid::fromString('123e4567-e89b-42d3-a456-426614174005'),
         );
 
-        $user = new User('user@example.com', ['ROLE_USER'], id: $video->userId());
+        $user = new User(
+            new UserEmail('user@example.com'),
+            new UserRoles(['ROLE_USER']),
+            id: $video->userId(),
+        );
 
         $commandBus = $this->createMock(MessageBusInterface::class);
         $commandBus->expects($this->once())
