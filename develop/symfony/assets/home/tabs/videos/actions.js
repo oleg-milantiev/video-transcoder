@@ -47,11 +47,13 @@ export function createVideosTabActions(params) {
             headers: authHeader,
         });
 
+        const payload = await parseJsonResponse(response);
+
         if (!response.ok) {
-            throw new Error('Failed to load list');
+            throw new Error(extractApiErrorMessage(payload, 'Failed to load list'));
         }
 
-        return normalizeListResponse(await response.json(), page, limit);
+        return normalizeListResponse(payload, page, limit);
     }
 
     async function loadVideos(page = 1) {

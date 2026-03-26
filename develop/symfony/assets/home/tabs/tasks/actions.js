@@ -1,4 +1,4 @@
-import { toInt } from '../../shared.js';
+import { toInt, parseJsonResponse, extractApiErrorMessage } from '../../shared.js';
 
 export function isTaskActive(status) {
     return status === 'PENDING' || status === 'PROCESSING';
@@ -51,11 +51,13 @@ export function createTasksTabActions(params) {
             headers: authHeader,
         });
 
+        const payload = await parseJsonResponse(response);
+
         if (!response.ok) {
-            throw new Error('Failed to load list');
+            throw new Error(extractApiErrorMessage(payload, 'Failed to load list'));
         }
 
-        return normalizeListResponse(await response.json(), page, limit);
+        return normalizeListResponse(payload, page, limit);
     }
 
     async function loadTasks(page = 1) {
@@ -103,8 +105,9 @@ export function createTasksTabActions(params) {
                 headers: authHeader,
             });
 
+            const payload = await parseJsonResponse(response);
             if (!response.ok) {
-                tasksState.tasksError.value = 'Failed to cancel task';
+                tasksState.tasksError.value = extractApiErrorMessage(payload, 'Failed to cancel task');
             }
         } catch (e) {
             tasksState.tasksError.value = 'Failed to cancel task';
