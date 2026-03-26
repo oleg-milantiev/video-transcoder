@@ -346,6 +346,75 @@ final class VideoApiControllerTest extends ApiWebTestCase
     }
 
     /**
+     * @throws \JsonException
+     */
+    public function testPatchTitleReturnsSuccessPayload(): void
+    {
+        $client = $this->createBearerAuthenticatedClient(
+            userId: SymfonyUuid::fromString('00000000-0000-4000-8000-000000000042'),
+            roles: ['ROLE_ADMIN'],
+        );
+        $videoId = Uuid::fromString('11111111-1111-4111-8111-111111111111');
+
+        $queryBus = $this->createMock(QueryBus::class);
+        $queryBus->expects($this->once())
+            ->method('query')
+            ->with($this->callback(function (object $query) use ($videoId): bool {
+                return $query instanceof \App\Application\Query\PatchVideoQuery
+                    && $query->videoId->equals($videoId);
+            }));
+        $this->replaceService(QueryBus::class, $queryBus);
+
+        $client->request('PATCH', '/api/video/' . $videoId->toRfc4122(), [], [], ['CONTENT_TYPE' => 'application/json'], json_encode(['title' => 'New Title'], JSON_THROW_ON_ERROR));
+
+        self::assertResponseStatusCodeSame(200);
+        self::assertSame(['data' => []], $this->decodeJson($client->getResponse()->getContent()));
+    }
+
+    public function testPatchReturnsBadRequestForInvalidVideoId(): void
+    {
+        $client = $this->createBearerAuthenticatedClient();
+
+        $queryBus = $this->createMock(QueryBus::class);
+        $queryBus->expects($this->never())->method('query');
+        $this->replaceService(QueryBus::class, $queryBus);
+
+        $client->request('PATCH', '/api/video/not-a-uuid', [], [], ['CONTENT_TYPE' => 'application/json'], json_encode(['title' => 'New'], JSON_THROW_ON_ERROR));
+
+        self::assertResponseStatusCodeSame(400);
+        self::assertSame([
+            'error' => [
+                'code' => 'INVALID_VIDEO_ID',
+                'message' => 'Invalid UUID',
+                'details' => [],
+            ],
+        ], $this->decodeJson($client->getResponse()->getContent()));
+    }
+
+    public function testPatchReturnsForbiddenOnAccessDenied(): void
+    {
+        $client = $this->createBearerAuthenticatedClient();
+        $videoId = Uuid::fromString('11111111-1111-4111-8111-111111111111');
+
+        $queryBus = $this->createMock(QueryBus::class);
+        $queryBus->expects($this->once())
+            ->method('query')
+            ->willThrowException(new \DomainException('Access denied'));
+        $this->replaceService(QueryBus::class, $queryBus);
+
+        $client->request('PATCH', '/api/video/' . $videoId->toRfc4122(), [], [], ['CONTENT_TYPE' => 'application/json'], json_encode(['title' => 'New'], JSON_THROW_ON_ERROR));
+
+        self::assertResponseStatusCodeSame(403);
+        self::assertSame([
+            'error' => [
+                'code' => 'ACCESS_DENIED',
+                'message' => 'Access denied',
+                'details' => [],
+            ],
+        ], $this->decodeJson($client->getResponse()->getContent()));
+    }
+
+    /**
      * @return array<mixed>
      * @throws \JsonException
      */

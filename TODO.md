@@ -1,8 +1,14 @@
 # TODOs for video-transcoder
 
+Полный цикл фичи включает в себя
+- backend (api)
+- frontend
+- link frontend -> api
+- phpUnit (+stan)
+- e2e
+
 ## Sprint 0.0.1
 
-- phpUnit, e2e
 - frontend
   - каскад уведомлений
   - 401 так и не обработался

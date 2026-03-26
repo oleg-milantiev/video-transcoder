@@ -105,7 +105,7 @@ class VideoApiController extends AbstractController
         }
     }
 
-    #[Route('/{id}', name: 'api_video_patch', requirements: ['id' => '[0-9a-fA-F-]{36}'], methods: ['PATCH'])]
+    #[Route('/{id}', name: 'api_video_patch', methods: ['PATCH'])]
     public function patch(string $id, Request $request): Response
     {
         $payload = json_decode($request->getContent() ?: '{}', true);
