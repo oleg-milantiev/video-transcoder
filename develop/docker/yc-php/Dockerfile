@@ -42,6 +42,7 @@ ARG DATABASE_URL
 ARG REDIS_HOST
 ARG REDIS_PORT
 
+ENV APP_ENV=prod
 RUN composer install --no-interaction --prefer-dist --no-progress --optimize-autoloader --no-dev
 
 RUN chown -R www-data:www-data /var/www/yc

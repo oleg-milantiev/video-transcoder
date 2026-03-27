@@ -17,7 +17,6 @@ services:
         image: olegmilantiev/yc-php:${PROJECT_VERSION}
         env_file:
             - .env
-        # todo optimize
         environment:
             MERCURE_PUBLIC_URL: 'http://mercure:8080/.well-known/mercure'
             MERCURE_INTERNAL_URL: 'http://mercure:8080/.well-known/mercure'
@@ -38,7 +37,6 @@ services:
         image: olegmilantiev/yc-ffmpeg:${PROJECT_VERSION}
         env_file:
             - .env
-        # todo optimize
         environment:
             MERCURE_PUBLIC_URL: 'http://mercure:8080/.well-known/mercure'
             MERCURE_INTERNAL_URL: 'http://mercure:8080/.well-known/mercure'
@@ -64,7 +62,6 @@ services:
         image: olegmilantiev/yc-ffmpeg:${PROJECT_VERSION}
         env_file:
             - .env
-        # todo optimize
         environment:
             MERCURE_PUBLIC_URL: 'http://mercure:8080/.well-known/mercure'
             MERCURE_INTERNAL_URL: 'http://mercure:8080/.well-known/mercure'
