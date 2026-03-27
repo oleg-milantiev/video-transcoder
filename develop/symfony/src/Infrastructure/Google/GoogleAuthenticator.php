@@ -12,7 +12,6 @@ class GoogleAuthenticator
 {
     private Google $provider;
     private SessionInterface $session;
-    private string $redirectUri;
 
     public function __construct(
         SessionInterface $session,
@@ -24,7 +23,6 @@ class GoogleAuthenticator
         string $redirectUri
     ) {
         $this->session = $session;
-        $this->redirectUri = $redirectUri;
 
         $this->provider = new Google([
             'clientId' => $clientId,
@@ -50,29 +48,48 @@ class GoogleAuthenticator
 
     /**
      * Получить пользователя от Google по коду авторизации
+     *
+     * @throws \RuntimeException
      */
-    public function getUserFromCode(Request $request): ?GoogleUser
+    public function getUserFromCode(Request $request): GoogleUser
     {
+        // Проверяем наличие ошибки от Google
+        $error = $request->query->get('error');
+        if ($error) {
+            $errorDescription = $request->query->get('error_description', 'Unknown error');
+            throw new \RuntimeException("Google OAuth error: $error - $errorDescription");
+        }
+
         // Проверяем state (защита от CSRF)
         $state = $request->query->get('state');
         $savedState = $this->session->get('oauth2state');
 
         if (!$state || $state !== $savedState) {
-            throw new \RuntimeException('Invalid OAuth state');
+            throw new \RuntimeException('Invalid OAuth state - possible CSRF attack');
         }
+
+        // Очищаем state из сессии после проверки
+        $this->session->remove('oauth2state');
 
         // Получаем код авторизации
         $code = $request->query->get('code');
         if (!$code) {
-            throw new \RuntimeException('No authorization code');
+            throw new \RuntimeException('No authorization code provided');
         }
 
-        // Получаем токен доступа
-        $token = $this->provider->getAccessToken('authorization_code', [
-            'code' => $code
-        ]);
+        try {
+            // Получаем токен доступа
+            $token = $this->provider->getAccessToken('authorization_code', [
+                'code' => $code
+            ]);
 
-        // Получаем данные пользователя
-        return $this->provider->getResourceOwner($token);
+            // Получаем данные пользователя
+            /** @var GoogleUser $resourceOwner */
+            $resourceOwner = $this->provider->getResourceOwner($token);
+
+            return $resourceOwner;
+        } catch (\Exception $e) {
+            throw new \RuntimeException('Failed to get access token: ' . $e->getMessage(), 0, $e);
+        }
     }
 }
