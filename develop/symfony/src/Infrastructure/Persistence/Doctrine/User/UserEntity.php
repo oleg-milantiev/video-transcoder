@@ -120,6 +120,7 @@ class UserEntity implements UserInterface, PasswordAuthenticatedUserInterface
     /**
      * @see UserInterface
      */
+    #[\Deprecated('This method is deprecated since Symfony 7.3. Logic is kept here for now.', 'symfony/security-http')]
     public function eraseCredentials(): void
     {
         // If you store any temporary, sensitive data on the user, clear it here
