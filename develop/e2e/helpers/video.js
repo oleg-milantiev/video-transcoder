@@ -12,6 +12,37 @@ async function expectDetailsValue(page, label) {
   await expect(dd).toHaveText(/\S+/, { timeout: UI_TIMEOUT });
 }
 
+async function renameVideoFromDetails(page, newTitle) {
+  const renameButton = page.locator('button[title="Rename video"]').first();
+  await expect(renameButton).toBeVisible({ timeout: UI_TIMEOUT });
+  await renameButton.click({ timeout: UI_TIMEOUT });
+
+  const renameModalInput = page.locator('.swal2-input').first();
+  await expect(renameModalInput).toBeVisible({ timeout: UI_TIMEOUT });
+  await renameModalInput.fill(newTitle);
+
+  const confirmButton = page.locator('.swal2-confirm').first();
+  await expect(confirmButton).toBeVisible({ timeout: UI_TIMEOUT });
+  await confirmButton.click({ timeout: UI_TIMEOUT });
+}
+
+async function expectVideoDetailsTitle(page, expectedTitle) {
+  const titleLabel = page.locator('dt', { hasText: 'Title' }).first();
+  await expect(titleLabel).toBeVisible({ timeout: UI_TIMEOUT });
+
+  const titleValue = titleLabel.locator('xpath=following-sibling::dd[1]//span[1]').first();
+  await expect(titleValue).toBeVisible({ timeout: UI_TIMEOUT });
+  await expect.poll(
+    async () => ((await titleValue.textContent()) || '').trim(),
+    { timeout: 30000 }
+  ).toBe(expectedTitle);
+}
+
+async function clickBackButton(page) {
+  await page.getByRole('button', { name: 'Back' }).click({ timeout: UI_TIMEOUT });
+}
+
+
 function presetsTable(page) {
   const heading = page.getByRole('heading', { name: 'Presets' }).first();
   return heading.locator('xpath=following-sibling::table[1]');
@@ -111,6 +142,9 @@ async function waitForPosterAndMeta(page, testInfo, prefix = '07-details-poster-
 
 module.exports = {
   expectDetailsValue,
+  renameVideoFromDetails,
+  expectVideoDetailsTitle,
+  clickBackButton,
   presetsTable,
   presetRow,
   readPresetTaskState,

@@ -14,6 +14,9 @@ const {
   uploadFixture,
   waitForVideoDetailsVisible,
   expectDetailsValue,
+  clickBackButton,
+  renameVideoFromDetails,
+  expectVideoDetailsTitle,
   waitForPosterAndMeta,
   logoutToPublic,
   shot,
@@ -23,6 +26,7 @@ test('upload video and verify details flow', async ({ page }, testInfo) => {
   const { adminEmail, adminPassword } = getAdminCredentials();
   const fileName = '2022_10_04_Two_Maxes.mp4';
   const baseFileName = fileName.substring(0, fileName.lastIndexOf('.'));
+  const renamedBaseFileName = `${baseFileName}-02`;
 
   await openHome(page);
   await openSignIn(page);
@@ -48,9 +52,22 @@ test('upload video and verify details flow', async ({ page }, testInfo) => {
   await expectDetailsValue(page, 'Title');
   await expectDetailsValue(page, 'Extension');
   await expectDetailsValue(page, 'Created At');
+  await waitForPosterAndMeta(page, testInfo);
   await shot(page, testInfo, '04-video-details-filled.png');
 
-  await waitForPosterAndMeta(page, testInfo);
+  await renameVideoFromDetails(page, renamedBaseFileName);
+  await expectVideoDetailsTitle(page, renamedBaseFileName);
+  await shot(page, testInfo, '05-video-renamed-in-details.png');
+
+  await clickBackButton(page);
+  await expectVideosTableVisible(page);
+  const renamedVideoRow = videoRowByTitle(page, renamedBaseFileName);
+  await expectVideoRowHasCoreValues(renamedVideoRow, renamedBaseFileName);
+  await shot(page, testInfo, '06-video-row-renamed-in-table.png');
+
+  await renamedVideoRow.click({ timeout: UI_TIMEOUT });
+  await waitForVideoDetailsVisible(page);
+  await expectVideoDetailsTitle(page, renamedBaseFileName);
 
   await logoutToPublic(page);
   await shot(page, testInfo, '08-sign-out-and-sign-in-links.png');
