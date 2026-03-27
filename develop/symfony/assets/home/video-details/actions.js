@@ -206,6 +206,10 @@ export function createVideoDetailsActions(params) {
         const taskId = typeof update.taskId === 'string' ? update.taskId : '';
         const presetId = typeof update.presetId === 'string' ? update.presetId : '';
 
+        if (!taskId) {
+            return;
+        }
+
         const nextPresets = (state.dto.value.presetsWithTasks || []).map((preset) => {
             const task = preset.task;
             const sameTask = taskId && task && String(task.id) === taskId;
@@ -229,9 +233,12 @@ export function createVideoDetailsActions(params) {
                     ...currentTask,
                     id: taskId || currentTask.id || null,
                     status: typeof update.status === 'string' ? update.status : currentTask.status,
-                    progress: toInt(update.progress, currentTask.progress),
+                    progress: typeof update.progress === 'number' ? update.progress : currentTask.progress,
                     createdAt: typeof update.createdAt === 'string' ? update.createdAt : currentTask.createdAt,
-                    downloadFilename: typeof update.downloadFilename === 'string' ? update.downloadFilename : currentTask.downloadFilename,
+                    updatedAt: typeof update.updatedAt === 'string' ? update.updatedAt : currentTask.updatedAt,
+                    downloadFilename: (typeof update.videoTitle === 'string' && typeof update.presetTitle === 'string')
+                        ? (update.videoTitle + ' - ' + update.presetTitle)
+                        : (currentTask.videoTitle + ' - ' + currentTask.presetTitle),
                 },
             };
         });

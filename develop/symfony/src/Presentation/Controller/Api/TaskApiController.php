@@ -123,10 +123,7 @@ class TaskApiController extends AbstractController
         ]);
 
         $this->taskRepository->save($task);
-        $this->taskRealtimeNotifier->notifyTaskUpdated($task, $cancelledNow ? 'cancelled' : 'cancel_requested', [
-            'cancelledNow' => $cancelledNow,
-            'cancellationRequested' => true,
-        ]);
+        $this->taskRealtimeNotifier->notifyTaskUpdated($task, $cancelledNow ? 'cancelled' : 'cancel_requested');
 
         $this->cancellationTrigger->request($task->id());
 

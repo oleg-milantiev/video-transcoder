@@ -134,8 +134,13 @@ export function createTasksTabActions(params) {
             return {
                 ...task,
                 status: typeof update.status === 'string' ? update.status : task.status,
-                progress: toInt(update.progress, task.progress),
-                downloadFilename: typeof update.downloadFilename === 'string' ? update.downloadFilename : task.downloadFilename,
+                progress: typeof update.progress === 'number' ? update.progress : task.progress,
+                createdAt: typeof update.createdAt === 'string' ? update.createdAt : task.createdAt,
+                downloadFilename: (typeof update.videoTitle === 'string' && typeof update.presetTitle === 'string')
+                    ? (update.videoTitle + ' - ' + update.presetTitle)
+                    : (task.videoTitle + ' - ' + task.presetTitle),
+                videoTitle: typeof update.videoTitle === 'string' ? update.videoTitle : task.videoTitle,
+                presetTitle: typeof update.presetTitle === 'string' ? update.presetTitle : task.presetTitle,
             };
         });
     }

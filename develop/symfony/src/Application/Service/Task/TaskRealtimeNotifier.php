@@ -6,6 +6,7 @@ namespace App\Application\Service\Task;
 
 use App\Application\Command\Mercure\PublishMercureMessage;
 use App\Application\DTO\MercureMessageDTO;
+use App\Application\DTO\TaskRealtimePayloadDTO;
 use App\Domain\Video\Entity\Task;
 use App\Domain\Video\Repository\PresetRepositoryInterface;
 use App\Domain\Video\Repository\VideoRepositoryInterface;
@@ -22,37 +23,27 @@ final readonly class TaskRealtimeNotifier
     ) {
     }
 
-    /**
-     * @param array<string, mixed> $extraPayload
-     */
     public function notifyTaskUpdated(Task $task, string $action = 'updated', array $extraPayload = []): void
     {
         if ($task->id() === null) {
             return;
         }
 
-        $video = $this->videoRepository->findById($task->videoId());
-        $preset = $this->presetRepository->findById($task->presetId());
+        $dto = TaskRealtimePayloadDTO::fromTask($task);
 
-        // todo sync realtime contract with frontend
-        $payload = array_merge([
-            'taskId' => $task->id()->toRfc4122(),
-            'videoId' => $task->videoId()->toRfc4122(),
-            'presetId' => $task->presetId()->toRfc4122(),
-            'status' => $task->status()->name,
-            'progress' => $task->progress()->value(),
-            'videoTitle' => $video?->title()->value(),
-            'downloadFilename' => $video?->title()->value() . ' - ' . $preset?->title()->value(),
-            'createdAt' => $task->createdAt()->format('Y-m-d H:i'),
-            'updatedAt' => $task->updatedAt()?->format('Y-m-d H:i'),
-        ], $extraPayload);
+        if ($action === 'created' || $action === 'updated') {
+            $video = $this->videoRepository->findById($task->videoId());
+            $preset = $this->presetRepository->findById($task->presetId());
+
+            $dto->addVideoPresetFields($video, $preset);
+        }
 
         $this->commandBus->dispatch(new PublishMercureMessage(new MercureMessageDTO(
             action: $action,
             entity: 'task',
             id: $task->id(),
             userId: $task->userId(),
-            payload: $payload,
+            payload: array_merge($dto->toArray(), $extraPayload),
         )));
     }
 }
