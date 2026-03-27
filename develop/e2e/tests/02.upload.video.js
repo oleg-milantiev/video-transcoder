@@ -22,6 +22,7 @@ const {
 test('upload video and verify details flow', async ({ page }, testInfo) => {
   const { adminEmail, adminPassword } = getAdminCredentials();
   const fileName = '2022_10_04_Two_Maxes.mp4';
+  const baseFileName = fileName.substring(0, fileName.lastIndexOf('.'));
 
   await openHome(page);
   await openSignIn(page);
@@ -36,9 +37,9 @@ test('upload video and verify details flow', async ({ page }, testInfo) => {
 
   await openVideosTab(page);
   await expectVideosTableVisible(page);
-  const videoRow = videoRowByTitle(page, fileName);
+  const videoRow = videoRowByTitle(page, baseFileName);
 
-  await expectVideoRowHasCoreValues(videoRow, fileName);
+  await expectVideoRowHasCoreValues(videoRow, baseFileName);
   await shot(page, testInfo, '03-video-row-in-table.png');
 
   await videoRow.click({ timeout: UI_TIMEOUT });

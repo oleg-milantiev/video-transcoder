@@ -25,6 +25,7 @@ test('transcode flow from video details to downloadable mp4', async ({ page }, t
     await capture.start();
     const sourceVideoFileName = '2022_10_04_Two_Maxes.mp4';
     const uploadedVideoName = '2022_10_04_Two_Maxes-04.mp4';
+    const baseFileName = uploadedVideoName.substring(0, uploadedVideoName.lastIndexOf('.'));
     const presetTitle = '180p';
     let downloadedMp4Url = '';
 
@@ -42,7 +43,7 @@ test('transcode flow from video details to downloadable mp4', async ({ page }, t
         await shot(page, testInfo, '02-videos-tab-open.png');
 
     // 3) Open previously uploaded video card
-        const row = videoRowByTitle(page, uploadedVideoName);
+        const row = videoRowByTitle(page, baseFileName);
         await expect(row).toBeVisible({ timeout: NAV_TIMEOUT });
         await row.click({ timeout: UI_TIMEOUT });
 
@@ -110,7 +111,7 @@ test('transcode flow from video details to downloadable mp4', async ({ page }, t
         await page.getByRole('button', { name: 'Videos' }).click({ timeout: UI_TIMEOUT });
         await expect(page.locator('#videosTable')).toBeVisible({ timeout: UI_TIMEOUT });
 
-        const listRow = videoRowByTitle(page, uploadedVideoName);
+        const listRow = videoRowByTitle(page, baseFileName);
         await expect(listRow).toBeVisible({ timeout: NAV_TIMEOUT });
 
         await clickAndAcceptConfirm(
@@ -124,7 +125,7 @@ test('transcode flow from video details to downloadable mp4', async ({ page }, t
             intervals: [1000, 2000, 5000],
         }).toBeGreaterThan(0);
 
-        await expect(listRow.locator('td.video-title-deleted')).toContainText(uploadedVideoName, { timeout: UI_TIMEOUT });
+        await expect(listRow.locator('td.video-title-deleted')).toContainText(baseFileName, { timeout: UI_TIMEOUT });
         // Deleted row must not allow a real delete action anymore.
         await expect(listRow.locator('button:not([disabled])', { hasText: 'Delete' })).toHaveCount(0);
         await shot(page, testInfo, '07-video-marked-deleted-in-list.png');
@@ -133,7 +134,7 @@ test('transcode flow from video details to downloadable mp4', async ({ page }, t
         await listRow.click({ timeout: UI_TIMEOUT });
         await waitForVideoDetailsVisible(page);
         await expect(page.getByText('This video has been deleted')).toBeVisible({ timeout: UI_TIMEOUT });
-        await expect(page.locator('dd.video-title-deleted')).toContainText(uploadedVideoName, { timeout: UI_TIMEOUT });
+        await expect(page.locator('dd.video-title-deleted')).toContainText(baseFileName, { timeout: UI_TIMEOUT });
 
         const presetsBody = presetsTable(page).locator('tbody').first();
         await expect(presetsBody).toContainText('DELETED', { timeout: UI_TIMEOUT });

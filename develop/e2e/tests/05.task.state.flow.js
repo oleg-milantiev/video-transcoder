@@ -30,6 +30,7 @@ test('task state flow with 4k preset: progress, cancel, restart, complete', asyn
   const { adminEmail, adminPassword } = getAdminCredentials();
   const sourceVideoFileName = '2022_10_04_Two_Maxes.mp4';
   const uploadedVideoName = '2022_10_04_Two_Maxes-05.mp4';
+  const baseFileName = uploadedVideoName.substring(0, uploadedVideoName.lastIndexOf('.'));
   const presetTitle = 'FHD';
 
   // Step 2 — start console capture for this test
@@ -65,7 +66,7 @@ test('task state flow with 4k preset: progress, cancel, restart, complete', asyn
     await openVideosTab(page);
     await expectVideosTableVisible(page);
 
-    const videoRow = activeVideoRowByTitle(page, uploadedVideoName);
+    const videoRow = activeVideoRowByTitle(page, baseFileName);
     await expect(videoRow).toBeVisible({ timeout: UI_TIMEOUT });
     await videoRow.click({ timeout: UI_TIMEOUT });
 

@@ -22,7 +22,7 @@ const {
 test('admin area full smoke with CRUD checks', async ({ page }, testInfo) => {
   // Configure admin credentials used in this test and target uploaded video name
   const { adminEmail, adminPassword } = getAdminCredentials();
-  const uploadedVideoName = '2022_10_04_Two_Maxes.mp4';
+  const uploadedVideoName = '2022_10_04_Two_Maxes';
 
   // Step 1 — Navigate to home and sign in as admin
   await openHome(page);
