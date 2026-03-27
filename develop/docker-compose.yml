@@ -26,7 +26,10 @@ services:
 
     php:
         restart: always
-        image: olegmilantiev/yc-php:${PROJECT_VERSION}
+        build:
+            context: .
+            dockerfile: ./develop/docker/yc-php/Dockerfile
+            target: dev
         env_file:
             - .env
         depends_on:
@@ -34,6 +37,8 @@ services:
             - postgres
         expose:
             - 9000
+        extra_hosts:
+            - "host.docker.internal:host-gateway"
         volumes:
             - ./symfony:/var/www/yc
 # use filesystem for debug

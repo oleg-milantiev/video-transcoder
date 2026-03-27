@@ -22,6 +22,7 @@ trap cleanup EXIT INT TERM
 git clone --depth 1 --branch "release/${PROJECT_VERSION}" "$GIT_REPOSITORY_URL" "$TMP_REPO_DIR"
 
 docker build \
+  --target prod \
 	--build-arg REDIS_HOST="${REDIS_HOST}" \
 	--build-arg REDIS_PORT="${REDIS_PORT}" \
 	--build-arg DATABASE_URL="${DATABASE_URL}" \
