@@ -5,6 +5,7 @@ namespace App\Infrastructure\Security\Voter;
 use App\Domain\Video\Entity\Video;
 use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
 use Symfony\Component\Security\Core\Authorization\Voter\Voter;
+use Symfony\Component\Security\Core\Authorization\Voter\Vote;
 
 final class VideoAccessVoter extends Voter
 {
@@ -24,7 +25,7 @@ final class VideoAccessVoter extends Voter
         return in_array($attribute, [self::CAN_VIEW_DETAILS, self::CAN_START_TRANSCODE, self::CAN_DOWNLOAD_TRANSCODE, self::CAN_CANCEL_TRANSCODE, self::CAN_DELETE, self::CAN_EDIT], true);
     }
 
-    protected function voteOnAttribute(string $attribute, mixed $subject, TokenInterface $token): bool
+    protected function voteOnAttribute(string $attribute, mixed $subject, TokenInterface $token, ?Vote $vote = null): bool
     {
         if (!$subject instanceof Video) {
             return false;

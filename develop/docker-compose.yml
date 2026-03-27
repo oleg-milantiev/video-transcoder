@@ -28,10 +28,13 @@ services:
         restart: always
         build:
             context: .
-            dockerfile: ./develop/docker/yc-php/Dockerfile
+            dockerfile: ./docker/yc-php/Dockerfile
             target: dev
         env_file:
             - .env
+        environment:
+            - APP_ENV=dev
+            - APP_DEBUG=1
         depends_on:
             - redis
             - postgres
@@ -49,6 +52,9 @@ services:
         image: olegmilantiev/yc-ffmpeg:${PROJECT_VERSION}
         env_file:
             - .env
+        environment:
+            - APP_ENV=dev
+            - APP_DEBUG=1
         depends_on:
             - redis
             - postgres
@@ -69,6 +75,9 @@ services:
         image: olegmilantiev/yc-ffmpeg:${PROJECT_VERSION}
         env_file:
             - .env
+        environment:
+            - APP_ENV=dev
+            - APP_DEBUG=1
         depends_on:
             - redis
             - postgres

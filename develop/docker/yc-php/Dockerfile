@@ -19,10 +19,10 @@ WORKDIR /var/www/yc
 # -----------------------------------
 FROM base AS dev
 
-RUN apk add --no-cache $PHPIZE_DEPS \
+RUN apk add --no-cache $PHPIZE_DEPS linux-headers \
     && pecl install xdebug \
     && docker-php-ext-enable xdebug \
-    && apk del $PHPIZE_DEPS
+    && apk del $PHPIZE_DEPS linux-headers
 
 RUN echo "xdebug.mode=debug" >> /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini \
     && echo "xdebug.client_host=host.docker.internal" >> /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini \
