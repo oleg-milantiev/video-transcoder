@@ -20,5 +20,5 @@ kubectl get ingress
 kubectl scale deployment php-api --replicas=0
 kubectl scale deployment ffmpeg-worker --replicas=0
 
-# Эта команда откроет порт 5432 на вашем локальном компьютере
+# Проброс posgresql (аналогично ssh)
 kubectl port-forward deployment/postgres 5432:5432

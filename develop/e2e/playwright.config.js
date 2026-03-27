@@ -22,15 +22,15 @@ module.exports = defineConfig({
     trace: 'on',
     video: 'on',
     screenshot: 'on',
-    viewport: { width: 2000, height: 2000 }
+    viewport: { width: 1700, height: 1300 }
   },
   projects: [
     {
       name: 'chromium',
       use: {
         ...devices['Desktop Chrome'],
-        viewport: { width: 2000, height: 2000 },
-        video: { mode: 'on', size: { width: 2000, height: 2000 } }
+        viewport: { width: 1700, height: 1300 },
+        video: { mode: 'on', size: { width: 1700, height: 1300 } }
       }
     }
   ]

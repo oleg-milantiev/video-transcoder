@@ -10,7 +10,7 @@ Run phpunit and composer stan after every backend change.
 ## Architecture Overview
 - **Domain-Driven Design (DDD)**: The backend (Symfony) is organized by domain boundaries: `Domain`, `Application`, `Infrastructure`, `Presentation`.
 - **Core Components**:
-  - **Frontend**: Twig pages mount Vue SPA modules from `develop/symfony/assets/home/`; uploads still use Uppy + tus chunking.
+  - **Frontend**: Twig pages mount Vue SPA modules from `develop/symfony/assets/home/`; uploads use Uppy + tus chunking.
   - **API**: Symfony app (`develop/symfony/`) exposes REST endpoints and handles business logic.
   - **Workers**: Symfony Messenger consumers (auto-scaled) process transcoding jobs using ffmpeg.
   - **Persistence**: PostgreSQL (see `postgres.yaml`), Doctrine ORM, entities in `Domain`/`Infrastructure`.

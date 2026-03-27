@@ -1,12 +1,15 @@
 # video-transcoder
 
-AI-powered Wiki: https://deepwiki.com/oleg-milantiev/video-transcoder
+**AI-powered Wiki:** https://deepwiki.com/oleg-milantiev/video-transcoder
 
-Task state flow (DDD): [TASK_STATE_FLOW.md](TASK_STATE_FLOW.md)
+## 📚 Documentation
 
-TBD English
-
---
+### Key Documents
+- **[AGENTS.md](AGENTS.md)** — Architecture overview, DDD patterns, developer workflows, and integration guide for AI coding agents
+- **[TASK_STATE_FLOW.md](TASK_STATE_FLOW.md)** — Task lifecycle and state transitions (DDD)
+- **[EVENTS.md](EVENTS.md)** — Event-driven architecture and message flows
+- **[frontend.md](frontend.md)** — Frontend architecture and Vue SPA modules
+- **[develop/e2e/README.md](develop/e2e/README.md)** — End-to-end testing guide with Playwright
 
 ## По-русски
 
@@ -40,25 +43,49 @@ TBD English
 
 ### Сценарий использования
 
+#### Авторизация
+
 Гость может **авторизоваться** (без регистрации) и **выйти** из сайта.
+
+![Login Form](develop/e2e/shot/01/02-login-form-filled.png)
+
+#### Пользователь (User)
 
 Авторизованный **пользователь** с обычными **правами** обладает списком его **видео**.
 Он может:
 
-- загружать видео;
-- редактировать свойства видео;
-- ? удалять видео;
-- ставить **задачу** на транскодировку видео в выбранном **пресете**;
-- отменять задачу в процессе транскодировки;
-- следить за статусом задачи транскодирования.
+- загружать видео
+![Upload Interface](develop/e2e/shot/02/01-upload-tab-ready.png)
+- просматривать список видео
+![Videos List](develop/e2e/shot/02/03-video-row-in-table.png)
+- просматривать и редактировать некоторые свойства видео
+![Video Details](develop/e2e/shot/02/04-video-details-filled.png)
+- удалять видео
+![Delete Video](develop/e2e/shot/04/02-videos-tab-open.png)
+- ставить **задачу** на транскодировку видео в выбранном **пресете**
+![Transcode Started](develop/e2e/shot/04/04-transcode-clicked.png)
+- отменять задачу в процессе транскодировки
+![Cancel Transcode](develop/e2e/shot/05/05-task-cancelled.png)
+- следить за статусом задачи транскодирования
+![Task Completed](develop/e2e/shot/04/05-task-completed.png)
+- скачивать результат
+![Download Result](develop/e2e/shot/04/06-download-verified.png)
+
+**Процесс транскодирования:**
 
 Авторизованный пользователь с админскими правами видит EasyAdmin **админку** с CRUD:
 
 - пользователей;
+![Admin Users](develop/e2e/shot/03/02-admin-users-and-menu.png)
 - видео с **превью**;
+![Admin Videos CRUD](develop/e2e/shot/03/06-admin-videos-uploaded-file.png)
 - список пресетов;
+![Presets Management](develop/e2e/shot/03/03-presets-created.png)
 - текущих и законченных задач транскодирования (? с возможностью прервать задачу).
 - **тарифы**
+![Tariffs Configuration](develop/e2e/shot/03/04-tarifs-created.png)
+- **логи**
+![Admin Logs](develop/e2e/shot/03/10-admin-logs-readonly-with-filters.png)
 
 ### Ролевая модель
 
@@ -101,4 +128,3 @@ TBD English
 **Scalability:** Эластичное потребление ресурсов облака (AutoScale) в зависимости от длины очереди задач.
 
 **Reliability:** Гарантированная доставка задач через брокер сообщений и возобновление обработки при сбоях воркеров.
-
