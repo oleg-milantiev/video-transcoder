@@ -6,6 +6,7 @@ namespace App\Application\Service\Video;
 
 use App\Application\Command\Mercure\PublishMercureMessage;
 use App\Application\DTO\MercureMessageDTO;
+use App\Application\DTO\VideoRealtimePayloadDTO;
 use App\Domain\Video\Entity\Video;
 use App\Domain\Video\Service\Storage\StorageInterface;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
@@ -30,24 +31,16 @@ final readonly class VideoRealtimeNotifier
         }
 
         $hasPreview = ($video->meta()['preview'] ?? false) === true;
+        $poster = $hasPreview ? $this->storage->publicUrl($this->storage->previewKey($video)) : null;
 
-        // todo sync contract with frontend
-        $payload = array_merge([
-            'videoId' => $video->id()->toRfc4122(),
-            'title' => $video->title()->value(),
-            'poster' => $hasPreview ? $this->storage->publicUrl($this->storage->previewKey($video)) : null,
-            'meta' => $video->meta(),
-            'createdAt' => $video->createdAt()->format(DATE_ATOM),
-            'updatedAt' => $video->updatedAt()?->format(DATE_ATOM),
-        ], $extraPayload);
+        $dto = VideoRealtimePayloadDTO::fromVideo($video, $poster);
 
         $this->commandBus->dispatch(new PublishMercureMessage(new MercureMessageDTO(
             action: $action,
             entity: 'video',
             id: $video->id(),
             userId: $video->userId(),
-            payload: $payload,
+            payload: array_merge($dto->toArray(), $extraPayload),
         )));
     }
 }
-
