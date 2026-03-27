@@ -7,11 +7,6 @@
 - phpUnit (+stan)
 - e2e
 
-## Sprint 0.0.1
-
-e2e
-- тест переименования видео
-
 ## Sprint 0.0.2
 
 - синхронизировать docker-compose и docker-compose.release
