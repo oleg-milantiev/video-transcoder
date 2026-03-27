@@ -1,7 +1,7 @@
 services:
     nginx:
         restart: always
-        image: olegmilantiev/yc-nginx:${PROJECT_VERSION}
+        image: nginx:1.28-alpine
         ports:
             - "80:80"
             - "443:443"
@@ -13,7 +13,10 @@ services:
 
     cron:
         restart: always
-        image: olegmilantiev/yc-php:${PROJECT_VERSION}
+        build:
+            context: .
+            dockerfile: ./docker/yc-php/Dockerfile
+            target: dev
         command: crond -f -l 2 -c /etc/crontabs
         env_file:
             - .env
@@ -32,9 +35,6 @@ services:
             target: dev
         env_file:
             - .env
-        environment:
-            - APP_ENV=dev
-            - APP_DEBUG=1
         depends_on:
             - redis
             - postgres
@@ -49,12 +49,12 @@ services:
 
     ffmpeg:
         restart: always
-        image: olegmilantiev/yc-ffmpeg:${PROJECT_VERSION}
+        build:
+            context: .
+            dockerfile: ./docker/yc-php/Dockerfile
+            target: dev
         env_file:
             - .env
-        environment:
-            - APP_ENV=dev
-            - APP_DEBUG=1
         depends_on:
             - redis
             - postgres
@@ -72,12 +72,12 @@ services:
 
     ffmpeg-transcode:
         restart: always
-        image: olegmilantiev/yc-ffmpeg:${PROJECT_VERSION}
+        build:
+            context: .
+            dockerfile: ./docker/yc-php/Dockerfile
+            target: dev
         env_file:
             - .env
-        environment:
-            - APP_ENV=dev
-            - APP_DEBUG=1
         depends_on:
             - redis
             - postgres
