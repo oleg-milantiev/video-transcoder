@@ -11,7 +11,7 @@ class TaskInfoDTOTest extends TestCase
 {
     public function testStoresPrimitiveValues(): void
     {
-        $dto = new TaskInfoDTO('PROCESSING', 65, '2026-03-18 09:00', '10101010-1010-4010-8010-101010101010');
+        $dto = new TaskInfoDTO('PROCESSING', 65, '2026-03-18 09:00', 'example.mp4', '10101010-1010-4010-8010-101010101010');
 
         $this->assertSame('PROCESSING', $dto->status);
         $this->assertSame(65, $dto->progress);
@@ -21,7 +21,7 @@ class TaskInfoDTOTest extends TestCase
 
     public function testIdIsOptional(): void
     {
-        $dto = new TaskInfoDTO('PENDING', 0, '2026-03-18 10:00');
+        $dto = new TaskInfoDTO('PENDING', 0, '2026-03-18 10:00', 'file-placeholder.mp4');
 
         $this->assertNull($dto->id);
     }

@@ -135,6 +135,7 @@ export function createTasksTabActions(params) {
                 ...task,
                 status: typeof update.status === 'string' ? update.status : task.status,
                 progress: toInt(update.progress, task.progress),
+                downloadFilename: typeof update.downloadFilename === 'string' ? update.downloadFilename : task.downloadFilename,
             };
         });
     }

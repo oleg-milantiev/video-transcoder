@@ -26,7 +26,7 @@ function createTaskAction(vm, preset) {
             {
                 href: vm.taskDownloadUrl(task.id),
                 class: 'btn btn-outline-primary btn-sm',
-                download: '',
+                download: task.downloadFilename,
             },
             'Download'
         );

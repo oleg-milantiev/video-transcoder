@@ -7,7 +7,7 @@ function renderTaskAction(vm, task) {
             {
                 href: vm.getTaskDownloadUrl(task.id),
                 class: 'btn btn-outline-primary btn-sm',
-                download: '',
+                download: task.downloadFilename,
             },
             'Download'
         );

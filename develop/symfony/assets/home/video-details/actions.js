@@ -220,6 +220,7 @@ export function createVideoDetailsActions(params) {
                 status: 'PENDING',
                 progress: 0,
                 createdAt: typeof update.createdAt === 'string' ? update.createdAt : '-',
+                downloadFilename: typeof update.downloadFilename === 'string' ? update.downloadFilename : '',
             };
 
             return {
@@ -230,6 +231,7 @@ export function createVideoDetailsActions(params) {
                     status: typeof update.status === 'string' ? update.status : currentTask.status,
                     progress: toInt(update.progress, currentTask.progress),
                     createdAt: typeof update.createdAt === 'string' ? update.createdAt : currentTask.createdAt,
+                    downloadFilename: typeof update.downloadFilename === 'string' ? update.downloadFilename : currentTask.downloadFilename,
                 },
             };
         });

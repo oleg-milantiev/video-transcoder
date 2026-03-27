@@ -96,9 +96,11 @@ class VideoRepository extends ServiceEntityRepository implements VideoRepository
                 t.id AS task_id,
                 t.status,
                 t.progress,
+                CONCAT(v.title, ' - ', p.title) as download_filename,
                 TO_CHAR(t.created_at, 'YYYY-MM-DD HH24:MI') as created_at
             FROM preset p
             LEFT JOIN task t ON p.id = t.preset_id AND t.video_id = :videoId
+            LEFT JOIN video v ON t.video_id = v.id
             ORDER BY p.title
         SQL;
 
@@ -115,6 +117,7 @@ class VideoRepository extends ServiceEntityRepository implements VideoRepository
                     'status' => (int)$row['status'],
                     'progress' => (int)$row['progress'],
                     'createdAt' => $row['created_at'],
+                    'downloadFilename' => $row['download_filename'],
                 ] : null,
             ];
         }

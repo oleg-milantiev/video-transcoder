@@ -36,6 +36,7 @@ class GetVideoDetailsHandlerTest extends TestCase
                         'status' => 2,
                         'progress' => 75,
                         'createdAt' => '2024-03-18 10:00',
+                        'downloadFilename' => 'HD - example.mp4',
                     ],
                 ],
             ]);

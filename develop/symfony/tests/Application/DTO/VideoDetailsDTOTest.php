@@ -37,7 +37,7 @@ class VideoDetailsDTOTest extends TestCase
         $presetDto = new PresetWithTaskDTO(
             id: '123e4567-e89b-42d3-a456-426614174005',
             title: 'Mobile',
-            task: new TaskInfoDTO('PENDING', 0, '2026-03-18 08:50', '123e4567-e89b-42d3-a456-426614174055'),
+            task: new TaskInfoDTO('PENDING', 0, '2026-03-18 08:50', 'mobile-file.mp4', '123e4567-e89b-42d3-a456-426614174055'),
         );
 
         $storage = $this->createStub(StorageInterface::class);

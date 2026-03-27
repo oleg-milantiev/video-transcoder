@@ -44,6 +44,7 @@ final readonly class GetVideoDetailsHandler
                     status: TaskStatus::tryFrom((int)$presetData['task']['status'])?->name ?? 'UNKNOWN',
                     progress: $presetData['task']['progress'],
                     createdAt: $presetData['task']['createdAt'],
+                    downloadFilename: $presetData['task']['downloadFilename'],
                     id: $presetData['task']['id'],
                 );
             }
