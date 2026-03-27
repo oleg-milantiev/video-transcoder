@@ -8,9 +8,11 @@ use App\Application\Event\PatchVideoSuccess;
 use App\Application\Query\PatchVideoQuery;
 use App\Application\Logging\LogServiceInterface;
 use App\Application\Service\Video\VideoRealtimeNotifier;
+use App\Application\Service\Task\TaskRealtimeNotifier;
 use App\Application\Exception\VideoNotFoundException;
 use App\Domain\Video\ValueObject\VideoTitle;
 use App\Domain\Video\Repository\VideoRepositoryInterface;
+use App\Domain\Video\Repository\TaskRepositoryInterface;
 use App\Infrastructure\Security\Voter\VideoAccessVoter;
 use Psr\Log\LogLevel;
 use Symfony\Bundle\SecurityBundle\Security;
@@ -27,6 +29,8 @@ final readonly class PatchVideoHandler
         private VideoRepositoryInterface $videoRepository,
         private Security $security,
         private VideoRealtimeNotifier $videoRealtimeNotifier,
+        private TaskRepositoryInterface $taskRepository,
+        private TaskRealtimeNotifier $taskRealtimeNotifier,
         private LogServiceInterface $logService,
     ) {}
 
@@ -71,5 +75,9 @@ final readonly class PatchVideoHandler
         ));
         $this->logService->log('video', $video->id(), LogLevel::INFO, 'Video title updated', ['videoId' => $video->id()->toRfc4122()]);
         $this->videoRealtimeNotifier->notifyVideoUpdated($video, 'updated', ['title' => $video->title()->value()]);
+        $tasks = $this->taskRepository->findByVideoId($query->videoId);
+        foreach ($tasks as $task) {
+            $this->taskRealtimeNotifier->notifyTaskUpdated($task, 'updated');
+        }
     }
 }

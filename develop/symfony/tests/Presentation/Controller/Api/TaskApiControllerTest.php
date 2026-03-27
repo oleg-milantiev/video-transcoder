@@ -179,7 +179,7 @@ final class TaskApiControllerTest extends ApiWebTestCase
         $this->replaceService(LogServiceInterface::class, $logService);
 
         $videoRepository = $this->createMock(VideoRepositoryInterface::class);
-        $videoRepository->expects($this->once())->method('findById')->with($task->videoId())->willReturn($video);
+        $videoRepository->expects($this->atLeast(2))->method('findById')->with($task->videoId())->willReturn($video);
         $this->replaceService(VideoRepositoryInterface::class, $videoRepository);
 
         $security = $this->createMock(Security::class);
@@ -220,7 +220,7 @@ final class TaskApiControllerTest extends ApiWebTestCase
         $this->replaceService(LogServiceInterface::class, $logService);
 
         $videoRepository = $this->createMock(VideoRepositoryInterface::class);
-        $videoRepository->expects($this->once())->method('findById')->with($task->videoId())->willReturn($video);
+        $videoRepository->expects($this->atLeast(2))->method('findById')->with($task->videoId())->willReturn($video);
         $this->replaceService(VideoRepositoryInterface::class, $videoRepository);
 
         $security = $this->createMock(Security::class);

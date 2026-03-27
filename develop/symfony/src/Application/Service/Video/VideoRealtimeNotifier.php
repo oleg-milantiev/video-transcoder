@@ -31,8 +31,10 @@ final readonly class VideoRealtimeNotifier
 
         $hasPreview = ($video->meta()['preview'] ?? false) === true;
 
+        // todo sync contract with frontend
         $payload = array_merge([
             'videoId' => $video->id()->toRfc4122(),
+            'title' => $video->title()->value(),
             'poster' => $hasPreview ? $this->storage->publicUrl($this->storage->previewKey($video)) : null,
             'meta' => $video->meta(),
             'createdAt' => $video->createdAt()->format(DATE_ATOM),

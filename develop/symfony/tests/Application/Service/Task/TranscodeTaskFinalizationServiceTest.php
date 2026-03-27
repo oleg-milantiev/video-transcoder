@@ -20,6 +20,8 @@ use Symfony\Component\Cache\Adapter\ArrayAdapter;
 use Symfony\Component\Messenger\Envelope;
 use Symfony\Component\Messenger\MessageBusInterface;
 use App\Domain\Shared\ValueObject\Uuid;
+use App\Domain\Video\Repository\PresetRepositoryInterface;
+use App\Domain\Video\Repository\VideoRepositoryInterface;
 
 class TranscodeTaskFinalizationServiceTest extends TestCase
 {
@@ -58,7 +60,7 @@ class TranscodeTaskFinalizationServiceTest extends TestCase
         $commandBus->expects($this->once())
             ->method('dispatch')
             ->willReturn(new Envelope(new \stdClass()));
-        $taskRealtimeNotifier = new TaskRealtimeNotifier($commandBus);
+        $taskRealtimeNotifier = new TaskRealtimeNotifier($commandBus, $this->createStub(PresetRepositoryInterface::class), $this->createStub(VideoRepositoryInterface::class));
 
         $service = new TranscodeTaskFinalizationService($taskRepository, $logService, $taskRealtimeNotifier, new FlashNotificationFactory(), $cancellationTrigger);
         $service->handleCancellation($originalTask, $report);
@@ -98,7 +100,7 @@ class TranscodeTaskFinalizationServiceTest extends TestCase
         $commandBus->expects($this->once())
             ->method('dispatch')
             ->willReturn(new Envelope(new \stdClass()));
-        $taskRealtimeNotifier = new TaskRealtimeNotifier($commandBus);
+        $taskRealtimeNotifier = new TaskRealtimeNotifier($commandBus, $this->createStub(PresetRepositoryInterface::class), $this->createStub(VideoRepositoryInterface::class));
 
         $service = new TranscodeTaskFinalizationService($taskRepository, $logService, $taskRealtimeNotifier, new FlashNotificationFactory(), $cancellationTrigger);
         $service->handleSuccess($task, 'video/11.mp4', $report);
@@ -125,7 +127,7 @@ class TranscodeTaskFinalizationServiceTest extends TestCase
         $commandBus->expects($this->once())
             ->method('dispatch')
             ->willReturn(new Envelope(new \stdClass()));
-        $taskRealtimeNotifier = new TaskRealtimeNotifier($commandBus);
+        $taskRealtimeNotifier = new TaskRealtimeNotifier($commandBus, $this->createStub(PresetRepositoryInterface::class), $this->createStub(VideoRepositoryInterface::class));
 
         $service = new TranscodeTaskFinalizationService($taskRepository, $logService, $taskRealtimeNotifier, new FlashNotificationFactory(), new TaskCancellationTrigger(new ArrayAdapter()));
         $service->handleFailure($task, new \RuntimeException('boom'));

@@ -26,6 +26,7 @@ use PHPUnit\Framework\TestCase;
 use Symfony\Component\Messenger\Envelope;
 use Symfony\Component\Messenger\MessageBusInterface;
 use App\Domain\Shared\ValueObject\Uuid;
+use App\Domain\Video\Repository\VideoRepositoryInterface;
 
 class TranscodeTaskPreparationServiceTest extends TestCase
 {
@@ -72,7 +73,7 @@ class TranscodeTaskPreparationServiceTest extends TestCase
         $commandBus->expects($this->once())
             ->method('dispatch')
             ->willReturn(new Envelope(new \stdClass()));
-        $taskRealtimeNotifier = new TaskRealtimeNotifier($commandBus);
+        $taskRealtimeNotifier = new TaskRealtimeNotifier($commandBus, $this->createStub(PresetRepositoryInterface::class), $this->createStub(VideoRepositoryInterface::class));
 
         $service = new TranscodeTaskPreparationService($presetRepository, $taskRepository, $logService, $taskRealtimeNotifier, new FlashNotificationFactory(), $storage);
         $context = $service->prepare($task, $video);
@@ -107,7 +108,7 @@ class TranscodeTaskPreparationServiceTest extends TestCase
         $storage = $this->createStub(StorageInterface::class);
         $commandBus = $this->createMock(MessageBusInterface::class);
         $commandBus->expects($this->never())->method('dispatch');
-        $taskRealtimeNotifier = new TaskRealtimeNotifier($commandBus);
+        $taskRealtimeNotifier = new TaskRealtimeNotifier($commandBus, $this->createStub(PresetRepositoryInterface::class), $this->createStub(VideoRepositoryInterface::class));
 
         $service = new TranscodeTaskPreparationService($presetRepository, $taskRepository, $logService, $taskRealtimeNotifier, new FlashNotificationFactory(), $storage);
 
