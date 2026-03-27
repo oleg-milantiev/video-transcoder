@@ -47,10 +47,11 @@ PROJECT_VERSION=$PROJECT_VERSION docker compose \
   -f docker-compose.release.yml \
   up -d --wait ffmpeg ffmpeg-transcode
 
-docker compose -p "$PROJECT_NAME" -f docker-compose.release.yml exec -T php \
-  vendor/bin/phpunit tests/
-docker compose -p "$PROJECT_NAME" -f docker-compose.release.yml exec -T php \
-  composer stan
+# no phpUnit and stan in prod env
+#docker compose -p "$PROJECT_NAME" -f docker-compose.release.yml exec -T php \
+#  vendor/bin/phpunit tests/
+#docker compose -p "$PROJECT_NAME" -f docker-compose.release.yml exec -T php \
+#  composer stan
 
 docker compose -p "$PROJECT_NAME" -f docker-compose.release.yml exec -T playwright bash -lc "
   cd /work/e2e

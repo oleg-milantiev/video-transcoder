@@ -44,6 +44,7 @@ ARG REDIS_PORT
 
 ENV APP_ENV=prod
 RUN composer install --no-interaction --prefer-dist --no-progress --optimize-autoloader --no-dev
+RUN php bin/console asset-map:compile
 
 RUN chown -R www-data:www-data /var/www/yc
 EXPOSE 9000

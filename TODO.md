@@ -16,7 +16,6 @@
   - добавить проверку realtime событий
     - обновление downloadFilename видео и тасков по переименованию видео
     - удаление тасков по удалению видео
-- синхронизировать docker-compose и docker-compose.release
 - щас можно бесконечно клацать transcode -> cancel -> transcode -> cancel -> ...
   - как-то завязать на тариф
 - удалить mp4 по отмене задачи транскодера в TranscodeVideoHandler
@@ -26,7 +25,6 @@
 - DDD
   - cлабая типизация meta: array в Task/Video — риск нарушения инвариантов и неявной связи с application-слоем.
 - frontend
-  - каскад уведомлений
   - 401 так и не обработался
   - убрать delete с видео, если не canBeDeleted (например, внутри есть задачи в pending / processing)
 - (? xdebug) phpUnit coverage
