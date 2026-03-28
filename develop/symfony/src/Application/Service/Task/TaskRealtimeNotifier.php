@@ -31,12 +31,9 @@ final readonly class TaskRealtimeNotifier
 
         $dto = TaskRealtimePayloadDTO::fromTask($task);
 
-        if ($action === 'created' || $action === 'updated') {
-            $video = $this->videoRepository->findById($task->videoId());
-            $preset = $this->presetRepository->findById($task->presetId());
-
-            $dto->addVideoPresetFields($video, $preset);
-        }
+        $video = $this->videoRepository->findById($task->videoId());
+        $preset = $this->presetRepository->findById($task->presetId());
+        $dto->addVideoPresetFields($video, $preset);
 
         $this->commandBus->dispatch(new PublishMercureMessage(new MercureMessageDTO(
             action: $action,
