@@ -46,50 +46,40 @@ services:
             - "host.docker.internal:host-gateway"
         volumes:
             - ./symfony:/var/www/yc
-# use filesystem for debug
-#            - symfony-var:/var/www/yc/var
 
     ffmpeg:
         restart: always
         build:
-            context: .
-            dockerfile: ./docker/yc-php/Dockerfile
+            context: ./docker/yc-ffmpeg
+            dockerfile: ./Dockerfile
             target: dev
         env_file:
             - .env
+        environment:
+            - PHP_IDE_CONFIG=serverName=yc.local
         depends_on:
             - redis
             - postgres
         command: sh -c '/var/www/yc/bin/console messenger:consume async -vvv'
-#        mem_limit: 256m
-        deploy:
-            replicas: 1
-#            resources:
-#                limits:
-#                    memory: 256M
         volumes:
             - ./symfony:/var/www/yc
-# use filesystem for debug
-#            - symfony-var:/var/www/yc/var
 
     ffmpeg-transcode:
         restart: always
         build:
-            context: .
-            dockerfile: ./docker/yc-php/Dockerfile
+            context: ./docker/yc-ffmpeg
+            dockerfile: ./Dockerfile
             target: dev
         env_file:
             - .env
+        environment:
+            - PHP_IDE_CONFIG=serverName=yc.local
         depends_on:
             - redis
             - postgres
         command: sh -c '/var/www/yc/bin/console messenger:consume async_transcode -vvv'
-#        mem_limit: 256m
         deploy:
             replicas: 2
-#            resources:
-#                limits:
-#                    memory: 256M
         volumes:
             - ./symfony:/var/www/yc
 
@@ -134,8 +124,6 @@ services:
 volumes:
     # PostgreSQL data volume
     db-data:
-
-    symfony-var:
 
 networks:
     appnet:

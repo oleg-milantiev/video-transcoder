@@ -9,5 +9,9 @@ if [ -z "$GIT_REPOSITORY_URL" ]; then
     exit 1
 fi
 
-docker build --build-arg PROJECT_VERSION=${PROJECT_VERSION} --build-arg GIT_REPOSITORY_URL=${GIT_REPOSITORY_URL} -t olegmilantiev/yc-ffmpeg:${PROJECT_VERSION} . && \
-    docker push olegmilantiev/yc-ffmpeg:${PROJECT_VERSION}
+docker build \
+	--target=prod \
+	--build-arg PROJECT_VERSION=${PROJECT_VERSION} \
+	--build-arg GIT_REPOSITORY_URL=${GIT_REPOSITORY_URL} \
+	-t olegmilantiev/yc-ffmpeg:${PROJECT_VERSION} . && \
+docker push olegmilantiev/yc-ffmpeg:${PROJECT_VERSION}
