@@ -168,6 +168,11 @@
   <component name="PhpStanOptionsConfiguration">
     <option name="transferred" value="true" />
   </component>
+  <component name="PhpUnit">
+    <phpunit_settings>
+      <phpunit_by_interpreter interpreter_id="6e4d97d2-cb5d-4bf8-b849-8c8b9096fa76" load_method="PHPUNIT_PHAR" custom_loader_path="" phpunit_phar_path="/var/www/yc/bin/phpunit" />
+    </phpunit_settings>
+  </component>
   <component name="Psalm">
     <Psalm_settings>
       <psalm_fixer_by_interpreter asDefaultInterpreter="true" interpreter_id="6e4d97d2-cb5d-4bf8-b849-8c8b9096fa76" timeout="60000" />

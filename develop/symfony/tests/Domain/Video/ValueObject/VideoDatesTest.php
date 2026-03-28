@@ -40,5 +40,16 @@ final class VideoDatesTest extends TestCase
             new \DateTimeImmutable('2026-03-19 09:59:59'),
         );
     }
+
+    public function testFromPersistenceWithUpdatedAt(): void
+    {
+        $createdAt = new \DateTimeImmutable('2026-03-19 10:00:00');
+        $updatedAt = new \DateTimeImmutable('2026-03-19 11:00:00');
+
+        $dates = VideoDates::fromPersistence($createdAt, $updatedAt);
+
+        $this->assertSame($createdAt, $dates->createdAt());
+        $this->assertSame($updatedAt, $dates->updatedAt());
+    }
 }
 

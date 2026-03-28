@@ -34,4 +34,13 @@ class PresetNameTest extends TestCase
         $this->expectException(InvalidPresetName::class);
         new PresetName(str_repeat('a', 256));
     }
+
+    public function testEquals(): void
+    {
+        $a = new PresetName('HD1');
+        $b = new PresetName('HD1');
+        $c = new PresetName('4K2');
+        $this->assertTrue($a->equals($b));
+        $this->assertFalse($a->equals($c));
+    }
 }

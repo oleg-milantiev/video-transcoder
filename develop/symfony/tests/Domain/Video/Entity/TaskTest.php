@@ -7,6 +7,7 @@ namespace App\Tests\Domain\Video\Entity;
 use App\Domain\Video\Entity\Task;
 use App\Domain\Video\Exception\TaskAlreadyDeleted;
 use App\Domain\Video\ValueObject\Progress;
+use App\Domain\Video\ValueObject\TaskDates;
 use App\Domain\Video\ValueObject\TaskStatus;
 use PHPUnit\Framework\TestCase;
 use App\Domain\Shared\ValueObject\Uuid;
@@ -204,6 +205,146 @@ final class TaskTest extends TestCase
 
         $this->expectException(TaskAlreadyDeleted::class);
         $task->updateMeta(['x' => 'y']);
+    }
+
+    public function testReconstituteSetsAllFields(): void
+    {
+        $id = Uuid::fromString('dddddddd-dddd-4ddd-8ddd-dddddddddddd');
+        $createdAt = new \DateTimeImmutable('2026-03-18 10:00:00');
+
+        $task = Task::reconstitute(
+            videoId: $this->videoId(),
+            presetId: $this->presetId(),
+            userId: $this->userId(),
+            status: TaskStatus::PROCESSING,
+            progress: new Progress(50),
+            dates: TaskDates::create($createdAt),
+            id: $id,
+            meta: ['output' => 'test.mp4'],
+        );
+
+        $this->assertSame($id, $task->id());
+        $this->assertSame(TaskStatus::PROCESSING, $task->status());
+        $this->assertSame(50, $task->progress()->value());
+        $this->assertSame('test.mp4', $task->meta()['output']);
+        $this->assertSame($createdAt, $task->createdAt());
+        $this->assertSame($this->videoId()->toRfc4122(), $task->videoId()->toRfc4122());
+        $this->assertSame($this->presetId()->toRfc4122(), $task->presetId()->toRfc4122());
+        $this->assertSame($this->userId()->toRfc4122(), $task->userId()->toRfc4122());
+    }
+
+    public function testReconstitutedTaskWithDeletedStatusIsDeleted(): void
+    {
+        $task = Task::reconstitute(
+            videoId: $this->videoId(),
+            presetId: $this->presetId(),
+            userId: $this->userId(),
+            status: TaskStatus::DELETED,
+            progress: new Progress(0),
+            dates: TaskDates::create(),
+            id: Uuid::fromString('dddddddd-dddd-4ddd-8ddd-dddddddddddd'),
+            meta: [],
+            deleted: false,
+        );
+
+        $this->assertTrue($task->isDeleted());
+    }
+
+    public function testCanStartReturnsFalseForDeletedTask(): void
+    {
+        $task = Task::create($this->videoId(), $this->presetId(), $this->userId());
+        $task->markDeleted();
+
+        $this->assertFalse($task->canStart(12.5));
+    }
+
+    public function testRestartAfterCancelSetsPendingStatus(): void
+    {
+        $task = Task::create($this->videoId(), $this->presetId(), $this->userId());
+        $task->cancel();
+        $task->restart();
+
+        $this->assertSame(TaskStatus::PENDING, $task->status());
+        $this->assertSame(0, $task->progress()->value());
+    }
+
+    public function testRestartAfterFailSetsPendingStatus(): void
+    {
+        $task = Task::create($this->videoId(), $this->presetId(), $this->userId());
+        $task->fail();
+        $task->restart();
+
+        $this->assertSame(TaskStatus::PENDING, $task->status());
+        $this->assertSame(0, $task->progress()->value());
+    }
+
+    public function testRestartOnPendingTaskThrows(): void
+    {
+        $task = Task::create($this->videoId(), $this->presetId(), $this->userId());
+
+        $this->expectException(\DomainException::class);
+        $task->restart();
+    }
+
+    public function testFailOnFinishedTaskThrows(): void
+    {
+        $task = Task::create($this->videoId(), $this->presetId(), $this->userId());
+        $task->start(12.5);
+        $task->updateProgress(new Progress(100));
+
+        $this->expectException(\DomainException::class);
+        $task->fail();
+    }
+
+    public function testCanBeCancelledReturnsFalseForDeletedTask(): void
+    {
+        $task = Task::create($this->videoId(), $this->presetId(), $this->userId());
+        $task->markDeleted();
+
+        $this->assertFalse($task->canBeCancelled());
+    }
+
+    public function testAssignIdSetsId(): void
+    {
+        $task = Task::create($this->videoId(), $this->presetId(), $this->userId());
+        $id = Uuid::fromString('dddddddd-dddd-4ddd-8ddd-dddddddddddd');
+
+        $task->assignId($id);
+
+        $this->assertSame($id, $task->id());
+    }
+
+    public function testAssignSameIdDoesNotThrow(): void
+    {
+        $task = Task::create($this->videoId(), $this->presetId(), $this->userId());
+        $id = Uuid::fromString('dddddddd-dddd-4ddd-8ddd-dddddddddddd');
+
+        $task->assignId($id);
+        $task->assignId($id);
+
+        $this->assertSame($id, $task->id());
+    }
+
+    public function testAssignDifferentIdThrows(): void
+    {
+        $task = Task::create($this->videoId(), $this->presetId(), $this->userId());
+        $id1 = Uuid::fromString('dddddddd-dddd-4ddd-8ddd-dddddddddddd');
+        $id2 = Uuid::fromString('eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee');
+
+        $task->assignId($id1);
+
+        $this->expectException(\DomainException::class);
+        $task->assignId($id2);
+    }
+
+    public function testClearOutputSetsOutputToNull(): void
+    {
+        $task = Task::create($this->videoId(), $this->presetId(), $this->userId());
+        $task->updateMeta(['output' => 'video.mp4']);
+
+        $task->clearOutput();
+
+        $this->assertNull($task->meta()['output']);
     }
 
     private function videoId(): Uuid

@@ -23,5 +23,75 @@ class TaskStatusTest extends TestCase
     {
         $this->assertSame(TaskStatus::PENDING, TaskStatus::from(TaskStatus::PENDING->value));
     }
+
+    public function testFactoryMethods(): void
+    {
+        $this->assertSame(TaskStatus::PENDING, TaskStatus::pending());
+        $this->assertSame(TaskStatus::PROCESSING, TaskStatus::processing());
+        $this->assertSame(TaskStatus::COMPLETED, TaskStatus::completed());
+        $this->assertSame(TaskStatus::FAILED, TaskStatus::failed());
+        $this->assertSame(TaskStatus::CANCELLED, TaskStatus::cancelled());
+        $this->assertSame(TaskStatus::DELETED, TaskStatus::deleted());
+    }
+
+    public function testCanBeStarted(): void
+    {
+        $this->assertTrue(TaskStatus::PENDING->canBeStarted());
+        $this->assertTrue(TaskStatus::CANCELLED->canBeStarted());
+        $this->assertTrue(TaskStatus::FAILED->canBeStarted());
+        $this->assertFalse(TaskStatus::PROCESSING->canBeStarted());
+        $this->assertFalse(TaskStatus::COMPLETED->canBeStarted());
+        $this->assertFalse(TaskStatus::DELETED->canBeStarted());
+    }
+
+    public function testCanBeDeleted(): void
+    {
+        $this->assertFalse(TaskStatus::PENDING->canBeDeleted());
+        $this->assertFalse(TaskStatus::PROCESSING->canBeDeleted());
+        $this->assertTrue(TaskStatus::COMPLETED->canBeDeleted());
+        $this->assertTrue(TaskStatus::FAILED->canBeDeleted());
+        $this->assertTrue(TaskStatus::CANCELLED->canBeDeleted());
+        $this->assertTrue(TaskStatus::DELETED->canBeDeleted());
+    }
+
+    public function testCanBeRestarted(): void
+    {
+        $this->assertTrue(TaskStatus::CANCELLED->canBeRestarted());
+        $this->assertTrue(TaskStatus::FAILED->canBeRestarted());
+        $this->assertFalse(TaskStatus::PENDING->canBeRestarted());
+        $this->assertFalse(TaskStatus::PROCESSING->canBeRestarted());
+        $this->assertFalse(TaskStatus::COMPLETED->canBeRestarted());
+        $this->assertFalse(TaskStatus::DELETED->canBeRestarted());
+    }
+
+    public function testIsTranscoding(): void
+    {
+        $this->assertTrue(TaskStatus::PENDING->isTranscoding());
+        $this->assertTrue(TaskStatus::PROCESSING->isTranscoding());
+        $this->assertFalse(TaskStatus::COMPLETED->isTranscoding());
+        $this->assertFalse(TaskStatus::FAILED->isTranscoding());
+        $this->assertFalse(TaskStatus::CANCELLED->isTranscoding());
+        $this->assertFalse(TaskStatus::DELETED->isTranscoding());
+    }
+
+    public function testIsDeleted(): void
+    {
+        $this->assertTrue(TaskStatus::DELETED->isDeleted());
+        $this->assertFalse(TaskStatus::PENDING->isDeleted());
+        $this->assertFalse(TaskStatus::PROCESSING->isDeleted());
+        $this->assertFalse(TaskStatus::COMPLETED->isDeleted());
+        $this->assertFalse(TaskStatus::FAILED->isDeleted());
+        $this->assertFalse(TaskStatus::CANCELLED->isDeleted());
+    }
+
+    public function testIsFinished(): void
+    {
+        $this->assertTrue(TaskStatus::COMPLETED->isFinished());
+        $this->assertTrue(TaskStatus::FAILED->isFinished());
+        $this->assertTrue(TaskStatus::CANCELLED->isFinished());
+        $this->assertTrue(TaskStatus::DELETED->isFinished());
+        $this->assertFalse(TaskStatus::PENDING->isFinished());
+        $this->assertFalse(TaskStatus::PROCESSING->isFinished());
+    }
 }
 

@@ -76,4 +76,65 @@ final class RealtimeNotificationTest extends TestCase
             imageUrl: 'bad url',
         );
     }
+
+    public function testThrowsWhenTitleTooLong(): void
+    {
+        $this->expectException(InvalidRealtimeNotification::class);
+
+        RealtimeNotification::create(
+            level: RealtimeNotificationLevel::INFO,
+            title: str_repeat('a', 141),
+            html: 'Some text',
+        );
+    }
+
+    public function testHtmlGetterReturnsHtml(): void
+    {
+        $notification = RealtimeNotification::create(
+            level: RealtimeNotificationLevel::INFO,
+            title: 'Title',
+            html: '<b>Content</b>',
+        );
+
+        $this->assertSame('<b>Content</b>', $notification->html());
+    }
+
+    public function testNullImageUrlProducesNullImageAlt(): void
+    {
+        $notification = RealtimeNotification::create(
+            level: RealtimeNotificationLevel::INFO,
+            title: 'Title',
+            html: 'Content',
+            imageUrl: null,
+        );
+
+        $this->assertNull($notification->imageUrl());
+        $this->assertNull($notification->imageAlt());
+    }
+
+    public function testExplicitImageAltIsUsedWhenProvided(): void
+    {
+        $notification = RealtimeNotification::create(
+            level: RealtimeNotificationLevel::SUCCESS,
+            title: 'Title',
+            html: 'Content',
+            imageUrl: '/img/thumb.jpg',
+            imageAlt: 'Custom alt text',
+        );
+
+        $this->assertSame('Custom alt text', $notification->imageAlt());
+    }
+
+    public function testEmptyStringImageUrlTreatedAsNull(): void
+    {
+        $notification = RealtimeNotification::create(
+            level: RealtimeNotificationLevel::INFO,
+            title: 'Title',
+            html: 'Content',
+            imageUrl: '   ',
+        );
+
+        $this->assertNull($notification->imageUrl());
+        $this->assertNull($notification->imageAlt());
+    }
 }

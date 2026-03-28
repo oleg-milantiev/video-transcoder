@@ -73,5 +73,30 @@ class TaskDatesTest extends TestCase
             ->markStarted(new \DateTimeImmutable('2026-03-18 10:05:00'))
             ->markStarted(new \DateTimeImmutable('2026-03-18 10:06:00'));
     }
+
+    public function testRestartClearsStartedAt(): void
+    {
+        $createdAt = new \DateTimeImmutable('2026-03-18 10:00:00');
+        $startedAt = new \DateTimeImmutable('2026-03-18 10:05:00');
+
+        $dates = TaskDates::create($createdAt)
+            ->markStarted($startedAt)
+            ->restart();
+
+        $this->assertSame($createdAt, $dates->createdAt());
+        $this->assertNull($dates->startedAt());
+        $this->assertNotNull($dates->updatedAt());
+    }
+
+    public function testInvalidUpdatedAtBeforeCreatedAtWithoutStartedAtThrows(): void
+    {
+        $this->expectException(InvalidTaskDates::class);
+
+        TaskDates::fromPersistence(
+            new \DateTimeImmutable('2026-03-18 10:00:00'),
+            null,
+            new \DateTimeImmutable('2026-03-18 09:59:59'),
+        );
+    }
 }
 

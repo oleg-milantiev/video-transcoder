@@ -143,5 +143,79 @@ final class VideoTest extends TestCase
         $this->expectException(VideoHasTranscodingTasks::class);
         $video->markDeleted([$task]);
     }
+
+    public function testClearSourceKeySetsSourceKeyToNull(): void
+    {
+        $video = Video::reconstitute(
+            new VideoTitle('Source video'),
+            new FileExtension('mp4'),
+            Uuid::fromString('11111111-1111-4111-8111-111111111115'),
+            ['sourceKey' => 'videos/original.mp4'],
+            VideoDates::create(),
+            Uuid::fromString('11111111-1111-4111-8111-111111111116'),
+        );
+
+        $video->clearSourceKey();
+
+        $this->assertNull($video->meta()['sourceKey']);
+        $this->assertNotNull($video->updatedAt());
+    }
+
+    public function testChangeTitleUpdatesTitle(): void
+    {
+        $video = Video::create(
+            new VideoTitle('Old Title'),
+            new FileExtension('mp4'),
+            Uuid::fromString('11111111-1111-4111-8111-111111111117'),
+        );
+
+        $video->changeTitle(new VideoTitle('New Title'));
+
+        $this->assertSame('New Title', $video->title()->value());
+        $this->assertNotNull($video->updatedAt());
+    }
+
+    public function testChangeTitleOnDeletedVideoThrows(): void
+    {
+        $video = Video::reconstitute(
+            new VideoTitle('Deleted'),
+            new FileExtension('mp4'),
+            Uuid::fromString('11111111-1111-4111-8111-111111111118'),
+            [],
+            VideoDates::create(),
+            Uuid::fromString('11111111-1111-4111-8111-111111111119'),
+            true,
+        );
+
+        $this->expectException(VideoAlreadyDeleted::class);
+        $video->changeTitle(new VideoTitle('New'));
+    }
+
+    public function testUpdateMetaOnDeletedVideoThrows(): void
+    {
+        $video = Video::reconstitute(
+            new VideoTitle('Deleted'),
+            new FileExtension('mp4'),
+            Uuid::fromString('22222222-2222-4222-8222-222222222223'),
+            [],
+            VideoDates::create(),
+            Uuid::fromString('22222222-2222-4222-8222-222222222224'),
+            true,
+        );
+
+        $this->expectException(VideoAlreadyDeleted::class);
+        $video->updateMeta(['key' => 'value']);
+    }
+
+    public function testDurationReturnsNullWhenNotInMeta(): void
+    {
+        $video = Video::create(
+            new VideoTitle('No duration'),
+            new FileExtension('mp4'),
+            Uuid::fromString('22222222-2222-4222-8222-222222222225'),
+        );
+
+        $this->assertNull($video->duration());
+    }
 }
 

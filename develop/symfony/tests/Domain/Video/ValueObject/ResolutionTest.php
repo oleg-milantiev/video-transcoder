@@ -28,5 +28,28 @@ class ResolutionTest extends TestCase
         $this->expectException(IncompatibleVideoFormat::class);
         new Resolution(1920, 0);
     }
+
+    public function testIs4kReturnsTrueFor4kWidth(): void
+    {
+        $this->assertTrue((new Resolution(3840, 2160))->is4k());
+        $this->assertTrue((new Resolution(4096, 1080))->is4k());
+        $this->assertTrue((new Resolution(1920, 2160))->is4k());
+        $this->assertFalse((new Resolution(1920, 1080))->is4k());
+    }
+
+    public function testEquals(): void
+    {
+        $a = new Resolution(1920, 1080);
+        $b = new Resolution(1920, 1080);
+        $c = new Resolution(1280, 720);
+        $this->assertTrue($a->equals($b));
+        $this->assertFalse($a->equals($c));
+    }
+
+    public function testToString(): void
+    {
+        $res = new Resolution(1920, 1080);
+        $this->assertSame('1920x1080', (string) $res);
+    }
 }
 
