@@ -2,6 +2,7 @@
 
 namespace App\Presentation\Validator\Constraints;
 
+use App\Domain\Shared\ValueObject\Uuid;
 use App\Infrastructure\Persistence\Doctrine\User\UserEntity;
 use App\Infrastructure\Persistence\Doctrine\User\UserRepository;
 use Doctrine\DBAL\Exception;
@@ -42,7 +43,9 @@ class AtLeastOneAdminValidator extends ConstraintValidator
         // But the constraint is about NOT removing the LAST admin.
         // If we're editing an existing user and removing their admin role:
         if ($user->id !== null) {
-            if ($this->userRepository->countAdmins($user->id) === 0) {
+            $excludeId = Uuid::fromString($user->id->toRfc4122());
+
+            if ($this->userRepository->countAdmins($excludeId) === 0) {
                 $this->context->buildViolation($constraint->message)
                     ->addViolation();
             }

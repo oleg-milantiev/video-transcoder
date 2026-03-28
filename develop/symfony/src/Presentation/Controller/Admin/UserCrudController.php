@@ -2,6 +2,7 @@
 
 namespace App\Presentation\Controller\Admin;
 
+use App\Domain\Shared\ValueObject\Uuid;
 use App\Infrastructure\Persistence\Doctrine\User\UserEntity;
 use App\Infrastructure\Persistence\Doctrine\User\UserRepository;
 use Doctrine\DBAL\Exception;
@@ -42,7 +43,9 @@ class UserCrudController extends AbstractCrudController
         }
 
         if (in_array('ROLE_ADMIN', $entityInstance->getRoles(), true)) {
-            if ($this->userRepository->countAdmins($entityInstance->id) === 0) {
+            $excludeId = Uuid::fromString($entityInstance->id->toRfc4122());
+
+            if ($this->userRepository->countAdmins($excludeId) === 0) {
                 $this->addFlash('danger', 'Cannot delete the last administrator.');
                 return;
             }
