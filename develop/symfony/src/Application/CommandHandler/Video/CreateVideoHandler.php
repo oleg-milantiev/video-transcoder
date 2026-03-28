@@ -11,6 +11,7 @@ use App\Application\Event\CreateVideoSuccess;
 use App\Application\Factory\FlashNotificationFactory;
 use App\Application\Factory\VideoFactory;
 use App\Application\Service\Video\VideoRealtimeNotifier;
+use App\Domain\Video\Repository\TaskRepositoryInterface;
 use Psr\Log\LogLevel;
 use App\Application\Logging\LogServiceInterface;
 use App\Domain\Video\Repository\VideoRepositoryInterface;
@@ -33,6 +34,7 @@ final readonly class CreateVideoHandler
         private StorageInterface $storage,
         private VideoFactory $videoFactory,
         private FlashNotificationFactory $flashNotificationFactory,
+        private TaskRepositoryInterface $taskRepository,
     ) {
     }
 
@@ -57,7 +59,7 @@ final readonly class CreateVideoHandler
             $video = $this->videoRepository->save($video);
 
             $this->logService->log('video', $video->id(), LogLevel::INFO, 'Video created', [
-                'video' => VideoItemDTO::fromDomain($video, $this->storage),
+                'video' => VideoItemDTO::fromDomain($video, $this->storage, $this->taskRepository),
                 'file' => $command->file()->details(),
             ]);
             $this->logService->log('user', $command->userId(), LogLevel::INFO, 'User uploaded video', [

@@ -13,8 +13,8 @@ readonly class VideoItemDTO
         public string $title,
         public string $createdAt,
         public bool $deleted,
-        public ?string $poster = null,
         public bool $canBeDeleted,
+        public ?string $poster = null,
     ) {}
 
     public static function fromDomain(Video $video, StorageInterface $storage, TaskRepositoryInterface $taskRepository): self
@@ -35,8 +35,8 @@ readonly class VideoItemDTO
             title: $video->title()->value(),
             createdAt: $video->createdAt()->format('Y-m-d H:i'),
             deleted: $video->isDeleted(),
-            poster: $poster,
             canBeDeleted: $canBeDeleted,
+            poster: $poster,
         );
     }
 }

@@ -3,12 +3,15 @@ import { createRouter, createWebHistory, RouterView } from 'vue-router';
 import { connectMercure } from './connectMercure.js';
 import { createHomeTabsView } from './HomeTabsView.js';
 import { createVideoDetailsView } from './VideoDetailsView.js';
+import { initAuth } from './apiAuth.js';
 
 function readConfig(element) {
     return {
         userIdentifier: element.dataset.userIdentifier || '',
         userId: element.dataset.userId || '',
         apiBearerToken: element.dataset.apiBearerToken || null,
+        apiRefreshToken: element.dataset.apiRefreshToken || null,
+        apiRefreshUrl: element.dataset.apiRefreshUrl || '/api/auth/refresh',
         mercureHubUrl: element.dataset.mercureHubUrl || '',
         mercureTopic: element.dataset.mercureTopic || '',
         mercureSubscriberToken: element.dataset.mercureSubscriberToken || '',
@@ -38,6 +41,11 @@ export function mountHomeSpa() {
     }
 
     const config = readConfig(rootElement);
+    initAuth({
+        accessToken: config.apiBearerToken,
+        refreshToken: config.apiRefreshToken,
+        refreshUrl: config.apiRefreshUrl,
+    });
     connectMercure(config, rootElement);
     const HomeTabsView = createHomeTabsView(config);
     const VideoDetailsView = createVideoDetailsView(config);

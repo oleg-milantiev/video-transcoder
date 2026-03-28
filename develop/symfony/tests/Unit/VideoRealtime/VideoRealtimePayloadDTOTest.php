@@ -27,7 +27,7 @@ final class VideoRealtimePayloadDTOTest extends TestCase
             deleted: true,
         );
 
-        $dto = VideoRealtimePayloadDTO::fromVideo($video, '/uploads/preview.jpg');
+        $dto = VideoRealtimePayloadDTO::fromVideo($video, '/uploads/preview.jpg', []);
 
         $arr = $dto->toArray();
 

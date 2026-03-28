@@ -1,14 +1,3 @@
-export function createAuthHeader(apiBearerToken) {
-    return apiBearerToken ? { Authorization: 'Bearer ' + apiBearerToken } : {};
-}
-
-export function createJsonAuthHeaders(apiBearerToken) {
-    return {
-        'Content-Type': 'application/json',
-        'X-Requested-With': 'XMLHttpRequest',
-        ...createAuthHeader(apiBearerToken),
-    };
-}
 
 export function toInt(value, fallback) {
     const parsed = Number.parseInt(String(value), 10);
@@ -40,11 +29,6 @@ export function extractApiErrorMessage(payload, fallback) {
 }
 
 export async function parseJsonResponse(response) {
-    if (response && response.status === 401) {
-        console.log('Unauthorized');
-        window.location.reload();
-    }
-
     try {
         return await response.json();
     } catch (e) {

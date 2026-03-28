@@ -39,6 +39,7 @@ security:
     access_control:
         - { path: ^/connect/google, roles: PUBLIC_ACCESS }
         - { path: ^/api/auth/token$, roles: PUBLIC_ACCESS }
+        - { path: ^/api/auth/refresh$, roles: PUBLIC_ACCESS }
         - { path: ^/api, roles: IS_AUTHENTICATED_FULLY }
         - { path: ^/admin, roles: ROLE_ADMIN }
         # - { path: ^/profile, roles: ROLE_USER }

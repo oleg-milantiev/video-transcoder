@@ -1,12 +1,11 @@
 import { computed } from 'vue';
 import {
-    createJsonAuthHeaders,
     extractApiErrorMessage,
     normalizeErrorMessage,
     parseJsonResponse,
     replaceTemplateValue,
-    toInt,
 } from '../shared.js';
+import { authFetch } from '../apiAuth.js';
 import Swal from '../../vendor/sweetalert2/sweetalert2.index.js';
 
 function formatMetaValue(value) {
@@ -23,7 +22,6 @@ function formatMetaValue(value) {
 
 export function createVideoDetailsActions(params) {
     const { config, route, router, state } = params;
-    const authHeaders = createJsonAuthHeaders(config.apiBearerToken || null);
 
     const uuid = computed(() => {
         if (typeof route.params.uuid === 'string' && route.params.uuid) {
@@ -47,9 +45,8 @@ export function createVideoDetailsActions(params) {
         const url = replaceTemplateValue(config.apiVideoDetailsUrlTemplate, '__UUID__', uuid.value);
 
         try {
-            const response = await fetch(url, {
+            const response = await authFetch(url, {
                 method: 'GET',
-                headers: authHeaders,
                 credentials: 'same-origin',
             });
             const payload = await parseJsonResponse(response);
@@ -106,9 +103,9 @@ export function createVideoDetailsActions(params) {
         state.actionError.value = '';
 
         try {
-            const response = await fetch(url, {
+            const response = await authFetch(url, {
                 method: 'PATCH',
-                headers: createJsonAuthHeaders(config.apiBearerToken || null),
+                headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
                 credentials: 'same-origin',
                 body: JSON.stringify({ title: newTitle }),
             });
@@ -140,9 +137,9 @@ export function createVideoDetailsActions(params) {
         state.actionError.value = '';
 
         try {
-            const response = await fetch(url, {
+            const response = await authFetch(url, {
                 method: 'POST',
-                headers: authHeaders,
+                headers: { 'X-Requested-With': 'XMLHttpRequest' },
                 credentials: 'same-origin',
             });
             const payload = await parseJsonResponse(response);

@@ -11,6 +11,8 @@
         data-user-identifier="{{ app.user ? app.user.userIdentifier|e('html_attr') : '' }}"
         data-user-id="{{ userId|default('')|e('html_attr') }}"
         data-api-bearer-token="{{ apiAccessToken|default('')|e('html_attr') }}"
+        data-api-refresh-token="{{ apiRefreshToken|default('')|e('html_attr') }}"
+        data-api-refresh-url="{{ path('api_auth_refresh')|e('html_attr') }}"
         data-mercure-hub-url="{{ mercureHubUrl|default('')|e('html_attr') }}"
         data-mercure-topic="{{ mercureTopic|default('')|e('html_attr') }}"
         data-mercure-subscriber-token="{{ mercureSubscriberToken|default('')|e('html_attr') }}"

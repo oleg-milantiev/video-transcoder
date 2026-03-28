@@ -16,6 +16,7 @@ use App\Domain\Video\ValueObject\FileExtension;
 use App\Domain\Video\ValueObject\VideoTitle;
 use App\Domain\Video\ValueObject\VideoDates;
 use App\Domain\Video\Repository\VideoRepositoryInterface;
+use App\Domain\Video\Repository\TaskRepositoryInterface;
 use App\Domain\Video\Service\Storage\StorageInterface;
 use App\Application\Logging\LogServiceInterface;
 use PHPUnit\Framework\TestCase;
@@ -86,7 +87,7 @@ class CreateVideoHandlerTest extends TestCase
             ->willReturn('source/user/video.mp4');
         $storage->method('sourceKey')->willReturn('source/user/video.mp4');
 
-        $notifier = new VideoRealtimeNotifier($commandBus, $storage);
+        $notifier = new VideoRealtimeNotifier($commandBus, $storage, $this->createStub(TaskRepositoryInterface::class));
         $logService = $this->createStub(LogServiceInterface::class);
 
         $handler = new CreateVideoHandler(
@@ -98,6 +99,7 @@ class CreateVideoHandlerTest extends TestCase
             $storage,
             new VideoFactory(),
             new FlashNotificationFactory(),
+            $this->createStub(TaskRepositoryInterface::class),
         );
 
         $handler->__invoke($command);
@@ -157,7 +159,7 @@ class CreateVideoHandlerTest extends TestCase
 
         // instantiate real notifier with a mocked command bus to avoid mocking final class
         $storage = $this->createStub(StorageInterface::class);
-        $notifier = new VideoRealtimeNotifier($commandBus, $storage);
+        $notifier = new VideoRealtimeNotifier($commandBus, $storage, $this->createStub(TaskRepositoryInterface::class));
         $logService = $this->createStub(LogServiceInterface::class);
 
         $storage->method('putFromPath')->willThrowException(new \Exception('IO error'));
@@ -175,6 +177,7 @@ class CreateVideoHandlerTest extends TestCase
             $storage,
             $videoFactory,
             $flashFactory,
+            $this->createStub(TaskRepositoryInterface::class),
         );
 
         // Invoke handler - should catch exception and dispatch CreateVideoFail

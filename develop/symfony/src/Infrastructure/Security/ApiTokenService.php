@@ -7,21 +7,36 @@ use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
 final readonly class ApiTokenService
 {
-    private const int DEFAULT_TTL_SECONDS = 3600;
+    private const int DEFAULT_TTL_SECONDS = 3600; // 1 hour
+    private const int DEFAULT_REFRESH_TTL_SECONDS = 86400; // 24 hours
+    private const string TYPE_ACCESS = 'access';
+    private const string TYPE_REFRESH = 'refresh';
 
     public function __construct(
         #[Autowire('%kernel.secret%')]
         private string $secret,
         private int $ttlSeconds = self::DEFAULT_TTL_SECONDS,
+        private int $refreshTtlSecondsValue = self::DEFAULT_REFRESH_TTL_SECONDS,
     ) {
     }
 
     public function createToken(Uuid $userId, string $identifier): string
     {
+        return $this->buildToken($userId, $identifier, $this->ttlSeconds(), self::TYPE_ACCESS);
+    }
+
+    public function createRefreshToken(Uuid $userId, string $identifier): string
+    {
+        return $this->buildToken($userId, $identifier, $this->refreshTtlSeconds(), self::TYPE_REFRESH);
+    }
+
+    private function buildToken(Uuid $userId, string $identifier, int $ttl, string $type): string
+    {
         $payload = [
             'sub' => $userId->toRfc4122(),
             'identifier' => $identifier,
-            'exp' => time() + $this->ttlSeconds(),
+            'exp' => time() + $ttl,
+            'type' => $type,
         ];
 
         $payloadPart = $this->base64UrlEncode((string) json_encode($payload, JSON_THROW_ON_ERROR));
@@ -35,6 +50,24 @@ final readonly class ApiTokenService
      * @throws \JsonException
      */
     public function parseToken(string $token): array
+    {
+        return $this->parseAndValidate($token, self::TYPE_ACCESS);
+    }
+
+    /**
+     * @return array{sub: string, identifier: string, exp: int}
+     * @throws \JsonException
+     */
+    public function parseRefreshToken(string $token): array
+    {
+        return $this->parseAndValidate($token, self::TYPE_REFRESH);
+    }
+
+    /**
+     * @return array{sub: string, identifier: string, exp: int}
+     * @throws \JsonException
+     */
+    private function parseAndValidate(string $token, string $expectedType): array
     {
         $parts = explode('.', $token, 2);
         if (count($parts) !== 2 || $parts[0] === '' || $parts[1] === '') {
@@ -58,9 +91,14 @@ final readonly class ApiTokenService
         $sub = $payload['sub'] ?? null;
         $identifier = $payload['identifier'] ?? null;
         $exp = $payload['exp'] ?? null;
+        $type = $payload['type'] ?? null;
 
         if (!is_string($sub) || !Uuid::isValid($sub) || !is_string($identifier) || !is_int($exp)) {
             throw new \InvalidArgumentException('Invalid token claims.');
+        }
+
+        if ($type !== $expectedType) {
+            throw new \InvalidArgumentException('Invalid token type.');
         }
 
         if ($exp < time()) {
@@ -77,6 +115,11 @@ final readonly class ApiTokenService
     public function ttlSeconds(): int
     {
         return $this->ttlSeconds > 0 ? $this->ttlSeconds : self::DEFAULT_TTL_SECONDS;
+    }
+
+    public function refreshTtlSeconds(): int
+    {
+        return $this->refreshTtlSecondsValue > 0 ? $this->refreshTtlSecondsValue : self::DEFAULT_REFRESH_TTL_SECONDS;
     }
 
     private function base64UrlEncode(string $value): string

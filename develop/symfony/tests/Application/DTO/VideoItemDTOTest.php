@@ -7,6 +7,7 @@ namespace App\Tests\Application\DTO;
 use App\Application\DTO\VideoItemDTO;
 use App\Domain\Video\Entity\Video;
 use App\Domain\Video\Service\Storage\StorageInterface;
+use App\Domain\Video\Repository\TaskRepositoryInterface;
 use App\Domain\Video\ValueObject\FileExtension;
 use App\Domain\Video\ValueObject\VideoDates;
 use App\Domain\Video\ValueObject\VideoTitle;
@@ -31,7 +32,7 @@ class VideoItemDTOTest extends TestCase
         $storage->method('previewKey')->willReturn($uuid->toRfc4122() . '.jpg');
         $storage->method('publicUrl')->willReturn('/uploads/' . $uuid->toRfc4122() . '.jpg');
 
-        $dto = VideoItemDTO::fromDomain($video, $storage);
+        $dto = VideoItemDTO::fromDomain($video, $storage, $this->createStub(TaskRepositoryInterface::class));
 
         $this->assertSame($uuid->toRfc4122(), $dto->uuid);
         $this->assertSame('Demo Video', $dto->title);
@@ -57,7 +58,7 @@ class VideoItemDTOTest extends TestCase
         $storage->method('previewKey')->willReturn($uuid->toRfc4122() . '.jpg');
         $storage->method('publicUrl')->willReturn('/uploads/' . $uuid->toRfc4122() . '.jpg');
 
-        $dto = VideoItemDTO::fromDomain($video, $storage);
+        $dto = VideoItemDTO::fromDomain($video, $storage, $this->createStub(TaskRepositoryInterface::class));
 
         $this->assertTrue($dto->deleted);
         $this->assertSame('/uploads/' . $uuid->toRfc4122() . '.jpg', $dto->poster);

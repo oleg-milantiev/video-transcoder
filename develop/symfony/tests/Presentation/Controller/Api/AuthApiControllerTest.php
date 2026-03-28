@@ -145,6 +145,7 @@ final class AuthApiControllerTest extends ApiWebTestCase
         $payload = $this->decodeJson($client->getResponse()->getContent());
         self::assertSame('Bearer', $payload['tokenType']);
         self::assertIsString($payload['accessToken']);
+        self::assertIsString($payload['refreshToken']);
         self::assertGreaterThan(0, $payload['expiresIn']);
 
         /** @var ApiTokenService $tokenService */
@@ -153,6 +154,108 @@ final class AuthApiControllerTest extends ApiWebTestCase
 
         self::assertSame('00000000-0000-4000-8000-000000000009', $claims['sub']);
         self::assertSame('known@example.com', $claims['identifier']);
+
+        $refreshClaims = $tokenService->parseRefreshToken($payload['refreshToken']);
+        self::assertSame('00000000-0000-4000-8000-000000000009', $refreshClaims['sub']);
+        self::assertSame('known@example.com', $refreshClaims['identifier']);
+    }
+
+    // ── /refresh endpoint ───────────────────────────────────────────────────
+
+    /**
+     * @throws \JsonException
+     */
+    public function testRefreshReturnsBadRequestForInvalidJson(): void
+    {
+        $client = static::createClient();
+        $client->request(
+            'POST',
+            '/api/auth/refresh',
+            server: ['CONTENT_TYPE' => 'application/json'],
+            content: 'not-json'
+        );
+
+        self::assertResponseStatusCodeSame(400);
+        self::assertSame(['error' => 'Invalid JSON payload.'], $this->decodeJson($client->getResponse()->getContent()));
+    }
+
+    /**
+     * @throws \JsonException
+     */
+    public function testRefreshReturnsBadRequestForMissingRefreshToken(): void
+    {
+        $client = static::createClient();
+        $client->request(
+            'POST',
+            '/api/auth/refresh',
+            server: ['CONTENT_TYPE' => 'application/json'],
+            content: (string) json_encode([], JSON_THROW_ON_ERROR)
+        );
+
+        self::assertResponseStatusCodeSame(400);
+        self::assertSame(['error' => 'refreshToken is required.'], $this->decodeJson($client->getResponse()->getContent()));
+    }
+
+    /**
+     * @throws \JsonException
+     */
+    public function testRefreshReturnsUnauthorizedForInvalidToken(): void
+    {
+        $client = static::createClient();
+        $client->request(
+            'POST',
+            '/api/auth/refresh',
+            server: ['CONTENT_TYPE' => 'application/json'],
+            content: (string) json_encode(['refreshToken' => 'bad.token'], JSON_THROW_ON_ERROR)
+        );
+
+        self::assertResponseStatusCodeSame(401);
+        self::assertSame(['error' => 'Invalid or expired refresh token.'], $this->decodeJson($client->getResponse()->getContent()));
+    }
+
+    /**
+     * @throws \JsonException
+     */
+    public function testRefreshReturnsNewTokenPairForValidRefreshToken(): void
+    {
+        $client = static::createClient();
+
+        $user = new UserEntity();
+        $user->id = SymfonyUuid::fromString('00000000-0000-4000-8000-000000000010');
+        $user->email = 'refresh@example.com';
+        $user->roles = ['ROLE_USER'];
+
+        $provider = new InMemoryTestUserProvider($user);
+        static::getContainer()->set('security.user.provider.concrete.app_user_provider', $provider);
+
+        /** @var ApiTokenService $tokenService */
+        $tokenService = static::getContainer()->get(ApiTokenService::class);
+
+        $userId = \App\Domain\Shared\ValueObject\Uuid::fromString($user->id->toRfc4122());
+        $refreshToken = $tokenService->createRefreshToken($userId, $user->getUserIdentifier());
+
+        $client->request(
+            'POST',
+            '/api/auth/refresh',
+            server: ['CONTENT_TYPE' => 'application/json'],
+            content: (string) json_encode(['refreshToken' => $refreshToken], JSON_THROW_ON_ERROR)
+        );
+
+        self::assertResponseStatusCodeSame(200);
+
+        $payload = $this->decodeJson($client->getResponse()->getContent());
+        self::assertSame('Bearer', $payload['tokenType']);
+        self::assertIsString($payload['accessToken']);
+        self::assertIsString($payload['refreshToken']);
+        self::assertGreaterThan(0, $payload['expiresIn']);
+
+        $accessClaims = $tokenService->parseToken($payload['accessToken']);
+        self::assertSame('00000000-0000-4000-8000-000000000010', $accessClaims['sub']);
+        self::assertSame('refresh@example.com', $accessClaims['identifier']);
+
+        $refreshClaims = $tokenService->parseRefreshToken($payload['refreshToken']);
+        self::assertSame('00000000-0000-4000-8000-000000000010', $refreshClaims['sub']);
+        self::assertSame('refresh@example.com', $refreshClaims['identifier']);
     }
 
     /**

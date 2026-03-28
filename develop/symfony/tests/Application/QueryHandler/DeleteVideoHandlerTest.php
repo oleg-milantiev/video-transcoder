@@ -64,7 +64,7 @@ final class DeleteVideoHandlerTest extends TestCase
             $videoRepository,
             $this->createStub(TaskRepositoryInterface::class),
             $this->createStub(LogServiceInterface::class),
-            new VideoRealtimeNotifier($this->createStub(MessageBusInterface::class), $this->createStub(StorageInterface::class)),
+            new VideoRealtimeNotifier($this->createStub(MessageBusInterface::class), $this->createStub(StorageInterface::class), $this->createStub(TaskRepositoryInterface::class)),
             $this->createStub(Security::class),
             $this->createStub(QueryBus::class),
         );
@@ -111,7 +111,7 @@ final class DeleteVideoHandlerTest extends TestCase
             $videoRepository,
             $this->createStub(TaskRepositoryInterface::class),
             $this->createStub(LogServiceInterface::class),
-            new VideoRealtimeNotifier($this->createStub(MessageBusInterface::class), $this->createStub(StorageInterface::class)),
+            new VideoRealtimeNotifier($this->createStub(MessageBusInterface::class), $this->createStub(StorageInterface::class), $this->createStub(TaskRepositoryInterface::class)),
             $security,
             $this->createStub(QueryBus::class),
         );
@@ -192,7 +192,7 @@ final class DeleteVideoHandlerTest extends TestCase
             ->willReturnCallback(static function (object $message): Envelope {
                 return new Envelope($message);
             });
-        $videoRealtimeNotifier = new VideoRealtimeNotifier($notifierCommandBus, $this->createStub(StorageInterface::class));
+        $videoRealtimeNotifier = new VideoRealtimeNotifier($notifierCommandBus, $this->createStub(StorageInterface::class), $this->createStub(TaskRepositoryInterface::class));
 
         $security = $this->createMock(Security::class);
         $security->expects($this->once())
@@ -249,7 +249,7 @@ final class DeleteVideoHandlerTest extends TestCase
             $videoRepository,
             $taskRepository,
             $this->createStub(LogServiceInterface::class),
-            new VideoRealtimeNotifier($this->createStub(MessageBusInterface::class), $this->createStub(StorageInterface::class)),
+            new VideoRealtimeNotifier($this->createStub(MessageBusInterface::class), $this->createStub(StorageInterface::class), $this->createStub(TaskRepositoryInterface::class)),
             $security,
             $this->createStub(QueryBus::class),
         );

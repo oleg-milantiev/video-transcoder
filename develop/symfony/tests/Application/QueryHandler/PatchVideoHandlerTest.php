@@ -44,7 +44,7 @@ final class PatchVideoHandlerTest extends TestCase
         $taskRepository = $this->createStub(TaskRepositoryInterface::class);
         $taskRealtimeNotifier = new TaskRealtimeNotifier($this->createStub(MessageBusInterface::class), $this->createStub(PresetRepositoryInterface::class), $this->createStub(VideoRepoInterface::class));
 
-        $handler = new PatchVideoHandler($eventBus, $videoRepository, $this->createStub(Security::class), new VideoRealtimeNotifier($this->createStub(MessageBusInterface::class), $this->createStub(StorageInterface::class)), $taskRepository, $taskRealtimeNotifier, $this->createStub(LogServiceInterface::class));
+        $handler = new PatchVideoHandler($eventBus, $videoRepository, $this->createStub(Security::class), new VideoRealtimeNotifier($this->createStub(MessageBusInterface::class), $this->createStub(StorageInterface::class), $this->createStub(TaskRepositoryInterface::class)), $taskRepository, $taskRealtimeNotifier, $this->createStub(LogServiceInterface::class));
 
         $this->expectException(\App\Application\Exception\VideoNotFoundException::class);
         $handler(new PatchVideoQuery($videoId->toRfc4122(), 'New title', $userId->toRfc4122()));
@@ -68,7 +68,7 @@ final class PatchVideoHandlerTest extends TestCase
         $taskRepository = $this->createStub(TaskRepositoryInterface::class);
         $taskRealtimeNotifier = new TaskRealtimeNotifier($this->createStub(MessageBusInterface::class), $this->createStub(PresetRepositoryInterface::class), $this->createStub(VideoRepoInterface::class));
 
-        $handler = new PatchVideoHandler($eventBus, $videoRepository, $security, new VideoRealtimeNotifier($this->createStub(MessageBusInterface::class), $this->createStub(StorageInterface::class)), $taskRepository, $taskRealtimeNotifier, $this->createStub(LogServiceInterface::class));
+        $handler = new PatchVideoHandler($eventBus, $videoRepository, $security, new VideoRealtimeNotifier($this->createStub(MessageBusInterface::class), $this->createStub(StorageInterface::class), $this->createStub(TaskRepositoryInterface::class)), $taskRepository, $taskRealtimeNotifier, $this->createStub(LogServiceInterface::class));
 
         $this->expectException(\DomainException::class);
         $handler(new PatchVideoQuery($videoId->toRfc4122(), 'New title', $userId->toRfc4122()));
@@ -92,7 +92,7 @@ final class PatchVideoHandlerTest extends TestCase
         $notifierBus = $this->createMock(MessageBusInterface::class);
         $notifierBus->expects($this->once())->method('dispatch')->willReturnCallback(static function ($m) { return new \Symfony\Component\Messenger\Envelope($m); });
 
-        $videoRealtimeNotifier = new VideoRealtimeNotifier($notifierBus, $this->createStub(StorageInterface::class));
+        $videoRealtimeNotifier = new VideoRealtimeNotifier($notifierBus, $this->createStub(StorageInterface::class), $this->createStub(TaskRepositoryInterface::class));
 
         $eventBus = $this->createStub(MessageBusInterface::class);
         $eventBus->method('dispatch')->willReturn(new Envelope(new \stdClass()));

@@ -10,6 +10,7 @@ use App\Application\Service\Video\VideoRealtimeNotifier;
 use App\Domain\Shared\ValueObject\Uuid;
 use App\Domain\Video\Entity\Video;
 use App\Domain\Video\Service\Storage\StorageInterface;
+use App\Domain\Video\Repository\TaskRepositoryInterface;
 use App\Domain\Video\ValueObject\FileExtension;
 use App\Domain\Video\ValueObject\VideoDates;
 use App\Domain\Video\ValueObject\VideoTitle;
@@ -64,7 +65,7 @@ final class VideoRealtimeNotifierTest extends TestCase
                 return new Envelope($command);
             });
 
-        $notifier = new VideoRealtimeNotifier($commandBus, $storage);
+        $notifier = new VideoRealtimeNotifier($commandBus, $storage, $this->createStub(TaskRepositoryInterface::class));
         $notifier->notifyVideoUpdated($video, 'updated', [
             'title' => 'Overridden title',
             'note' => 'upload complete',
@@ -87,7 +88,7 @@ final class VideoRealtimeNotifierTest extends TestCase
         $commandBus = $this->createMock(MessageBusInterface::class);
         $commandBus->expects($this->never())->method('dispatch');
 
-        $notifier = new VideoRealtimeNotifier($commandBus, $storage);
+        $notifier = new VideoRealtimeNotifier($commandBus, $storage, $this->createStub(TaskRepositoryInterface::class));
         $notifier->notifyVideoUpdated($video, 'uploaded');
     }
 }

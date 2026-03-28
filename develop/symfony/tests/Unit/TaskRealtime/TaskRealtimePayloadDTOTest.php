@@ -44,8 +44,8 @@ final class TaskRealtimePayloadDTOTest extends TestCase
 
         $arr = $dto->toArray();
 
-        $this->assertArrayHasKey('id', $arr);
-        $this->assertSame($task->id()->toRfc4122(), $arr['id']);
+        $this->assertArrayHasKey('taskId', $arr);
+        $this->assertSame($task->id()->toRfc4122(), $arr['taskId']);
         $this->assertSame('PROCESSING', $arr['status']);
         $this->assertSame(42, $arr['progress']);
         $this->assertArrayHasKey('createdAt', $arr);
@@ -57,6 +57,8 @@ final class TaskRealtimePayloadDTOTest extends TestCase
     {
         $dto = new TaskRealtimePayloadDTO(
             taskId: Uuid::generate()->toRfc4122(),
+            videoId: Uuid::generate()->toRfc4122(),
+            presetId: Uuid::generate()->toRfc4122(),
             status: 'PENDING',
             progress: 0,
             createdAt: (new \DateTimeImmutable())->format('Y-m-d H:i'),

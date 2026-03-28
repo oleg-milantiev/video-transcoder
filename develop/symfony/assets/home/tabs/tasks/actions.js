@@ -1,11 +1,12 @@
-import { toInt, parseJsonResponse, extractApiErrorMessage } from '../../shared.js';
+import { parseJsonResponse, extractApiErrorMessage } from '../../shared.js';
+import { authFetch } from '../../apiAuth.js';
 
 export function isTaskActive(status) {
     return status === 'PENDING' || status === 'PROCESSING';
 }
 
 export function createTasksTabActions(params) {
-    const { config, authHeader, tasksState, pageLimit } = params;
+    const { config, tasksState, pageLimit } = params;
 
     function normalizeListResponse(payload, page, limit) {
         if (!payload || typeof payload !== 'object') {
@@ -46,9 +47,8 @@ export function createTasksTabActions(params) {
     }
 
     async function fetchList(url, page, limit) {
-        const response = await fetch(buildPageUrl(url, page, limit), {
+        const response = await authFetch(buildPageUrl(url, page, limit), {
             method: 'GET',
-            headers: authHeader,
         });
 
         const payload = await parseJsonResponse(response);
@@ -100,9 +100,8 @@ export function createTasksTabActions(params) {
 
         try {
             const url = config.apiTaskCancelUrlTemplate.replace('__TASK_ID__', String(taskId));
-            const response = await fetch(url, {
+            const response = await authFetch(url, {
                 method: 'POST',
-                headers: authHeader,
             });
 
             const payload = await parseJsonResponse(response);

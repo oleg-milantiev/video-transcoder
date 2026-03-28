@@ -44,7 +44,7 @@ final class VideoRealtimePayloadDTO
             createdAt: $video->createdAt()->format(DATE_ATOM),
             updatedAt: $video->updatedAt()?->format(DATE_ATOM),
             deleted: $video->isDeleted(),
-            canBedeleted: $canBeDeleted,
+            canBeDeleted: $canBeDeleted,
         );
     }
 

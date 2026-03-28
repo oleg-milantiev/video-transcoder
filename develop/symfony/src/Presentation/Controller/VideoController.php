@@ -27,6 +27,7 @@ class VideoController extends AbstractController
 
         return $this->render('video/details.html.twig', [
             'apiAccessToken' => $user ? $this->tokenService->createToken($userId, $user->getUserIdentifier()) : null,
+            'apiRefreshToken' => $user ? $this->tokenService->createRefreshToken($userId, $user->getUserIdentifier()) : null,
             'mercureHubUrl' => $this->mercureTokenService->publicHubUrl(),
             'mercureSubscriberToken' => $user ? $this->mercureTokenService->createSubscriberTokenForUser($userId) : null,
             'mercureTopic' => $user ? $this->mercureTokenService->createUserTopic($userId) : null,

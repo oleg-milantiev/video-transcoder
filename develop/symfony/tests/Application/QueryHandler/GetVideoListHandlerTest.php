@@ -7,6 +7,7 @@ use App\Application\QueryHandler\GetVideoListHandler;
 use App\Domain\Video\DTO\PaginatedResult;
 use App\Domain\Video\Repository\VideoRepositoryInterface;
 use App\Domain\Video\Service\Storage\StorageInterface;
+use App\Domain\Video\Repository\TaskRepositoryInterface;
 use App\Tests\Domain\Entity\VideoFake;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\HttpFoundation\Request;
@@ -33,7 +34,7 @@ class GetVideoListHandlerTest extends TestCase
 
         $request = new Request(['page' => $page, 'limit' => $limit]);
         $query = new GetVideoListQuery($request, $userId);
-        $handler = new GetVideoListHandler($repo, $this->createStub(StorageInterface::class));
+        $handler = new GetVideoListHandler($repo, $this->createStub(TaskRepositoryInterface::class), $this->createStub(StorageInterface::class));
         $response = $handler($query);
 
         $this->assertEquals($total, $response->total);

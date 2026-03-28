@@ -18,6 +18,7 @@ use App\Application\Logging\LogServiceInterface;
 use App\Domain\Video\Entity\Video;
 use App\Domain\Video\Exception\VideoMetadataExtractionFailed;
 use App\Domain\Video\Repository\VideoRepositoryInterface;
+use App\Domain\Video\Repository\TaskRepositoryInterface;
 use App\Domain\Video\Service\Storage\StorageInterface;
 use App\Domain\Video\ValueObject\FileExtension;
 use App\Domain\Video\ValueObject\VideoTitle;
@@ -99,7 +100,7 @@ class ExtractVideoMetadataHandlerTest extends TestCase
             ->method('dispatch')
             ->with($this->isInstanceOf(PublishMercureMessage::class))
             ->willReturnCallback(static fn (object $message): Envelope => new Envelope($message));
-        $notifier = new VideoRealtimeNotifier($notifierCommandBus, $storage);
+        $notifier = new VideoRealtimeNotifier($notifierCommandBus, $storage, $this->createStub(TaskRepositoryInterface::class));
 
         $handler = new ExtractVideoMetadataHandler(
             $videoRepository,
@@ -154,7 +155,7 @@ class ExtractVideoMetadataHandlerTest extends TestCase
 
         $notifierCommandBus = $this->createMock(MessageBusInterface::class);
         $notifierCommandBus->expects($this->never())->method('dispatch');
-        $notifier = new VideoRealtimeNotifier($notifierCommandBus, $storage);
+        $notifier = new VideoRealtimeNotifier($notifierCommandBus, $storage, $this->createStub(TaskRepositoryInterface::class));
 
         $handler = new ExtractVideoMetadataHandler(
             $videoRepository,

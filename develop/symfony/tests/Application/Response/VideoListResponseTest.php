@@ -6,6 +6,7 @@ namespace App\Tests\Application\Response;
 
 use App\Application\Response\VideoListResponse;
 use App\Domain\Video\Service\Storage\StorageInterface;
+use App\Domain\Video\Repository\TaskRepositoryInterface;
 use App\Tests\Domain\Entity\VideoFake;
 use PHPUnit\Framework\TestCase;
 
@@ -15,7 +16,7 @@ class VideoListResponseTest extends TestCase
     {
         $videos = [VideoFake::create(), VideoFake::create()];
         $storage = $this->createStub(StorageInterface::class);
-        $response = VideoListResponse::fromDomain($videos, total: 12, page: 2, limit: 5, storage: $storage);
+        $response = VideoListResponse::fromDomain($videos, total: 12, page: 2, limit: 5, storage: $storage, taskRepository: $this->createStub(TaskRepositoryInterface::class));
 
         $this->assertCount(2, $response->items);
         $this->assertSame(12, $response->total);
@@ -28,7 +29,7 @@ class VideoListResponseTest extends TestCase
     public function testFromDomainHandlesEmptyList(): void
     {
         $storage = $this->createStub(StorageInterface::class);
-        $response = VideoListResponse::fromDomain([], total: 0, page: 1, limit: 10, storage: $storage);
+        $response = VideoListResponse::fromDomain([], total: 0, page: 1, limit: 10, storage: $storage, taskRepository: $this->createStub(TaskRepositoryInterface::class));
 
         $this->assertSame([], $response->items);
         $this->assertSame(0, $response->total);

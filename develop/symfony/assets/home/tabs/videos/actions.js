@@ -1,7 +1,8 @@
-import { createJsonAuthHeaders, extractApiErrorMessage, parseJsonResponse } from '../../shared.js';
+import { extractApiErrorMessage, parseJsonResponse } from '../../shared.js';
+import { authFetch } from '../../apiAuth.js';
 
 export function createVideosTabActions(params) {
-    const { config, authHeader, router, videosState, pageLimit } = params;
+    const { config, router, videosState, pageLimit } = params;
 
     function normalizeListResponse(payload, page, limit) {
         if (!payload || typeof payload !== 'object') {
@@ -42,9 +43,8 @@ export function createVideosTabActions(params) {
     }
 
     async function fetchList(url, page, limit) {
-        const response = await fetch(buildPageUrl(url, page, limit), {
+        const response = await authFetch(buildPageUrl(url, page, limit), {
             method: 'GET',
-            headers: authHeader,
         });
 
         const payload = await parseJsonResponse(response);
@@ -107,9 +107,9 @@ export function createVideosTabActions(params) {
         };
 
         try {
-            const response = await fetch(config.apiVideoDeleteUrlTemplate.replace('__UUID__', videoId), {
+            const response = await authFetch(config.apiVideoDeleteUrlTemplate.replace('__UUID__', videoId), {
                 method: 'DELETE',
-                headers: createJsonAuthHeaders(config.apiBearerToken || null),
+                headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
             });
 
             const payload = await parseJsonResponse(response);

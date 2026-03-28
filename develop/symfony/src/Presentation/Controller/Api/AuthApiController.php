@@ -71,12 +71,55 @@ final class AuthApiController extends AbstractController
             'route' => (string) $request->attributes->get('_route', 'api_auth_token'),
         ]);
 
+        $userId = Uuid::fromString($user->id->toRfc4122());
+
         return new JsonResponse([
             'tokenType' => 'Bearer',
-            'accessToken' => $this->tokenService->createToken(Uuid::fromString($user->id->toRfc4122()), $user->getUserIdentifier()),
+            'accessToken' => $this->tokenService->createToken($userId, $user->getUserIdentifier()),
+            'refreshToken' => $this->tokenService->createRefreshToken($userId, $user->getUserIdentifier()),
+            'expiresIn' => $this->tokenService->ttlSeconds(),
+        ]);
+    }
+
+    /**
+     * @throws \JsonException
+     */
+    #[Route('/refresh', name: 'api_auth_refresh', methods: ['POST'])]
+    public function refresh(Request $request): Response
+    {
+        $payload = json_decode($request->getContent(), true);
+        if (!is_array($payload)) {
+            return new JsonResponse(['error' => 'Invalid JSON payload.'], Response::HTTP_BAD_REQUEST);
+        }
+
+        $refreshTokenStr = (string) ($payload['refreshToken'] ?? '');
+        if ($refreshTokenStr === '') {
+            return new JsonResponse(['error' => 'refreshToken is required.'], Response::HTTP_BAD_REQUEST);
+        }
+
+        try {
+            $claims = $this->tokenService->parseRefreshToken($refreshTokenStr);
+        } catch (\Throwable) {
+            return new JsonResponse(['error' => 'Invalid or expired refresh token.'], Response::HTTP_UNAUTHORIZED);
+        }
+
+        try {
+            $user = $this->userProvider->loadUserByIdentifier($claims['identifier']);
+        } catch (\Throwable) {
+            return new JsonResponse(['error' => 'Invalid credentials.'], Response::HTTP_UNAUTHORIZED);
+        }
+
+        if (!$user instanceof UserEntity || $user->id === null) {
+            return new JsonResponse(['error' => 'Invalid credentials.'], Response::HTTP_UNAUTHORIZED);
+        }
+
+        $userId = Uuid::fromString($user->id->toRfc4122());
+
+        return new JsonResponse([
+            'tokenType' => 'Bearer',
+            'accessToken' => $this->tokenService->createToken($userId, $user->getUserIdentifier()),
+            'refreshToken' => $this->tokenService->createRefreshToken($userId, $user->getUserIdentifier()),
             'expiresIn' => $this->tokenService->ttlSeconds(),
         ]);
     }
 }
-
-

@@ -6,6 +6,7 @@ namespace App\Tests\Application\Service\Task;
 
 use App\Application\DTO\TranscodeProcessReportDTO;
 use App\Application\DTO\TranscodeReportDTO;
+use App\Application\DTO\TranscodeStartContextDTO;
 use App\Application\Factory\FlashNotificationFactory;
 use Psr\Log\LogLevel;
 use App\Application\Logging\LogServiceInterface;
@@ -22,6 +23,8 @@ use Symfony\Component\Messenger\MessageBusInterface;
 use App\Domain\Shared\ValueObject\Uuid;
 use App\Domain\Video\Repository\PresetRepositoryInterface;
 use App\Domain\Video\Repository\VideoRepositoryInterface;
+use App\Tests\Domain\Entity\VideoFake;
+use App\Tests\Domain\Entity\PresetFake;
 
 class TranscodeTaskFinalizationServiceTest extends TestCase
 {
@@ -130,7 +133,15 @@ class TranscodeTaskFinalizationServiceTest extends TestCase
         $taskRealtimeNotifier = new TaskRealtimeNotifier($commandBus, $this->createStub(PresetRepositoryInterface::class), $this->createStub(VideoRepositoryInterface::class));
 
         $service = new TranscodeTaskFinalizationService($taskRepository, $logService, $taskRealtimeNotifier, new FlashNotificationFactory(), new TaskCancellationTrigger(new ArrayAdapter()));
-        $service->handleFailure($task, new \RuntimeException('boom'));
+        $context = new TranscodeStartContextDTO(
+            task: $task,
+            video: VideoFake::create(),
+            preset: new PresetFake(),
+            relativeOutputPath: 'output/test.mp4',
+            absoluteOutputPath: '/tmp/output/test.mp4',
+            inputPath: '/tmp/input.mp4',
+        );
+        $service->handleFailure($task, new \RuntimeException('boom'), $context);
     }
 
     private function createTask(Uuid $id): Task
