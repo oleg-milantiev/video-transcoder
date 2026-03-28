@@ -35,6 +35,8 @@ services:
             target: dev
         env_file:
             - .env
+        environment:
+            - PHP_IDE_CONFIG=serverName=yc.local
         depends_on:
             - redis
             - postgres
