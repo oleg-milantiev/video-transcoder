@@ -107,8 +107,8 @@ class VideoItemDTOTest extends TestCase
             id: Uuid::fromString('66666666-6666-4666-8666-666666666666'),
         );
 
-        $taskRepository = $this->createMock(TaskRepositoryInterface::class);
-        $taskRepository->method('findByVideoId')->with($uuid)->willReturn([$activeTask]);
+        $taskRepository = $this->createStub(TaskRepositoryInterface::class);
+        $taskRepository->method('findByVideoId')->willReturn([$activeTask]);
 
         $dto = VideoItemDTO::fromDomain($video, $this->createStub(StorageInterface::class), $taskRepository);
 
@@ -149,8 +149,8 @@ class VideoItemDTOTest extends TestCase
             deleted: true,
         );
 
-        $taskRepository = $this->createMock(TaskRepositoryInterface::class);
-        $taskRepository->method('findByVideoId')->with($uuid)->willReturn([$deletedTask1, $deletedTask2]);
+        $taskRepository = $this->createStub(TaskRepositoryInterface::class);
+        $taskRepository->method('findByVideoId')->willReturn([$deletedTask1, $deletedTask2]);
 
         $dto = VideoItemDTO::fromDomain($video, $this->createStub(StorageInterface::class), $taskRepository);
 

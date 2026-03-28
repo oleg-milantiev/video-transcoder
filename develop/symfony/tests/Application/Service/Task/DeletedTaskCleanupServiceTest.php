@@ -131,5 +131,65 @@ final class DeletedTaskCleanupServiceTest extends TestCase
         $result = $service->cleanupTask($task);
         $this->assertFalse($result);
     }
+
+    public function testCleanupTaskReturnsFalseWhenOutputKeyIsEmpty(): void
+    {
+        $task = Task::reconstitute(
+            videoId: Uuid::fromString('11111111-1111-4111-8111-111111111111'),
+            presetId: Uuid::fromString('22222222-2222-4222-8222-222222222222'),
+            userId: Uuid::fromString('33333333-3333-4333-8333-333333333333'),
+            status: TaskStatus::deleted(),
+            progress: new Progress(0),
+            dates: TaskDates::create(),
+            id: Uuid::fromString('44444444-4444-4444-8444-444444444444'),
+            meta: ['output' => ''],  // empty output key
+            deleted: true,
+        );
+
+        $storage = $this->createMock(StorageInterface::class);
+        $storage->expects($this->never())->method('delete');
+
+        $service = new DeletedTaskCleanupService(
+            $this->createStub(TaskRepositoryInterface::class),
+            $storage,
+            $this->createStub(LogServiceInterface::class),
+        );
+
+        $result = $service->cleanupTask($task);
+        $this->assertFalse($result);
+    }
+
+    public function testCleanupTaskReturnsTrueWhenStorageDeletesFile(): void
+    {
+        $outputKey = 'output/success.mp4';
+        $task = Task::reconstitute(
+            videoId: Uuid::fromString('11111111-1111-4111-8111-111111111111'),
+            presetId: Uuid::fromString('22222222-2222-4222-8222-222222222222'),
+            userId: Uuid::fromString('33333333-3333-4333-8333-333333333333'),
+            status: TaskStatus::deleted(),
+            progress: new Progress(0),
+            dates: TaskDates::create(),
+            id: Uuid::fromString('44444444-4444-4444-8444-444444444444'),
+            meta: ['output' => $outputKey],
+            deleted: true,
+        );
+
+        $taskRepository = $this->createMock(TaskRepositoryInterface::class);
+        $taskRepository->expects($this->once())->method('save');
+
+        $storage = $this->createMock(StorageInterface::class);
+        $storage->expects($this->once())
+            ->method('delete')
+            ->with($outputKey)
+            ->willReturn(true);
+
+        $logService = $this->createMock(LogServiceInterface::class);
+        $logService->expects($this->once())->method('log');
+
+        $service = new DeletedTaskCleanupService($taskRepository, $storage, $logService);
+
+        $result = $service->cleanupTask($task);
+        $this->assertTrue($result);
+    }
 }
 

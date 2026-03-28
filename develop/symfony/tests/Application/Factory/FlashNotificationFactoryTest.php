@@ -46,6 +46,35 @@ final class FlashNotificationFactoryTest extends TestCase
         $this->assertStringContainsString('&lt;boom&gt;', $payload['html']);
     }
 
+    public function testBuildsTranscodeStartedNotification(): void
+    {
+        $factory = new FlashNotificationFactory();
+        $task = $this->createTask();
+
+        $dto = $factory->transcodeStarted($task);
+        $payload = $dto->toArray();
+
+        $this->assertSame('info', $payload['level']);
+        $this->assertSame('Transcoding started', $payload['title']);
+        $this->assertStringContainsString('/video/123e4567-e89b-42d3-a456-426614174503', $payload['html']);
+        $this->assertSame(5000, $payload['timer']);
+    }
+
+    public function testBuildsTranscodeCompletedNotification(): void
+    {
+        $factory = new FlashNotificationFactory();
+        $task = $this->createTask();
+
+        $dto = $factory->transcodeCompleted($task);
+        $payload = $dto->toArray();
+
+        $this->assertSame('success', $payload['level']);
+        $this->assertSame('Transcoding completed', $payload['title']);
+        $this->assertStringContainsString('/task/123e4567-e89b-42d3-a456-426614174506/download', $payload['html']);
+        $this->assertStringContainsString('/video/123e4567-e89b-42d3-a456-426614174503', $payload['html']);
+        $this->assertSame(10000, $payload['timer']);
+    }
+
     private function createTask(): Task
     {
         $task = Task::create(
