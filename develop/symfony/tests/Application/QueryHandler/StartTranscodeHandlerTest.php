@@ -9,6 +9,9 @@ use App\Application\Event\StartTranscodeFail;
 use App\Application\Event\StartTranscodeStart;
 use App\Application\Event\StartTranscodeSuccess;
 use App\Application\Exception\VideoNotFoundException;
+use App\Application\Exception\UserNotFoundException;
+use App\Application\Exception\TranscodeAccessDeniedException;
+use App\Application\Exception\PresetNotFoundException;
 use App\Application\Logging\LogServiceInterface;
 use App\Application\Query\StartTranscodeQuery;
 use App\Application\QueryHandler\StartTranscodeHandler;
@@ -176,6 +179,139 @@ class StartTranscodeHandlerTest extends TestCase
                 StartTranscodeStart::class,
                 StartTranscodeFail::class,
             ], $dispatchedEventClasses);
+        }
+    }
+
+    /**
+     * @throws ExceptionInterface
+     */
+    public function testThrowsWhenUserNotFound(): void
+    {
+        $commandBus = $this->createStub(MessageBusInterface::class);
+        $eventBus = $this->createMock(MessageBusInterface::class);
+        $dispatchedEventClasses = [];
+        $eventBus->expects($this->exactly(2))
+            ->method('dispatch')
+            ->willReturnCallback(static function (object $message) use (&$dispatchedEventClasses): Envelope {
+                $dispatchedEventClasses[] = $message::class;
+
+                return new Envelope($message);
+            });
+
+        $videoRepo = $this->createMock(VideoRepositoryInterface::class);
+        $videoRepo->expects($this->once())->method('findById')->willReturn(Video::reconstitute(new VideoTitle('S'), new FileExtension('mp4'), Uuid::fromString('123e4567-e89b-42d3-a456-426614174077'), [], VideoDates::create(), Uuid::fromString('123e4567-e89b-42d3-a456-426614174100')));
+
+        $handler = new StartTranscodeHandler(
+            $commandBus,
+            $eventBus,
+            $videoRepo,
+            $this->createStub(PresetRepositoryInterface::class),
+            $this->createStub(TaskRepositoryInterface::class),
+            $this->createStub(UserRepositoryInterface::class),
+            $this->createStub(LogServiceInterface::class),
+            $this->createStub(Security::class),
+        );
+
+        $this->expectException(UserNotFoundException::class);
+        try {
+            $handler(new StartTranscodeQuery('123e4567-e89b-42d3-a456-426614174100', '123e4567-e89b-42d3-a456-426614174005', '123e4567-e89b-42d3-a456-426614174999'));
+        } finally {
+            $this->assertSame([StartTranscodeStart::class, StartTranscodeFail::class], $dispatchedEventClasses);
+        }
+    }
+
+    /**
+     * @throws ExceptionInterface
+     */
+    public function testThrowsWhenAccessDenied(): void
+    {
+        $commandBus = $this->createStub(MessageBusInterface::class);
+        $eventBus = $this->createMock(MessageBusInterface::class);
+        $dispatchedEventClasses = [];
+        $eventBus->expects($this->exactly(2))
+            ->method('dispatch')
+            ->willReturnCallback(static function (object $message) use (&$dispatchedEventClasses): Envelope {
+                $dispatchedEventClasses[] = $message::class;
+
+                return new Envelope($message);
+            });
+
+        $videoId = Uuid::fromString('123e4567-e89b-42d3-a456-426614174100');
+        $video = Video::reconstitute(new VideoTitle('S'), new FileExtension('mp4'), Uuid::fromString('123e4567-e89b-42d3-a456-426614174077'), [], VideoDates::create(), $videoId);
+
+        $videoRepo = $this->createStub(VideoRepositoryInterface::class);
+        $videoRepo->method('findById')->willReturn($video);
+
+        $user = new User(new UserEmail('user@example.com'), new UserRoles(['ROLE_USER']), id: $video->userId());
+        $userRepo = $this->createMock(UserRepositoryInterface::class);
+        $userRepo->expects($this->once())->method('findById')->willReturn($user);
+
+        $security = $this->createMock(Security::class);
+        $security->expects($this->once())->method('isGranted')->with(VideoAccessVoter::CAN_START_TRANSCODE, $video)->willReturn(false);
+
+        $handler = new StartTranscodeHandler(
+            $commandBus,
+            $eventBus,
+            $videoRepo,
+            $this->createStub(PresetRepositoryInterface::class),
+            $this->createStub(TaskRepositoryInterface::class),
+            $userRepo,
+            $this->createStub(LogServiceInterface::class),
+            $security,
+        );
+
+        $this->expectException(TranscodeAccessDeniedException::class);
+        try {
+            $handler(new StartTranscodeQuery($videoId->toRfc4122(), '123e4567-e89b-42d3-a456-426614174005', '123e4567-e89b-42d3-a456-426614174001'));
+        } finally {
+            $this->assertSame([StartTranscodeStart::class, StartTranscodeFail::class], $dispatchedEventClasses);
+        }
+    }
+
+    /**
+     * @throws ExceptionInterface
+     */
+    public function testThrowsWhenPresetNotFound(): void
+    {
+        $commandBus = $this->createStub(MessageBusInterface::class);
+        $eventBus = $this->createMock(MessageBusInterface::class);
+        $dispatchedEventClasses = [];
+        $eventBus->expects($this->exactly(2))
+            ->method('dispatch')
+            ->willReturnCallback(static function (object $message) use (&$dispatchedEventClasses): Envelope {
+                $dispatchedEventClasses[] = $message::class;
+
+                return new Envelope($message);
+            });
+
+        $videoId = Uuid::fromString('123e4567-e89b-42d3-a456-426614174100');
+        $video = Video::reconstitute(new VideoTitle('S'), new FileExtension('mp4'), Uuid::fromString('123e4567-e89b-42d3-a456-426614174077'), [], VideoDates::create(), $videoId);
+
+        $videoRepo = $this->createStub(VideoRepositoryInterface::class);
+        $videoRepo->method('findById')->willReturn($video);
+
+        $userRepo = $this->createMock(UserRepositoryInterface::class);
+        $userRepo->expects($this->once())->method('findById')->willReturn(new User(new UserEmail('user@example.com'), new UserRoles(['ROLE_USER']), id: $video->userId()));
+
+        $security = $this->createMock(Security::class);
+        $security->expects($this->once())->method('isGranted')->with(VideoAccessVoter::CAN_START_TRANSCODE, $video)->willReturn(true);
+
+        $handler = new StartTranscodeHandler(
+            $commandBus,
+            $eventBus,
+            $videoRepo,
+            $this->createStub(PresetRepositoryInterface::class), // will return null
+            $this->createStub(TaskRepositoryInterface::class),
+            $userRepo,
+            $this->createStub(LogServiceInterface::class),
+            $security,
+        );
+
+        $this->expectException(PresetNotFoundException::class);
+        try {
+            $handler(new StartTranscodeQuery($videoId->toRfc4122(), '123e4567-e89b-42d3-a456-426614174999', $video->userId()->toRfc4122()));
+        } finally {
+            $this->assertSame([StartTranscodeStart::class, StartTranscodeFail::class], $dispatchedEventClasses);
         }
     }
 }

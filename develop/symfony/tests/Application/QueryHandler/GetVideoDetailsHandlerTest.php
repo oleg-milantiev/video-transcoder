@@ -2,6 +2,7 @@
 
 namespace App\Tests\Application\QueryHandler;
 
+use App\Application\Exception\QueryException;
 use App\Application\Query\GetVideoDetailsQuery;
 use App\Application\QueryHandler\GetVideoDetailsHandler;
 use App\Application\Query\Repository\VideoDetailsReadRepositoryInterface;
@@ -53,5 +54,40 @@ class GetVideoDetailsHandlerTest extends TestCase
 
         $this->assertSame('PROCESSING', $dto->presetsWithTasks[0]->task->status);
         $this->assertSame('42424242-4242-4242-8242-424242424242', $dto->presetsWithTasks[0]->task->id);
+    }
+
+    public function testThrowsWhenVideoNotFound(): void
+    {
+        $repository = $this->createStub(VideoRepositoryInterface::class);
+        $repository->method('findById')->willReturn(null);
+
+        $videoDetailsRepository = $this->createStub(VideoDetailsReadRepositoryInterface::class);
+        $security = $this->createStub(Security::class);
+
+        $handler = new GetVideoDetailsHandler($repository, $videoDetailsRepository, $this->createStub(StorageInterface::class), $security);
+
+        $this->expectException(QueryException::class);
+        $handler(new GetVideoDetailsQuery('00000000-0000-4000-8000-000000000101'));
+    }
+
+    public function testThrowsWhenAccessDenied(): void
+    {
+        $video = VideoFake::create();
+
+        $repository = $this->createStub(VideoRepositoryInterface::class);
+        $repository->method('findById')->willReturn($video);
+
+        $videoDetailsRepository = $this->createStub(VideoDetailsReadRepositoryInterface::class);
+
+        $security = $this->createMock(Security::class);
+        $security->expects($this->once())->method('isGranted')->with(
+            VideoAccessVoter::CAN_VIEW_DETAILS,
+            $video
+        )->willReturn(false);
+
+        $handler = new GetVideoDetailsHandler($repository, $videoDetailsRepository, $this->createStub(StorageInterface::class), $security);
+
+        $this->expectException(QueryException::class);
+        $handler(new GetVideoDetailsQuery($video->id()->toRfc4122()));
     }
 }
