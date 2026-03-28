@@ -22,4 +22,14 @@ final class PasswordHashTest extends TestCase
 
         new PasswordHash('   ');
     }
+
+    public function testEquals(): void
+    {
+        $a = new PasswordHash('hash-abc');
+        $b = new PasswordHash('hash-abc');
+        $c = new PasswordHash('hash-xyz');
+
+        $this->assertTrue($a->equals($b));
+        $this->assertFalse($a->equals($c));
+    }
 }

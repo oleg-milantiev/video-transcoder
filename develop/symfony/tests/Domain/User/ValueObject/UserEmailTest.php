@@ -23,4 +23,29 @@ final class UserEmailTest extends TestCase
 
         new UserEmail('not-an-email');
     }
+
+    public function testThrowsOnEmptyEmail(): void
+    {
+        $this->expectException(\DomainException::class);
+
+        new UserEmail('   ');
+    }
+
+    public function testThrowsOnTooLongEmail(): void
+    {
+        $this->expectException(\DomainException::class);
+
+        // 175 chars local part + '@b.com' = 181 chars > MAX_LENGTH(180)
+        new UserEmail(str_repeat('a', 175) . '@b.com');
+    }
+
+    public function testEquals(): void
+    {
+        $a = new UserEmail('user@example.com');
+        $b = new UserEmail('user@example.com');
+        $c = new UserEmail('other@example.com');
+
+        $this->assertTrue($a->equals($b));
+        $this->assertFalse($a->equals($c));
+    }
 }

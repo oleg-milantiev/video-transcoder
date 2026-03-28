@@ -23,5 +23,22 @@ final class TariffTitleTest extends TestCase
 
 		new TariffTitle('   ');
 	}
+
+	public function testThrowsOnTooLongTitle(): void
+	{
+		$this->expectException(\DomainException::class);
+
+		new TariffTitle(str_repeat('a', 256));
+	}
+
+	public function testEquals(): void
+	{
+		$a = new TariffTitle('Pro Plan');
+		$b = new TariffTitle('Pro Plan');
+		$c = new TariffTitle('Free Plan');
+
+		$this->assertTrue($a->equals($b));
+		$this->assertFalse($a->equals($c));
+	}
 }
 

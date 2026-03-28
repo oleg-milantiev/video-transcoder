@@ -30,4 +30,21 @@ final class UserRolesTest extends TestCase
 
         new UserRoles(['ADMIN']);
     }
+
+    public function testThrowsOnEmptyStringRole(): void
+    {
+        $this->expectException(\DomainException::class);
+
+        new UserRoles(['  ']);
+    }
+
+    public function testEquals(): void
+    {
+        $a = new UserRoles(['ROLE_ADMIN', 'ROLE_USER']);
+        $b = new UserRoles(['ROLE_ADMIN', 'ROLE_USER']);
+        $c = new UserRoles(['ROLE_USER']);
+
+        $this->assertTrue($a->equals($b));
+        $this->assertFalse($a->equals($c));
+    }
 }

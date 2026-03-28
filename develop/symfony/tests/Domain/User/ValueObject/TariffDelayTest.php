@@ -22,5 +22,15 @@ final class TariffDelayTest extends TestCase
 
         new TariffDelay(-1);
     }
+
+    public function testEquals(): void
+    {
+        $a = new TariffDelay(30);
+        $b = new TariffDelay(30);
+        $c = new TariffDelay(60);
+
+        $this->assertTrue($a->equals($b));
+        $this->assertFalse($a->equals($c));
+    }
 }
 

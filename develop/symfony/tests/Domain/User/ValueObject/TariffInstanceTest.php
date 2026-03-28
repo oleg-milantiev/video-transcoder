@@ -22,5 +22,15 @@ final class TariffInstanceTest extends TestCase
 
         new TariffInstance(0);
     }
+
+    public function testEquals(): void
+    {
+        $a = new TariffInstance(3);
+        $b = new TariffInstance(3);
+        $c = new TariffInstance(5);
+
+        $this->assertTrue($a->equals($b));
+        $this->assertFalse($a->equals($c));
+    }
 }
 
