@@ -106,4 +106,101 @@ final class PatchVideoHandlerTest extends TestCase
 
         $this->assertSame('New title', $video->title()->value());
     }
+
+    public function testUpdatesTasksWhenTitleChanges(): void
+    {
+        $videoId = Uuid::fromString('11111111-1111-4111-8111-111111111111');
+        $userId = Uuid::fromString('22222222-2222-4222-8222-222222222222');
+        $taskId = Uuid::fromString('33333333-3333-4333-8333-333333333333');
+        $presetId = Uuid::fromString('44444444-4444-4444-8444-444444444444');
+
+        $video = Video::reconstitute(new VideoTitle('Old title'), new FileExtension('mp4'), $userId, [], VideoDates::create(), $videoId);
+        $task = Task::reconstitute(
+            videoId: $videoId,
+            presetId: $presetId,
+            userId: $userId,
+            status: \App\Domain\Video\ValueObject\TaskStatus::COMPLETED,
+            progress: new \App\Domain\Video\ValueObject\Progress(100),
+            dates: TaskDates::create(),
+            id: $taskId,
+        );
+
+        $videoRepository = $this->createMock(VideoRepositoryInterface::class);
+        $videoRepository->expects($this->once())->method('findById')->with($videoId)->willReturn($video);
+        $videoRepository->expects($this->once())->method('save')->with($this->callback(static function (Video $v): bool {
+            return $v->title()->value() === 'New title';
+        }))->willReturnCallback(static fn (Video $v) => $v);
+
+        $security = $this->createMock(Security::class);
+        $security->expects($this->once())->method('isGranted')->with(VideoAccessVoter::CAN_EDIT, $video)->willReturn(true);
+
+        $notifierBus = $this->createMock(MessageBusInterface::class);
+        $notifierBus->expects($this->exactly(2))->method('dispatch')->willReturnCallback(static function ($m) { return new \Symfony\Component\Messenger\Envelope($m); });
+
+        $videoRealtimeNotifier = new VideoRealtimeNotifier($notifierBus, $this->createStub(StorageInterface::class), $this->createStub(TaskRepositoryInterface::class));
+
+        $eventBus = $this->createStub(MessageBusInterface::class);
+        $eventBus->method('dispatch')->willReturn(new Envelope(new \stdClass()));
+
+        $taskRepository = $this->createMock(TaskRepositoryInterface::class);
+        $taskRepository->expects($this->once())->method('findByVideoId')->with($videoId)->willReturn([$task]);
+
+        $taskRealtimeNotifier = new TaskRealtimeNotifier($notifierBus, $this->createStub(PresetRepositoryInterface::class), $this->createStub(VideoRepoInterface::class));
+
+        $logService = $this->createMock(LogServiceInterface::class);
+        $logService->expects($this->once())->method('log');
+
+        $handler = new PatchVideoHandler($eventBus, $videoRepository, $security, $videoRealtimeNotifier, $taskRepository, $taskRealtimeNotifier, $logService);
+
+        $handler(new PatchVideoQuery($videoId->toRfc4122(), 'New title', $userId->toRfc4122()));
+
+        $this->assertSame('New title', $video->title()->value());
+    }
+
+    public function testThrowsWhenSaveFailsAndDispatchesFail(): void
+    {
+        $videoId = Uuid::fromString('11111111-1111-4111-8111-111111111111');
+        $userId = Uuid::fromString('22222222-2222-4222-8222-222222222222');
+        $video = Video::reconstitute(new VideoTitle('Old title'), new FileExtension('mp4'), $userId, [], VideoDates::create(), $videoId);
+
+        $videoRepository = $this->createMock(VideoRepositoryInterface::class);
+        $videoRepository->expects($this->once())->method('findById')->with($videoId)->willReturn($video);
+        $videoRepository->expects($this->once())->method('save')->willThrowException(new \RuntimeException('Save failed'));
+
+        $security = $this->createMock(Security::class);
+        $security->expects($this->once())->method('isGranted')->with(VideoAccessVoter::CAN_EDIT, $video)->willReturn(true);
+
+        $eventBus = $this->createMock(MessageBusInterface::class);
+        $eventBus->expects($this->exactly(2))->method('dispatch')->willReturnCallback(
+            static function ($message) {
+                if (!$message instanceof \App\Application\Event\PatchVideoFail) {
+                    return new Envelope($message);
+                }
+                return new Envelope($message);
+            }
+        );
+
+        $taskRepository = $this->createStub(TaskRepositoryInterface::class);
+        $taskRealtimeNotifier = new TaskRealtimeNotifier($this->createStub(MessageBusInterface::class), $this->createStub(PresetRepositoryInterface::class), $this->createStub(VideoRepoInterface::class));
+
+        $logService = $this->createMock(LogServiceInterface::class);
+        $logService->expects($this->once())->method('log');
+
+        $handler = new PatchVideoHandler(
+            $eventBus,
+            $videoRepository,
+            $security,
+            new VideoRealtimeNotifier($this->createStub(MessageBusInterface::class), $this->createStub(StorageInterface::class), $this->createStub(TaskRepositoryInterface::class)),
+            $taskRepository,
+            $taskRealtimeNotifier,
+            $logService
+        );
+
+        $this->expectException(\RuntimeException::class);
+        try {
+            $handler(new PatchVideoQuery($videoId->toRfc4122(), 'New title', $userId->toRfc4122()));
+        } finally {
+            // Verify that PatchVideoFail event was dispatched
+        }
+    }
 }

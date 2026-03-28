@@ -136,7 +136,7 @@ final class DeleteTaskHandlerTest extends TestCase
 
         $taskRepository->expects($this->once())
             ->method('save')
-            ->with($this->callback(function ($savedTask) use ($task): bool {
+            ->with($this->callback(function ($savedTask): bool {
                 // saved task should be marked deleted
                 return $savedTask->isDeleted();
             }));

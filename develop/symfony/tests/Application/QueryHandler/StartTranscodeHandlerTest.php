@@ -314,5 +314,86 @@ class StartTranscodeHandlerTest extends TestCase
             $this->assertSame([StartTranscodeStart::class, StartTranscodeFail::class], $dispatchedEventClasses);
         }
     }
+
+    /**
+     * @throws ExceptionInterface
+     */
+    public function testThrowsWhenTaskSaveFails(): void
+    {
+        $videoId = Uuid::fromString('123e4567-e89b-42d3-a456-426614174100');
+        $video = Video::reconstitute(
+            new VideoTitle('Source Clip'),
+            new FileExtension('mp4'),
+            userId: Uuid::fromString('123e4567-e89b-42d3-a456-426614174077'),
+            meta: [],
+            dates: VideoDates::create(new \DateTimeImmutable('2026-03-18 12:00:00')),
+            id: $videoId,
+        );
+
+        $preset = new Preset(
+            new PresetTitle('HD 720p'),
+            new Resolution(1280, 720),
+            new Codec('h264'),
+            new Bitrate(50.0),
+            id: Uuid::fromString('123e4567-e89b-42d3-a456-426614174005'),
+        );
+
+        $user = new User(
+            new UserEmail('user@example.com'),
+            new UserRoles(['ROLE_USER']),
+            id: $video->userId(),
+        );
+
+        $commandBus = $this->createStub(MessageBusInterface::class);
+        $eventBus = $this->createMock(MessageBusInterface::class);
+        $dispatchedEventClasses = [];
+        $eventBus->expects($this->exactly(2))
+            ->method('dispatch')
+            ->willReturnCallback(static function (object $message) use (&$dispatchedEventClasses): Envelope {
+                $dispatchedEventClasses[] = $message::class;
+                return new Envelope($message);
+            });
+
+        $videoRepo = $this->createMock(VideoRepositoryInterface::class);
+        $videoRepo->expects($this->once())
+            ->method('findById')
+            ->with($videoId)
+            ->willReturn($video);
+
+        $presetRepo = $this->createMock(PresetRepositoryInterface::class);
+        $presetRepo->expects($this->once())
+            ->method('findById')
+            ->with($preset->id())
+            ->willReturn($preset);
+
+        $taskRepo = $this->createMock(TaskRepositoryInterface::class);
+        $taskRepo->expects($this->once())
+            ->method('save')
+            ->willThrowException(new \RuntimeException('Failed to save task'));
+
+        $userRepo = $this->createMock(UserRepositoryInterface::class);
+        $userRepo->expects($this->once())
+            ->method('findById')
+            ->with($user->id())
+            ->willReturn($user);
+
+        $security = $this->createMock(Security::class);
+        $security->expects($this->once())
+            ->method('isGranted')
+            ->with(VideoAccessVoter::CAN_START_TRANSCODE, $video)
+            ->willReturn(true);
+
+        $logService = $this->createStub(LogServiceInterface::class);
+
+        $handler = new StartTranscodeHandler($commandBus, $eventBus, $videoRepo, $presetRepo, $taskRepo, $userRepo, $logService, $security);
+        $query = new StartTranscodeQuery($videoId->toRfc4122(), $preset->id()->toRfc4122(), $user->id()->toRfc4122());
+
+        $this->expectException(\App\Application\Exception\TaskCreationFailedException::class);
+        try {
+            $handler($query);
+        } finally {
+            $this->assertSame([StartTranscodeStart::class, StartTranscodeFail::class], $dispatchedEventClasses);
+        }
+    }
 }
 
