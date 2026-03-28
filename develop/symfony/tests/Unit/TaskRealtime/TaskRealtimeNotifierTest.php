@@ -211,4 +211,25 @@ final class TaskRealtimeNotifierTest extends TestCase
 
         $notifier->notifyTaskUpdated($task, 'deleted');
     }
+
+    public function testDoesNothingWhenTaskHasNoId(): void
+    {
+        $commandBus = $this->createMock(MessageBusInterface::class);
+        $commandBus->expects($this->never())->method('dispatch');
+
+        // Task::create() produces a task with null id
+        $task = Task::create(
+            Uuid::generate(),
+            Uuid::generate(),
+            Uuid::generate(),
+        );
+
+        $notifier = new TaskRealtimeNotifier(
+            $commandBus,
+            $this->createStub(PresetRepositoryInterface::class),
+            $this->createStub(VideoRepositoryInterface::class),
+        );
+
+        $notifier->notifyTaskUpdated($task); // should return early, no dispatch
+    }
 }

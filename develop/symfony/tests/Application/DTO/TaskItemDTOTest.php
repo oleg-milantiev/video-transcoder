@@ -62,4 +62,35 @@ class TaskItemDTOTest extends TestCase
         $this->assertSame(75, $dto->progress);
         $this->assertSame('2026-03-18 10:00', $dto->createdAt);
     }
+
+    public function testFromDomainThrowsWhenTaskHasNoId(): void
+    {
+        $video = Video::reconstitute(
+            new VideoTitle('Video'),
+            new FileExtension('mp4'),
+            Uuid::fromString('99999999-9999-4999-8999-999999999999'),
+            [],
+            VideoDates::create(),
+            Uuid::fromString('22222222-2222-4222-8222-222222222222'),
+        );
+
+        $preset = new Preset(
+            new PresetTitle('HD 1080p'),
+            new Resolution(1920, 1080),
+            new Codec('h264'),
+            new Bitrate(50.0),
+            Uuid::fromString('77777777-7777-4777-8777-777777777777'),
+        );
+
+        // Task::create() produces a task with null id
+        $task = Task::create(
+            $video->id(),
+            $preset->id(),
+            Uuid::fromString('99999999-9999-4999-8999-999999999999'),
+        );
+
+        $this->expectException(\DomainException::class);
+        $this->expectExceptionMessage('Task id must be set for TaskItemDTO mapping.');
+        TaskItemDTO::fromDomain($task, $video, $preset);
+    }
 }

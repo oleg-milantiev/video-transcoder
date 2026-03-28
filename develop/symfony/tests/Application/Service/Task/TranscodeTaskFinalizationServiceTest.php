@@ -144,6 +144,70 @@ class TranscodeTaskFinalizationServiceTest extends TestCase
         $service->handleFailure($task, new \RuntimeException('boom'), $context);
     }
 
+    public function testHandleFailureSkipsSaveWhenTaskAlreadyFinished(): void
+    {
+        $taskId = Uuid::fromString('123e4567-e89b-42d3-a456-426614174213');
+        $task = $this->createTask($taskId);
+        // Complete the task so isFinished() returns true
+        $task->start(10.0);
+        $task->updateProgress(new \App\Domain\Video\ValueObject\Progress(100)); // → COMPLETED
+
+        $taskRepository = $this->createMock(TaskRepositoryInterface::class);
+        $taskRepository->expects($this->never())->method('save');
+
+        $logService = $this->createMock(LogServiceInterface::class);
+        $logService->expects($this->once())->method('log');
+
+        $commandBus = $this->createMock(MessageBusInterface::class);
+        $commandBus->expects($this->never())->method('dispatch');
+        $taskRealtimeNotifier = new TaskRealtimeNotifier($commandBus, $this->createStub(PresetRepositoryInterface::class), $this->createStub(VideoRepositoryInterface::class));
+
+        $service = new TranscodeTaskFinalizationService($taskRepository, $logService, $taskRealtimeNotifier, new FlashNotificationFactory(), new TaskCancellationTrigger(new ArrayAdapter()));
+
+        $context = new TranscodeStartContextDTO(
+            task: $task,
+            video: VideoFake::create(),
+            preset: new PresetFake(),
+            relativeOutputPath: 'output/test.mp4',
+            absoluteOutputPath: '/tmp/not_exists_xyz.mp4',
+            inputPath: '/tmp/input.mp4',
+        );
+        $service->handleFailure($task, new \RuntimeException('already finished'), $context);
+    }
+
+    public function testHandleFailureDeletesOutputFileWhenExists(): void
+    {
+        $taskId = Uuid::fromString('123e4567-e89b-42d3-a456-426614174214');
+        $task = $this->createTask($taskId);
+
+        // Create a temp file to simulate existing output
+        $tmpFile = tempnam(sys_get_temp_dir(), 'transcode_test_');
+
+        $taskRepository = $this->createMock(TaskRepositoryInterface::class);
+        $taskRepository->expects($this->once())->method('save');
+
+        $logService = $this->createMock(LogServiceInterface::class);
+        $logService->expects($this->once())->method('log');
+
+        $commandBus = $this->createMock(MessageBusInterface::class);
+        $commandBus->expects($this->once())->method('dispatch')->willReturn(new Envelope(new \stdClass()));
+        $taskRealtimeNotifier = new TaskRealtimeNotifier($commandBus, $this->createStub(PresetRepositoryInterface::class), $this->createStub(VideoRepositoryInterface::class));
+
+        $service = new TranscodeTaskFinalizationService($taskRepository, $logService, $taskRealtimeNotifier, new FlashNotificationFactory(), new TaskCancellationTrigger(new ArrayAdapter()));
+
+        $context = new TranscodeStartContextDTO(
+            task: $task,
+            video: VideoFake::create(),
+            preset: new PresetFake(),
+            relativeOutputPath: 'output/test.mp4',
+            absoluteOutputPath: $tmpFile,
+            inputPath: '/tmp/input.mp4',
+        );
+        $service->handleFailure($task, new \RuntimeException('fail with file'), $context);
+
+        $this->assertFileDoesNotExist($tmpFile);
+    }
+
     private function createTask(Uuid $id): Task
     {
         $task = Task::create(

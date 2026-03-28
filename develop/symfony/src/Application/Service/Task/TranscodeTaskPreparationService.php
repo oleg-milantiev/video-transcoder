@@ -12,7 +12,7 @@ use App\Domain\Video\Repository\PresetRepositoryInterface;
 use App\Domain\Video\Repository\TaskRepositoryInterface;
 use App\Domain\Video\Service\Storage\StorageInterface;
 
-final readonly class TranscodeTaskPreparationService
+readonly class TranscodeTaskPreparationService
 {
     public function __construct(
         private PresetRepositoryInterface $presetRepository,

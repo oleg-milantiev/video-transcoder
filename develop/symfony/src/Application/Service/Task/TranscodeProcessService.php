@@ -17,7 +17,7 @@ use Psr\Cache\InvalidArgumentException;
 use Symfony\Component\Process\Exception\ProcessFailedException;
 use Symfony\Component\Process\Process;
 
-final readonly class TranscodeProcessService
+readonly class TranscodeProcessService
 {
     private const float PROGRESS_UPDATE_INTERVAL = 5.0;
     private const float CANCEL_CHECK_INTERVAL = 1.0;

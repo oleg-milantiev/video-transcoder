@@ -13,7 +13,7 @@ use App\Domain\Video\ValueObject\Progress;
 use App\Domain\Video\ValueObject\TaskStatus;
 use App\Infrastructure\Task\TaskCancellationTrigger;
 
-final readonly class TranscodeTaskFinalizationService
+readonly class TranscodeTaskFinalizationService
 {
     public function __construct(
         private TaskRepositoryInterface $taskRepository,
