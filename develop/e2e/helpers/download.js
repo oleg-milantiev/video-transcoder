@@ -46,5 +46,14 @@ async function clickDownloadAndVerifyMp4(page, row) {
   return resolvedMp4Url;
 }
 
-module.exports = { clickDownloadAndVerifyMp4 };
+async function expectDownloadFilename(page, expectedFilename) {
+  const downloadLink = page.locator('a:has-text("Download")').last();
+  await downloadLink.waitFor({ state: 'attached', timeout: UI_TIMEOUT });
+
+  await expect(downloadLink).toHaveAttribute('download', expectedFilename, {
+    timeout: UI_TIMEOUT
+  });
+}
+
+module.exports = { clickDownloadAndVerifyMp4, expectDownloadFilename };
 

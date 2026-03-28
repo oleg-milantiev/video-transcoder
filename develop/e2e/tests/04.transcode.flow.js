@@ -16,7 +16,7 @@ const {
     clickDownloadAndVerifyMp4,
     presetsTable,
     logoutToPublic,
-    shot,
+    shot, renameVideoFromDetails, expectVideoDetailsTitle, expectDownloadFilename,
 } = require('../helpers');
 
 test('transcode flow from video details to downloadable mp4', async ({ page }, testInfo) => {
@@ -26,6 +26,7 @@ test('transcode flow from video details to downloadable mp4', async ({ page }, t
     const sourceVideoFileName = '2022_10_04_Two_Maxes.mp4';
     const uploadedVideoName = '2022_10_04_Two_Maxes-04.mp4';
     const baseFileName = uploadedVideoName.substring(0, uploadedVideoName.lastIndexOf('.'));
+    const renamedBaseFileName = `${baseFileName}-renamed`;
     const presetTitle = '180p';
     let downloadedMp4Url = '';
 
@@ -106,12 +107,24 @@ test('transcode flow from video details to downloadable mp4', async ({ page }, t
         downloadedMp4Url = await clickDownloadAndVerifyMp4(page, completedRow);
         await shot(page, testInfo, '06-download-verified.png');
 
-    // 9) Go back to videos list, delete video, verify deleted state in list
+        // Before rename - check download filename matches old video title with preset
+        const presetName = '180p'; // or get from table dynamically if available
+        const expectedFilenameBeforeRename = `${baseFileName} - ${presetName}`;
+        await expectDownloadFilename(page, expectedFilenameBeforeRename);
+
+        await renameVideoFromDetails(page, renamedBaseFileName);
+        await expectVideoDetailsTitle(page, renamedBaseFileName);
+
+        // After rename - check download filename matches new video title with preset
+        const expectedFilenameAfterRename = `${renamedBaseFileName} - ${presetName}`;
+        await expectDownloadFilename(page, expectedFilenameAfterRename);
+
+        // 9) Go back to videos list, delete video, verify deleted state in list
         await page.goto('/?tab=videos', { waitUntil: 'domcontentloaded', timeout: NAV_TIMEOUT });
         await page.getByRole('button', { name: 'Videos' }).click({ timeout: UI_TIMEOUT });
         await expect(page.locator('#videosTable')).toBeVisible({ timeout: UI_TIMEOUT });
 
-        const listRow = videoRowByTitle(page, baseFileName);
+        const listRow = videoRowByTitle(page, renamedBaseFileName);
         await expect(listRow).toBeVisible({ timeout: NAV_TIMEOUT });
 
         await clickAndAcceptConfirm(
@@ -125,7 +138,7 @@ test('transcode flow from video details to downloadable mp4', async ({ page }, t
             intervals: [1000, 2000, 5000],
         }).toBeGreaterThan(0);
 
-        await expect(listRow.locator('td.video-title-deleted')).toContainText(baseFileName, { timeout: UI_TIMEOUT });
+        await expect(listRow.locator('td.video-title-deleted')).toContainText(renamedBaseFileName, { timeout: UI_TIMEOUT });
         // Deleted row must not allow a real delete action anymore.
         await expect(listRow.locator('button:not([disabled])', { hasText: 'Delete' })).toHaveCount(0);
         await shot(page, testInfo, '07-video-marked-deleted-in-list.png');
@@ -134,7 +147,7 @@ test('transcode flow from video details to downloadable mp4', async ({ page }, t
         await listRow.click({ timeout: UI_TIMEOUT });
         await waitForVideoDetailsVisible(page);
         await expect(page.getByText('This video has been deleted')).toBeVisible({ timeout: UI_TIMEOUT });
-        await expect(page.locator('dd.video-title-deleted')).toContainText(baseFileName, { timeout: UI_TIMEOUT });
+        await expect(page.locator('dd.video-title-deleted')).toContainText(renamedBaseFileName, { timeout: UI_TIMEOUT });
 
         const presetsBody = presetsTable(page).locator('tbody').first();
         await expect(presetsBody).toContainText('DELETED', { timeout: UI_TIMEOUT });

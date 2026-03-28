@@ -108,6 +108,7 @@ Tests are designed to run sequentially (`workers: 1`) and build on data created 
 - Clicks `Download` and validates successful endpoint response/redirect to `.mp4`
 - Saves the resolved final `.mp4` URL to a local test variable
 - Accepts browser download redirect behavior where Playwright may report download as `canceled`
+- Verifies that the download link's `download` attribute initially equals "{videoTitle} - {presetTitle}" and, after renaming the video in details, updates to use the new video title
 - Returns to `Videos`, confirms delete popup (`Delete this video?`), and deletes the video
 - Verifies deleted row state in list: title is styled as deleted and active `Delete` action is unavailable
 - Opens video details and verifies deleted UI (`This video has been deleted`, deleted title, `DELETED` in presets, no actions)
