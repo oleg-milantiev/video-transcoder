@@ -104,8 +104,8 @@ final readonly class TranscodeVideoHandler
             return;
         }
 
+        $context = $this->transcodeTaskPreparationService->prepare($task, $video);
         try {
-            $context = $this->transcodeTaskPreparationService->prepare($task, $video);
             $transcodeReport = $this->transcodeProcessService->run($context);
 
             if ($transcodeReport->cancelled === true) {
@@ -123,7 +123,7 @@ final readonly class TranscodeVideoHandler
                 videoId: $context->video->id()?->toRfc4122(),
             ));
         } catch (\Throwable $exception) {
-            $this->transcodeTaskFinalizationService->handleFailure($task, $exception);
+            $this->transcodeTaskFinalizationService->handleFailure($task, $exception, $context);
             $this->eventBus->dispatch(new TranscodeVideoFail(
                 error: $exception->getMessage(),
                 taskId: $task->id()->toRfc4122(),

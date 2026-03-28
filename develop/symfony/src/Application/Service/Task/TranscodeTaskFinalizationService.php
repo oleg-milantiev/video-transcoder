@@ -3,6 +3,7 @@
 namespace App\Application\Service\Task;
 
 use App\Application\DTO\TranscodeReportDTO;
+use App\Application\DTO\TranscodeStartContextDTO;
 use App\Application\Factory\FlashNotificationFactory;
 use Psr\Log\LogLevel;
 use App\Application\Logging\LogServiceInterface;
@@ -62,7 +63,7 @@ final readonly class TranscodeTaskFinalizationService
         $this->cancellationTrigger->clear($task->id());
     }
 
-    public function handleFailure(Task $task, \Throwable $exception): void
+    public function handleFailure(Task $task, \Throwable $exception, TranscodeStartContextDTO $context): void
     {
         if (!$task->status()->isFinished()) {
             $task->fail();
@@ -71,6 +72,10 @@ final readonly class TranscodeTaskFinalizationService
                 'error' => $exception->getMessage(),
                 'notification' => $this->flashNotificationFactory->transcodeFailed($task, $exception)->toArray(),
             ]);
+        }
+
+        if (file_exists($context->absoluteOutputPath)) {
+            unlink($context->absoluteOutputPath);
         }
 
         $this->logService->log('task', $task->id(), LogLevel::ERROR, 'Transcoding failed', [
