@@ -96,7 +96,7 @@ Tests are designed to run sequentially (`workers: 1`) and build on data created 
 
 ### `04.transcode.flow.js` - transcode, download and remove flow
 
-- Logs in as admin
+- Logs in as test
 - Uploads the source fixture again under the `-04` suffix and operates on that uploaded video (uploads `2022_10_04_Two_Maxes-04.mp4`), then opens `Videos` and enters that video
 - Verifies `Presets` table is visible on `Video Details`
 - Verifies preset `180p` exists and starts transcoding via `Transcode`

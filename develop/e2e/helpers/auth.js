@@ -3,8 +3,15 @@ const { UI_TIMEOUT, NAV_TIMEOUT } = require('./constants');
 
 function getAdminCredentials() {
   return {
-    adminEmail: process.env.ADMIN_EMAIL || 'oleg@milantiev.com',
-    adminPassword: process.env.ADMIN_PASSWORD || 'admin',
+    email: process.env.ADMIN_EMAIL || 'oleg@milantiev.com',
+    password: process.env.ADMIN_PASSWORD || 'admin',
+  };
+}
+
+function getTestCredentials() {
+  return {
+    email: process.env.TEST_EMAIL || 'test@test.com',
+    password: process.env.TEST_PASSWORD || 'test',
   };
 }
 
@@ -26,10 +33,19 @@ async function submitSignIn(page) {
 }
 
 async function loginAsAdmin(page) {
-  const { adminEmail, adminPassword } = getAdminCredentials();
+  const {email, password} = getAdminCredentials();
+  await loginAs(page, email, password);
+}
+
+async function loginAsTest(page) {
+  const {email, password} = getTestCredentials();
+  await loginAs(page, email, password);
+}
+
+async function loginAs(page, email, password) {
   await openHome(page);
   await openSignIn(page);
-  await fillSignInCredentials(page, adminEmail, adminPassword);
+  await fillSignInCredentials(page, email, password);
   await submitSignIn(page);
   await expect(page.getByRole('button', { name: 'Videos' })).toBeVisible({ timeout: UI_TIMEOUT });
 }
@@ -42,12 +58,12 @@ async function logoutToPublic(page) {
 
 module.exports = {
   getAdminCredentials,
+  getTestCredentials,
   openHome,
   openSignIn,
   fillSignInCredentials,
   submitSignIn,
   loginAsAdmin,
+  loginAsTest,
   logoutToPublic,
 };
-
-

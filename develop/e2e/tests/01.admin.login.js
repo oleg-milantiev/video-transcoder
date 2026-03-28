@@ -17,7 +17,7 @@ const {
 } = require('../helpers');
 
 test('admin login and empty tabs smoke test', async ({ page }, testInfo) => {
-  const { adminEmail, adminPassword } = getAdminCredentials();
+  const { email, password } = getAdminCredentials();
 
   await openHome(page);
   await expect(page.getByRole('link', { name: 'Sign in' }).last()).toBeVisible({ timeout: UI_TIMEOUT });
@@ -25,7 +25,7 @@ test('admin login and empty tabs smoke test', async ({ page }, testInfo) => {
 
   await openSignIn(page);
   await expect(page.locator('#inputEmail')).toBeVisible({ timeout: UI_TIMEOUT });
-  await fillSignInCredentials(page, adminEmail, adminPassword);
+  await fillSignInCredentials(page, email, password);
   await shot(page, testInfo, '02-login-form-filled.png');
 
   await submitSignIn(page);

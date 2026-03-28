@@ -23,14 +23,14 @@ const {
 } = require('../helpers');
 
 test('upload video and verify details flow', async ({ page }, testInfo) => {
-  const { adminEmail, adminPassword } = getAdminCredentials();
+  const { email, password } = getAdminCredentials();
   const fileName = '2022_10_04_Two_Maxes.mp4';
   const baseFileName = fileName.substring(0, fileName.lastIndexOf('.'));
   const renamedBaseFileName = `${baseFileName}-02`;
 
   await openHome(page);
   await openSignIn(page);
-  await fillSignInCredentials(page, adminEmail, adminPassword);
+  await fillSignInCredentials(page, email, password);
   await submitSignIn(page);
 
   await expectUploadDashboardVisible(page);

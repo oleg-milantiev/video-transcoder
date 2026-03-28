@@ -147,6 +147,9 @@ async function createUserWithTariff(page, email, password, tariffTitle) {
   await page.getByLabel('Email').first().fill(email, { timeout: UI_TIMEOUT });
   await page.getByLabel('Password').first().fill(password, { timeout: UI_TIMEOUT });
 
+  await page.locator('button.field-collection-add-button').first().click({ timeout: UI_TIMEOUT });
+  await page.locator('input#UserEntity_roles_0').first().fill('ROLE_USER', { timeout: UI_TIMEOUT });
+
   const tariffSelect = page.locator('select[name$="[tariff]"]').first();
   if ((await tariffSelect.count()) > 0) {
     await tariffSelect.selectOption({ label: tariffTitle }, { timeout: UI_TIMEOUT });

@@ -27,7 +27,7 @@ test('task state flow with 4k preset: progress, cancel, restart, complete', asyn
   page.setDefaultTimeout(UI_TIMEOUT);
   page.setDefaultNavigationTimeout(NAV_TIMEOUT);
 
-  const { adminEmail, adminPassword } = getAdminCredentials();
+  const { email, password } = getAdminCredentials();
   const sourceVideoFileName = '2022_10_04_Two_Maxes.mp4';
   const uploadedVideoName = '2022_10_04_Two_Maxes-05.mp4';
   const baseFileName = uploadedVideoName.substring(0, uploadedVideoName.lastIndexOf('.'));
@@ -41,20 +41,20 @@ test('task state flow with 4k preset: progress, cancel, restart, complete', asyn
     // Step 3 — Login as admin
     await openHome(page);
     await openSignIn(page);
-    await fillSignInCredentials(page, adminEmail, adminPassword);
+    await fillSignInCredentials(page, email, password);
     await submitSignIn(page);
     await expect(page.getByRole('button', { name: 'Videos' })).toBeVisible({ timeout: UI_TIMEOUT });
     await shot(page, testInfo, '01-login-success.png');
 
     // Step 4 — Ensure two quick transcodes are allowed in this scenario (assign Premium tariff)
     await openAdminDashboardFromHome(page);
-    await assignTariffToUser(page, adminEmail, 'Premium');
+    await assignTariffToUser(page, email, 'Premium');
     await shot(page, testInfo, '01b-admin-premium-tariff-assigned.png');
 
     // Step 5 — Re-login to refresh security token context after tariff update
     await page.goto('/logout', { waitUntil: 'domcontentloaded', timeout: NAV_TIMEOUT });
     await openSignIn(page);
-    await fillSignInCredentials(page, adminEmail, adminPassword);
+    await fillSignInCredentials(page, email, password);
     await submitSignIn(page);
     await expect(page.getByRole('button', { name: 'Videos' })).toBeVisible({ timeout: UI_TIMEOUT });
     await page.goto('/?tab=videos', { waitUntil: 'domcontentloaded', timeout: NAV_TIMEOUT });

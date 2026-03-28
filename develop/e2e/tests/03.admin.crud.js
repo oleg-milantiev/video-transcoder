@@ -21,13 +21,13 @@ const {
 
 test('admin area full smoke with CRUD checks', async ({ page }, testInfo) => {
   // Configure admin credentials used in this test and target uploaded video name
-  const { adminEmail, adminPassword } = getAdminCredentials();
+  const { email, password } = getAdminCredentials();
   const uploadedVideoName = '2022_10_04_Two_Maxes-02';
 
   // Step 1 — Navigate to home and sign in as admin
   await openHome(page);
   await openSignIn(page);
-  await fillSignInCredentials(page, adminEmail, adminPassword);
+  await fillSignInCredentials(page, email, password);
   await submitSignIn(page);
 
   await expect(page.getByRole('link', { name: 'Admin', exact: true })).toBeVisible({ timeout: UI_TIMEOUT });
@@ -71,7 +71,7 @@ test('admin area full smoke with CRUD checks', async ({ page }, testInfo) => {
   // Step 5 — Create a test user with email test@test.com, password 'test', ROLE_USER and Free tariff
   await createUserWithTariff(page, 'test@test.com', 'test', 'Free');
   await shot(page, testInfo, '05-test-user-created.png');
-  await assignTariffToUser(page, adminEmail, 'Free', testInfo);
+  await assignTariffToUser(page, email, 'Free', testInfo);
   await shot(page, testInfo, '05b-admin-user-free-tariff.png');
 
   // Step 6 - go to Tasks and mark the first task deleted, then verify UI updates.

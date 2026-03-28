@@ -38,7 +38,7 @@ final class Version20260322071016 extends AbstractMigration
         $this->addSql('ALTER TABLE "user" ADD CONSTRAINT FK_8D93D64992348FD2 FOREIGN KEY (tariff_id) REFERENCES tariff (id) NOT DEFERRABLE');
         $this->addSql('ALTER TABLE video ADD CONSTRAINT FK_7CC7DA2CA76ED395 FOREIGN KEY (user_id) REFERENCES "user" (id) NOT DEFERRABLE');
 
-        $this->addSql('INSERT INTO "user" (id, email, roles, password) VALUES (\'123e4567-e89b-42d3-a456-426614174000\', \'oleg@milantiev.com\', \'["ROLE_ADMIN"]\', \'$2y$13$aMbt0.agYrHEOjmVLRu0tOa94hWeIErYcW6JPUo0EOFX2PoCzus5m\')');
+        $this->addSql('INSERT INTO "user" (id, email, roles, password) VALUES (\'123e4567-e89b-42d3-a456-426614174000\', \'oleg@milantiev.com\', \'["ROLE_ADMIN", "ROLE_USER"]\', \'$2y$13$aMbt0.agYrHEOjmVLRu0tOa94hWeIErYcW6JPUo0EOFX2PoCzus5m\')');
     }
 
     public function down(Schema $schema): void

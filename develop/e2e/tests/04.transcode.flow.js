@@ -3,7 +3,7 @@ const { attachConsoleCapture } = require('../consoleCapture');
 const {
     UI_TIMEOUT,
     NAV_TIMEOUT,
-    loginAsAdmin,
+    loginAsTest,
     uploadFixtureAsName,
     openVideosTab,
     expectVideosTableVisible,
@@ -31,8 +31,8 @@ test('transcode flow from video details to downloadable mp4', async ({ page }, t
     let downloadedMp4Url = '';
 
     try {
-        // 1) Home + login
-        await loginAsAdmin(page);
+    // 1) Home + login
+        await loginAsTest(page);
         await expect(page.getByRole('button', { name: 'Videos' })).toBeVisible({ timeout: UI_TIMEOUT });
         await shot(page, testInfo, '01-login-success.png');
 
@@ -107,19 +107,19 @@ test('transcode flow from video details to downloadable mp4', async ({ page }, t
         downloadedMp4Url = await clickDownloadAndVerifyMp4(page, completedRow);
         await shot(page, testInfo, '06-download-verified.png');
 
-        // Before rename - check download filename matches old video title with preset
+    // Before rename - check download filename matches old video title with preset
         const presetName = '180p'; // or get from table dynamically if available
         const expectedFilenameBeforeRename = `${baseFileName} - ${presetName}`;
         await expectDownloadFilename(page, expectedFilenameBeforeRename);
-
+    // Rename video from details page
         await renameVideoFromDetails(page, renamedBaseFileName);
         await expectVideoDetailsTitle(page, renamedBaseFileName);
 
-        // After rename - check download filename matches new video title with preset
+    // After rename - check download filename matches new video title with preset
         const expectedFilenameAfterRename = `${renamedBaseFileName} - ${presetName}`;
         await expectDownloadFilename(page, expectedFilenameAfterRename);
 
-        // 9) Go back to videos list, delete video, verify deleted state in list
+    // 9) Go back to videos list, delete video, verify deleted state in list
         await page.goto('/?tab=videos', { waitUntil: 'domcontentloaded', timeout: NAV_TIMEOUT });
         await page.getByRole('button', { name: 'Videos' }).click({ timeout: UI_TIMEOUT });
         await expect(page.locator('#videosTable')).toBeVisible({ timeout: UI_TIMEOUT });
