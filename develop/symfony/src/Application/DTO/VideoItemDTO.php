@@ -3,6 +3,7 @@
 namespace App\Application\DTO;
 
 use App\Domain\Video\Entity\Video;
+use App\Domain\Video\Repository\TaskRepositoryInterface;
 use App\Domain\Video\Service\Storage\StorageInterface;
 
 readonly class VideoItemDTO
@@ -13,12 +14,21 @@ readonly class VideoItemDTO
         public string $createdAt,
         public bool $deleted,
         public ?string $poster = null,
+        public bool $canBeDeleted,
     ) {}
 
-    public static function fromDomain(Video $video, StorageInterface $storage): self
+    public static function fromDomain(Video $video, StorageInterface $storage, TaskRepositoryInterface $taskRepository): self
     {
         $hasPreview = ($video->meta()['preview'] ?? false) === true;
         $poster = $hasPreview ? $storage->publicUrl($storage->previewKey($video)) : null;
+
+        $canBeDeleted = true;
+        foreach ($taskRepository->findByVideoId($video->id()) as $task) {
+            if (!$task->status()->canBeDeleted()) {
+                $canBeDeleted = false;
+                break;
+            }
+        }
 
         return new self(
             uuid: $video->id()?->toRfc4122() ?? '',
@@ -26,6 +36,7 @@ readonly class VideoItemDTO
             createdAt: $video->createdAt()->format('Y-m-d H:i'),
             deleted: $video->isDeleted(),
             poster: $poster,
+            canBeDeleted: $canBeDeleted,
         );
     }
 }

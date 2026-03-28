@@ -8,6 +8,7 @@ use App\Application\Command\Mercure\PublishMercureMessage;
 use App\Application\DTO\MercureMessageDTO;
 use App\Application\DTO\VideoRealtimePayloadDTO;
 use App\Domain\Video\Entity\Video;
+use App\Domain\Video\Repository\TaskRepositoryInterface;
 use App\Domain\Video\Service\Storage\StorageInterface;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Messenger\MessageBusInterface;
@@ -18,6 +19,7 @@ final readonly class VideoRealtimeNotifier
         #[Autowire(service: 'messenger.bus.command')]
         private MessageBusInterface $commandBus,
         private StorageInterface $storage,
+        private TaskRepositoryInterface $taskRepository,
     ) {
     }
 
@@ -32,8 +34,9 @@ final readonly class VideoRealtimeNotifier
 
         $hasPreview = ($video->meta()['preview'] ?? false) === true;
         $poster = $hasPreview ? $this->storage->publicUrl($this->storage->previewKey($video)) : null;
+        $tasks = $this->taskRepository->findByVideoId($video->id());
 
-        $dto = VideoRealtimePayloadDTO::fromVideo($video, $poster);
+        $dto = VideoRealtimePayloadDTO::fromVideo($video, $poster, $tasks);
 
         $this->commandBus->dispatch(new PublishMercureMessage(new MercureMessageDTO(
             action: $action,

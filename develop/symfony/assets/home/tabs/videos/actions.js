@@ -149,6 +149,7 @@ export function createVideosTabActions(params) {
                 meta: payload.meta || video.meta,
                 updatedAt: payload.updatedAt || video.updatedAt,
                 deleted: payload.deleted === true ? true : video.deleted === true,
+                canBeDeleted: payload.canBeDeleted === true ? true : video.canBeDeleted === true,
             };
         });
     }

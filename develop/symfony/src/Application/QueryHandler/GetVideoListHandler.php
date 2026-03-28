@@ -4,6 +4,7 @@ namespace App\Application\QueryHandler;
 
 use App\Application\Query\GetVideoListQuery;
 use App\Application\Response\VideoListResponse;
+use App\Domain\Video\Repository\TaskRepositoryInterface;
 use App\Domain\Video\Repository\VideoRepositoryInterface;
 use App\Domain\Video\Service\Storage\StorageInterface;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
@@ -13,6 +14,7 @@ final readonly class GetVideoListHandler
 {
     public function __construct(
         private VideoRepositoryInterface $videoRepository,
+        private TaskRepositoryInterface $taskRepository,
         private StorageInterface $storage,
     ) {
     }
@@ -27,6 +29,7 @@ final readonly class GetVideoListHandler
             $query->page,
             $query->limit,
             $this->storage,
+            $this->taskRepository,
         );
     }
 }

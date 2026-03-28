@@ -24,22 +24,21 @@ function renderPoster(video) {
 }
 
 function renderDeleteButton(vm, video) {
-    const videoId = String(video && (video.uuid || video.id) ? (video.uuid || video.id) : '');
-    const isPending = vm.videoDeletePending && vm.videoDeletePending[videoId] === true;
-    const isDeleted = video.deleted === true;
+    if (video.deleted || !video.canBeDeleted) {
+        return;
+    }
 
     return h(
         'button',
         {
             type: 'button',
             class: 'btn btn-sm btn-outline-danger',
-            disabled: isDeleted || isPending,
             onClick: (event) => {
                 event.stopPropagation();
                 vm.deleteVideo(video);
             },
         },
-        isPending ? 'Deleting...' : 'Delete'
+        'Delete'
     );
 }
 

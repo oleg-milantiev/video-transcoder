@@ -19,14 +19,23 @@ final class VideoRealtimePayloadDTO
         public string $createdAt,
         public ?string $updatedAt,
         public bool $deleted,
+        public bool $canBeDeleted,
     ) {
     }
 
     /**
      * @param array<string, mixed> $meta
      */
-    public static function fromVideo(Video $video, ?string $poster): self
+    public static function fromVideo(Video $video, ?string $poster, array $tasks): self
     {
+        $canBeDeleted = true;
+        foreach ($tasks as $task) {
+            if (!$task->status()->canBeDeleted()) {
+                $canBeDeleted = false;
+                break;
+            }
+        }
+
         return new self(
             videoId: $video->id()->toRfc4122(),
             title: $video->title()->value(),
@@ -35,6 +44,7 @@ final class VideoRealtimePayloadDTO
             createdAt: $video->createdAt()->format(DATE_ATOM),
             updatedAt: $video->updatedAt()?->format(DATE_ATOM),
             deleted: $video->isDeleted(),
+            canBedeleted: $canBeDeleted,
         );
     }
 
@@ -51,6 +61,7 @@ final class VideoRealtimePayloadDTO
             'createdAt' => $this->createdAt,
             'updatedAt' => $this->updatedAt,
             'deleted' => $this->deleted,
+            'canBeDeleted' => $this->canBeDeleted,
         ];
     }
 }
