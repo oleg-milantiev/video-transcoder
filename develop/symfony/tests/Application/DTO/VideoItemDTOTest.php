@@ -114,4 +114,46 @@ class VideoItemDTOTest extends TestCase
 
         $this->assertFalse($dto->canBeDeleted);
     }
+
+    public function testFromDomainCanBeDeletedTrueWhenAllTasksDeleted(): void
+    {
+        $uuid = Uuid::fromString('77777777-7777-4777-8777-777777777777');
+        $video = Video::reconstitute(
+            new VideoTitle('Deletable Video'),
+            new FileExtension('mp4'),
+            Uuid::fromString('42424242-4242-4242-8242-424242424242'),
+            [],
+            VideoDates::create(),
+            $uuid,
+        );
+
+        $deletedTask1 = Task::reconstitute(
+            videoId: $uuid,
+            presetId: Uuid::fromString('55555555-5555-4555-8555-555555555555'),
+            userId: Uuid::fromString('42424242-4242-4242-8242-424242424242'),
+            status: TaskStatus::DELETED,
+            progress: new Progress(0),
+            dates: TaskDates::create(),
+            id: Uuid::fromString('66666666-6666-4666-8666-666666666661'),
+            deleted: true,
+        );
+
+        $deletedTask2 = Task::reconstitute(
+            videoId: $uuid,
+            presetId: Uuid::fromString('55555555-5555-4555-8555-555555555556'),
+            userId: Uuid::fromString('42424242-4242-4242-8242-424242424242'),
+            status: TaskStatus::DELETED,
+            progress: new Progress(0),
+            dates: TaskDates::create(),
+            id: Uuid::fromString('66666666-6666-4666-8666-666666666662'),
+            deleted: true,
+        );
+
+        $taskRepository = $this->createMock(TaskRepositoryInterface::class);
+        $taskRepository->method('findByVideoId')->with($uuid)->willReturn([$deletedTask1, $deletedTask2]);
+
+        $dto = VideoItemDTO::fromDomain($video, $this->createStub(StorageInterface::class), $taskRepository);
+
+        $this->assertTrue($dto->canBeDeleted);
+    }
 }

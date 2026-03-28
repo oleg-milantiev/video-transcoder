@@ -93,4 +93,41 @@ class TaskItemDTOTest extends TestCase
         $this->expectExceptionMessage('Task id must be set for TaskItemDTO mapping.');
         TaskItemDTO::fromDomain($task, $video, $preset);
     }
+
+    public function testFromDomainWithDeletedTask(): void
+    {
+        $videoId = Uuid::fromString('22222222-2222-4222-8222-222222222222');
+        $video = Video::reconstitute(
+            new VideoTitle('Deleted Video'),
+            new FileExtension('mp4'),
+            Uuid::fromString('99999999-9999-4999-8999-999999999999'),
+            [],
+            VideoDates::create(),
+            $videoId,
+        );
+
+        $preset = new Preset(
+            new PresetTitle('HD 720p'),
+            new Resolution(1280, 720),
+            new Codec('h265'),
+            new Bitrate(100.0),
+            Uuid::fromString('77777777-7777-4777-8777-777777777777'),
+        );
+
+        $task = Task::reconstitute(
+            videoId: $videoId,
+            presetId: Uuid::fromString('77777777-7777-4777-8777-777777777777'),
+            userId: Uuid::fromString('99999999-9999-4999-8999-999999999999'),
+            status: TaskStatus::deleted(),
+            progress: new Progress(0),
+            dates: TaskDates::create(),
+            id: Uuid::fromString('55555555-5555-4555-8555-555555555556'),
+            deleted: true,
+        );
+
+        $dto = TaskItemDTO::fromDomain($task, $video, $preset);
+
+        $this->assertTrue($dto->deleted);
+        $this->assertSame('DELETED', $dto->status);
+    }
 }
