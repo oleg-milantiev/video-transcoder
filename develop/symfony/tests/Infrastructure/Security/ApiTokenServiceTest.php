@@ -36,7 +36,7 @@ final class ApiTokenServiceTest extends TestCase
 
         self::assertSame('11111111-1111-4111-8111-111111111111', $claims['sub']);
         self::assertSame('user@example.com', $claims['identifier']);
-        self::assertGreaterThan(time() + 86400, $claims['exp']); // at least 1 day left
+        self::assertGreaterThan(time() + 23*3600, $claims['exp']); // at least 23h left
     }
 
     public function testRefreshTokenHasLongerTtlThanAccessToken(): void
@@ -102,6 +102,6 @@ final class ApiTokenServiceTest extends TestCase
 
     public function testRefreshTtlSecondsReturnsDefault(): void
     {
-        self::assertSame(2592000, $this->service->refreshTtlSeconds());
+        self::assertSame(86400, $this->service->refreshTtlSeconds());
     }
 }

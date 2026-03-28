@@ -1,7 +1,6 @@
 import { defineComponent, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { renderHomeTabs } from './HomeTabsRender.js';
-import { createAuthHeader } from './shared.js';
 import { createUploadTabState } from './tabs/upload/state.js';
 import { createUploadTabActions } from './tabs/upload/actions.js';
 import { createVideosTabState } from './tabs/videos/state.js';
@@ -23,14 +22,12 @@ export function createHomeTabsView(config) {
             const activeTab = ref(initialTab);
             let unbindRealtime = function noop() {};
             const pageLimit = 10;
-            const authHeader = createAuthHeader(config.apiBearerToken || null);
             const uploadState = createUploadTabState();
             const uploadActions = createUploadTabActions(config, uploadState);
 
             const videosState = createVideosTabState(pageLimit);
             const videosActions = createVideosTabActions({
                 config,
-                authHeader,
                 router,
                 videosState,
                 pageLimit,
@@ -39,7 +36,6 @@ export function createHomeTabsView(config) {
             const tasksState = createTasksTabState(pageLimit);
             const tasksActions = createTasksTabActions({
                 config,
-                authHeader,
                 tasksState,
                 pageLimit,
             });
