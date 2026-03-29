@@ -12,6 +12,11 @@ use App\Application\Factory\FlashNotificationFactory;
 use App\Application\Factory\VideoFactory;
 use App\Application\Service\Video\VideoRealtimeNotifier;
 use App\Domain\Video\Repository\TaskRepositoryInterface;
+use App\Domain\Video\Exception\VideoSizeExceedsQuota;
+use App\Domain\Video\Exception\VideoFileNotFound;
+use App\Domain\User\Exception\UserNotFound;
+use App\Domain\User\Exception\TariffNotFound;
+use App\Domain\User\Repository\UserRepositoryInterface;
 use Psr\Log\LogLevel;
 use App\Application\Logging\LogServiceInterface;
 use App\Domain\Video\Repository\VideoRepositoryInterface;
@@ -29,6 +34,7 @@ final readonly class CreateVideoHandler
         #[Autowire(service: 'messenger.bus.event')]
         private MessageBusInterface $eventBus,
         private VideoRepositoryInterface $videoRepository,
+        private UserRepositoryInterface $userRepository,
         private VideoRealtimeNotifier $notifier,
         private LogServiceInterface $logService,
         private StorageInterface $storage,
@@ -45,6 +51,34 @@ final readonly class CreateVideoHandler
                 userId: $command->userId()->toRfc4122(),
                 filename: $command->file()->getName(),
             ));
+
+            $filePath = $command->file()->getFilePath();
+
+            if (!file_exists($filePath)) {
+                throw VideoFileNotFound::cannotDetermineSize($filePath);
+            }
+
+            $fileSize = @filesize($filePath);
+            if ($fileSize === false) {
+                throw VideoFileNotFound::cannotDetermineSize($filePath);
+            }
+
+            $fileSizeMb = $fileSize / (1024 * 1024);
+
+            $user = $this->userRepository->findById($command->userId());
+            if ($user === null) {
+                throw UserNotFound::byId($command->userId()->toRfc4122());
+            }
+
+            $tariff = $user->tariff();
+            if ($tariff === null) {
+                throw TariffNotFound::forUser($command->userId()->toRfc4122());
+            }
+
+            $maxSizeMb = $tariff->videoSize()->value();
+            if ($fileSizeMb > $maxSizeMb) {
+                throw VideoSizeExceedsQuota::fromSize($fileSizeMb, $maxSizeMb);
+            }
 
             $video = $this->videoFactory->fromCreateVideo($command);
             $video = $this->videoRepository->save($video);

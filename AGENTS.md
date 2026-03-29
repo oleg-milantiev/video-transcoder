@@ -5,6 +5,7 @@ e2e tests:
 
 Run phpunit and composer stan after every backend change.
 - **phpunit** - docker exec -i develop-php-1 vendor/bin/phpunit tests/
+- Find and always fix phpUnit notices by adding --debug to the command. Do not add ignore attributes, fix notices and deprecations.
 - **stan** - docker exec -i develop-php-1 composer stan
 
 ## Architecture Overview

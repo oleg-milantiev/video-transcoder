@@ -10,6 +10,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
+#[IsGranted('IS_AUTHENTICATED_FULLY')]
 class VideoController extends AbstractController
 {
     public function __construct(
@@ -19,7 +20,6 @@ class VideoController extends AbstractController
     }
 
     #[Route('/video/{uuid}', name: 'video_details', requirements: ['uuid' => '[0-9a-fA-F-]{36}'], methods: ['GET'])]
-    #[IsGranted('IS_AUTHENTICATED_FULLY')]
     public function details(string $uuid): Response
     {
         $user = $this->getUser();

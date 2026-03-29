@@ -11,6 +11,9 @@ use App\Application\Event\CreateVideoFail;
 use App\Application\Factory\FlashNotificationFactory;
 use App\Application\Factory\VideoFactory;
 use App\Application\Service\Video\VideoRealtimeNotifier;
+use App\Domain\User\Entity\Tariff;
+use App\Domain\User\Entity\User;
+use App\Domain\User\ValueObject\TariffVideoSize;
 use App\Domain\Video\Entity\Video;
 use App\Domain\Video\ValueObject\FileExtension;
 use App\Domain\Video\ValueObject\VideoTitle;
@@ -18,6 +21,7 @@ use App\Domain\Video\ValueObject\VideoDates;
 use App\Domain\Video\Repository\VideoRepositoryInterface;
 use App\Domain\Video\Repository\TaskRepositoryInterface;
 use App\Domain\Video\Service\Storage\StorageInterface;
+use App\Domain\User\Repository\UserRepositoryInterface;
 use App\Application\Logging\LogServiceInterface;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Messenger\Envelope;
@@ -31,9 +35,13 @@ class CreateVideoHandlerTest extends TestCase
     {
         $userId = Uuid::generate();
 
+        // Create a real temporary file
+        $tempFile = tempnam(sys_get_temp_dir(), 'test_');
+        file_put_contents($tempFile, 'test video content');
+
         $file = $this->createStub(TusFile::class);
         $file->method('getName')->willReturn('video.mp4');
-        $file->method('getFilePath')->willReturn('/tmp/video.mp4');
+        $file->method('getFilePath')->willReturn($tempFile);
         $file->method('details')->willReturn(['metadata' => ['originalName' => 'video.mp4']]);
 
         $command = new CreateVideo($file, $userId);
@@ -90,10 +98,20 @@ class CreateVideoHandlerTest extends TestCase
         $notifier = new VideoRealtimeNotifier($commandBus, $storage, $this->createStub(TaskRepositoryInterface::class));
         $logService = $this->createStub(LogServiceInterface::class);
 
+        // Create user with tariff that allows the file size
+        $userWithTariff = $this->createStub(User::class);
+        $tariff = $this->createStub(Tariff::class);
+        $tariff->method('videoSize')->willReturn(new TariffVideoSize(1000.0)); // 1000 MB limit
+        $userWithTariff->method('tariff')->willReturn($tariff);
+
+        $userRepository = $this->createStub(UserRepositoryInterface::class);
+        $userRepository->method('findById')->willReturn($userWithTariff);
+
         $handler = new CreateVideoHandler(
             $commandBus,
             $eventBus,
             $videoRepository,
+            $userRepository,
             $notifier,
             $logService,
             $storage,
@@ -111,16 +129,23 @@ class CreateVideoHandlerTest extends TestCase
 
         $this->assertCount(1, $extractCommands);
         $this->assertSame('source/user/video.mp4', $extractCommands[0]->video()->meta()['sourceKey'] ?? null);
+
+        // Cleanup
+        @unlink($tempFile);
     }
 
     public function testStorageUploadExceptionDispatchesCreateVideoFail(): void
     {
         $userId = Uuid::generate();
 
+        // Create a real temporary file
+        $tempFile = tempnam(sys_get_temp_dir(), 'test_');
+        file_put_contents($tempFile, 'test video content');
+
         // Mock TusPhp/File
         $file = $this->createStub(TusFile::class);
         $file->method('getName')->willReturn('video.mp4');
-        $file->method('getFilePath')->willReturn('/tmp/video.mp4');
+        $file->method('getFilePath')->willReturn($tempFile);
         $file->method('details')->willReturn(['metadata' => ['originalName' => 'video.mp4']]);
 
         $command = new CreateVideo($file, $userId);
@@ -168,10 +193,14 @@ class CreateVideoHandlerTest extends TestCase
         $videoFactory = new VideoFactory();
         $flashFactory = new FlashNotificationFactory();
 
+        $userRepository = $this->createStub(UserRepositoryInterface::class);
+        $userRepository->method('findById')->willReturn(null);
+
         $handler = new CreateVideoHandler(
             $commandBus,
             $eventBus,
             $videoRepository,
+            $userRepository,
             $notifier,
             $logService,
             $storage,
@@ -194,5 +223,271 @@ class CreateVideoHandlerTest extends TestCase
         }
 
         $this->assertTrue($found, 'CreateVideoFail event was not dispatched');
+
+        // Cleanup
+        @unlink($tempFile);
+    }
+
+    public function testFileSizeExceedingTariffLimitDispatchesCreateVideoFail(): void
+    {
+        $userId = Uuid::generate();
+
+        // Create a temp file with known size - use 100 MB file to test against 50 MB limit
+        $tempFile = tempnam(sys_get_temp_dir(), 'test_');
+        file_put_contents($tempFile, str_repeat('x', 100 * 1024 * 1024)); // 100 MB file
+
+        $file = $this->createStub(TusFile::class);
+        $file->method('getName')->willReturn('video.mp4');
+        $file->method('getFilePath')->willReturn($tempFile);
+        $file->method('details')->willReturn(['metadata' => ['originalName' => 'video.mp4']]);
+
+        $command = new CreateVideo($file, $userId);
+
+        $commandBus = $this->createStub(MessageBusInterface::class);
+
+        $eventBus = new class implements MessageBusInterface {
+            public array $dispatched = [];
+
+            public function dispatch($message, array $stamps = []): Envelope
+            {
+                $this->dispatched[] = $message;
+                return new Envelope($message);
+            }
+        };
+
+        $videoRepository = $this->createStub(VideoRepositoryInterface::class);
+
+        // Use stubs (not mocks) for User and Tariff since no expectations are configured
+        $userWithTariff = $this->createStub(User::class);
+        $tariff = $this->createStub(Tariff::class);
+        // Use real TariffVideoSize since it's final
+        $tariff->method('videoSize')->willReturn(new TariffVideoSize(50.0));
+        $userWithTariff->method('tariff')->willReturn($tariff);
+
+        $userRepository = $this->createMock(UserRepositoryInterface::class);
+        $userRepository->expects($this->once())
+            ->method('findById')
+            ->with($userId)
+            ->willReturn($userWithTariff);
+
+        $storage = $this->createStub(StorageInterface::class);
+        $notifier = new VideoRealtimeNotifier($commandBus, $storage, $this->createStub(TaskRepositoryInterface::class));
+        $logService = $this->createStub(LogServiceInterface::class);
+
+        $handler = new CreateVideoHandler(
+            $commandBus,
+            $eventBus,
+            $videoRepository,
+            $userRepository,
+            $notifier,
+            $logService,
+            $storage,
+            new VideoFactory(),
+            new FlashNotificationFactory(),
+            $this->createStub(TaskRepositoryInterface::class),
+        );
+
+        $handler->__invoke($command);
+
+        // Assert that CreateVideoFail was dispatched with size limit error message
+        $found = false;
+        foreach ($eventBus->dispatched as $evt) {
+            if ($evt instanceof CreateVideoFail && strpos($evt->error, 'exceeds your tariff limit') !== false) {
+                $found = true;
+            }
+        }
+
+        $this->assertTrue($found, 'CreateVideoFail event with size limit error was not dispatched');
+
+        // Cleanup
+        @unlink($tempFile);
+    }
+
+    public function testMissingFileDispatchesCreateVideoFail(): void
+    {
+        $userId = Uuid::generate();
+
+        $file = $this->createStub(TusFile::class);
+        $file->method('getName')->willReturn('video.mp4');
+        $file->method('getFilePath')->willReturn('/nonexistent/path/video.mp4');
+        $file->method('details')->willReturn(['metadata' => ['originalName' => 'video.mp4']]);
+
+        $command = new CreateVideo($file, $userId);
+
+        $commandBus = $this->createStub(MessageBusInterface::class);
+
+        $eventBus = new class implements MessageBusInterface {
+            public array $dispatched = [];
+
+            public function dispatch($message, array $stamps = []): Envelope
+            {
+                $this->dispatched[] = $message;
+                return new Envelope($message);
+            }
+        };
+
+        $videoRepository = $this->createStub(VideoRepositoryInterface::class);
+        $userRepository = $this->createStub(UserRepositoryInterface::class);
+        $storage = $this->createStub(StorageInterface::class);
+        $notifier = new VideoRealtimeNotifier($commandBus, $storage, $this->createStub(TaskRepositoryInterface::class));
+        $logService = $this->createStub(LogServiceInterface::class);
+
+        $handler = new CreateVideoHandler(
+            $commandBus,
+            $eventBus,
+            $videoRepository,
+            $userRepository,
+            $notifier,
+            $logService,
+            $storage,
+            new VideoFactory(),
+            new FlashNotificationFactory(),
+            $this->createStub(TaskRepositoryInterface::class),
+        );
+
+        $handler->__invoke($command);
+
+        // Assert that CreateVideoFail was dispatched with file not found error
+        $found = false;
+        foreach ($eventBus->dispatched as $evt) {
+            if ($evt instanceof CreateVideoFail && strpos($evt->error, 'Cannot determine file size') !== false) {
+                $found = true;
+            }
+        }
+
+        $this->assertTrue($found, 'CreateVideoFail event with file not found error was not dispatched');
+    }
+
+    public function testUserNotFoundDispatchesCreateVideoFail(): void
+    {
+        $userId = Uuid::generate();
+
+        // Create a real temporary file
+        $tempFile = tempnam(sys_get_temp_dir(), 'test_');
+        file_put_contents($tempFile, 'test video content');
+
+        $file = $this->createStub(TusFile::class);
+        $file->method('getName')->willReturn('video.mp4');
+        $file->method('getFilePath')->willReturn($tempFile);
+        $file->method('details')->willReturn(['metadata' => ['originalName' => 'video.mp4']]);
+
+        $command = new CreateVideo($file, $userId);
+
+        $commandBus = $this->createStub(MessageBusInterface::class);
+
+        $eventBus = new class implements MessageBusInterface {
+            public array $dispatched = [];
+
+            public function dispatch($message, array $stamps = []): Envelope
+            {
+                $this->dispatched[] = $message;
+                return new Envelope($message);
+            }
+        };
+
+        $videoRepository = $this->createStub(VideoRepositoryInterface::class);
+        $userRepository = $this->createStub(UserRepositoryInterface::class);
+        $userRepository->method('findById')->willReturn(null);
+
+        $storage = $this->createStub(StorageInterface::class);
+        $notifier = new VideoRealtimeNotifier($commandBus, $storage, $this->createStub(TaskRepositoryInterface::class));
+        $logService = $this->createStub(LogServiceInterface::class);
+
+        $handler = new CreateVideoHandler(
+            $commandBus,
+            $eventBus,
+            $videoRepository,
+            $userRepository,
+            $notifier,
+            $logService,
+            $storage,
+            new VideoFactory(),
+            new FlashNotificationFactory(),
+            $this->createStub(TaskRepositoryInterface::class),
+        );
+
+        $handler->__invoke($command);
+
+        // Assert that CreateVideoFail was dispatched with user not found error
+        $found = false;
+        foreach ($eventBus->dispatched as $evt) {
+            if ($evt instanceof CreateVideoFail && strpos($evt->error, 'User not found') !== false) {
+                $found = true;
+            }
+        }
+
+        $this->assertTrue($found, 'CreateVideoFail event with user not found error was not dispatched');
+
+        // Cleanup
+        @unlink($tempFile);
+    }
+
+    public function testTariffNotFoundDispatchesCreateVideoFail(): void
+    {
+        $userId = Uuid::generate();
+
+        // Create a real temporary file
+        $tempFile = tempnam(sys_get_temp_dir(), 'test_');
+        file_put_contents($tempFile, 'test video content');
+
+        $file = $this->createStub(TusFile::class);
+        $file->method('getName')->willReturn('video.mp4');
+        $file->method('getFilePath')->willReturn($tempFile);
+        $file->method('details')->willReturn(['metadata' => ['originalName' => 'video.mp4']]);
+
+        $command = new CreateVideo($file, $userId);
+
+        $commandBus = $this->createStub(MessageBusInterface::class);
+
+        $eventBus = new class implements MessageBusInterface {
+            public array $dispatched = [];
+
+            public function dispatch($message, array $stamps = []): Envelope
+            {
+                $this->dispatched[] = $message;
+                return new Envelope($message);
+            }
+        };
+
+        $videoRepository = $this->createStub(VideoRepositoryInterface::class);
+
+        // Create stub user without tariff
+        $userWithoutTariff = $this->createStub(User::class);
+        $userWithoutTariff->method('tariff')->willReturn(null);
+
+        $userRepository = $this->createStub(UserRepositoryInterface::class);
+        $userRepository->method('findById')->willReturn($userWithoutTariff);
+
+        $storage = $this->createStub(StorageInterface::class);
+        $notifier = new VideoRealtimeNotifier($commandBus, $storage, $this->createStub(TaskRepositoryInterface::class));
+        $logService = $this->createStub(LogServiceInterface::class);
+
+        $handler = new CreateVideoHandler(
+            $commandBus,
+            $eventBus,
+            $videoRepository,
+            $userRepository,
+            $notifier,
+            $logService,
+            $storage,
+            new VideoFactory(),
+            new FlashNotificationFactory(),
+            $this->createStub(TaskRepositoryInterface::class),
+        );
+
+        $handler->__invoke($command);
+
+        // Assert that CreateVideoFail was dispatched with tariff not found error
+        $found = false;
+        foreach ($eventBus->dispatched as $evt) {
+            if ($evt instanceof CreateVideoFail && strpos($evt->error, 'Tariff not found') !== false) {
+                $found = true;
+            }
+        }
+
+        $this->assertTrue($found, 'CreateVideoFail event with tariff not found error was not dispatched');
+
+        // Cleanup
+        @unlink($tempFile);
     }
 }
