@@ -38,7 +38,8 @@ final class Version20260322071016 extends AbstractMigration
         $this->addSql('ALTER TABLE "user" ADD CONSTRAINT FK_8D93D64992348FD2 FOREIGN KEY (tariff_id) REFERENCES tariff (id) NOT DEFERRABLE');
         $this->addSql('ALTER TABLE video ADD CONSTRAINT FK_7CC7DA2CA76ED395 FOREIGN KEY (user_id) REFERENCES "user" (id) NOT DEFERRABLE');
 
-        $this->addSql('INSERT INTO "user" (id, email, roles, password) VALUES (\'123e4567-e89b-42d3-a456-426614174000\', \'oleg@milantiev.com\', \'["ROLE_ADMIN", "ROLE_USER"]\', \'$2y$13$aMbt0.agYrHEOjmVLRu0tOa94hWeIErYcW6JPUo0EOFX2PoCzus5m\')');
+        $this->addSql("INSERT INTO tariff (id, title, delay, instance, video_duration, video_size, max_width, max_height, storage_gb, storage_hour) VALUES ('905048e3-fd0f-408d-bffd-a596e896a92c', 'Free', 86400, 1, 3600, 100, 1920, 1280, 1, 24)");
+        $this->addSql('INSERT INTO "user" (id, email, roles, password, tariff_id) VALUES (\'123e4567-e89b-42d3-a456-426614174000\', \'oleg@milantiev.com\', \'["ROLE_ADMIN", "ROLE_USER"]\', \'$2y$13$aMbt0.agYrHEOjmVLRu0tOa94hWeIErYcW6JPUo0EOFX2PoCzus5m\', \'905048e3-fd0f-408d-bffd-a596e896a92c\')');
     }
 
     public function down(Schema $schema): void
