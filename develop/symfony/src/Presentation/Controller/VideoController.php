@@ -33,6 +33,7 @@ class VideoController extends AbstractController
             'mercureTopic' => $user ? $this->mercureTokenService->createUserTopic($userId) : null,
             'userId' => $user ? $userId->toRfc4122() : null,
             'uuid' => $uuid,
+            'maxVideoSize' => $user?->tariff?->videoSize,
         ]);
     }
 }

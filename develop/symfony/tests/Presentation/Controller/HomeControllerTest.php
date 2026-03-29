@@ -59,6 +59,7 @@ final class HomeControllerTest extends WebTestCase
         self::assertSame('/video/__UUID__', $spaRoot->attr('data-video-details-url-template'));
         self::assertSame('/task/__TASK_ID__/download', $spaRoot->attr('data-task-download-url-template'));
         self::assertSame('/', $spaRoot->attr('data-home-url'));
+        self::assertSame('', $spaRoot->attr('data-max-video-size'));
     }
 }
 

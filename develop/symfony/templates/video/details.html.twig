@@ -28,5 +28,6 @@
         data-task-download-url-template="{{ path('task_download', {'id': dummyTaskId})|replace({(dummyTaskId): '__TASK_ID__'})|e('html_attr') }}"
         data-home-url="{{ path('app_home')|e('html_attr') }}"
         data-video-uuid="{{ uuid|e('html_attr') }}"
+        data-max-video-size="{{ maxVideoSize|default('')|e('html_attr') }}"
     ></div>
 {% endblock %}

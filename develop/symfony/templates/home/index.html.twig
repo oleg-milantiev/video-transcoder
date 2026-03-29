@@ -41,6 +41,7 @@
                 data-video-details-url-template="{{ path('video_details', {'uuid': dummyUuid})|replace({(dummyUuid): '__UUID__'})|e('html_attr') }}"
                 data-task-download-url-template="{{ path('task_download', {'id': dummyTaskId})|replace({(dummyTaskId): '__TASK_ID__'})|e('html_attr') }}"
                 data-home-url="{{ path('app_home')|e('html_attr') }}"
+                data-max-video-size="{{ maxVideoSize|default('')|e('html_attr') }}"
             ></div>
 
         {% else %}

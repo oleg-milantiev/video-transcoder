@@ -33,6 +33,7 @@ class HomeController extends AbstractController
             'mercureSubscriberToken' => $user ? $this->mercureTokenService->createSubscriberTokenForUser($userId) : null,
             'mercureTopic' => $user ? $this->mercureTokenService->createUserTopic($userId) : null,
             'userId' => $user ? $userId->toRfc4122() : null,
+            'maxVideoSize' => $user?->tariff?->videoSize,
         ]);
     }
 }

@@ -54,6 +54,7 @@ final class VideoControllerTest extends WebTestCase
         self::assertSame('/task/__TASK_ID__/download', $spaRoot->attr('data-task-download-url-template'));
         self::assertSame('/', $spaRoot->attr('data-home-url'));
         self::assertSame('11111111-1111-4111-8111-111111111111', $spaRoot->attr('data-video-uuid'));
+        self::assertSame('', $spaRoot->attr('data-max-video-size'));
     }
 }
 
