@@ -16,4 +16,10 @@ interface VideoRepositoryInterface extends PaginatedRepositoryInterface
      * @return array<int, Video>
      */
     public function findDeletedVideoForCleanup(): array;
+
+    /**
+     * Mark videos (and tasks) as deleted that are older than User.Tariff.storageHour
+     * @return int Number of videos deleted
+     */
+    public function deleteExpiredVideosAndTasks(): int;
 }

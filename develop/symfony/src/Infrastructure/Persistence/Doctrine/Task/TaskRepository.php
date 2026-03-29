@@ -153,6 +153,7 @@ class TaskRepository extends ServiceEntityRepository implements TaskRepositoryIn
 
     /**
      * @throws Exception
+     * todo optimize cascade and create indexes
      */
     public function getScheduled(): array
     {
@@ -193,7 +194,6 @@ class TaskRepository extends ServiceEntityRepository implements TaskRepositoryIn
               -- 2. Прошло достаточно времени с последнего запуска (если он был)
               AND (
                 last_start_time IS NULL
-                    -- TODO fields with timezone!
                     OR last_start_time <= NOW() - (delay || ' seconds')::interval
                 );
         SQL;

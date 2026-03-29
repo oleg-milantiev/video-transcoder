@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Presentation\Console;
 
 use App\Application\Service\Maintenance\TusCleanupService;
+use App\Domain\Video\Repository\VideoRepositoryInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
@@ -21,6 +22,7 @@ final class HourCommand extends Command
         private readonly TusCleanupService $tusCleanupService,
         private readonly LoggerInterface $logger,
         private readonly LockFactory $lockFactory,
+        private readonly VideoRepositoryInterface $videoRepository,
     ) {
         parent::__construct();
     }
@@ -43,10 +45,11 @@ final class HourCommand extends Command
             }
 
             $deleted = $this->tusCleanupService->cleanupExpiredUploads();
-            $count = count($deleted);
+            $tusCount = count($deleted);
+            $this->logger->info('app:hour tus cleanup finished', ['deletedCount' => $tusCount]);
 
-            $this->logger->info('app:hour tus cleanup finished', ['deletedCount' => $count]);
-            $output->writeln(sprintf('Tus cleanup done: %d expired uploads removed.', $count));
+            $expiredCount = $this->videoRepository->deleteExpiredVideosAndTasks();
+            $this->logger->info('app:hour delete expired videos finished', ['deletedCount' => $expiredCount]);
 
             return Command::SUCCESS;
         } catch (\Throwable $e) {

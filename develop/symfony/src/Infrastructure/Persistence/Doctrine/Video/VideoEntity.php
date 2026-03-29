@@ -11,6 +11,8 @@ use Symfony\Component\Uid\UuidV4 as SymfonyUuid;
 
 #[ORM\Entity(repositoryClass: VideoRepository::class)]
 #[ORM\Table(name: 'video')]
+// for videoRepository->deleteExpiredVideosAndTasks
+// CREATE INDEX idx_video_deleted_created ON video (deleted, created_at) WHERE (deleted = false)
 class VideoEntity
 {
     #[ORM\Id]

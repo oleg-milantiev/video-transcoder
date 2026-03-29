@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="DataSourcePerFileMappings">
+    <file url="file://$PROJECT_DIR$/develop/symfony/src/Infrastructure/Persistence/Doctrine/Video/VideoRepository.php" value="750c98ee-b279-4724-a42a-7ecb702fb669" />
+  </component>
+</project>
