@@ -18,12 +18,20 @@ export function initHomeLegacyWidgets(config) {
     const apiBearerToken = config.apiBearerToken || null;
     const authHeader = createAuthHeader(apiBearerToken);
 
-    const uppy = new window.Uppy.Uppy({
+    const maxFileSize = config.maxVideoSize ? config.maxVideoSize * 1024 * 1024 : null;
+
+    const uppyConfig = {
         autoProceed: true,
         restrictions: {
             allowedFileTypes: ['.mp4', '.mkv', '.avi', '.mov'],
         },
-    })
+    };
+
+    if (maxFileSize !== null) {
+        uppyConfig.restrictions.maxFileSize = maxFileSize;
+    }
+
+    const uppy = new window.Uppy.Uppy(uppyConfig)
         .use(window.Uppy.Dashboard, {
             inline: true,
             target: '#drag-drop-area',
@@ -36,6 +44,12 @@ export function initHomeLegacyWidgets(config) {
                 return authHeader;
             },
         });
+
+    // Display tariff limit warning
+    if (maxFileSize !== null && maxFileSize > 0) {
+        const warningMessage = `Your tariff allows uploading videos up to ${Math.round(maxFileSize)} MB.`;
+        uppy.info(warningMessage, 'info', 5000);
+    }
 
     uppy.on('file-added', function (file) {
         const uuid = uuidv4();
@@ -55,4 +69,3 @@ export function initHomeLegacyWidgets(config) {
         }
     };
 }
-

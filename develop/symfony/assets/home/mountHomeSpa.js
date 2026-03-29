@@ -27,6 +27,7 @@ function readConfig(element) {
         taskDownloadUrlTemplate: element.dataset.taskDownloadUrlTemplate || '',
         homeUrl: element.dataset.homeUrl || '/',
         videoUuid: element.dataset.videoUuid || '',
+        maxVideoSize: element.dataset.maxVideoSize ? parseFloat(element.dataset.maxVideoSize) : null,
     };
 }
 
