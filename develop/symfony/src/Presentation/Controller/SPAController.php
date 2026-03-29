@@ -40,7 +40,7 @@ class SPAController extends AbstractController
             'userId' => $userId->toRfc4122(),
             'maxVideoSize' => $user->tariff?->videoSize,
             'storage' => [
-                'max' => (int)($user->tariff->storageGb * 1024 * 1024 * 1024),
+                'max' => (int)($user->tariff?->storageGb * 1024 * 1024 * 1024 ?? 0),
                 'now' => $this->videoRepository->getStorageSize($userId) +
                     $this->taskRepository->getStorageSize($userId),
             ],
