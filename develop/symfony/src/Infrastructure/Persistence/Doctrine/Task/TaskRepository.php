@@ -180,7 +180,7 @@ class TaskRepository extends ServiceEntityRepository implements TaskRepositoryIn
               AND (
                 last_start_time IS NULL
                     -- TODO fields with timezone!
-                    OR last_start_time <= NOW() AT TIME ZONE 'MSK' - (delay || ' seconds')::interval
+                    OR last_start_time <= NOW() - (delay || ' seconds')::interval
                 );
         SQL;
 
