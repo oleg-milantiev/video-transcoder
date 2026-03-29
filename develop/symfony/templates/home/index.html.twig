@@ -20,30 +20,8 @@
     {% set dummyTaskId = '33333333-3333-4333-8333-333333333333' %}
     <div class="container py-5">
         {% if app.user %}
-            <div
-                id="home-spa"
-                data-user-identifier="{{ app.user.userIdentifier|e('html_attr') }}"
-                data-user-id="{{ userId|default('')|e('html_attr') }}"
-                data-api-bearer-token="{{ apiAccessToken|default('')|e('html_attr') }}"
-                data-api-refresh-token="{{ apiRefreshToken|default('')|e('html_attr') }}"
-                data-api-refresh-url="{{ path('api_auth_refresh')|e('html_attr') }}"
-                data-mercure-hub-url="{{ mercureHubUrl|default('')|e('html_attr') }}"
-                data-mercure-topic="{{ mercureTopic|default('')|e('html_attr') }}"
-                data-mercure-subscriber-token="{{ mercureSubscriberToken|default('')|e('html_attr') }}"
-                data-api-upload-url="{{ path('api_tus')|e('html_attr') }}"
-                data-api-video-list-url="{{ path('api_video_list')|e('html_attr') }}"
-                data-api-task-list-url="{{ path('api_task_list')|e('html_attr') }}"
-                data-api-video-details-url-template="{{ path('api_video_details', {'id': dummyUuid})|replace({(dummyUuid): '__UUID__'})|e('html_attr') }}"
-                data-api-video-transcode-url-template="{{ path('api_video_transcode', {'id': dummyUuid, 'presetId': dummyPresetId})|replace({(dummyUuid): '__UUID__', (dummyPresetId): '__PRESET_ID__'})|e('html_attr') }}"
-                data-api-video-delete-url-template="{{ path('api_video_delete', {'uuid': dummyUuid})|replace({(dummyUuid): '__UUID__'})|e('html_attr') }}"
-                data-api-video-patch-url-template="{{ path('api_video_patch', {'id': dummyUuid})|replace({(dummyUuid): '__UUID__'})|e('html_attr') }}"
-                data-api-task-cancel-url-template="{{ path('api_task_cancel', {'id': dummyTaskId})|replace({(dummyTaskId): '__TASK_ID__'})|e('html_attr') }}"
-                data-video-details-url-template="{{ path('video_details', {'uuid': dummyUuid})|replace({(dummyUuid): '__UUID__'})|e('html_attr') }}"
-                data-task-download-url-template="{{ path('task_download', {'id': dummyTaskId})|replace({(dummyTaskId): '__TASK_ID__'})|e('html_attr') }}"
-                data-home-url="{{ path('app_home')|e('html_attr') }}"
-                data-max-video-size="{{ maxVideoSize|default('')|e('html_attr') }}"
-            ></div>
-
+            <div id="home-spa"></div>
+            <script>const config = {{ config|json_encode|raw }};</script>
         {% else %}
             <p>Please <a href="{{ path('app_login') }}" class="btn btn-primary">Sign in</a>.</p>
         {% endif %}

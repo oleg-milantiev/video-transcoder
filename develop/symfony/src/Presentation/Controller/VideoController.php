@@ -12,8 +12,10 @@ class VideoController extends SPAController
     #[Route('/video/{uuid}', name: 'video_details', requirements: ['uuid' => '[0-9a-fA-F-]{36}'], methods: ['GET'])]
     public function details(string $uuid): Response
     {
-        return $this->render('video/details.html.twig', array_merge($this->getSPA(), [
-            'uuid' => $uuid,
-        ]));
+        return $this->render('video/details.html.twig', [
+            'config' => array_merge($this->getSPA(), [
+                'videoUuid' => $uuid,
+            ])
+        ]);
     }
 }

@@ -10,6 +10,6 @@ class HomeController extends SPAController
     #[Route('/', name: 'app_home')]
     public function index(): Response
     {
-        return $this->render('home/index.html.twig', $this->getSPA());
+        return $this->render('home/index.html.twig', ['config' => $this->getSPA()]);
     }
 }
