@@ -78,6 +78,9 @@ class TranscodeTaskFinalizationServiceTest extends TestCase
         $task->start(12.5);
         $report = $this->createReport(false);
 
+        // Create a temp output file
+        $tmpOutputFile = tempnam(sys_get_temp_dir(), 'transcode_success_');
+
         $taskRepository = $this->createMock(TaskRepositoryInterface::class);
         $taskRepository->expects($this->once())
             ->method('save')
@@ -105,10 +108,22 @@ class TranscodeTaskFinalizationServiceTest extends TestCase
             ->willReturn(new Envelope(new \stdClass()));
         $taskRealtimeNotifier = new TaskRealtimeNotifier($commandBus, $this->createStub(PresetRepositoryInterface::class), $this->createStub(VideoRepositoryInterface::class));
 
+        $context = new TranscodeStartContextDTO(
+            task: $task,
+            video: VideoFake::create(),
+            preset: new PresetFake(),
+            relativeOutputPath: 'video/11.mp4',
+            absoluteOutputPath: $tmpOutputFile,
+            inputPath: '/tmp/input.mp4',
+        );
+
         $service = new TranscodeTaskFinalizationService($taskRepository, $logService, $taskRealtimeNotifier, new FlashNotificationFactory(), $cancellationTrigger);
-        $service->handleSuccess($task, 'video/11.mp4', $report);
+        $service->handleSuccess($task, $context , $report);
 
         $this->assertFalse($cancellationTrigger->isRequested($taskId));
+
+        // Cleanup
+        @unlink($tmpOutputFile);
     }
 
     public function testHandleFailureFailsActiveTaskAndLogsError(): void
@@ -238,6 +253,3 @@ class TranscodeTaskFinalizationServiceTest extends TestCase
         );
     }
 }
-
-
-

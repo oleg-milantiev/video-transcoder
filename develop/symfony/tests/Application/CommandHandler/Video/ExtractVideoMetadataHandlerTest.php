@@ -113,9 +113,9 @@ class ExtractVideoMetadataHandlerTest extends TestCase
         ?LoggerInterface $logger = null,
         ?TaskRepositoryInterface $taskRepository = null
     ): ExtractVideoMetadataHandler {
-        $storage ??= $this->createMock(StorageInterface::class);
-        $storage->expects($this->any())->method('sourceKey')->willReturn('source.mp4');
-        $storage->expects($this->any())->method('localPathForRead')->willReturn('/tmp/source.mp4');
+        $storage ??= $this->createStub(StorageInterface::class);
+        $storage->method('sourceKey')->willReturn('source.mp4');
+        $storage->method('localPathForRead')->willReturn('/tmp/source.mp4');
 
         return new ExtractVideoMetadataHandler(
             $videoRepository ?? $this->createMock(VideoRepositoryInterface::class),
@@ -201,7 +201,7 @@ class ExtractVideoMetadataHandlerTest extends TestCase
         $logService = $this->createMock(LogServiceInterface::class);
         $logService->expects($this->atLeastOnce())->method('log');
 
-        $eventBus = $this->createMock(MessageBusInterface::class);
+        $eventBus = $this->createStub(MessageBusInterface::class);
         $events = [];
         $eventBus->method('dispatch')
             ->willReturnCallback(static function (object $msg) use (&$events): Envelope {
@@ -249,7 +249,7 @@ class ExtractVideoMetadataHandlerTest extends TestCase
         $logService = $this->createMock(LogServiceInterface::class);
         $logService->expects($this->atLeastOnce())->method('log');
 
-        $eventBus = $this->createMock(MessageBusInterface::class);
+        $eventBus = $this->createStub(MessageBusInterface::class);
         $events = [];
         $eventBus->method('dispatch')
             ->willReturnCallback(static function (object $msg) use (&$events): Envelope {
@@ -291,7 +291,7 @@ class ExtractVideoMetadataHandlerTest extends TestCase
         $videoRepository = $this->createMock(VideoRepositoryInterface::class);
         $videoRepository->expects($this->atLeastOnce())->method('save');
 
-        $eventBus = $this->createMock(MessageBusInterface::class);
+        $eventBus = $this->createStub(MessageBusInterface::class);
         $events = [];
         $eventBus->method('dispatch')
             ->willReturnCallback(static function (object $msg) use (&$events): Envelope {
@@ -328,7 +328,7 @@ class ExtractVideoMetadataHandlerTest extends TestCase
         $videoRepository = $this->createMock(VideoRepositoryInterface::class);
         $videoRepository->expects($this->atLeastOnce())->method('save');
 
-        $eventBus = $this->createMock(MessageBusInterface::class);
+        $eventBus = $this->createStub(MessageBusInterface::class);
         $events = [];
         $eventBus->method('dispatch')
             ->willReturnCallback(static function (object $msg) use (&$events): Envelope {
@@ -365,7 +365,7 @@ class ExtractVideoMetadataHandlerTest extends TestCase
         $videoRepository = $this->createMock(VideoRepositoryInterface::class);
         $videoRepository->expects($this->atLeastOnce())->method('save');
 
-        $eventBus = $this->createMock(MessageBusInterface::class);
+        $eventBus = $this->createStub(MessageBusInterface::class);
         $events = [];
         $eventBus->method('dispatch')
             ->willReturnCallback(static function (object $msg) use (&$events): Envelope {
@@ -400,7 +400,7 @@ class ExtractVideoMetadataHandlerTest extends TestCase
         $videoRepository = $this->createMock(VideoRepositoryInterface::class);
         $videoRepository->expects($this->atLeastOnce())->method('save');
 
-        $eventBus = $this->createMock(MessageBusInterface::class);
+        $eventBus = $this->createStub(MessageBusInterface::class);
         $events = [];
         $eventBus->method('dispatch')
             ->willReturnCallback(static function (object $msg) use (&$events): Envelope {
@@ -437,7 +437,7 @@ class ExtractVideoMetadataHandlerTest extends TestCase
         $videoRepository = $this->createMock(VideoRepositoryInterface::class);
         $videoRepository->expects($this->atLeastOnce())->method('save');
 
-        $eventBus = $this->createMock(MessageBusInterface::class);
+        $eventBus = $this->createStub(MessageBusInterface::class);
         $events = [];
         $eventBus->method('dispatch')
             ->willReturnCallback(static function (object $msg) use (&$events): Envelope {
@@ -472,7 +472,7 @@ class ExtractVideoMetadataHandlerTest extends TestCase
         $videoRepository = $this->createMock(VideoRepositoryInterface::class);
         $videoRepository->expects($this->atLeastOnce())->method('save');
 
-        $eventBus = $this->createMock(MessageBusInterface::class);
+        $eventBus = $this->createStub(MessageBusInterface::class);
         $events = [];
         $eventBus->method('dispatch')
             ->willReturnCallback(static function (object $msg) use (&$events): Envelope {
@@ -512,7 +512,7 @@ class ExtractVideoMetadataHandlerTest extends TestCase
         $logService = $this->createMock(LogServiceInterface::class);
         $logService->expects($this->atLeastOnce())->method('log');
 
-        $eventBus = $this->createMock(MessageBusInterface::class);
+        $eventBus = $this->createStub(MessageBusInterface::class);
         $events = [];
         $eventBus->method('dispatch')
             ->willReturnCallback(static function (object $msg) use (&$events): Envelope {
