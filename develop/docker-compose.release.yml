@@ -76,7 +76,7 @@ services:
 #        mem_limit: 512m
         deploy:
             # todo test with 2 replicas
-            replicas: 1
+            replicas: 2
             # todo limit memory. Ex.: 4k use 2g+ :(
 #            resources:
 #                limits:
