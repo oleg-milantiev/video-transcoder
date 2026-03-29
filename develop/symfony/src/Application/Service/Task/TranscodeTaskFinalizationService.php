@@ -44,10 +44,11 @@ readonly class TranscodeTaskFinalizationService
         $this->cancellationTrigger->clear($cancelledTask->id());
     }
 
-    public function handleSuccess(Task $task, string $relativeOutputPath, TranscodeReportDTO $report): void
+    public function handleSuccess(Task $task, TranscodeStartContextDTO $context, TranscodeReportDTO $report): void
     {
         $task->updateMeta([
-            'output' => $relativeOutputPath,
+            'size' => filesize($context->absoluteOutputPath),
+            'output' => $context->relativeOutputPath,
             'transcode' => [
                 'finishedAt' => new \DateTimeImmutable()->format(DATE_ATOM),
                 'report' => $report->toArray(),

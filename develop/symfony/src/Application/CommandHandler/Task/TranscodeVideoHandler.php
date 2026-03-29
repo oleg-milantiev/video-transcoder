@@ -117,7 +117,7 @@ final readonly class TranscodeVideoHandler
                 return;
             }
 
-            $this->transcodeTaskFinalizationService->handleSuccess($context->task, $context->relativeOutputPath, $transcodeReport);
+            $this->transcodeTaskFinalizationService->handleSuccess($context->task, $context, $transcodeReport);
             $this->eventBus->dispatch(new TranscodeVideoSuccess(
                 taskId: $context->task->id()->toRfc4122(),
                 videoId: $context->video->id()?->toRfc4122(),
