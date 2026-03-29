@@ -81,7 +81,18 @@ async function createOrUpdatePreset(page, preset, testInfo) {
   await expect(persistedRow).toContainText(String(preset.height), { timeout: UI_TIMEOUT });
 }
 
-async function createOrUpdateTariffByTitle(page, title, delay, instance, testInfo, screenshotName) {
+async function fillTariffFields(page, tariff) {
+  await page.getByLabel('Delay').fill(String(tariff.delay));
+  await page.getByLabel('Parallel tasks').fill(String(tariff.instance));
+  await page.getByLabel('Max video duration').fill(String(tariff.videoDuration));
+  await page.getByLabel('Max video size').fill(String(tariff.videoSize));
+  await page.getByLabel('Max width').fill(String(tariff.maxWidth));
+  await page.getByLabel('Max height').fill(String(tariff.maxHeight));
+  await page.getByLabel('Storage (GB)').fill(String(tariff.storageGb));
+  await page.getByLabel('Storage retention').fill(String(tariff.storageHour));
+}
+
+async function createOrUpdateTariffByTitle(page, title, tariff, testInfo, screenshotName) {
   await openAdminSection(page, 'Tariffs', '/admin/tariff');
 
   const tariffsTbody = mainTableBodyForHeading(page, 'Tariffs');
@@ -92,8 +103,7 @@ async function createOrUpdateTariffByTitle(page, title, delay, instance, testInf
     await page.locator('a.action-new').click({ timeout: UI_TIMEOUT });
 
     await page.getByLabel('Title').fill(title);
-    await page.getByLabel('Delay').fill(String(delay));
-    await page.getByLabel('Instance').fill(String(instance));
+    await fillTariffFields(page, tariff);
     await submitCrudForm(page);
   }
 
@@ -102,13 +112,12 @@ async function createOrUpdateTariffByTitle(page, title, delay, instance, testInf
   await shot(page, testInfo, screenshotName);
 
   await tariffRow.locator('a.action-edit').click({ timeout: UI_TIMEOUT });
-  await page.getByLabel('Delay').fill(String(delay));
-  await page.getByLabel('Instance').fill(String(instance));
+  await fillTariffFields(page, tariff);
   await submitCrudForm(page);
 
   const persistedRow = tariffsTbody.locator('tr', { hasText: title }).first();
-  await expect(persistedRow).toContainText(String(delay), { timeout: UI_TIMEOUT });
-  await expect(persistedRow).toContainText(String(instance), { timeout: UI_TIMEOUT });
+  await expect(persistedRow).toContainText(String(tariff.delay), { timeout: UI_TIMEOUT });
+  await expect(persistedRow).toContainText(String(tariff.instance), { timeout: UI_TIMEOUT });
 }
 
 async function assignTariffToUser(page, userEmail, tariffTitle, testInfo, screenshotName = '08-user-tariff-assigned.png') {

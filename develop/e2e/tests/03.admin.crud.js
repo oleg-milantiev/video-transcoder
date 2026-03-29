@@ -63,9 +63,29 @@ test('admin area full smoke with CRUD checks', async ({ page }, testInfo) => {
   await shot(page, testInfo, '03-presets-created.png');
 
   // Step 4 — Ensure Tariffs exist and configure them; then assign a tariff to the admin user
-  await createOrUpdateTariffByTitle(page, 'Free', 60, 1, testInfo, '07-tariff-free-initial.png');
-  await createOrUpdateTariffByTitle(page, 'Free', 3600, 1, testInfo, '07b-tariff-free-updated-to-hour.png');
-  await createOrUpdateTariffByTitle(page, 'Premium', 0, 2, testInfo, '07c-tariff-premium-present.png');
+  const freeTariff = {
+    delay: 60,
+    instance: 1,
+    videoDuration: 3600,
+    videoSize: 100,
+    maxWidth: 1920,
+    maxHeight: 1080,
+    storageGb: 1,
+    storageHour: 24,
+  };
+  const premiumTariff = {
+    delay: 0,
+    instance: 2,
+    videoDuration: 86400,
+    videoSize: 1024,
+    maxWidth: 3840,
+    maxHeight: 2160,
+    storageGb: 100,
+    storageHour: 720,
+  };
+  await createOrUpdateTariffByTitle(page, 'Free', { ...freeTariff, delay: 60 }, testInfo, '07-tariff-free-initial.png');
+  await createOrUpdateTariffByTitle(page, 'Free', { ...freeTariff, delay: 3600 }, testInfo, '07b-tariff-free-updated-to-hour.png');
+  await createOrUpdateTariffByTitle(page, 'Premium', premiumTariff, testInfo, '07c-tariff-premium-present.png');
   await shot(page, testInfo, '04-tarifs-created.png');
 
   // Step 5 — Create a test user with email test@test.com, password 'test', ROLE_USER and Free tariff
