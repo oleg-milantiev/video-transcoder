@@ -12,6 +12,13 @@ function createAuthHeader(apiBearerToken) {
 
 export function initHomeLegacyWidgets(config) {
     if (typeof window.Uppy === 'undefined') {
+        console.warn('[upload] Uppy is not loaded – skipping widget init');
+        return function noop() {};
+    }
+
+    const dropArea = document.getElementById('drag-drop-area');
+    if (!dropArea) {
+        console.warn('[upload] #drag-drop-area not found – skipping widget init');
         return function noop() {};
     }
 
@@ -34,7 +41,7 @@ export function initHomeLegacyWidgets(config) {
     const uppy = new window.Uppy.Uppy(uppyConfig)
         .use(window.Uppy.Dashboard, {
             inline: true,
-            target: '#drag-drop-area',
+            target: dropArea,
             proudlyDisplayPoweredByUppy: false,
         })
         .use(window.Uppy.Tus, {

@@ -108,6 +108,7 @@ export function createHomeTabsView(config) {
             return {
                 activeTab,
                 setTab,
+                uppyReady: uploadState.uppyReady,
                 userIdentifier: config.user ? config.user.identifier : '',
                 videos: videosState.videos,
                 videosMeta: videosState.videosMeta,

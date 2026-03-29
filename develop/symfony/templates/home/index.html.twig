@@ -3,6 +3,11 @@
 {% block title %}Video Transcoder{% endblock %}
 
 {% block stylesheets %}
+    {# Prevent Turbo Drive from caching this page.
+       Without this, a cached snapshot carries data-vue-mounted="1" and
+       mountHomeSpa() would bail out early on restore, leaving a dead DOM.
+       With no-cache, Turbo always does a fresh fetch, so the page boots cleanly. #}
+    <meta name="turbo-cache-control" content="no-cache">
     <link href="https://releases.transloadit.com/uppy/v3.21.0/uppy.min.css" rel="stylesheet">
 
     {{ parent() }}
@@ -21,11 +26,11 @@
     <div class="container py-5">
         {% if app.user %}
             <div id="home-spa"></div>
-            <script>const config = {{ config|json_encode|raw }};</script>
+            {# Use var (not const) so Turbo can re-execute this script on navigation
+               without hitting "Identifier 'config' has already been declared". #}
+            <script>var config = {{ config|json_encode|raw }};</script>
         {% else %}
             <p>Please <a href="{{ path('app_login') }}" class="btn btn-primary">Sign in</a>.</p>
         {% endif %}
     </div>
-
-
 {% endblock %}
