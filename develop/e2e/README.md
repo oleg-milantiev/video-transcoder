@@ -169,6 +169,21 @@ End-to-end scenario that exercises the full lifecycle across three presets with 
   - Clicks download and confirms the resolved URL returns HTTP `< 400` and ends in `.mp4`
 - Signs out
 
+### `07.parallel.transcode.js` — parallel transcode: two heavy presets on Premium tariff
+
+Verifies that two worker replicas pick up two tasks simultaneously when the user has `instance=2`.
+
+- Logs in as test user (Premium tariff with `instance=2` set by test `06`)
+- Uploads source fixture as `2022_10_04_Two_Maxes-07.mp4`
+- Opens `Videos` tab and enters the `-07` video card
+- Waits for poster and meta to be ready
+- Clicks `Transcode` on `FHD` and `720p` presets (both scheduled immediately: `delay=0`)
+- **Parallel check** — polls every 1 second until **both** presets are simultaneously in `PROCESSING` state with `progress > 0`, confirming two workers are running in parallel
+- Polls every 1 second until both presets reach `COMPLETED`
+- Verifies `Download` link is visible for each preset row
+- For each preset (`FHD`, `720p`) verifies the link's `download` attribute matches `{baseName} - {presetTitle}` and clicks download confirming a valid `.mp4` response
+- Signs out
+
 ## Execution order
 
 - `01.admin.login.js`
@@ -177,6 +192,7 @@ End-to-end scenario that exercises the full lifecycle across three presets with 
 - `04.transcode.flow.js`
 - `05.task.state.flow.js`
 - `06.multi.preset.flow.js`
+- `07.parallel.transcode.js`
 
 ## Data dependencies
 
@@ -185,6 +201,7 @@ End-to-end scenario that exercises the full lifecycle across three presets with 
 - `04` uploads the source fixture a second time as `2022_10_04_Two_Maxes-04.mp4` and validates the full transcode + delete lifecycle for the `-04` video using preset `180p`.
 - `05` re-uploads the source fixture as `2022_10_04_Two_Maxes-05.mp4` and uses `FHD` from `03` for long-running state-flow checks (progress/cancel/restart).
 - `06` uploads the source fixture as `2022_10_04_Two_Maxes-06.mp4`; relies on `test@test.com` having Free tariff (set by `03`) so that initial tasks stay `PENDING`, then switches to Premium and adds preset `720p` via admin, and validates all three presets complete and produce downloadable files.
+- `07` relies on `test@test.com` having Premium tariff (`instance=2`, set by `06`) and on preset `720p` existing (created by `06`). Uploads `-07` video and validates simultaneous PROCESSING of `FHD` + `720p` across two worker replicas.
 
 ## Local run in release stack
 

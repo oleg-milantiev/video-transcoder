@@ -51,6 +51,7 @@ async function loginAs(page, email, password) {
 }
 
 async function logoutToPublic(page) {
+  openHome(page);
   await expect(page.getByRole('link', { name: 'Sign out' })).toBeVisible({ timeout: UI_TIMEOUT });
   await page.getByRole('link', { name: 'Sign out' }).click({ timeout: UI_TIMEOUT });
   await expect(page.getByRole('link', { name: 'Sign in' })).toHaveCount(2, { timeout: UI_TIMEOUT });

@@ -178,6 +178,28 @@ async function waitForAllPresetsToComplete(page, presetTitles, maxAttempts = 24,
   throw new Error(`Not all presets reached COMPLETED after ${maxAttempts} attempts (${(maxAttempts * delayMs) / 1000}s)`);
 }
 
+/**
+ * Polls every pollMs until ALL specified presets are simultaneously PROCESSING with progress > 0.
+ * Verifies parallel execution: every preset must be in PROCESSING state (not just one at a time).
+ */
+async function waitForAllPresetsProcessingWithProgress(page, presetTitles, maxAttempts = 90, pollMs = 1000) {
+  for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+    let allProcessing = true;
+    for (const title of presetTitles) {
+      const { status, progress } = await readPresetTaskState(page, title);
+      if (status !== 'PROCESSING' || progress <= 0) {
+        allProcessing = false;
+        break;
+      }
+    }
+    if (allProcessing) return;
+    if (attempt < maxAttempts) await page.waitForTimeout(pollMs);
+  }
+  throw new Error(
+    `Not all presets [${presetTitles.join(', ')}] reached PROCESSING with progress > 0 after ${maxAttempts}s`,
+  );
+}
+
 module.exports = {
   expectDetailsValue,
   renameVideoFromDetails,
@@ -193,5 +215,6 @@ module.exports = {
   clickTranscodeForPreset,
   expectPresetStatus,
   waitForAllPresetsToComplete,
+  waitForAllPresetsProcessingWithProgress,
 };
 
