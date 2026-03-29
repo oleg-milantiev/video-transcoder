@@ -55,5 +55,11 @@ async function expectDownloadFilename(page, expectedFilename) {
   });
 }
 
-module.exports = { clickDownloadAndVerifyMp4, expectDownloadFilename };
+async function expectRowDownloadFilename(row, expectedFilename) {
+  const downloadLink = row.getByRole('link', { name: 'Download' });
+  await expect(downloadLink).toBeVisible({ timeout: UI_TIMEOUT });
+  await expect(downloadLink).toHaveAttribute('download', expectedFilename, { timeout: UI_TIMEOUT });
+}
+
+module.exports = { clickDownloadAndVerifyMp4, expectDownloadFilename, expectRowDownloadFilename };
 

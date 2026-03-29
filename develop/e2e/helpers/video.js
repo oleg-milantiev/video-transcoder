@@ -140,6 +140,44 @@ async function waitForPosterAndMeta(page, testInfo, prefix = '07-details-poster-
   throw new Error('Poster is not fully loaded or Meta duration is missing after 5 checks with 5-second delays');
 }
 
+async function getAllPresetTitles(page) {
+  const rows = await presetsTable(page).locator('tbody tr').all();
+  const titles = [];
+  for (const row of rows) {
+    const title = (await row.locator('td').nth(0).innerText()).trim();
+    if (title) titles.push(title);
+  }
+  return titles;
+}
+
+async function clickTranscodeForPreset(page, presetTitle) {
+  const row = presetRow(page, presetTitle);
+  const btn = row.getByRole('button', { name: 'Transcode' });
+  await expect(btn).toBeVisible({ timeout: UI_TIMEOUT });
+  await btn.click({ timeout: UI_TIMEOUT });
+}
+
+async function expectPresetStatus(page, presetTitle, expectedStatus) {
+  const { status } = await readPresetTaskState(page, presetTitle);
+  expect(status).toContain(expectedStatus);
+}
+
+async function waitForAllPresetsToComplete(page, presetTitles, maxAttempts = 24, delayMs = 5000) {
+  for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+    let allDone = true;
+    for (const title of presetTitles) {
+      const { status } = await readPresetTaskState(page, title);
+      if (status !== 'COMPLETED') {
+        allDone = false;
+        break;
+      }
+    }
+    if (allDone) return;
+    if (attempt < maxAttempts) await page.waitForTimeout(delayMs);
+  }
+  throw new Error(`Not all presets reached COMPLETED after ${maxAttempts} attempts (${(maxAttempts * delayMs) / 1000}s)`);
+}
+
 module.exports = {
   expectDetailsValue,
   renameVideoFromDetails,
@@ -151,5 +189,9 @@ module.exports = {
   waitForVideoDetailsVisible,
   expectFlashPopupTitle,
   waitForPosterAndMeta,
+  getAllPresetTitles,
+  clickTranscodeForPreset,
+  expectPresetStatus,
+  waitForAllPresetsToComplete,
 };
 

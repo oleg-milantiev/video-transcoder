@@ -132,6 +132,43 @@ Tests are designed to run sequentially (`workers: 1`) and build on data created 
 - Performs `Sign out` and verifies `Sign in` links are visible again
 - Saves screenshots for each milestone (`start`, `cancel`, `cancelled`, `restart completed`)
 
+### `06.multi.preset.flow.js` — multi-preset transcode: tariff change, new preset, full download
+
+End-to-end scenario that exercises the full lifecycle across three presets with a mid-flow tariff and preset change.
+
+#### Phase 1 — Login as test, upload, verify video card, trigger initial presets
+
+- Logs in as test user (`test@test.com`)
+- Uploads the source fixture as `2022_10_04_Two_Maxes-06.mp4`
+- Opens `Videos` tab and confirms the `-06` row is visible
+- Clicks the row and verifies core detail fields (`Title`, `Extension`, `Created At`)
+- Waits for the poster image and meta duration to be ready (up to 5 × 5 s retries)
+- Iterates over all presets currently in the system and clicks `Transcode` on each
+- Waits 3 seconds (tasks stay `PENDING` because the Free tariff's delay has not elapsed and the scheduler has not run)
+- Asserts that every preset row shows status `PENDING`
+- Signs out
+
+#### Phase 2 — Admin: assign Premium tariff + create 720p preset
+
+- Logs in as admin
+- Opens the admin dashboard
+- Assigns tariff `Premium` to `test@test.com` (removes the scheduler delay constraint)
+- Creates (or updates) preset `720p` — width: 1280, height: 720, codec: `h264`, bitrate: 3 Mbps
+- Returns to the main site and signs out
+
+#### Phase 3 — Test user: full transcode + download for all three presets
+
+- Logs in as test user again
+- Finds the previously uploaded `-06` video and opens its card
+- Verifies preset statuses: `180p = PENDING`, `FHD = PENDING`, `720p = No task`
+- Clicks `Transcode` on the `720p` row; this dispatches `StartTaskScheduler`, which now schedules all three tasks (Premium tariff: `delay=0`, `instance=2`)
+- Polls with 5-second intervals (up to 24 attempts = 2 min) until all three presets reach `COMPLETED`
+- Verifies a `Download` link is visible for each preset row
+- For each preset (`180p`, `FHD`, `720p`):
+  - Verifies the link's `download` attribute matches `{baseName} - {presetTitle}` (no `.mp4` extension in attribute)
+  - Clicks download and confirms the resolved URL returns HTTP `< 400` and ends in `.mp4`
+- Signs out
+
 ## Execution order
 
 - `01.admin.login.js`
@@ -139,13 +176,15 @@ Tests are designed to run sequentially (`workers: 1`) and build on data created 
 - `03.admin.crud.js`
 - `04.transcode.flow.js`
 - `05.task.state.flow.js`
+- `06.multi.preset.flow.js`
 
 ## Data dependencies
 
 - `02` uploads the original source video fixture used by `03` for admin checks.
-- `03` ensures presets `180p` and `FHD`, tariffs (`Free`, `Premium`), and user tariff assignment (`Free`) are ready. Additionally, `03` performs admin-side `Mark deleted` actions on the first Task and on the specific Video and verifies UI changes.
+- `03` ensures presets `180p` and `FHD`, tariffs (`Free`, `Premium`), and user tariff assignment (`Free` for `test@test.com`) are ready. Additionally, `03` performs admin-side `Mark deleted` actions on the first Task and on the specific Video and verifies UI changes.
 - `04` uploads the source fixture a second time as `2022_10_04_Two_Maxes-04.mp4` and validates the full transcode + delete lifecycle for the `-04` video using preset `180p`.
 - `05` re-uploads the source fixture as `2022_10_04_Two_Maxes-05.mp4` and uses `FHD` from `03` for long-running state-flow checks (progress/cancel/restart).
+- `06` uploads the source fixture as `2022_10_04_Two_Maxes-06.mp4`; relies on `test@test.com` having Free tariff (set by `03`) so that initial tasks stay `PENDING`, then switches to Premium and adds preset `720p` via admin, and validates all three presets complete and produce downloadable files.
 
 ## Local run in release stack
 
@@ -155,3 +194,11 @@ bash release.check.sh
 ```
 
 Artifacts are saved under `develop/release.check/<PROJECT_NAME>/playwright`.
+
+## Click new test
+
+- start docker-compose environment
+- start local xServer (like vcxsrv)
+- docker exec -it relcheck_0_0_3_1774763384-playwright-1 bash
+- export DISPLAY=192.168.2.70:0
+- npx playwright codegen http://nginx
