@@ -69,6 +69,8 @@ final readonly class ExtractVideoMetadataHandler
             $this->logger->debug('Extract Video Metadata: data extracted', [
                 'meta' => $metadata,
             ]);
+            $video->updateMeta($metadata);
+            $this->videoRepository->save($video);
 
             $width = $metadata['width'] ?? null;
             $height = $metadata['height'] ?? null;
@@ -89,9 +91,6 @@ final readonly class ExtractVideoMetadataHandler
             if ($duration > $maxDuration) {
                 $this->handleMetadataExtractionError($video, VideoMetadataInvalid::durationExceedsLimit($duration, $maxDuration));
             }
-
-            $video->updateMeta($metadata);
-            $this->videoRepository->save($video);
 
             $this->logService->log('video', $video->id(), LogLevel::INFO, 'Metadata extracted');
             $this->notifier->notifyVideoUpdated($video, 'meta');
