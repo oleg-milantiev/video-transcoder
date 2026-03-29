@@ -10,7 +10,13 @@ use App\Domain\User\Entity\User;
 use App\Domain\User\ValueObject\PasswordHash;
 use App\Domain\User\ValueObject\TariffDelay;
 use App\Domain\User\ValueObject\TariffInstance;
+use App\Domain\User\ValueObject\TariffMaxHeight;
+use App\Domain\User\ValueObject\TariffMaxWidth;
+use App\Domain\User\ValueObject\TariffStorageGb;
+use App\Domain\User\ValueObject\TariffStorageHour;
 use App\Domain\User\ValueObject\TariffTitle;
+use App\Domain\User\ValueObject\TariffVideoDuration;
+use App\Domain\User\ValueObject\TariffVideoSize;
 use App\Domain\User\ValueObject\UserEmail;
 use App\Domain\User\ValueObject\UserRoles;
 use PHPUnit\Framework\TestCase;
@@ -49,7 +55,7 @@ final class UserTest extends TestCase
     {
         $id = Uuid::fromString('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa');
         $hash = new PasswordHash('bcrypt-hash');
-        $tariff = new Tariff(new TariffTitle('Pro'), new TariffDelay(60), new TariffInstance(2));
+        $tariff = new Tariff(new TariffTitle('Pro'), new TariffDelay(60), new TariffInstance(2), new TariffVideoDuration(3600), new TariffVideoSize(500.0), new TariffMaxWidth(1920), new TariffMaxHeight(1080), new TariffStorageGb(100.0), new TariffStorageHour(24));
 
         $user = new User(
             email: new UserEmail('user@example.com'),
@@ -73,7 +79,7 @@ final class UserTest extends TestCase
 
         $this->assertNull($user->tariff());
 
-        $tariff = new Tariff(new TariffTitle('Pro'), new TariffDelay(30), new TariffInstance(5));
+        $tariff = new Tariff(new TariffTitle('Pro'), new TariffDelay(30), new TariffInstance(5), new TariffVideoDuration(1800), new TariffVideoSize(250.0), new TariffMaxWidth(1280), new TariffMaxHeight(720), new TariffStorageGb(50.0), new TariffStorageHour(12));
         $user->updateTariff($tariff);
 
         $this->assertSame($tariff, $user->tariff());
