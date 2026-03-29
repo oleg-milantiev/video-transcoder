@@ -141,6 +141,95 @@ class StartTranscodeHandlerTest extends TestCase
     /**
      * @throws ExceptionInterface
      */
+    public function testRestartsExistingTaskWhenFoundForTranscode(): void
+    {
+        $videoId = Uuid::fromString('123e4567-e89b-42d3-a456-426614174100');
+        $video = Video::reconstitute(
+            new VideoTitle('Source Clip'),
+            new FileExtension('mp4'),
+            userId: Uuid::fromString('123e4567-e89b-42d3-a456-426614174077'),
+            meta: [],
+            dates: VideoDates::create(new \DateTimeImmutable('2026-03-18 12:00:00')),
+            id: $videoId,
+        );
+
+        $preset = new Preset(
+            new PresetTitle('HD 720p'),
+            new Resolution(1280, 720),
+            new Codec('h264'),
+            new Bitrate(50.0),
+            id: Uuid::fromString('123e4567-e89b-42d3-a456-426614174005'),
+        );
+
+        $user = new User(
+            new UserEmail('user@example.com'),
+            new UserRoles(['ROLE_USER']),
+            id: $video->userId(),
+        );
+
+        // Existing FAILED task — restart() must be called on it
+        $existingTask = Task::reconstitute(
+            videoId: $videoId,
+            presetId: $preset->id(),
+            userId: $user->id(),
+            status: \App\Domain\Video\ValueObject\TaskStatus::FAILED,
+            progress: new \App\Domain\Video\ValueObject\Progress(0),
+            dates: \App\Domain\Video\ValueObject\TaskDates::create(),
+            id: Uuid::fromString('123e4567-e89b-42d3-a456-426614174321'),
+        );
+
+        $commandBus = $this->createMock(MessageBusInterface::class);
+        $commandBus->expects($this->once())
+            ->method('dispatch')
+            ->with($this->isInstanceOf(StartTaskScheduler::class))
+            ->willReturn(new Envelope(new StartTaskScheduler(), [new HandledStamp(null, 'handler')]));
+
+        $dispatchedEventClasses = [];
+        $eventBus = new class ($dispatchedEventClasses) implements MessageBusInterface {
+            public function __construct(private array &$dispatched) {}
+            public function dispatch(object $message, array $stamps = []): Envelope
+            {
+                $this->dispatched[] = $message::class;
+                return new Envelope($message);
+            }
+        };
+
+        $videoRepo = $this->createStub(VideoRepositoryInterface::class);
+        $videoRepo->method('findById')->willReturn($video);
+
+        $presetRepo = $this->createStub(PresetRepositoryInterface::class);
+        $presetRepo->method('findById')->willReturn($preset);
+
+        $taskRepo = $this->createMock(TaskRepositoryInterface::class);
+        $taskRepo->expects($this->once())
+            ->method('findForTranscode')
+            ->willReturn($existingTask);
+        $taskRepo->expects($this->once())
+            ->method('save')
+            ->with($this->isInstanceOf(Task::class));
+
+        $userRepo = $this->createStub(UserRepositoryInterface::class);
+        $userRepo->method('findById')->willReturn($user);
+
+        $security = $this->createMock(Security::class);
+        $security->expects($this->once())
+            ->method('isGranted')
+            ->willReturn(true);
+
+        $logService = $this->createMock(LogServiceInterface::class);
+        $logService->expects($this->exactly(3))->method('log');
+
+        $handler = new StartTranscodeHandler($commandBus, $eventBus, $videoRepo, $presetRepo, $taskRepo, $userRepo, $logService, $security);
+        $query = new StartTranscodeQuery($videoId->toRfc4122(), $preset->id()->toRfc4122(), $user->id()->toRfc4122());
+        $dto = $handler($query);
+
+        $this->assertInstanceOf(TaskItemDTO::class, $dto);
+        $this->assertSame([StartTranscodeStart::class, StartTranscodeSuccess::class], $dispatchedEventClasses);
+    }
+
+    /**
+     * @throws ExceptionInterface
+     */
     public function testThrowsWhenVideoNotFound(): void
     {
         $commandBus = $this->createStub(MessageBusInterface::class);

@@ -416,6 +416,85 @@ final class DeleteVideoHandlerTest extends TestCase
         ));
     }
 
+    public function testSkipsAlreadyDeletedTasksInLoop(): void
+    {
+        $videoId = Uuid::fromString('11111111-1111-4111-8111-111111111111');
+        $userId = Uuid::fromString('22222222-2222-4222-8222-222222222222');
+        $video = $this->createVideo($videoId, $userId);
+
+        // One task that is already deleted — must be skipped (continue)
+        $deletedTask = Task::reconstitute(
+            videoId: $videoId,
+            presetId: Uuid::fromString('33333333-3333-4333-8333-333333333333'),
+            userId: $userId,
+            status: TaskStatus::DELETED,
+            progress: new Progress(0),
+            dates: TaskDates::create(),
+            id: Uuid::fromString('44444444-4444-4444-8444-444444444411'),
+            deleted: true,
+        );
+
+        // One non-deleted completed task — must be processed normally
+        $completedTask = Task::reconstitute(
+            videoId: $videoId,
+            presetId: Uuid::fromString('55555555-5555-4555-8555-555555555555'),
+            userId: $userId,
+            status: TaskStatus::COMPLETED,
+            progress: new Progress(100),
+            dates: TaskDates::create(),
+            id: Uuid::fromString('66666666-6666-4666-8666-666666666666'),
+        );
+
+        $events = [];
+        $eventBus = new class ($events) implements MessageBusInterface {
+            public function __construct(private array &$events) {}
+            public function dispatch($message, array $stamps = []): Envelope
+            {
+                $this->events[] = $message::class;
+                return new Envelope($message);
+            }
+        };
+
+        $videoRepository = $this->createMock(VideoRepositoryInterface::class);
+        $videoRepository->expects($this->once())->method('findById')->willReturn($video);
+        $videoRepository->expects($this->once())->method('save');
+
+        $taskRepository = $this->createStub(TaskRepositoryInterface::class);
+        $taskRepository->method('findByVideoId')->willReturn([$deletedTask, $completedTask]);
+
+        // queryBus must be called exactly ONCE — only for the non-deleted task
+        $queryBus = $this->createMock(QueryBus::class);
+        $queryBus->expects($this->once())->method('query');
+
+        $security = $this->createMock(Security::class);
+        $security->expects($this->once())->method('isGranted')->willReturn(true);
+
+        $cleanupCommandBus = $this->createMock(MessageBusInterface::class);
+        $cleanupCommandBus->expects($this->once())
+            ->method('dispatch')
+            ->willReturnCallback(static fn (object $m): Envelope => new Envelope($m));
+
+        $notifierCommandBus = $this->createMock(MessageBusInterface::class);
+        $notifierCommandBus->expects($this->once())
+            ->method('dispatch')
+            ->willReturnCallback(static fn (object $m): Envelope => new Envelope($m));
+
+        $handler = new DeleteVideoHandler(
+            $cleanupCommandBus,
+            $eventBus,
+            $videoRepository,
+            $taskRepository,
+            $this->createStub(LogServiceInterface::class),
+            new VideoRealtimeNotifier($notifierCommandBus, $this->createStub(StorageInterface::class), $this->createStub(TaskRepositoryInterface::class)),
+            $security,
+            $queryBus,
+        );
+
+        $handler(new DeleteVideoQuery($videoId->toRfc4122(), $userId->toRfc4122()));
+
+        $this->assertContains(DeleteVideoSuccess::class, $events);
+    }
+
     private function createVideo(Uuid $videoId, Uuid $userId): Video
     {
         return Video::reconstitute(
