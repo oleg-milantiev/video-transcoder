@@ -108,7 +108,7 @@ export function createHomeTabsView(config) {
             return {
                 activeTab,
                 setTab,
-                userIdentifier: config.userIdentifier,
+                userIdentifier: config.user ? config.user.identifier : '',
                 videos: videosState.videos,
                 videosMeta: videosState.videosMeta,
                 videosLoading: videosState.videosLoading,

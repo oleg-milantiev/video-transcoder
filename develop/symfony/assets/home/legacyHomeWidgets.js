@@ -15,10 +15,10 @@ export function initHomeLegacyWidgets(config) {
         return function noop() {};
     }
 
-    const apiBearerToken = config.apiBearerToken || null;
+    const apiBearerToken = config.token ? (config.token.access || null) : null;
     const authHeader = createAuthHeader(apiBearerToken);
 
-    const maxFileSize = config.maxVideoSize ? config.maxVideoSize * 1024 * 1024 : null;
+    const maxFileSize = (config.tariff && config.tariff.videoSize) ? parseFloat(config.tariff.videoSize) * 1024 * 1024 : null;
 
     const uppyConfig = {
         autoProceed: true,
@@ -38,7 +38,7 @@ export function initHomeLegacyWidgets(config) {
             proudlyDisplayPoweredByUppy: false,
         })
         .use(window.Uppy.Tus, {
-            endpoint: config.apiUploadUrl,
+            endpoint: config.route.upload,
             chunkSize: 5 * 1024 * 1024,
             headers: function () {
                 return authHeader;

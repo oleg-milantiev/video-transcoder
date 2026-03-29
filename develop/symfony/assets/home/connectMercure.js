@@ -31,7 +31,7 @@ export function connectMercure(config, rootElement) {
         return;
     }
 
-    if (!config.mercureHubUrl || !config.mercureTopic || !config.mercureSubscriberToken) {
+    if (!config.mercure.hub || !config.mercure.topic || !config.mercure.token) {
         return;
     }
 
@@ -40,13 +40,13 @@ export function connectMercure(config, rootElement) {
     }
 
     const eventSource = new EventSource(
-        createHubUrl(config.mercureHubUrl, config.mercureTopic, config.mercureSubscriberToken)
+        createHubUrl(config.mercure.hub, config.mercure.topic, config.mercure.token)
     );
 
     eventSource.onopen = function () {
         console.log('[mercure] connected', {
-            topic: config.mercureTopic,
-            userId: config.userId || null,
+            topic: config.mercure.topic,
+            userId: config.user ? config.user.id : null,
         });
     };
 

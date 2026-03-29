@@ -42,7 +42,7 @@ export function createVideoDetailsActions(params) {
         state.error.value = '';
         state.actionError.value = '';
 
-        const url = replaceTemplateValue(config.apiVideoDetailsUrlTemplate, '__UUID__', uuid.value);
+        const url = replaceTemplateValue(config.route.video.details, '__UUID__', uuid.value);
 
         try {
             const response = await authFetch(url, {
@@ -97,7 +97,7 @@ export function createVideoDetailsActions(params) {
             return;
         }
 
-        const url = replaceTemplateValue(config.apiVideoPatchUrlTemplate || config.apiVideoDetailsUrlTemplate, '__UUID__', uuid.value);
+        const url = replaceTemplateValue(config.route.video.patch || config.route.video.details, '__UUID__', uuid.value);
 
         state.activeActionKey.value = 'rename';
         state.actionError.value = '';
@@ -159,7 +159,7 @@ export function createVideoDetailsActions(params) {
 
     function startTranscode(presetId) {
         const url = replaceTemplateValue(
-            replaceTemplateValue(config.apiVideoTranscodeUrlTemplate, '__UUID__', uuid.value),
+            replaceTemplateValue(config.route.video.transcode, '__UUID__', uuid.value),
             '__PRESET_ID__',
             presetId
         );
@@ -168,18 +168,18 @@ export function createVideoDetailsActions(params) {
     }
 
     function cancelTask(taskId) {
-        const url = replaceTemplateValue(config.apiTaskCancelUrlTemplate, '__TASK_ID__', taskId);
+        const url = replaceTemplateValue(config.route.task.cancel, '__TASK_ID__', taskId);
         void runPostAction(url, 'cancel-' + String(taskId), 'Failed to cancel task');
     }
 
     function taskDownloadUrl(taskId) {
-        return replaceTemplateValue(config.taskDownloadUrlTemplate, '__TASK_ID__', taskId);
+        return replaceTemplateValue(config.route.task.download, '__TASK_ID__', taskId);
     }
 
     function goHome() {
-        if (config.homeUrl) {
+        if (config.route.home) {
             void router.push({
-                path: config.homeUrl,
+                path: config.route.home,
                 query: { tab: 'videos' },
             });
             return;

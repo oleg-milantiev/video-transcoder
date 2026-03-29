@@ -65,7 +65,7 @@ export function createTasksTabActions(params) {
         tasksState.tasksError.value = '';
 
         try {
-            const payload = await fetchList(config.apiTaskListUrl, page, pageLimit);
+            const payload = await fetchList(config.route.task.list, page, pageLimit);
             tasksState.tasks.value = payload.items;
             tasksState.tasksMeta.value = {
                 page: payload.page,
@@ -99,7 +99,7 @@ export function createTasksTabActions(params) {
         tasksState.taskActionKey.value = 'cancel-' + String(taskId);
 
         try {
-            const url = config.apiTaskCancelUrlTemplate.replace('__TASK_ID__', String(taskId));
+            const url = config.route.task.cancel.replace('__TASK_ID__', String(taskId));
             const response = await authFetch(url, {
                 method: 'POST',
             });
@@ -116,7 +116,7 @@ export function createTasksTabActions(params) {
     }
 
     function getTaskDownloadUrl(taskId) {
-        return config.taskDownloadUrlTemplate.replace('__TASK_ID__', String(taskId));
+        return config.route.task.download.replace('__TASK_ID__', String(taskId));
     }
 
     function applyTaskRealtimeUpdate(update) {
