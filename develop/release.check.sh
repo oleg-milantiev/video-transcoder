@@ -65,3 +65,5 @@ docker compose -p "$PROJECT_NAME" -f docker-compose.release.yml exec -T playwrig
   TEST_PASSWORD=test \
   npx playwright test --project=chromium
 "
+
+rsync -avr --delete /root/video-transcoder/develop/release.check/$PROJECT_NAME/playwright/html-report/ 192.168.2.198:/mnt/goodwin/milantiev/www/oleg/oleg.milantiev.com/www/html-report
