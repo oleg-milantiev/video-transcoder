@@ -57,6 +57,20 @@ class VideoRepository extends ServiceEntityRepository implements VideoRepository
         return $entity ? self::mapToDomain($entity) : null;
     }
 
+    public function getStorageSize(Uuid $userId): int
+    {
+        $conn = $this->getEntityManager()->getConnection();
+
+        $sql = "SELECT sum((v.meta->>'size')::bigint)
+            FROM video v
+            WHERE v.user_id = :userId
+                AND v.deleted = false";
+
+        $size = $conn->executeQuery($sql, ['userId' => $userId->toRfc4122()])->fetchOne();
+
+        return $size ? (int)$size : 0;
+    }
+
     public function findDeletedVideoForCleanup(): array
     {
         $conn = $this->getEntityManager()->getConnection();

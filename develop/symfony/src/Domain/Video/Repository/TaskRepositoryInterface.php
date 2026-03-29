@@ -12,6 +12,8 @@ interface TaskRepositoryInterface extends PaginatedRepositoryInterface
     public function findByIdFresh(Uuid $id): ?Task;
     public function findForTranscode(Uuid $videoId, Uuid $presetId, Uuid $userId): ?Task;
 
+    public function getStorageSize(Uuid $userId): int;
+
     /**
      * @return array<int, Task>
      */
