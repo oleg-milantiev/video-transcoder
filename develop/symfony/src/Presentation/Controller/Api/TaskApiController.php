@@ -93,7 +93,7 @@ class TaskApiController extends AbstractController
             'cancelRequestedAt' => new \DateTimeImmutable()->format(DATE_ATOM),
         ]);
 
-        $cancelledNow = $task->status() === TaskStatus::PENDING || TaskStatus::STARTING;
+        $cancelledNow = $task->status() === TaskStatus::PENDING || $task->status() === TaskStatus::STARTING;
         $requestedByUserId = Uuid::fromString($this->getUser()->id->toRfc4122());
 
         if ($cancelledNow) {

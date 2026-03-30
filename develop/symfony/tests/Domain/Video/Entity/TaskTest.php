@@ -28,7 +28,7 @@ final class TaskTest extends TestCase
 
     public function testCanStartDependsOnStatusAndDuration(): void
     {
-        $task = Task::create($this->videoId(), $this->presetId(), $this->userId());
+        $task = $this->startingTask();
 
         $this->assertTrue($task->canStart(12.5));
         $this->assertFalse($task->canStart(null));
@@ -42,7 +42,7 @@ final class TaskTest extends TestCase
 
     public function testStartSwitchesToProcessingAndSetsDates(): void
     {
-        $task = Task::create($this->videoId(), $this->presetId(), $this->userId());
+        $task = $this->startingTask();
 
         $task->start(12.5);
 
@@ -53,7 +53,7 @@ final class TaskTest extends TestCase
 
     public function testStartTwiceThrows(): void
     {
-        $task = Task::create($this->videoId(), $this->presetId(), $this->userId());
+        $task = $this->startingTask();
         $task->start(12.5);
 
         $this->expectException(\DomainException::class);
@@ -62,7 +62,7 @@ final class TaskTest extends TestCase
 
     public function testUpdateProgressToCompleteMarksTaskCompleted(): void
     {
-        $task = Task::create($this->videoId(), $this->presetId(), $this->userId());
+        $task = $this->startingTask();
         $task->start(12.5);
 
         $task->updateProgress(new Progress(100));
@@ -74,7 +74,7 @@ final class TaskTest extends TestCase
 
     public function testFailMarksTaskFailed(): void
     {
-        $task = Task::create($this->videoId(), $this->presetId(), $this->userId());
+        $task = $this->startingTask();
         $task->start(12.5);
 
         $task->fail();
@@ -88,7 +88,7 @@ final class TaskTest extends TestCase
         $pendingTask->cancel();
         $this->assertSame(TaskStatus::CANCELLED, $pendingTask->status());
 
-        $processingTask = Task::create($this->videoId(), $this->presetId(), $this->userId());
+        $processingTask = $this->startingTask();
         $processingTask->start(12.5);
         $processingTask->cancel();
         $this->assertSame(TaskStatus::CANCELLED, $processingTask->status());
@@ -96,7 +96,7 @@ final class TaskTest extends TestCase
 
     public function testCancelCompletedTaskThrows(): void
     {
-        $task = Task::create($this->videoId(), $this->presetId(), $this->userId());
+        $task = $this->startingTask();
         $task->start(12.5);
         $task->updateProgress(new Progress(100));
 
@@ -134,7 +134,7 @@ final class TaskTest extends TestCase
 
     public function testStartWithoutValidDurationThrows(): void
     {
-        $task = Task::create($this->videoId(), $this->presetId(), $this->userId());
+        $task = $this->startingTask();
 
         $this->expectException(\DomainException::class);
         $task->start(null);
@@ -150,7 +150,7 @@ final class TaskTest extends TestCase
 
     public function testUpdateMetaOnCompletedTaskThrows(): void
     {
-        $task = Task::create($this->videoId(), $this->presetId(), $this->userId());
+        $task = $this->startingTask();
         $task->start(12.5);
         $task->updateProgress(new Progress(100));
 
@@ -158,25 +158,25 @@ final class TaskTest extends TestCase
         $task->updateMeta(['output' => 'completed.mp4']);
     }
 
-    public function testCanStartDependsOnStartedAtForFailedAndCancelled(): void
+    public function testCanStartOnlyForStartingStatus(): void
     {
-        $cancelledBeforeStart = Task::create($this->videoId(), $this->presetId(), $this->userId());
-        $cancelledBeforeStart->cancel();
-        $this->assertTrue($cancelledBeforeStart->canStart(12.5));
+        $this->assertFalse(Task::create($this->videoId(), $this->presetId(), $this->userId())->canStart(12.5));
 
-        $cancelledAfterStart = Task::create($this->videoId(), $this->presetId(), $this->userId());
-        $cancelledAfterStart->start(12.5);
-        $cancelledAfterStart->cancel();
-        $this->assertFalse($cancelledAfterStart->canStart(12.5));
+        $this->assertTrue($this->startingTask()->canStart(12.5));
 
-        $failedBeforeStart = Task::create($this->videoId(), $this->presetId(), $this->userId());
-        $failedBeforeStart->fail();
-        $this->assertTrue($failedBeforeStart->canStart(12.5));
+        $failedTask = Task::reconstitute(
+            $this->videoId(), $this->presetId(), $this->userId(),
+            TaskStatus::FAILED, new Progress(0), TaskDates::create(),
+            Uuid::fromString('dddddddd-dddd-4ddd-8ddd-dddddddddddd'),
+        );
+        $this->assertFalse($failedTask->canStart(12.5));
 
-        $failedAfterStart = Task::create($this->videoId(), $this->presetId(), $this->userId());
-        $failedAfterStart->start(12.5);
-        $failedAfterStart->fail();
-        $this->assertFalse($failedAfterStart->canStart(12.5));
+        $cancelledTask = Task::reconstitute(
+            $this->videoId(), $this->presetId(), $this->userId(),
+            TaskStatus::CANCELLED, new Progress(0), TaskDates::create(),
+            Uuid::fromString('dddddddd-dddd-4ddd-8ddd-dddddddddddd'),
+        );
+        $this->assertFalse($cancelledTask->canStart(12.5));
     }
 
     public function testMarkDeletedSetsDeletedStatus(): void
@@ -268,6 +268,47 @@ final class TaskTest extends TestCase
         $this->assertSame(0, $task->progress()->value());
     }
 
+    public function testRestartPreservesStartedAt(): void
+    {
+        $task = $this->startingTask();
+        $task->start(12.5);
+        $firstStartedAt = $task->startedAt();
+        $this->assertNotNull($firstStartedAt);
+
+        $task->fail();
+        $task->restart();
+
+        $this->assertSame(TaskStatus::PENDING, $task->status());
+        $this->assertSame($firstStartedAt, $task->startedAt(), 'startedAt must never be erased');
+    }
+
+    public function testSecondStartAfterRestartUpdatesStartedAt(): void
+    {
+        $knownStartedAt = new \DateTimeImmutable('2026-03-18 10:05:00');
+
+        // Task already has startedAt from a previous run, now back in STARTING
+        $task = Task::reconstitute(
+            videoId: $this->videoId(),
+            presetId: $this->presetId(),
+            userId: $this->userId(),
+            status: TaskStatus::STARTING,
+            progress: new Progress(0),
+            dates: TaskDates::fromPersistence(
+                new \DateTimeImmutable('2026-03-18 10:00:00'),
+                $knownStartedAt,
+                new \DateTimeImmutable('2026-03-18 10:06:00'),
+            ),
+            id: Uuid::fromString('dddddddd-dddd-4ddd-8ddd-dddddddddddd'),
+        );
+
+        $task->start(12.5);
+
+        $this->assertSame(TaskStatus::PROCESSING, $task->status());
+        $this->assertNotNull($task->startedAt());
+        // startedAt was overwritten with a brand-new DateTimeImmutable — different reference
+        $this->assertNotSame($knownStartedAt, $task->startedAt());
+    }
+
     public function testRestartAfterFailSetsPendingStatus(): void
     {
         $task = Task::create($this->videoId(), $this->presetId(), $this->userId());
@@ -288,7 +329,7 @@ final class TaskTest extends TestCase
 
     public function testFailOnFinishedTaskThrows(): void
     {
-        $task = Task::create($this->videoId(), $this->presetId(), $this->userId());
+        $task = $this->startingTask();
         $task->start(12.5);
         $task->updateProgress(new Progress(100));
 
@@ -345,6 +386,19 @@ final class TaskTest extends TestCase
         $task->clearOutput();
 
         $this->assertNull($task->meta()['output']);
+    }
+
+    private function startingTask(): Task
+    {
+        return Task::reconstitute(
+            videoId: $this->videoId(),
+            presetId: $this->presetId(),
+            userId: $this->userId(),
+            status: TaskStatus::STARTING,
+            progress: new Progress(0),
+            dates: TaskDates::create(),
+            id: Uuid::fromString('dddddddd-dddd-4ddd-8ddd-dddddddddddd'),
+        );
     }
 
     private function videoId(): Uuid

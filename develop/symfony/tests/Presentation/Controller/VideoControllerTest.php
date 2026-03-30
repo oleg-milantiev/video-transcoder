@@ -37,21 +37,21 @@ final class VideoControllerTest extends WebTestCase
         // New template: div with id 'home-spa' is mounted and config is injected via inline script
         self::assertCount(1, $crawler->filter('#home-spa'));
 
-        // Find the first script tag that contains the `const config =` declaration
+        // Find the first script tag that contains the `var config =` declaration
         $scriptNode = null;
         foreach ($crawler->filter('script') as $node) {
             $text = $node->textContent;
-            if (strpos($text, 'const config =') !== false) {
+            if (strpos($text, 'var config =') !== false) {
                 $scriptNode = $text;
                 break;
             }
         }
 
-        self::assertNotNull($scriptNode, 'Expected an inline script with `const config =` declaration');
+        self::assertNotNull($scriptNode, 'Expected an inline script with `var config =` declaration');
 
-        // Extract JSON after `const config =` using brace matching to be robust
-        $pos = strpos($scriptNode, 'const config =');
-        self::assertNotFalse($pos, 'Could not find `const config =` in script content');
+        // Extract JSON after `var config =` using brace matching to be robust
+        $pos = strpos($scriptNode, 'var config =');
+        self::assertNotFalse($pos, 'Could not find `var config =` in script content');
         $start = strpos($scriptNode, '{', $pos);
         self::assertNotFalse($start, 'Could not find opening brace for config JSON');
 

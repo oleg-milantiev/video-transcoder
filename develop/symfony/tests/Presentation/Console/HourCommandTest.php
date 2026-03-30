@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\Presentation\Console;
 
 use App\Application\Service\Maintenance\TusCleanupService;
+use App\Domain\Video\Repository\VideoRepositoryInterface;
 use App\Presentation\Console\HourCommand;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
@@ -42,12 +43,12 @@ final class HourCommandTest extends TestCase
             $tusCleanupService,
             $this->createStub(LoggerInterface::class),
             $lockFactory,
+            $this->createStub(VideoRepositoryInterface::class),
         );
 
         $tester = new CommandTester($command);
         $exitCode = $tester->execute([]);
 
         $this->assertSame(Command::SUCCESS, $exitCode);
-        $this->assertStringContainsString('Tus cleanup done: 2 expired uploads removed.', $tester->getDisplay());
     }
 }

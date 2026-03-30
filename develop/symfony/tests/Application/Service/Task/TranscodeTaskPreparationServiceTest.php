@@ -7,6 +7,9 @@ namespace App\Tests\Application\Service\Task;
 use App\Application\Service\Task\TranscodeTaskPreparationService;
 use App\Application\Service\Task\TaskRealtimeNotifier;
 use App\Application\Factory\FlashNotificationFactory;
+use App\Domain\Video\ValueObject\Progress;
+use App\Domain\Video\ValueObject\TaskDates;
+use App\Domain\Video\ValueObject\TaskStatus;
 use App\Domain\Video\ValueObject\VideoDates;
 use Psr\Log\LogLevel;
 use App\Application\Logging\LogServiceInterface;
@@ -143,8 +146,15 @@ class TranscodeTaskPreparationServiceTest extends TestCase
 
     private function createTask(Uuid $videoId, Uuid $presetId): Task
     {
-        $task = Task::create($videoId, $presetId, Uuid::fromString('123e4567-e89b-42d3-a456-426614174007'));
-        $task->assignId(Uuid::fromString('123e4567-e89b-42d3-a456-426614174013'));
+        $task = Task::reconstitute(
+            videoId: $videoId,
+            presetId: $presetId,
+            userId: Uuid::fromString('123e4567-e89b-42d3-a456-426614174007'),
+            status: TaskStatus::STARTING,
+            progress: new Progress(0),
+            dates: TaskDates::create(),
+            id: Uuid::fromString('123e4567-e89b-42d3-a456-426614174013'),
+        );
 
         return $task;
     }

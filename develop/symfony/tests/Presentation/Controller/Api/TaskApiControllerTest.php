@@ -12,6 +12,9 @@ use App\Domain\Shared\ValueObject\Uuid;
 use App\Domain\Video\Entity\Task;
 use App\Domain\Video\Repository\TaskRepositoryInterface;
 use App\Domain\Video\Repository\VideoRepositoryInterface;
+use App\Domain\Video\ValueObject\Progress;
+use App\Domain\Video\ValueObject\TaskDates;
+use App\Domain\Video\ValueObject\TaskStatus;
 use App\Infrastructure\Security\Voter\VideoAccessVoter;
 use App\Tests\Domain\Entity\TaskFake;
 use App\Tests\Domain\Entity\VideoFake;
@@ -244,12 +247,15 @@ final class TaskApiControllerTest extends ApiWebTestCase
 
     private function createProcessingTask(): Task
     {
-        $task = Task::create(
-            Uuid::fromString('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'),
-            Uuid::fromString('10101010-1010-4010-8010-101010101010'),
-            Uuid::fromString('00000000-0000-4000-8000-000000000042')
+        $task = Task::reconstitute(
+            videoId: Uuid::fromString('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'),
+            presetId: Uuid::fromString('10101010-1010-4010-8010-101010101010'),
+            userId: Uuid::fromString('00000000-0000-4000-8000-000000000042'),
+            status: TaskStatus::STARTING,
+            progress: new Progress(0),
+            dates: TaskDates::create(),
+            id: Uuid::fromString('77777777-7777-4777-8777-777777777777'),
         );
-        $task->assignId(Uuid::fromString('77777777-7777-4777-8777-777777777777'));
         $task->start(12.5);
 
         return $task;

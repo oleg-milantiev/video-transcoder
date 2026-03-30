@@ -34,7 +34,7 @@ class GetVideoDetailsHandlerTest extends TestCase
                     'title' => 'HD',
                     'task' => [
                         'id' => '42424242-4242-4242-8242-424242424242',
-                        'status' => 2,
+                        'status' => 3,
                         'progress' => 75,
                         'createdAt' => '2024-03-18 10:00',
                         'downloadFilename' => 'HD - example.mp4',

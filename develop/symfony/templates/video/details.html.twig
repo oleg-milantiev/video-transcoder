@@ -4,5 +4,5 @@
 
 {% block body %}
     <div id="home-spa"></div>
-    <script>const config = {{ config|json_encode|raw }};</script>
+    <script>var config = {{ config|json_encode|raw }};</script>
 {% endblock %}

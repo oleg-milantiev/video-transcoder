@@ -19,7 +19,7 @@ final class TaskFake
             videoId: $video->id() ?? Uuid::generate(),
             presetId: $preset->id() ?? Uuid::generate(),
             userId: $video->userId(),
-            status: TaskStatus::pending(),
+            status: TaskStatus::starting(),
             progress: new Progress(0),
             dates: TaskDates::create(),
             id: Uuid::generate(),

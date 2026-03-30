@@ -1,4 +1,4 @@
-# Task State Flow (DDD)
+# Task State Flow
 
 Этот документ фиксирует все варианты жизненного цикла `Task` в текущей реализации.
 
@@ -12,126 +12,151 @@
 
 ## States
 
-- `PENDING` - задача создана/ожидает запуска.
-- `PROCESSING` - транскодирование выполняется.
-- `COMPLETED` - успешно завершена.
-- `FAILED` - завершена с ошибкой.
-- `CANCELLED` - отменена пользователем или системой.
+| Статус | Описание |
+|---|---|
+| `PENDING` | Задача создана или перезапущена — ожидает планировщика |
+| `STARTING` | Планировщик выбрал задачу — воркер ещё не запустил ffmpeg |
+| `PROCESSING` | ffmpeg активно транскодирует |
+| `COMPLETED` | Успешно завершена |
+| `FAILED` | Завершена с ошибкой |
+| `CANCELLED` | Отменена пользователем или системой |
+| `DELETED` | Помечена удалённой |
+
+## Инвариант startedAt
+
+`startedAt` — audit-метка **последнего** фактического начала обработки ffmpeg.
+
+| Событие | Что происходит с `startedAt` |
+|---|---|
+| Первый `start()` (было `null`) | `null → NOW` |
+| Повторный `start()` после restart (было `NOT NULL`) | `NOT NULL → NOW` (перезаписывается) |
+| `restart()` | не изменяется (`touch()` обновляет только `updatedAt`) |
+| `fail()` / `cancel()` / `updateProgress()` | не изменяется |
+
+**Правила:**
+- `startedAt` **никогда не обнуляется** — единожды записанное значение только обновляется.
+- `TaskDates::markStarted()` вызывается при **каждом** переходе `STARTING → PROCESSING` и всегда перезаписывает `startedAt`.
+- `touch()` никогда не трогает `startedAt`.
 
 ## Domain transitions
 
 ### Allowed transitions
 
-- `null -> PENDING`
-  - через `Task::create(...)`
-- `FAILED|CANCELLED -> PENDING`
-  - через `Task::restart()`
-- `PENDING|FAILED|CANCELLED -> PROCESSING`
-  - через `Task::start(?float $videoDuration)` при `videoDuration > 0`
-- `PROCESSING -> PROCESSING`
-  - через `Task::updateProgress(...)` для значений `< 100`
-- `PROCESSING -> COMPLETED`
-  - через `Task::updateProgress(100)`
-- `PENDING|PROCESSING -> CANCELLED`
-  - через `Task::cancel()`
-- `PENDING|PROCESSING -> FAILED`
-  - через `Task::fail()`
+| Откуда | Метод | Условие | Куда |
+|---|---|---|---|
+| _(none)_ | `Task::create()` | — | `PENDING` |
+| `PENDING` | `Task::cancel()` | — | `CANCELLED` |
+| `PENDING` | `Task::fail()` | — | `FAILED` |
+| `PENDING` | _(планировщик)_ | — | `STARTING` |
+| `STARTING` | `Task::cancel()` | — | `CANCELLED` |
+| `STARTING` | `Task::fail()` | — | `FAILED` |
+| `STARTING` | `Task::start(duration)` | duration > 0 | `PROCESSING` |
+| `PROCESSING` | `Task::updateProgress(n)` | n < 100 | `PROCESSING` |
+| `PROCESSING` | `Task::updateProgress(100)` | — | `COMPLETED` |
+| `PROCESSING` | `Task::cancel()` | — | `CANCELLED` |
+| `PROCESSING` | `Task::fail()` | — | `FAILED` |
+| `FAILED` | `Task::restart()` | — | `PENDING` |
+| `CANCELLED` | `Task::restart()` | — | `PENDING` |
 
-### Forbidden transitions (aggregate throws)
+### Forbidden / guarded transitions
 
-- `COMPLETED -> *` (restart/start/cancel/fail/progress)
-- `FAILED -> CANCELLED` (прямой переход)
-- `CANCELLED -> FAILED` (прямой переход)
-- `PENDING -> COMPLETED` (без `PROCESSING`)
-- Любой `updateProgress(...)` из статуса, отличного от `PROCESSING`
-- Любой `start(...)` при `videoDuration <= 0` или `null`
+- `COMPLETED → *` — любой мутирующий вызов выбрасывает исключение.
+- `PENDING/STARTING → PROCESSING` напрямую не допускается — только через `STARTING → start()`.
+- `FAILED/CANCELLED → STARTING` напрямую запрещён — только через `restart() → PENDING`.
+- `start()` при `videoDuration <= 0` или `null` — выбрасывает `DomainException`.
+- `updateProgress(...)` из любого статуса кроме `PROCESSING` — выбрасывает `DomainException`.
+- Повторный `markStarted()` на `TaskDates` — выбрасывает `InvalidTaskDates`.
 
-## Transition matrix
+## canStart / canBeCancelled helpers
 
-| Current | Action | Condition | Next | Result |
-|---|---|---|---|---|
-| none | `create` | always | `PENDING` | OK |
-| `PENDING` | `start` | duration > 0 | `PROCESSING` | OK |
-| `PENDING` | `cancel` | always | `CANCELLED` | OK |
-| `PENDING` | `fail` | always | `FAILED` | OK |
-| `PENDING` | `updateProgress` | any | - | exception |
-| `PROCESSING` | `updateProgress` | 0..99 | `PROCESSING` | OK |
-| `PROCESSING` | `updateProgress` | 100 | `COMPLETED` | OK |
-| `PROCESSING` | `cancel` | always | `CANCELLED` | OK |
-| `PROCESSING` | `fail` | always | `FAILED` | OK |
-| `FAILED` | `restart` | always | `PENDING` | OK |
-| `FAILED` | `start` | duration > 0 | `PROCESSING`* | conditional |
-| `CANCELLED` | `restart` | always | `PENDING` | OK |
-| `CANCELLED` | `start` | duration > 0 | `PROCESSING`* | conditional |
-| `COMPLETED` | state/meta mutating action | any | - | exception |
+```
+Task::canStart(duration):
+  deleted == true          → false
+  status != STARTING       → false
+  duration <= 0 || null    → false
+  иначе                    → true
 
-`*` Примечание: `start()` дополнительно упирается в инварианты `TaskDates::markStarted()`.
-Если `startedAt` уже был установлен раньше, прямой `start()` выбросит исключение дат.
+Task::canBeCancelled():
+  deleted == true                               → false
+  status in {PENDING, STARTING, PROCESSING}     → true
+  иначе                                         → false
+```
 
 ## Runtime flows (application level)
 
 ### 1) Happy path
 
-1. Пользователь инициирует старт транскода.
-2. Создается новая задача (`PENDING`) или существующая `FAILED/CANCELLED` уходит в `restart -> PENDING`.
-3. Планировщик выбирает задачу.
-4. Воркeр делает `start(duration)` -> `PROCESSING`.
-5. Прогресс обновляется в цикле.
-6. На 100% задача становится `COMPLETED`.
+```
+create() → PENDING
+           ↓ планировщик
+         STARTING
+           ↓ ffmpeg-transcode - start(duration)
+         PROCESSING
+           ↓ ffmpeg-transcode - updateProgress(100)
+         COMPLETED
+```
 
-### 2) Cancel before worker start
+### 2) Cancel before ffmpeg start
 
-1. API `POST /api/task/{id}/cancel` получает `PENDING` задачу.
-2. Контроллер может сразу перевести ее в `CANCELLED`.
-3. Одновременно выставляется cancellation trigger.
-4. Если воркер позже подхватит задачу, увидит trigger и завершит обработку без ffmpeg.
+1. API `POST /api/task/{id}/cancel` получает задачу в статусе `PENDING` или `STARTING`.
+2. Контроллер вычисляет `cancelledNow = status in {PENDING, STARTING}`.
+3. Если `cancelledNow`, задача сразу переходит в `CANCELLED`.
+4. В любом случае выставляется cancellation trigger.
+5. Если воркер позже подхватит задачу, увидит trigger и завершит без ffmpeg.
 
 ### 3) Cancel during processing
 
-1. API ставит cancellation trigger.
-2. Процесс ffmpeg периодически проверяет trigger.
-3. При подтверждении отмены финализация сохраняет отчет и фиксирует `CANCELLED`.
+1. API выставляет cancellation trigger (задача остаётся `PROCESSING`).
+2. Цикл ffmpeg периодически проверяет trigger.
+3. При обнаружении финализация сохраняет отчёт и фиксирует `CANCELLED`.
 
 ### 4) Retry path
 
-1. Пользователь снова запускает транскод той же пары video+preset.
-2. Если найдена `FAILED/CANCELLED`, применяется `restart()`.
-3. Дальше обычный путь `PENDING -> PROCESSING -> COMPLETED|FAILED|CANCELLED`.
+```
+FAILED/CANCELLED → restart() → PENDING
+                               ↓ планировщик
+                             STARTING
+                               ↓ start(duration)
+                             PROCESSING
+                               ↓
+                           COMPLETED / FAILED / CANCELLED
+```
 
 ### 5) Start blocked (no transition)
 
-1. Воркeр читает задачу и проверяет `canStart(video->duration())`.
-2. Если длительность `null` или `<= 0`, либо статус не подходит, переход не выполняется.
-3. Состояние задачи остается прежним (обычно `PENDING`), пишется warning/event fail.
+1. Воркер читает задачу и проверяет `canStart(video->duration())`.
+2. Если статус не `STARTING` или длительность `null`/`<= 0` — переход не выполняется.
+3. Задача остаётся в текущем статусе, пишется warning-лог и event `TranscodeVideoFail`.
 
 ## Mermaid diagram
 
 ```mermaid
 stateDiagram-v2
-    [*] --> PENDING: create
+    [*] --> PENDING : create
 
-    PENDING --> PROCESSING: start(duration > 0)
-    PENDING --> CANCELLED: cancel
-    PENDING --> FAILED: fail
+    PENDING --> STARTING    : scheduler picks up
+    PENDING --> CANCELLED   : cancel
+    PENDING --> FAILED      : fail
 
-    PROCESSING --> PROCESSING: updateProgress(<100)
-    PROCESSING --> COMPLETED: updateProgress(100)
-    PROCESSING --> CANCELLED: cancel
-    PROCESSING --> FAILED: fail
+    STARTING --> PROCESSING : start(duration > 0)
+    STARTING --> CANCELLED  : cancel
+    STARTING --> FAILED     : fail
 
-    FAILED --> PENDING: restart
-    CANCELLED --> PENDING: restart
+    PROCESSING --> PROCESSING : updateProgress(< 100)
+    PROCESSING --> COMPLETED  : updateProgress(100)
+    PROCESSING --> CANCELLED  : cancel
+    PROCESSING --> FAILED     : fail
 
-    FAILED --> PROCESSING: start(duration > 0) [conditional*]
-    CANCELLED --> PROCESSING: start(duration > 0) [conditional*]
+    FAILED    --> PENDING : restart
+    CANCELLED --> PENDING : restart
 
     COMPLETED --> [*]
 ```
 
-`conditional*`: прямой `start()` зависит не только от статуса и длительности, но и от `TaskDates`.
-
 ## DDD notes
 
-- Источник правил переходов должен оставаться в агрегате `Task`.
-- Application слой должен только оркестрировать сценарии (выбор задачи, locks, очереди, события).
-- Для устойчивости домена рекомендуется использовать один канонический путь повторного запуска: `FAILED/CANCELLED -> restart -> start`.
+- Источник правил переходов — агрегат `Task`.
+- Application слой только оркестрирует (выбор задачи, locks, очереди, события).
+- `startedAt` — audit-метка последнего ffmpeg-запуска; **никогда не обнуляется**, перезаписывается при каждом `start()`.
+- `restart()` не трогает `startedAt`; только `start()` обновляет его.
+- Канонический путь повторного запуска: `FAILED/CANCELLED → restart() → PENDING → STARTING → start()`.

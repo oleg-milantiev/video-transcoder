@@ -44,16 +44,16 @@ final class HomeControllerTest extends WebTestCase
         $scriptNode = null;
         foreach ($crawler->filter('script') as $node) {
             $text = $node->textContent;
-            if (strpos($text, 'const config =') !== false) {
+            if (strpos($text, 'var config =') !== false) {
                 $scriptNode = $text;
                 break;
             }
         }
 
-        self::assertNotNull($scriptNode, 'Expected an inline script with `const config =` declaration');
+        self::assertNotNull($scriptNode, 'Expected an inline script with `var config =` declaration');
 
-        $pos = strpos($scriptNode, 'const config =');
-        self::assertNotFalse($pos, 'Could not find `const config =` in script content');
+        $pos = strpos($scriptNode, 'var config =');
+        self::assertNotFalse($pos, 'Could not find `var config =` in script content');
         $start = strpos($scriptNode, '{', $pos);
         self::assertNotFalse($start, 'Could not find opening brace for config JSON');
 

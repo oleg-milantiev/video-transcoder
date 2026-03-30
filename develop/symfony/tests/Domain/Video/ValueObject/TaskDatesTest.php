@@ -65,27 +65,34 @@ class TaskDatesTest extends TestCase
         );
     }
 
-    public function testMarkStartedTwiceThrows(): void
+    public function testMarkStartedTwiceUpdatesStartedAt(): void
     {
-        $this->expectException(InvalidTaskDates::class);
+        $createdAt    = new \DateTimeImmutable('2026-03-18 10:00:00');
+        $firstStart   = new \DateTimeImmutable('2026-03-18 10:05:00');
+        $secondStart  = new \DateTimeImmutable('2026-03-18 10:10:00');
 
-        TaskDates::create(new \DateTimeImmutable('2026-03-18 10:00:00'))
-            ->markStarted(new \DateTimeImmutable('2026-03-18 10:05:00'))
-            ->markStarted(new \DateTimeImmutable('2026-03-18 10:06:00'));
+        $dates = TaskDates::create($createdAt)
+            ->markStarted($firstStart)
+            ->markStarted($secondStart);
+
+        $this->assertSame($secondStart, $dates->startedAt());
+        $this->assertSame($secondStart, $dates->updatedAt());
+        $this->assertSame($createdAt,   $dates->createdAt());
     }
 
-    public function testRestartClearsStartedAt(): void
+    public function testTouchPreservesStartedAt(): void
     {
         $createdAt = new \DateTimeImmutable('2026-03-18 10:00:00');
         $startedAt = new \DateTimeImmutable('2026-03-18 10:05:00');
+        $updatedAt = new \DateTimeImmutable('2026-03-18 10:10:00');
 
         $dates = TaskDates::create($createdAt)
             ->markStarted($startedAt)
-            ->restart();
+            ->touch($updatedAt);
 
         $this->assertSame($createdAt, $dates->createdAt());
-        $this->assertNull($dates->startedAt());
-        $this->assertNotNull($dates->updatedAt());
+        $this->assertSame($startedAt, $dates->startedAt());
+        $this->assertSame($updatedAt, $dates->updatedAt());
     }
 
     public function testInvalidUpdatedAtBeforeCreatedAtWithoutStartedAtThrows(): void

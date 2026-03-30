@@ -8,6 +8,8 @@ use App\Application\DTO\TranscodeProcessReportDTO;
 use App\Application\DTO\TranscodeReportDTO;
 use App\Application\DTO\TranscodeStartContextDTO;
 use App\Application\Factory\FlashNotificationFactory;
+use App\Domain\Video\ValueObject\Progress;
+use App\Domain\Video\ValueObject\TaskDates;
 use Psr\Log\LogLevel;
 use App\Application\Logging\LogServiceInterface;
 use App\Application\Service\Task\TaskRealtimeNotifier;
@@ -165,7 +167,7 @@ class TranscodeTaskFinalizationServiceTest extends TestCase
         $task = $this->createTask($taskId);
         // Complete the task so isFinished() returns true
         $task->start(10.0);
-        $task->updateProgress(new \App\Domain\Video\ValueObject\Progress(100)); // → COMPLETED
+        $task->updateProgress(new Progress(100)); // → COMPLETED
 
         $taskRepository = $this->createMock(TaskRepositoryInterface::class);
         $taskRepository->expects($this->never())->method('save');
@@ -225,14 +227,15 @@ class TranscodeTaskFinalizationServiceTest extends TestCase
 
     private function createTask(Uuid $id): Task
     {
-        $task = Task::create(
-            Uuid::fromString('123e4567-e89b-42d3-a456-426614174199'),
-            Uuid::fromString('123e4567-e89b-42d3-a456-426614174001'),
-            Uuid::fromString('123e4567-e89b-42d3-a456-426614174007')
+        return Task::reconstitute(
+            videoId: Uuid::fromString('123e4567-e89b-42d3-a456-426614174199'),
+            presetId: Uuid::fromString('123e4567-e89b-42d3-a456-426614174001'),
+            userId: Uuid::fromString('123e4567-e89b-42d3-a456-426614174007'),
+            status: TaskStatus::STARTING,
+            progress: new Progress(0),
+            dates: TaskDates::create(),
+            id: $id,
         );
-        $task->assignId($id);
-
-        return $task;
     }
 
     private function createReport(bool $cancelled): TranscodeReportDTO
