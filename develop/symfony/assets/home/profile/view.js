@@ -1,4 +1,4 @@
-import { defineComponent, onBeforeUnmount, onMounted } from 'vue';
+import { defineComponent } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { renderProfile } from './render.js';
 import { createProfileState } from './state.js';
@@ -19,6 +19,7 @@ export function createProfileView(config) {
             });
 
             return {
+                config,
                 dto: state.dto,
                 loading: state.loading,
                 error: state.error,
