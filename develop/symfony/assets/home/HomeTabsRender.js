@@ -24,7 +24,6 @@ function paneClass(vm, id) {
 export function renderHomeTabs(vm) {
     return h('div', {}, [
         h('h1', { class: 'mb-4' }, 'Video Transcoder'),
-        h('p', {}, ['You are logged in as ', h('strong', {}, vm.userIdentifier), '.']),
         h('ul', { class: 'nav nav-tabs', role: 'tablist' }, [
             renderTabButton(vm, 'upload', 'Upload'),
             renderTabButton(vm, 'videos', 'Videos'),
