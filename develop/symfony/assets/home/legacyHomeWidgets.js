@@ -52,12 +52,6 @@ export function initHomeLegacyWidgets(config) {
             },
         });
 
-    // Display tariff limit warning
-    if (maxFileSize !== null && maxFileSize > 0) {
-        const warningMessage = `Your tariff allows uploading videos up to ${Math.round(maxFileSize)} MB.`;
-        uppy.info(warningMessage, 'info', 5000);
-    }
-
     uppy.on('file-added', function (file) {
         const uuid = uuidv4();
         const ext = file.name.split('.').pop().toLowerCase();

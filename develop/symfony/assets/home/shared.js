@@ -1,9 +1,4 @@
 
-export function toInt(value, fallback) {
-    const parsed = Number.parseInt(String(value), 10);
-    return Number.isFinite(parsed) ? parsed : fallback;
-}
-
 export function replaceTemplateValue(template, placeholder, value) {
     return template.replace(placeholder, String(value));
 }
@@ -34,5 +29,36 @@ export async function parseJsonResponse(response) {
     } catch (e) {
         return null;
     }
+}
+
+export function secondsToHuman(sec) {
+    if (typeof sec !== 'number' || !Number.isFinite(sec)) return '-';
+    if (sec < 60) return `${sec} s`;
+    const minutes = Math.floor(sec / 60);
+    if (minutes < 60) return `${minutes} m`;
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return `${hours} h`;
+    const days = Math.floor(hours / 24);
+    return `${days} d`;
+}
+
+export function bytesToHuman(bytes) {
+    if (typeof bytes !== 'number' || !Number.isFinite(bytes)) return '-';
+    if (bytes < 1024) return `${bytes} B`;
+    const units = ['KB', 'MB', 'GB', 'TB'];
+    let value = bytes / 1024;
+    let i = 0;
+    while (value >= 1024 && i < units.length - 1) {
+        value = value / 1024;
+        i += 1;
+    }
+    return `${Math.round(value * 10) / 10} ${units[i]}`;
+}
+
+export function megabytesToHuman(mb) {
+    if (typeof mb !== 'number' || !Number.isFinite(mb)) return '-';
+    if (mb < 1024) return `${mb} MB`;
+    const gb = Math.round((mb / 1024) * 10) / 10;
+    return `${gb} GB`;
 }
 
