@@ -5,6 +5,7 @@ namespace App\Presentation\Controller\Api;
 use App\Application\Exception\QueryException;
 use Psr\Log\LogLevel;
 use App\Application\Logging\LogServiceInterface;
+use Psr\Log\LoggerInterface;
 use App\Application\Query\GetTaskListQuery;
 use App\Application\QueryHandler\QueryBus;
 use App\Application\Response\TaskListResponse;
@@ -36,6 +37,7 @@ class TaskApiController extends AbstractController
         private readonly TaskRepositoryInterface $taskRepository,
         private readonly VideoRepositoryInterface $videoRepository,
         private readonly LogServiceInterface $logService,
+        private readonly LoggerInterface $logger,
         private readonly Security $security,
         private readonly TaskCancellationTrigger $cancellationTrigger,
         private readonly TaskRealtimeNotifier $taskRealtimeNotifier,
@@ -51,10 +53,12 @@ class TaskApiController extends AbstractController
                 new GetTaskListQuery($request, Uuid::fromString($this->getUser()->id->toRfc4122()))
             );
 
-            return new JsonResponse($taskListResponse);
+            return $this->apiSuccess((array) $taskListResponse);
         } catch (QueryException $e) {
-            // TODO тут не $this->apiError?
-            return new JsonResponse(['error' => $e->getMessage()], 400);
+            return $this->apiError('QUERY_FAILED', $e->getMessage(), 400);
+        } catch (\Throwable $e) {
+            $this->logger->critical('Failed to list tasks', ['exception' => $e]);
+            return $this->apiError('INTERNAL_ERROR', 'Failed to list tasks', 500);
         }
     }
 
