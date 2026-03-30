@@ -52,7 +52,7 @@ final class VideoApiControllerTest extends ApiWebTestCase
         $client->request('GET', '/api/video/?page=2&limit=5');
 
         self::assertResponseStatusCodeSame(200);
-        self::assertSame($listPayload, $this->decodeJson($client->getResponse()->getContent()));
+        self::assertSame(['data' => $listPayload], $this->decodeJson($client->getResponse()->getContent()));
     }
 
     /**
@@ -71,7 +71,13 @@ final class VideoApiControllerTest extends ApiWebTestCase
         $client->request('GET', '/api/video/');
 
         self::assertResponseStatusCodeSame(400);
-        self::assertSame(['error' => 'List failed'], $this->decodeJson($client->getResponse()->getContent()));
+        self::assertSame([
+            'error' => [
+                'code' => 'QUERY_FAILED',
+                'message' => 'List failed',
+                'details' => [],
+            ],
+        ], $this->decodeJson($client->getResponse()->getContent()));
     }
 
     /**
@@ -108,7 +114,7 @@ final class VideoApiControllerTest extends ApiWebTestCase
         $client->request('GET', '/api/video/11111111-1111-4111-8111-111111111111');
 
         self::assertResponseStatusCodeSame(200);
-        self::assertSame($payload, $this->decodeJson($client->getResponse()->getContent()));
+        self::assertSame(['data' => $payload], $this->decodeJson($client->getResponse()->getContent()));
     }
 
     /**
@@ -127,7 +133,13 @@ final class VideoApiControllerTest extends ApiWebTestCase
         $client->request('GET', '/api/video/11111111-1111-4111-8111-111111111111');
 
         self::assertResponseStatusCodeSame(404);
-        self::assertSame(['error' => 'Video not found'], $this->decodeJson($client->getResponse()->getContent()));
+        self::assertSame([
+            'error' => [
+                'code' => 'QUERY_FAILED',
+                'message' => 'Video not found',
+                'details' => [],
+            ],
+        ], $this->decodeJson($client->getResponse()->getContent()));
     }
 
     /**

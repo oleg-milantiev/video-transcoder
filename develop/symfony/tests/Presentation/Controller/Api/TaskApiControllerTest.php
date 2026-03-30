@@ -55,7 +55,7 @@ final class TaskApiControllerTest extends ApiWebTestCase
         $client->request('GET', '/api/task/?page=1&limit=2');
 
         self::assertResponseStatusCodeSame(200);
-        self::assertSame($listPayload, $this->decodeJson($client->getResponse()->getContent()));
+        self::assertSame(['data' => $listPayload], $this->decodeJson($client->getResponse()->getContent()));
     }
 
     /**
@@ -74,7 +74,13 @@ final class TaskApiControllerTest extends ApiWebTestCase
         $client->request('GET', '/api/task/');
 
         self::assertResponseStatusCodeSame(400);
-        self::assertSame(['error' => 'Task list failed'], $this->decodeJson($client->getResponse()->getContent()));
+        self::assertSame([
+            'error' => [
+                'code' => 'QUERY_FAILED',
+                'message' => 'Task list failed',
+                'details' => [],
+            ],
+        ], $this->decodeJson($client->getResponse()->getContent()));
     }
 
     public function testCancelReturnsNotFoundWhenTaskDoesNotExist(): void
