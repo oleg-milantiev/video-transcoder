@@ -1,9 +1,9 @@
 import { defineComponent, onBeforeUnmount, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { renderVideoDetails } from './VideoDetailsRender.js';
-import { createVideoDetailsState } from './video-details/state.js';
-import { createVideoDetailsActions } from './video-details/actions.js';
-import { bindVideoDetailsRealtime } from './video-details/realtime.js';
+import { renderVideoDetails } from './render.js';
+import { createVideoDetailsState } from './state.js';
+import { createVideoDetailsActions } from './actions.js';
+import { bindVideoDetailsRealtime } from './realtime.js';
 
 export function createVideoDetailsView(config) {
     return defineComponent({

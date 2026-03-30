@@ -2,7 +2,7 @@ import { createApp, h } from 'vue';
 import { createRouter, createWebHistory, RouterView } from 'vue-router';
 import { connectMercure } from './connectMercure.js';
 import { createHomeTabsView } from './HomeTabsView.js';
-import { createVideoDetailsView } from './VideoDetailsView.js';
+import { createVideoDetailsView } from './video-details/view.js';
 import { createProfileView } from './profile/view.js';
 import { initAuth } from './apiAuth.js';
 

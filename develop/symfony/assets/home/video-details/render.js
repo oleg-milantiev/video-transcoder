@@ -152,6 +152,8 @@ export function renderVideoDetails(vm) {
                     h('dd', { class: 'col-sm-9' }, vm.dto.createdAt),
                     h('dt', { class: 'col-sm-3' }, 'Updated At'),
                     h('dd', { class: 'col-sm-9' }, vm.dto.updatedAt || '-'),
+                    h('dt', { class: 'col-sm-3' }, 'Expired At'),
+                    h('dd', { class: 'col-sm-9' }, vm.dto.expiredAt + ' (' + vm.dto.expiredInterval + ')' || '-'),
                 ]),
             ]),
         ]),

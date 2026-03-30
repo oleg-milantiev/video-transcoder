@@ -36,7 +36,7 @@ readonly class VideoDetailsDTO
             createdAt: $video->createdAt()->format('Y-m-d H:i'),
             updatedAt: $video->updatedAt()?->format('Y-m-d H:i'),
             expiredAt: $expiredAt->format('Y-m-d H:i'),
-            expiredInterval: $expiredAt > new \DateTimeImmutable() ? $expiredInterval->format('%a days %h hours') : 'expired',
+            expiredInterval: $expiredAt > new \DateTimeImmutable() ? $expiredInterval->format('in %a days %h hours') : 'expired',
             meta: self::sanitizeMeta($video->meta()),
             poster: $hasPreview ? $storage->publicUrl($storage->previewKey($video)) : null,
             deleted: $video->isDeleted(),

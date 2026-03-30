@@ -233,6 +233,7 @@ export function createVideoDetailsActions(params) {
                     progress: typeof update.progress === 'number' ? update.progress : currentTask.progress,
                     createdAt: typeof update.createdAt === 'string' ? update.createdAt : currentTask.createdAt,
                     updatedAt: typeof update.updatedAt === 'string' ? update.updatedAt : currentTask.updatedAt,
+                    expiredAt: typeof update.expiredAt === 'string' ? update.expiredAt : currentTask.expiriedAt,
                     downloadFilename: (typeof update.videoTitle === 'string' && typeof update.presetTitle === 'string')
                         ? (update.videoTitle + ' - ' + update.presetTitle)
                         : (currentTask.videoTitle + ' - ' + currentTask.presetTitle),
@@ -261,6 +262,7 @@ export function createVideoDetailsActions(params) {
             title: typeof payload.title === 'string' ? payload.title : state.dto.value.title,
             meta: payload.meta || state.dto.value.meta,
             updatedAt: payload.updatedAt || state.dto.value.updatedAt,
+            expiredAt: payload.expiredAt || state.dto.value.expiredAt,
         };
     }
 
