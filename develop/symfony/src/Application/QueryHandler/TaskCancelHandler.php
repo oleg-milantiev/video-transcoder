@@ -2,8 +2,8 @@
 
 namespace App\Application\QueryHandler;
 
+use App\Application\Exception\TaskCancelAccessDeniedException;
 use App\Application\Exception\TaskNotFoundException;
-use App\Application\Exception\TranscodeAccessDeniedException;
 use App\Application\Exception\VideoNotFoundException;
 use App\Application\Logging\LogServiceInterface;
 use App\Application\Query\TaskCancelQuery;
@@ -38,11 +38,11 @@ final readonly class TaskCancelHandler
 
         $video = $this->videoRepository->findById($task->videoId());
         if ($video === null) {
-            throw new VideoNotFoundException('Video not found.');
+            throw new VideoNotFoundException('Video not found');
         }
 
         if (!$this->security->isGranted(VideoAccessVoter::CAN_CANCEL_TRANSCODE, $video)) {
-            throw new TranscodeAccessDeniedException('Access denied');
+            throw new TaskCancelAccessDeniedException('Access denied');
         }
 
         $task->updateMeta([

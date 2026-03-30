@@ -57,7 +57,7 @@ final class DeleteTaskHandlerTest extends TestCase
         $handler = new DeleteTaskHandler($taskRepository, $videoRepository, $logService, $security);
 
         $this->expectException(\DomainException::class);
-        $this->expectExceptionMessage('Task video not found.');
+        $this->expectExceptionMessage('Task video not found');
         $handler->__invoke($query);
     }
 

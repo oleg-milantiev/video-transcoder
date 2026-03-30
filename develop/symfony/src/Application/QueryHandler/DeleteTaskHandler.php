@@ -33,7 +33,7 @@ final readonly class DeleteTaskHandler
 
         $video = $this->videoRepository->findById($task->videoId());
         if ($video === null) {
-            throw new \DomainException('Task video not found.');
+            throw new \DomainException('Task video not found');
         }
 
         if (!$this->security->isGranted(VideoAccessVoter::CAN_DELETE, $video)) {

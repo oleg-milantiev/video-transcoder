@@ -4,8 +4,8 @@ namespace App\Presentation\Controller\Api;
 
 use App\Application\Exception\InvalidUuidException;
 use App\Application\Exception\QueryException;
+use App\Application\Exception\TaskCancelAccessDeniedException;
 use App\Application\Exception\TaskNotFoundException;
-use App\Application\Exception\TranscodeAccessDeniedException;
 use App\Application\Exception\VideoNotFoundException;
 use App\Application\Query\TaskCancelQuery;
 use App\Application\Logging\LogServiceInterface;
@@ -21,6 +21,7 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Messenger\Exception\HandlerFailedException;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
@@ -69,14 +70,21 @@ class TaskApiController extends AbstractController
             $result = $this->queryBus->query(new TaskCancelQuery($id, $this->getUser()->id->toRfc4122()));
 
             return $this->apiSuccess((array) $result);
-        } catch (InvalidUuidException $e) {
-            return $this->apiError('INVALID_TASK_ID', $e->getMessage(), 400);
-        } catch (TaskNotFoundException $e) {
-            return $this->apiError('TASK_NOT_FOUND', $e->getMessage(), 404);
-        } catch (VideoNotFoundException $e) {
-            return $this->apiError('VIDEO_NOT_FOUND', $e->getMessage(), 404);
-        } catch (TranscodeAccessDeniedException $e) {
-            return $this->apiError('ACCESS_DENIED', $e->getMessage(), 403);
+        } catch (HandlerFailedException $e) {
+            // todo образец. Размножить на остальные API
+            $return = match ($e->getPrevious()::class) {
+                InvalidUuidException::class => $this->apiError('INVALID_TASK_ID', $e->getPrevious()->getMessage(), 400),
+                TaskNotFoundException::class => $this->apiError('TASK_NOT_FOUND', $e->getPrevious()->getMessage(), 404),
+                VideoNotFoundException::class => $this->apiError('VIDEO_NOT_FOUND', $e->getPrevious()->getMessage(), 404),
+                TaskCancelAccessDeniedException::class => $this->apiError('ACCESS_DENIED', $e->getPrevious()->getMessage(), 403),
+                default => $this->apiError('INTERNAL_ERROR', 'Failed to cancel task: '. get_class($e->getPrevious()), 500),
+            };
+
+            if ($return->getStatusCode() === 500) {
+                $this->logger->critical('Failed to cancel task', ['exception' => $e]);
+            }
+
+            return $return;
         } catch (\Throwable $e) {
             $this->logger->critical('Failed to cancel task', ['exception' => $e]);
             return $this->apiError('INTERNAL_ERROR', 'Failed to cancel task', 500);

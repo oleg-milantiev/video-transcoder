@@ -105,6 +105,7 @@ final class TaskApiControllerTest extends ApiWebTestCase
         ], $this->decodeJson($client->getResponse()->getContent()));
     }
 
+    // todo Образец. Размножить на остальные fail тесты API. Не как в videoApiControllerTest::testTranscodeReturnsForbiddenOnDomainException !!
     public function testCancelReturnsNotFoundWhenVideoDoesNotExist(): void
     {
         $client = $this->createBearerAuthenticatedClient(userId: SymfonyUuid::fromString('00000000-0000-4000-8000-000000000042'));
@@ -203,9 +204,9 @@ final class TaskApiControllerTest extends ApiWebTestCase
         self::assertResponseStatusCodeSame(200);
 
         $payload = $this->decodeJson($client->getResponse()->getContent());
-        self::assertSame('CANCELLED', $payload['data']['task']['status']);
-        self::assertTrue($payload['data']['task']['cancelledNow']);
-        self::assertTrue($payload['data']['task']['cancellationRequested']);
+        self::assertSame('CANCELLED', $payload['task']['status']);
+        self::assertTrue($payload['task']['cancelledNow']);
+        self::assertTrue($payload['task']['cancellationRequested']);
         self::assertSame('00000000-0000-4000-8000-000000000042', $task->meta()['cancelledByUserId']);
         self::assertArrayHasKey('cancelRequestedAt', $task->meta());
     }
@@ -244,9 +245,9 @@ final class TaskApiControllerTest extends ApiWebTestCase
         self::assertResponseStatusCodeSame(200);
 
         $payload = $this->decodeJson($client->getResponse()->getContent());
-        self::assertSame('PROCESSING', $payload['data']['task']['status']);
-        self::assertFalse($payload['data']['task']['cancelledNow']);
-        self::assertTrue($payload['data']['task']['cancellationRequested']);
+        self::assertSame('PROCESSING', $payload['task']['status']);
+        self::assertFalse($payload['task']['cancelledNow']);
+        self::assertTrue($payload['task']['cancellationRequested']);
         self::assertSame('00000000-0000-4000-8000-000000000042', $task->meta()['cancelledByUserId']);
         self::assertArrayHasKey('cancelRequestedAt', $task->meta());
     }
