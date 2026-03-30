@@ -3,6 +3,7 @@ import { createRouter, createWebHistory, RouterView } from 'vue-router';
 import { connectMercure } from './connectMercure.js';
 import { createHomeTabsView } from './HomeTabsView.js';
 import { createVideoDetailsView } from './VideoDetailsView.js';
+import { createProfileView } from './profile/view.js';
 import { initAuth } from './apiAuth.js';
 
 export function mountHomeSpa() {
@@ -23,6 +24,7 @@ export function mountHomeSpa() {
     connectMercure(config, rootElement);
     const HomeTabsView = createHomeTabsView(config);
     const VideoDetailsView = createVideoDetailsView(config);
+    const ProfileView = createProfileView(config);
 
     const router = createRouter({
         history: createWebHistory(),
@@ -36,6 +38,11 @@ export function mountHomeSpa() {
                 path: '/video/:uuid',
                 name: 'video-details',
                 component: VideoDetailsView,
+            },
+            {
+                path: '/profile',
+                name: 'profile',
+                component: ProfileView,
             },
             {
                 path: '/:pathMatch(.*)*',
