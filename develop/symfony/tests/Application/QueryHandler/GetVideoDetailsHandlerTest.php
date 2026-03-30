@@ -8,8 +8,10 @@ use App\Application\QueryHandler\GetVideoDetailsHandler;
 use App\Application\Query\Repository\VideoDetailsReadRepositoryInterface;
 use App\Domain\Video\Repository\VideoRepositoryInterface;
 use App\Domain\Video\Service\Storage\StorageInterface;
+use App\Infrastructure\Persistence\Doctrine\User\UserEntity;
 use App\Infrastructure\Security\Voter\VideoAccessVoter;
 use App\Tests\Domain\Entity\VideoFake;
+use App\Tests\Infrastructure\Persistence\Doctrine\Entity\TariffFake;
 use PHPUnit\Framework\TestCase;
 use Symfony\Bundle\SecurityBundle\Security;
 
@@ -42,11 +44,18 @@ class GetVideoDetailsHandlerTest extends TestCase
                 ],
             ]);
 
+        $user = new UserEntity();
+        $user->tariff = TariffFake::create();
+        $user->tariff->storageHour = 24;
+
         $security = $this->createMock(Security::class);
         $security->expects($this->once())
             ->method('isGranted')
             ->with(VideoAccessVoter::CAN_VIEW_DETAILS, $video)
             ->willReturn(true);
+        $security->expects($this->once())
+            ->method('getUser')
+            ->willReturn($user);
 
         $handler = new GetVideoDetailsHandler($repository, $videoDetailsRepository, $this->createStub(StorageInterface::class), $security);
         $query = new GetVideoDetailsQuery($video->id()->toRfc4122());

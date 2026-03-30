@@ -7,6 +7,8 @@ namespace App\Tests\Application\DTO;
 use App\Application\DTO\PresetWithTaskDTO;
 use App\Application\DTO\TaskInfoDTO;
 use App\Application\DTO\VideoDetailsDTO;
+use App\Domain\User\Entity\Tariff;
+use App\Domain\User\ValueObject\TariffStorageHour;
 use App\Domain\Video\Entity\Video;
 use App\Domain\Video\Service\Storage\StorageInterface;
 use App\Domain\Video\ValueObject\FileExtension;
@@ -44,12 +46,17 @@ class VideoDetailsDTOTest extends TestCase
         $storage->method('previewKey')->willReturn($uuid->toRfc4122() . '.jpg');
         $storage->method('publicUrl')->willReturn('/uploads/' . $uuid->toRfc4122() . '.jpg');
 
-        $dto = VideoDetailsDTO::fromDomain($video, [$presetDto], $storage);
+        $tariff = $this->createStub(Tariff::class);
+        $tariff->method('storageHour')->willReturn(new TariffStorageHour(24));
+
+        $dto = VideoDetailsDTO::fromDomain($video, [$presetDto], $storage, $tariff);
 
         $this->assertSame($uuid->toRfc4122(), $dto->id);
         $this->assertSame('Detailed Video', $dto->title);
         $this->assertSame('mov', $dto->extension);
         $this->assertSame('2026-03-18 08:45', $dto->createdAt);
+        $this->assertSame('2026-03-19 08:45', $dto->expiredAt);
+        $this->assertSame('expired', $dto->expiredInterval);
         $this->assertNull($dto->updatedAt);
         $this->assertSame([$presetDto], $dto->presetsWithTasks);
         $this->assertSame('/uploads/' . $uuid->toRfc4122() . '.jpg', $dto->poster);

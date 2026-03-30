@@ -11,6 +11,8 @@ use App\Application\Query\Repository\VideoDetailsReadRepositoryInterface;
 use App\Domain\Video\Repository\VideoRepositoryInterface;
 use App\Domain\Video\Service\Storage\StorageInterface;
 use App\Domain\Video\ValueObject\TaskStatus;
+use App\Infrastructure\Persistence\Doctrine\User\TariffMapper;
+use App\Infrastructure\Persistence\Doctrine\User\UserEntity;
 use App\Infrastructure\Security\Voter\VideoAccessVoter;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
@@ -55,6 +57,13 @@ final readonly class GetVideoDetailsHandler
             );
         }
 
-        return VideoDetailsDTO::fromDomain($video, $presetsWithTasks, $this->storage);
+        /** @var UserEntity $user */
+        $user = $this->security->getUser();
+        if (!$user->tariff) {
+            throw new QueryException('Tariff not found');
+        }
+        $tariff = TariffMapper::toDomain($user->tariff);
+
+        return VideoDetailsDTO::fromDomain($video, $presetsWithTasks, $this->storage, $tariff);
     }
 }
