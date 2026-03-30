@@ -20,7 +20,6 @@ use App\Domain\Video\Exception\VideoAlreadyDeleted;
 use App\Domain\Video\Exception\VideoHasTranscodingTasks;
 use Psr\Log\LoggerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
@@ -47,10 +46,12 @@ class VideoApiController extends AbstractController
                 new GetVideoListQuery($request, Uuid::fromString($this->getUser()->id->toRfc4122()))
             );
 
-            return new JsonResponse($videoListResponse);
+            return $this->apiSuccess((array) $videoListResponse);
         } catch (QueryException $e) {
-            // TODO тут не $this->apiError?
-            return new JsonResponse(['error' => $e->getMessage()], 400);
+            return $this->apiError('QUERY_FAILED', $e->getMessage(), 400);
+        } catch (\Throwable $e) {
+            $this->logger->critical('Failed to list videos', ['exception' => $e]);
+            return $this->apiError('INTERNAL_ERROR', 'Failed to list videos', 500);
         }
     }
 
@@ -62,15 +63,15 @@ class VideoApiController extends AbstractController
                 new GetVideoDetailsQuery($id)
             );
 
-            return new JsonResponse($dto);
+            return $this->apiSuccess((array) $dto);
         } catch (QueryException $e) {
             $status = $e->getMessage() === 'Invalid UUID' ? 400 : 404;
-
-            // TODO тут не $this->apiError?
-            return new JsonResponse(['error' => $e->getMessage()], $status);
+            return $this->apiError('QUERY_FAILED', $e->getMessage(), $status);
         } catch (\DomainException $e) {
-            // TODO тут не $this->apiError?
-            return new JsonResponse(['error' => $e->getMessage()], 403);
+            return $this->apiError('ACCESS_DENIED', $e->getMessage(), 403);
+        } catch (\Throwable $e) {
+            $this->logger->critical('Failed to get video details', ['exception' => $e]);
+            return $this->apiError('INTERNAL_ERROR', 'Failed to get video details', 500);
         }
     }
 
