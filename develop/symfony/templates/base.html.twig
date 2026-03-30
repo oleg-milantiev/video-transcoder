@@ -28,14 +28,14 @@
                         {% if app.user %}
                             {% if is_granted('ROLE_ADMIN') %}
                                 <li class="nav-item">
-                                    <a class="nav-link text-warning" href="{{ path('admin') }}">Admin</a>
+                                    <a class="nav-link text-warning" href="{{ path('admin') }}" data-turbo-prefetch="false">Admin</a>
                                 </li>
                             {% endif %}
                             <li class="nav-item">
                                 <a class="nav-link text-light" href="{{ path('profile') }}">{{ app.user.userIdentifier }}</a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link" href="{{ path('app_logout') }}">Sign out</a>
+                                <a class="nav-link" href="{{ path('app_logout') }}" data-turbo-prefetch="false">Sign out</a>
                             </li>
                         {% else %}
                             <li class="nav-item">
