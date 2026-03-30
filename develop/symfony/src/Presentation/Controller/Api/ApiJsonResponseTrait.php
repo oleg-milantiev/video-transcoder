@@ -13,7 +13,7 @@ trait ApiJsonResponseTrait
      */
     private function apiSuccess(array $data, int $status = 200): JsonResponse
     {
-        return new JsonResponse(['data' => $data], $status);
+        return new JsonResponse($data, $status);
     }
 
     /**
