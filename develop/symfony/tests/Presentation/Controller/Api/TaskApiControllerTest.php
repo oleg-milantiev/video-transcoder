@@ -55,7 +55,7 @@ final class TaskApiControllerTest extends ApiWebTestCase
         $client->request('GET', '/api/task/?page=1&limit=2');
 
         self::assertResponseStatusCodeSame(200);
-        self::assertSame(['data' => $listPayload], $this->decodeJson($client->getResponse()->getContent()));
+        self::assertSame($listPayload, $this->decodeJson($client->getResponse()->getContent()));
     }
 
     /**

@@ -2,8 +2,12 @@
 
 namespace App\Presentation\Controller\Api;
 
+use App\Application\Exception\InvalidUuidException;
 use App\Application\Exception\QueryException;
-use Psr\Log\LogLevel;
+use App\Application\Exception\TaskNotFoundException;
+use App\Application\Exception\TranscodeAccessDeniedException;
+use App\Application\Exception\VideoNotFoundException;
+use App\Application\Query\TaskCancelQuery;
 use App\Application\Logging\LogServiceInterface;
 use Psr\Log\LoggerInterface;
 use App\Application\Query\GetTaskListQuery;
@@ -12,19 +16,13 @@ use App\Application\Response\TaskListResponse;
 use App\Domain\Shared\ValueObject\Uuid;
 use App\Domain\Video\Repository\TaskRepositoryInterface;
 use App\Domain\Video\Repository\VideoRepositoryInterface;
-use App\Domain\Video\ValueObject\TaskStatus;
-use App\Infrastructure\Security\Voter\VideoAccessVoter;
-use App\Infrastructure\Task\TaskCancellationTrigger;
-use App\Application\Service\Task\TaskRealtimeNotifier;
 use Psr\Cache\InvalidArgumentException;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Bundle\SecurityBundle\Security;
-use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
-use Symfony\Component\Uid\UuidV4 as SymfonyUuid;
 
 #[Route('/api/task')]
 #[IsGranted('IS_AUTHENTICATED_FULLY')]
@@ -39,8 +37,6 @@ class TaskApiController extends AbstractController
         private readonly LogServiceInterface $logService,
         private readonly LoggerInterface $logger,
         private readonly Security $security,
-        private readonly TaskCancellationTrigger $cancellationTrigger,
-        private readonly TaskRealtimeNotifier $taskRealtimeNotifier,
     ) {
     }
 
@@ -68,76 +64,22 @@ class TaskApiController extends AbstractController
     #[Route('/{id}/cancel', name: 'api_task_cancel', requirements: ['id' => '[0-9a-fA-F-]{36}'], methods: ['POST'])]
     public function cancel(string $id): Response
     {
-        // TODO move to TaskCancelQuery
         try {
-            $taskId = SymfonyUuid::fromString($id);
-        } catch (\Throwable) {
-            return $this->apiError('INVALID_TASK_ID', 'Invalid task id', 400);
+            // todo DTO
+            $result = $this->queryBus->query(new TaskCancelQuery($id, $this->getUser()->id->toRfc4122()));
+
+            return $this->apiSuccess((array) $result);
+        } catch (InvalidUuidException $e) {
+            return $this->apiError('INVALID_TASK_ID', $e->getMessage(), 400);
+        } catch (TaskNotFoundException $e) {
+            return $this->apiError('TASK_NOT_FOUND', $e->getMessage(), 404);
+        } catch (VideoNotFoundException $e) {
+            return $this->apiError('VIDEO_NOT_FOUND', $e->getMessage(), 404);
+        } catch (TranscodeAccessDeniedException $e) {
+            return $this->apiError('ACCESS_DENIED', $e->getMessage(), 403);
+        } catch (\Throwable $e) {
+            $this->logger->critical('Failed to cancel task', ['exception' => $e]);
+            return $this->apiError('INTERNAL_ERROR', 'Failed to cancel task', 500);
         }
-
-        $task = $this->taskRepository->findById(Uuid::fromString($taskId->toRfc4122()));
-        if (!$task) {
-            return $this->apiError('TASK_NOT_FOUND', 'Task not found', 404);
-        }
-
-        $video = $this->videoRepository->findById($task->videoId());
-        if (!$video) {
-            return $this->apiError('VIDEO_NOT_FOUND', 'Video not found', 404);
-        }
-
-        if (!$this->security->isGranted(VideoAccessVoter::CAN_CANCEL_TRANSCODE, $video)) {
-            return $this->apiError('ACCESS_DENIED', 'Access denied', 403);
-        }
-
-        // TODO atomize it!
-        // via $lock = $this->lockFactory->createLock(sprintf('transcode-task:%d', $scheduledTask->taskId), self::TASK_MUTEX_TTL);
-        // not db task status
-        $task->updateMeta([
-            'cancelledByUserId' => $this->getUser()->id->toRfc4122(),
-            'cancelRequestedAt' => new \DateTimeImmutable()->format(DATE_ATOM),
-        ]);
-
-        $cancelledNow = $task->status() === TaskStatus::PENDING || $task->status() === TaskStatus::STARTING;
-        $requestedByUserId = Uuid::fromString($this->getUser()->id->toRfc4122());
-
-        if ($cancelledNow) {
-            $task->cancel();
-            $this->logService->log('task', $task->id(), LogLevel::INFO, 'Task cancelled before start', [
-                'videoId' => $video->id()?->toRfc4122(),
-                'requestedByUserId' => $requestedByUserId?->toRfc4122(),
-            ]);
-        }
-        else {
-            $this->logService->log('task', $task->id(), LogLevel::INFO, 'Cancellation requested in progress', [
-                'videoId' => $video->id()?->toRfc4122(),
-                'requestedByUserId' => $requestedByUserId?->toRfc4122(),
-            ]);
-        }
-
-        $this->logService->log('video', $video->id(), LogLevel::INFO, 'Cancellation requested for video task', [
-            'taskId' => $task->id()->toRfc4122(),
-            'requestedByUserId' => $requestedByUserId?->toRfc4122(),
-            'cancelledNow' => $cancelledNow,
-        ]);
-
-        $this->logService->log('user', $requestedByUserId, LogLevel::INFO, 'User requested transcode cancellation', [
-            'taskId' => $task->id()->toRfc4122(),
-            'videoId' => $video->id()?->toRfc4122(),
-            'cancelledNow' => $cancelledNow,
-        ]);
-
-        $this->taskRepository->save($task);
-        $this->taskRealtimeNotifier->notifyTaskUpdated($task, $cancelledNow ? 'cancelled' : 'cancel_requested');
-
-        $this->cancellationTrigger->request($task->id());
-
-        return $this->apiSuccess([
-            'task' => [
-                'id' => $task->id()->toRfc4122(),
-                'status' => $task->status()->name,
-                'cancelledNow' => $cancelledNow,
-                'cancellationRequested' => true,
-            ],
-        ]);
     }
 }

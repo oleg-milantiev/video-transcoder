@@ -52,7 +52,7 @@ final class VideoApiControllerTest extends ApiWebTestCase
         $client->request('GET', '/api/video/?page=2&limit=5');
 
         self::assertResponseStatusCodeSame(200);
-        self::assertSame(['data' => $listPayload], $this->decodeJson($client->getResponse()->getContent()));
+        self::assertSame($listPayload, $this->decodeJson($client->getResponse()->getContent()));
     }
 
     /**
@@ -114,7 +114,7 @@ final class VideoApiControllerTest extends ApiWebTestCase
         $client->request('GET', '/api/video/11111111-1111-4111-8111-111111111111');
 
         self::assertResponseStatusCodeSame(200);
-        self::assertSame(['data' => $payload], $this->decodeJson($client->getResponse()->getContent()));
+        self::assertSame($payload, $this->decodeJson($client->getResponse()->getContent()));
     }
 
     /**
@@ -169,9 +169,7 @@ final class VideoApiControllerTest extends ApiWebTestCase
 
         self::assertResponseStatusCodeSame(200);
         self::assertSame([
-            'data' => [
-                'task' => ['taskId' => '15151515-1515-4515-8515-151515151515', 'status' => 'PENDING'],
-            ],
+            'task' => ['taskId' => '15151515-1515-4515-8515-151515151515', 'status' => 'PENDING'],
         ], $this->decodeJson($client->getResponse()->getContent()));
     }
 
@@ -273,11 +271,9 @@ final class VideoApiControllerTest extends ApiWebTestCase
 
         self::assertResponseStatusCodeSame(200);
         self::assertSame([
-            'data' => [
-                'video' => [
-                    'id' => $videoId->toRfc4122(),
-                    'deleted' => true,
-                ],
+            'video' => [
+                'id' => $videoId->toRfc4122(),
+                'deleted' => true,
             ],
         ], $this->decodeJson($client->getResponse()->getContent()));
     }
@@ -380,7 +376,7 @@ final class VideoApiControllerTest extends ApiWebTestCase
         $client->request('PATCH', '/api/video/' . $videoId->toRfc4122(), [], [], ['CONTENT_TYPE' => 'application/json'], json_encode(['title' => 'New Title'], JSON_THROW_ON_ERROR));
 
         self::assertResponseStatusCodeSame(200);
-        self::assertSame(['data' => []], $this->decodeJson($client->getResponse()->getContent()));
+        self::assertSame([], $this->decodeJson($client->getResponse()->getContent()));
     }
 
     public function testPatchReturnsBadRequestForInvalidVideoId(): void
