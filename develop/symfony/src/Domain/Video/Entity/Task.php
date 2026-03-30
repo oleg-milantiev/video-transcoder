@@ -81,10 +81,6 @@ class Task
             return false;
         }
 
-        if ($this->startedAt() !== null) {
-            return false;
-        }
-
         return $videoDuration !== null && $videoDuration > 0.0;
     }
 
@@ -110,7 +106,7 @@ class Task
 
         $this->status = TaskStatus::pending();
         $this->progress = new Progress(0);
-        $this->dates = $this->dates->restart();
+        $this->dates = $this->dates->touch();
     }
 
     public function updateProgress(Progress $progress): void
@@ -148,7 +144,7 @@ class Task
             return false;
         }
 
-        return $this->status === TaskStatus::PENDING || $this->status === TaskStatus::PROCESSING;
+        return $this->status === TaskStatus::PENDING || $this->status === TaskStatus::PROCESSING || $this->status === TaskStatus::STARTING;
     }
 
     public function cancel(): void

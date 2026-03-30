@@ -5,14 +5,16 @@ namespace App\Domain\Video\ValueObject;
 enum TaskStatus: int
 {
     case PENDING = 1;
-    case PROCESSING = 2;
-    case COMPLETED = 3;
-    case FAILED = 4;
-    case CANCELLED = 5;
-    case DELETED = 6;
+    case STARTING = 2;
+    case PROCESSING = 3;
+    case COMPLETED = 4;
+    case FAILED = 5;
+    case CANCELLED = 6;
+    case DELETED = 7;
 
     public const array NAMES = [
         self::PENDING->value => self::PENDING->name,
+        self::STARTING->value => self::STARTING->name,
         self::PROCESSING->value => self::PROCESSING->name,
         self::COMPLETED->value => self::COMPLETED->name,
         self::FAILED->value => self::FAILED->name,
@@ -23,6 +25,11 @@ enum TaskStatus: int
     public static function pending(): TaskStatus
     {
         return self::PENDING;
+    }
+
+    public static function starting(): TaskStatus
+    {
+        return self::STARTING;
     }
 
     public static function processing(): TaskStatus
@@ -52,12 +59,12 @@ enum TaskStatus: int
 
     public function canBeStarted(): bool
     {
-        return $this === self::PENDING || $this === self::CANCELLED || $this === self::FAILED;
+        return $this === self::STARTING;
     }
 
     public function canBeDeleted(): bool
     {
-        return $this !== self::PENDING && $this !== self::PROCESSING;
+        return $this !== self::PENDING && $this !== self::STARTING && $this !== self::PROCESSING;
     }
 
     public function canBeRestarted(): bool
@@ -67,7 +74,7 @@ enum TaskStatus: int
 
     public function isTranscoding(): bool
     {
-        return $this === self::PENDING || $this === self::PROCESSING;
+        return $this === self::PENDING || $this == self::STARTING || $this === self::PROCESSING;
     }
 
     public function isDeleted(): bool

@@ -37,20 +37,9 @@ final readonly class TaskDates
         return new self($createdAt, $startedAt, $updatedAt);
     }
 
-    public function markStarted(?\DateTimeImmutable $startedAt = null): self
+    public function markStarted(): self
     {
-        if ($this->startedAt !== null) {
-            throw InvalidTaskDates::alreadyStarted();
-        }
-
-        $startedAt ??= new \DateTimeImmutable();
-
-        return new self($this->createdAt, $startedAt, $startedAt);
-    }
-
-    public function restart(): self
-    {
-        return new self($this->createdAt, null, new \DateTimeImmutable());
+        return new self($this->createdAt, new \DateTimeImmutable(), new \DateTimeImmutable());
     }
 
     public function touch(?\DateTimeImmutable $updatedAt = null): self

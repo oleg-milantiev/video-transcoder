@@ -7,42 +7,31 @@ function createTaskAction(vm, preset) {
         return '';
     }
 
-    if (!task || !task.id) {
-        return h(
-            'button',
-            {
-                type: 'button',
-                class: 'btn btn-outline-primary btn-sm',
-                disabled: vm.activeActionKey === 'transcode-' + String(preset.id),
-                onClick: () => vm.startTranscode(preset.id),
-            },
-            vm.activeActionKey === 'transcode-' + String(preset.id) ? 'Processing...' : 'Transcode'
-        );
-    }
+    if (task && task.id) {
+        if (task.status === 'COMPLETED') {
+            return h(
+                'a',
+                {
+                    href: vm.taskDownloadUrl(task.id),
+                    class: 'btn btn-outline-primary btn-sm',
+                    download: task.downloadFilename,
+                },
+                'Download'
+            );
+        }
 
-    if (task.status === 'COMPLETED') {
-        return h(
-            'a',
-            {
-                href: vm.taskDownloadUrl(task.id),
-                class: 'btn btn-outline-primary btn-sm',
-                download: task.downloadFilename,
-            },
-            'Download'
-        );
-    }
-
-    if (task.status === 'PENDING' || task.status === 'PROCESSING') {
-        return h(
-            'button',
-            {
-                type: 'button',
-                class: 'btn btn-outline-primary btn-sm',
-                disabled: vm.activeActionKey === 'cancel-' + String(task.id),
-                onClick: () => vm.cancelTask(task.id),
-            },
-            vm.activeActionKey === 'cancel-' + String(task.id) ? 'Cancelling...' : 'Cancel'
-        );
+        if (task.status === 'PENDING' || task.status === 'STARTING' || task.status === 'PROCESSING') {
+            return h(
+                'button',
+                {
+                    type: 'button',
+                    class: 'btn btn-outline-primary btn-sm',
+                    disabled: vm.activeActionKey === 'cancel-' + String(task.id),
+                    onClick: () => vm.cancelTask(task.id),
+                },
+                vm.activeActionKey === 'cancel-' + String(task.id) ? 'Cancelling...' : 'Cancel'
+            );
+        }
     }
 
     return h(

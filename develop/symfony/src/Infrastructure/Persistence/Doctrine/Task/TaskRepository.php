@@ -153,49 +153,68 @@ class TaskRepository extends ServiceEntityRepository implements TaskRepositoryIn
 
     /**
      * @throws Exception
-     * todo optimize cascade and create indexes
+     * todo create indexes
      */
     public function getScheduled(): array
     {
         $conn = $this->getEntityManager()->getConnection();
 
         $sql = <<<'SQL'
-            WITH user_metrics AS (
-                -- Считаем текущую нагрузку пользователя и время последнего запуска (включая удалённые)
-                SELECT
-                    u.id AS user_id,
-                    t.delay,
-                    t.instance,
-                    COUNT(CASE WHEN task.status = 2 THEN 1 END) AS active_count,
-                    MAX(CASE WHEN task.status IN (2, 3, 4, 5, 6) THEN COALESCE(task.started_at, task.created_at) END) AS last_start_time
-                FROM "user" u
-                         JOIN tariff t ON u.tariff_id = t.id
-                         LEFT JOIN task task ON u.id = task.user_id
-                GROUP BY u.id, t.delay, t.instance
-            ),
-                 pending_tasks AS (
-                     -- Нумеруем задачи в очереди для каждого юзера
-                     SELECT
-                         tk.*,
-                         ROW_NUMBER() OVER (PARTITION BY tk.user_id ORDER BY tk.created_at) as queue_pos,
-                         um.active_count,
-                         um.instance,
-                         um.last_start_time,
-                         um.delay
-                     FROM task tk
-                              JOIN user_metrics um ON tk.user_id = um.user_id
-                     WHERE tk.status = 1 AND tk.deleted = false -- PENDING, not deleted
-                 )
-            SELECT id AS task_id, user_id, video_id
-            FROM pending_tasks
-            WHERE
-              -- 1. Не превышаем лимит одновременных задач
-                (active_count + queue_pos) <= instance
-              -- 2. Прошло достаточно времени с последнего запуска (если он был)
-              AND (
-                last_start_time IS NULL
-                    OR last_start_time <= NOW() - (delay || ' seconds')::interval
-                );
+            WITH
+                users_with_pending_tasks AS (
+                    -- Только юзеры с Pending задачами
+                    -- todo CREATE INDEX idx_task_user_active ON task (user_id) WHERE status = 1 AND deleted = false
+                    SELECT DISTINCT user_id
+                    FROM task
+                    WHERE status = 1 AND deleted = false -- PENDING, not deleted
+                ),
+                user_metrics AS (
+                    -- Считаем:
+                    --   - колво Starting/Processing задач (active_count) для порога tariff.instance
+                    --   - время последнего запуска (включая удалённые) для порога tariff.delay
+                    -- todo CREATE INDEX idx_task_user_status_started ON task (user_id, status, started_at);
+                    SELECT
+                        t.user_id,
+                        COUNT(CASE WHEN t.status IN (2, 3) THEN 1 END) AS active_count,
+                        MAX(t.started_at) AS last_start_time
+                    FROM task t
+                    JOIN users_with_pending_tasks u ON t.user_id = u.user_id
+                    GROUP BY t.user_id
+                ),
+                user_metrics_tariff AS (
+                    -- Приклеить тарифные поля
+                    -- todo CREATE INDEX idx_user_tariff_id ON "user" (tariff_id)
+                    SELECT
+                        m.*, -- user_id,active_count,last_start_time
+                        tt.instance,
+                        tt.delay
+                    FROM user_metrics m
+                    JOIN "user" u ON u.id = m.user_id
+                    JOIN tariff tt ON tt.id = u.tariff_id
+                ),
+                ready_to_start AS (
+                    -- Отбираем по одной задаче для каждого юзера, кто проходит по лимитам
+                    -- todo CREATE INDEX idx_task_pending_queue ON task (user_id, created_at) WHERE status = 1 AND deleted = false;
+                    SELECT DISTINCT ON (m.user_id)
+                        t.id AS task_id
+                    FROM task t
+                    JOIN user_metrics_tariff m ON t.user_id = m.user_id
+                    WHERE t.status = 1 AND t.deleted = false
+                      -- Условие 1: Есть свободные слоты в тарифе
+                      AND m.active_count < m.instance
+                      -- Условие 2: Прошло достаточно времени (delay в секундах)
+                      AND (m.last_start_time IS NULL OR m.last_start_time <= (NOW() - (m.delay || ' seconds')::interval))
+                    ORDER BY m.user_id, t.created_at
+                )
+                UPDATE task
+                SET status = 2, -- STARTING
+                    updated_at = NOW()
+                WHERE id IN (
+                    SELECT task_id
+                    FROM ready_to_start
+                    FOR UPDATE SKIP LOCKED -- Пропускать задачи, которые другой экземпляр шедулера обновляет
+                )
+                RETURNING task.id AS task_id, task.user_id, task.video_id
         SQL;
 
         $stmt = $conn->executeQuery($sql);
