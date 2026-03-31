@@ -27,7 +27,8 @@ class TariffCrudController extends AbstractCrudController
         return $crud
             ->showEntityActionsInlined()
             ->setEntityLabelInSingular('Tariff')
-            ->setEntityLabelInPlural('Tariffs');
+            ->setEntityLabelInPlural('Tariffs')
+            ->setDefaultSort(['title' => 'ASC']);
     }
 
     public function configureActions(Actions $actions): Actions

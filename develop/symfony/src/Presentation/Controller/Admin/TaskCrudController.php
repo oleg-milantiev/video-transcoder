@@ -48,7 +48,8 @@ class TaskCrudController extends AbstractCrudController
         return $crud
             ->showEntityActionsInlined()
             ->setEntityLabelInSingular('Task')
-            ->setEntityLabelInPlural('Tasks');
+            ->setEntityLabelInPlural('Tasks')
+            ->setDefaultSort(['createdAt' => 'DESC']);
     }
 
     public function configureFilters(Filters $filters): Filters

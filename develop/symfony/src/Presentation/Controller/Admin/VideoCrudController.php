@@ -47,7 +47,8 @@ class VideoCrudController extends AbstractCrudController
         return $crud
             ->showEntityActionsInlined()
             ->setEntityLabelInSingular('Video')
-            ->setEntityLabelInPlural('Videos');
+            ->setEntityLabelInPlural('Videos')
+            ->setDefaultSort(['title' => 'ASC']);
     }
 
     public function configureFilters(Filters $filters): Filters

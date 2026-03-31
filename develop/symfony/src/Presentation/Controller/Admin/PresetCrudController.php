@@ -27,7 +27,8 @@ class PresetCrudController extends AbstractCrudController
         return $crud
             ->showEntityActionsInlined()
             ->setEntityLabelInSingular('Preset')
-            ->setEntityLabelInPlural('Presets');
+            ->setEntityLabelInPlural('Presets')
+            ->setDefaultSort(['title' => 'ASC']);
     }
 
     public function configureActions(Actions $actions): Actions
