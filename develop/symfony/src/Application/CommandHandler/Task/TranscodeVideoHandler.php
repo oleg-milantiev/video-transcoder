@@ -152,4 +152,3 @@ final readonly class TranscodeVideoHandler
         $this->commandBus->dispatch(new StartTaskScheduler());
     }
 }
-

@@ -62,6 +62,7 @@ class VideoRepository extends ServiceEntityRepository implements VideoRepository
     {
         $conn = $this->getEntityManager()->getConnection();
 
+        // todo index
         $sql = "SELECT sum((v.meta->>'size')::bigint)
             FROM video v
             WHERE v.user_id = :userId

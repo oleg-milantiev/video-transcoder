@@ -142,6 +142,7 @@ class TaskRepository extends ServiceEntityRepository implements TaskRepositoryIn
     {
         $conn = $this->getEntityManager()->getConnection();
 
+        // todo index
         $sql = "SELECT sum((t.meta->>'size')::bigint)
             FROM task t
             WHERE t.user_id = :userId
@@ -152,10 +153,6 @@ class TaskRepository extends ServiceEntityRepository implements TaskRepositoryIn
         return $size ? (int)$size : 0;
     }
 
-    /**
-     * @throws Exception
-     * todo create indexes
-     */
     public function getScheduled(): array
     {
         $conn = $this->getEntityManager()->getConnection();

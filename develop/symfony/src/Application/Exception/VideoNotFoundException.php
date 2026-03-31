@@ -6,4 +6,3 @@ namespace App\Application\Exception;
 final class VideoNotFoundException extends QueryException
 {
 }
-

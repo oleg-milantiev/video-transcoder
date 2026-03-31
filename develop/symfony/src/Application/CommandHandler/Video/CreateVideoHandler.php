@@ -9,6 +9,7 @@ use App\Application\DTO\VideoItemDTO;
 use App\Application\Event\CreateVideoFail;
 use App\Application\Event\CreateVideoStart;
 use App\Application\Event\CreateVideoSuccess;
+use App\Application\Exception\StorageSizeExceedsQuota;
 use App\Application\Factory\FlashNotificationFactory;
 use App\Application\Factory\VideoFactory;
 use App\Application\Service\Video\VideoRealtimeNotifier;
@@ -59,6 +60,7 @@ final readonly class CreateVideoHandler
                 throw VideoFileNotFound::cannotDetermineSize($filePath);
             }
 
+            // file size tariff limits
             $fileSize = @filesize($filePath);
             if ($fileSize === false) {
                 throw VideoFileNotFound::cannotDetermineSize($filePath);
@@ -78,9 +80,20 @@ final readonly class CreateVideoHandler
 
             $maxSizeMb = $tariff->videoSize()->value();
             if ($fileSizeMb > $maxSizeMb) {
+                unlink($filePath);
+                // todo use app exception
                 throw VideoSizeExceedsQuota::fromSize($fileSizeMb, $maxSizeMb);
             }
 
+            // storage size tariff limits
+            $storageNowMb = ($this->videoRepository->getStorageSize($user->id()) + $this->taskRepository->getStorageSize($user->id()))/1024/1024;
+            $storageCapacityMb = $tariff->storageGb()->value()*1024;
+            if ($fileSizeMb + $storageNowMb > $storageCapacityMb) {
+                unlink($filePath);
+                throw StorageSizeExceedsQuota::create($fileSizeMb, $storageNowMb, $storageCapacityMb);
+            }
+
+            // its ok, lets store video!
             $video = $this->videoFactory->fromCreateVideo($command);
             $video = $this->videoRepository->save($video);
 
@@ -106,11 +119,11 @@ final readonly class CreateVideoHandler
                 'notification' => $this->flashNotificationFactory->uploadCompleted($video)->toArray(),
             ]);
 
-            $this->commandBus->dispatch(new ExtractVideoMetadata($video));
             $this->eventBus->dispatch(new CreateVideoSuccess(
                 videoId: $video->id()?->toRfc4122(),
                 userId: $command->userId()->toRfc4122(),
             ));
+            $this->commandBus->dispatch(new ExtractVideoMetadata($video));
         } catch (\Exception $e) {
             $this->eventBus->dispatch(new CreateVideoFail(
                 error: $e->getMessage(),
