@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace App\Application\QueryHandler;
 
+use App\Application\DTO\VideoItemDTO;
 use App\Application\Event\PatchVideoFail;
 use App\Application\Event\PatchVideoStart;
 use App\Application\Event\PatchVideoSuccess;
@@ -11,6 +12,7 @@ use App\Application\Logging\LogServiceInterface;
 use App\Application\Service\Video\VideoRealtimeNotifier;
 use App\Application\Service\Task\TaskRealtimeNotifier;
 use App\Application\Exception\VideoNotFoundException;
+use App\Domain\Video\Service\Storage\StorageInterface;
 use App\Domain\Video\ValueObject\VideoTitle;
 use App\Domain\Video\Repository\VideoRepositoryInterface;
 use App\Domain\Video\Repository\TaskRepositoryInterface;
@@ -33,9 +35,10 @@ final readonly class PatchVideoHandler
         private TaskRepositoryInterface $taskRepository,
         private TaskRealtimeNotifier $taskRealtimeNotifier,
         private LogServiceInterface $logService,
+        private StorageInterface $storage,
     ) {}
 
-    public function __invoke(PatchVideoQuery $query): void
+    public function __invoke(PatchVideoQuery $query): VideoItemDTO
     {
         $this->eventBus->dispatch(new PatchVideoStart(
             videoId: $query->videoId->toRfc4122(),
@@ -80,5 +83,7 @@ final readonly class PatchVideoHandler
         foreach ($tasks as $task) {
             $this->taskRealtimeNotifier->notifyTaskUpdated($task, 'updated');
         }
+
+        return VideoItemDTO::fromDomain($video, $this->storage, $this->taskRepository);
     }
 }

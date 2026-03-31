@@ -13,6 +13,7 @@ use App\Application\Exception\VideoNotFoundException;
 use App\Application\Query\DeleteVideoQuery;
 use App\Application\Query\GetVideoDetailsQuery;
 use App\Application\Query\GetVideoListQuery;
+use App\Application\Query\PatchVideoQuery;
 use App\Application\Query\StartTranscodeQuery;
 use App\Application\QueryHandler\QueryBus;
 use App\Application\Response\VideoListResponse;
@@ -42,12 +43,11 @@ class VideoApiController extends AbstractController
     public function index(Request $request): Response
     {
         try {
-            /** @var VideoListResponse $videoListResponse */
-            $videoListResponse = $this->queryBus->query(
-                new GetVideoListQuery($request, Uuid::fromString($this->getUser()->id->toRfc4122()))
+            return $this->apiSuccess((array)
+                $this->queryBus->query(
+                    new GetVideoListQuery($request, Uuid::fromString($this->getUser()->id->toRfc4122()))
+                )
             );
-
-            return $this->apiSuccess((array) $videoListResponse);
         } catch (QueryException $e) {
             return $this->apiError('QUERY_FAILED', $e->getMessage(), 400);
         } catch (\Throwable $e) {
@@ -60,15 +60,16 @@ class VideoApiController extends AbstractController
     public function details(string $id): Response
     {
         try {
-            $dto = $this->queryBus->query(
-                new GetVideoDetailsQuery($id)
+            return $this->apiSuccess((array)
+                $this->queryBus->query(
+                    new GetVideoDetailsQuery($id)
+                )
             );
-
-            return $this->apiSuccess((array) $dto);
         } catch (QueryException $e) {
             $status = $e->getMessage() === 'Invalid UUID' ? 400 : 404;
             return $this->apiError('QUERY_FAILED', $e->getMessage(), $status);
         } catch (\DomainException $e) {
+            // todo переделать
             return $this->apiError('ACCESS_DENIED', $e->getMessage(), 403);
         } catch (\Throwable $e) {
             $this->logger->critical('Failed to get video details', ['exception' => $e]);
@@ -80,11 +81,12 @@ class VideoApiController extends AbstractController
     public function transcode(string $id, string $presetId): Response
     {
         try {
-            $taskDto = $this->queryBus->query(
-                new StartTranscodeQuery($id, $presetId, $this->getUser()->id->toRfc4122())
+            // todo убрал task в иерархии. тесты и front адаптировать
+            return $this->apiSuccess((array)
+                $this->queryBus->query(
+                     new StartTranscodeQuery($id, $presetId, $this->getUser()->id->toRfc4122())
+                )
             );
-
-            return $this->apiSuccess(['task' => (array) $taskDto]);
         } catch (InvalidUuidException $e) {
             return $this->apiError('INVALID_UUID', $e->getMessage(), 400);
         } catch (VideoNotFoundException $e) {
@@ -110,17 +112,12 @@ class VideoApiController extends AbstractController
     #[Route('/{id}', name: 'api_video_patch', methods: ['PATCH'])]
     public function patch(string $id, Request $request): Response
     {
-        $payload = json_decode($request->getContent() ?: '{}', true);
-        $title = isset($payload['title']) ? (string)$payload['title'] : null;
-
-        if ($title === null) {
-            return $this->apiError('INVALID_PAYLOAD', 'Missing title', 400);
-        }
-
         try {
-            $this->queryBus->query(new \App\Application\Query\PatchVideoQuery($id, $title, $this->getUser()->id->toRfc4122()));
-
-            return $this->apiSuccess([]);
+            return $this->apiSuccess((array)
+                $this->queryBus->query(
+                    new PatchVideoQuery($id, $request, $this->getUser()->id->toRfc4122())
+                )
+            );
         } catch (InvalidUuidException $e) {
             return $this->apiError('INVALID_VIDEO_ID', $e->getMessage(), 400);
         } catch (VideoNotFoundException $e) {
@@ -137,12 +134,14 @@ class VideoApiController extends AbstractController
     public function delete(string $uuid): Response
     {
         try {
-            $query = new DeleteVideoQuery($uuid, $this->getUser()->id->toRfc4122());
-            $this->queryBus->query($query);
+            $this->queryBus->query(
+                new DeleteVideoQuery($uuid, $this->getUser()->id->toRfc4122())
+            );
 
+            // todo что за новый контракт? :(
             return $this->apiSuccess([
                 'video' => [
-                    'id' => $query->videoId->toRfc4122(),
+                    'id' => $uuid,
                     'deleted' => true,
                 ],
             ]);

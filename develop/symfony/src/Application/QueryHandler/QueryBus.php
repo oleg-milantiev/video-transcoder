@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace App\Application\QueryHandler;
 
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
+use Symfony\Component\Messenger\Exception\HandlerFailedException;
 use Symfony\Component\Messenger\HandleTrait;
 use Symfony\Component\Messenger\MessageBusInterface;
 
@@ -20,7 +21,11 @@ class QueryBus
 
     public function query(object $query): mixed
     {
-        // todo может быть тут разворачивать HandlerFailedException до $e->getPrevious()?
-        return $this->handle($query);
+        try {
+            return $this->handle($query);
+        } catch (HandlerFailedException $e) {
+            // queryBus always handle only one handler, so we can safely throw the first exception
+            throw $e->getPrevious() ?? $e;
+        }
     }
 }

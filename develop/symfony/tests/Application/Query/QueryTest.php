@@ -9,6 +9,7 @@ use App\Application\Query\DeleteVideoQuery;
 use App\Application\Query\StartTranscodeQuery;
 use App\Application\Query\PatchVideoQuery;
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\HttpFoundation\Request;
 
 final class QueryTest extends TestCase
 {
@@ -70,24 +71,34 @@ final class QueryTest extends TestCase
     {
         $videoId = '11111111-1111-4111-8111-111111111111';
         $userId = '22222222-2222-4222-8222-222222222222';
-        $title = 'New Title';
 
-        $query = new PatchVideoQuery($videoId, $title, $userId);
+        $query = new PatchVideoQuery($videoId, $this->getRequestWithTitle('New Title'), $userId);
 
         $this->assertSame($videoId, $query->videoId->toRfc4122());
         $this->assertSame($userId, $query->requestedByUserId->toRfc4122());
-        $this->assertSame($title, $query->title);
+        $this->assertSame('New Title', $query->title);
     }
 
     public function testPatchVideoQueryThrowsWhenInvalidVideoId(): void
     {
         $this->expectException(InvalidUuidException::class);
-        new PatchVideoQuery('invalid', 'Title', '22222222-2222-4222-8222-222222222222');
+        new PatchVideoQuery('invalid', $this->getRequestWithTitle('Title'), '22222222-2222-4222-8222-222222222222');
     }
 
     public function testPatchVideoQueryThrowsWhenInvalidUserId(): void
     {
         $this->expectException(InvalidUuidException::class);
-        new PatchVideoQuery('11111111-1111-4111-8111-111111111111', 'Title', 'invalid');
+        new PatchVideoQuery('11111111-1111-4111-8111-111111111111', $this->getRequestWithTitle('Title'), 'invalid');
+    }
+
+    private function getRequestWithTitle(string $title): Request
+    {
+        $payload = json_encode(['title' => $title]);
+
+        $request = $this->createStub(Request::class);
+        $request->method('getContent')
+            ->willReturn($payload);
+
+        return $request;
     }
 }

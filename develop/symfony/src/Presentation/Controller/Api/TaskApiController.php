@@ -46,12 +46,11 @@ class TaskApiController extends AbstractController
     public function index(Request $request): Response
     {
         try {
-            /** @var TaskListResponse $taskListResponse */
-            $taskListResponse = $this->queryBus->query(
-                new GetTaskListQuery($request, Uuid::fromString($this->getUser()->id->toRfc4122()))
+            return $this->apiSuccess((array)
+                $this->queryBus->query(
+                    new GetTaskListQuery($request, Uuid::fromString($this->getUser()->id->toRfc4122()))
+                )
             );
-
-            return $this->apiSuccess((array) $taskListResponse);
         } catch (QueryException $e) {
             return $this->apiError('QUERY_FAILED', $e->getMessage(), 400);
         } catch (\Throwable $e) {
@@ -71,23 +70,15 @@ class TaskApiController extends AbstractController
             $result = $this->queryBus->query(new TaskCancelQuery($id, $this->getUser()->id->toRfc4122()));
 
             return $this->apiSuccess((array) $result);
-        } catch (HandlerFailedException $e) {
-            // todo образец. Размножить на остальные API
-            $return = match ($e->getPrevious()::class) {
-                // todo рефакторинг папок application/exception
-                InvalidUuidException::class => $this->apiError('INVALID_TASK_ID', $e->getPrevious()->getMessage(), 400),
-                TaskNotFoundException::class => $this->apiError('TASK_NOT_FOUND', $e->getPrevious()->getMessage(), 404),
-                VideoNotFoundException::class => $this->apiError('VIDEO_NOT_FOUND', $e->getPrevious()->getMessage(), 404),
-                TaskCancelAccessDeniedException::class => $this->apiError('ACCESS_DENIED', $e->getPrevious()->getMessage(), 403),
-                default => $this->apiError('INTERNAL_ERROR', 'Failed to cancel task: '. get_class($e->getPrevious()), 500),
-            };
-
-            if ($return->getStatusCode() === 500) {
-                $this->logger->critical('Failed to cancel task', ['exception' => $e]);
-            }
-
-            return $return;
-        } catch (\Throwable $e) {
+        } catch (InvalidUuidException $e) {
+            return $this->apiError('INVALID_TASK_ID', $e->getMessage(), 400);
+        } catch (TaskNotFoundException $e) {
+            return $this->apiError('TASK_NOT_FOUND', $e->getMessage(), 404);
+        } catch (VideoNotFoundException $e) {
+            return $this->apiError('VIDEO_NOT_FOUND', $e->getMessage(), 404);
+        } catch (TaskCancelAccessDeniedException $e) {
+            return $this->apiError('ACCESS_DENIED', $e->getMessage(), 403);
+        } catch (\Throwable $e ) {
             $this->logger->critical('Failed to cancel task', ['exception' => $e]);
             return $this->apiError('INTERNAL_ERROR', 'Failed to cancel task', 500);
         }

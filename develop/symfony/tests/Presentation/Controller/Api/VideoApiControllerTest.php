@@ -169,7 +169,8 @@ final class VideoApiControllerTest extends ApiWebTestCase
 
         self::assertResponseStatusCodeSame(200);
         self::assertSame([
-            'task' => ['taskId' => '15151515-1515-4515-8515-151515151515', 'status' => 'PENDING'],
+            'taskId' => '15151515-1515-4515-8515-151515151515',
+            'status' => 'PENDING',
         ], $this->decodeJson($client->getResponse()->getContent()));
     }
 
