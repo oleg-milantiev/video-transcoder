@@ -33,6 +33,7 @@ export function createVideoDetailsView(config) {
             });
 
             return {
+                config,
                 dto: state.dto,
                 loading: state.loading,
                 error: state.error,

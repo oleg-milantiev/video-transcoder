@@ -222,6 +222,9 @@ export function createVideoDetailsActions(params) {
                 progress: 0,
                 createdAt: typeof update.createdAt === 'string' ? update.createdAt : '-',
                 downloadFilename: typeof update.downloadFilename === 'string' ? update.downloadFilename : '',
+                waitingTariffInstance: null,
+                waitingTariffDelay: null,
+                willStartAt: null,
             };
 
             return {
@@ -234,6 +237,9 @@ export function createVideoDetailsActions(params) {
                     createdAt: typeof update.createdAt === 'string' ? update.createdAt : currentTask.createdAt,
                     updatedAt: typeof update.updatedAt === 'string' ? update.updatedAt : currentTask.updatedAt,
                     expiredAt: typeof update.expiredAt === 'string' ? update.expiredAt : currentTask.expiriedAt,
+                    waitingTariffInstance: typeof update.waitingTariffInstance === 'boolean' ? update.waitingTariffInstance : (currentTask.waitingTariffInstance ?? null),
+                    waitingTariffDelay: typeof update.waitingTariffDelay === 'boolean' ? update.waitingTariffDelay : (currentTask.waitingTariffDelay ?? null),
+                    willStartAt: typeof update.willStartAt === 'string' ? update.willStartAt : (update.willStartAt === null ? null : (currentTask.willStartAt ?? null)),
                     downloadFilename: (typeof update.videoTitle === 'string' && typeof update.presetTitle === 'string')
                         ? (update.videoTitle + ' - ' + update.presetTitle)
                         : (currentTask.videoTitle + ' - ' + currentTask.presetTitle),

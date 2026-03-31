@@ -1,5 +1,74 @@
 import { h } from 'vue';
 
+function formatDelayClock(seconds) {
+    const normalized = Number(seconds);
+
+    if (!Number.isFinite(normalized) || normalized < 0) {
+        return '-';
+    }
+
+    const totalSeconds = Math.floor(normalized);
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const remainderSeconds = totalSeconds % 60;
+
+    return `${hours}:${String(minutes).padStart(2, '0')}:${String(remainderSeconds).padStart(2, '0')}`;
+}
+
+function buildPendingStatusHint(vm, task) {
+    if (!task || task.status !== 'PENDING') {
+        return null;
+    }
+
+    const messages = [];
+    const tariff = vm.config?.tariff || {};
+
+    if (task.waitingTariffInstance === true) {
+        messages.push(
+            `Your tariff limits the number of transcoding tasks that can run at the same time — no more than ${tariff.instance ?? '-'}.`
+        );
+    }
+
+    if (task.waitingTariffDelay === true) {
+        messages.push(
+            `Your tariff allows transcoding tasks to start no more often than every ${formatDelayClock(tariff.delay)}. The next video will start at ${task.willStartAt || '-'}.`
+        );
+    }
+
+    if (messages.length === 0) {
+        return null;
+    }
+
+    return ['Why isn\'t my video transcoding?', '', ...messages.map((message) => `• ${message}`)].join('\n');
+}
+
+function renderTaskStatus(vm, task) {
+    if (!task) {
+        return h('em', 'No task');
+    }
+
+    const tooltipText = buildPendingStatusHint(vm, task);
+    if (tooltipText === null) {
+        return task.status;
+    }
+
+    return h('span', { class: 'd-inline-flex align-items-center gap-1' }, [
+        h('span', task.status),
+        h(
+            'span',
+            {
+                class: 'd-inline-flex align-items-center justify-content-center rounded-circle border border-secondary text-secondary fw-semibold',
+                title: tooltipText,
+                'aria-label': tooltipText,
+                tabindex: '0',
+                role: 'img',
+                style: 'width: 1rem; height: 1rem; font-size: 0.75rem; line-height: 1; cursor: help; user-select: none;',
+            },
+            '?'
+        ),
+    ]);
+}
+
 function createTaskAction(vm, preset) {
     const task = preset.task;
 
@@ -53,7 +122,7 @@ function renderPresetRows(vm) {
 
         return h('tr', [
             h('td', preset.title),
-            h('td', task ? task.status : h('em', 'No task')),
+            h('td', renderTaskStatus(vm, task)),
             h('td', task ? String(task.progress) + '%' : '-'),
             h('td', task ? task.createdAt : '-'),
             h('td', [actionNode]),

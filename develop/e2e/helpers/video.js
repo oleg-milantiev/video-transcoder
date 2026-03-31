@@ -56,7 +56,8 @@ async function readPresetTaskState(page, presetTitle) {
   const row = presetRow(page, presetTitle);
   await expect(row).toBeVisible({ timeout: UI_TIMEOUT });
 
-  const status = (await row.locator('td').nth(1).innerText({ timeout: UI_TIMEOUT })).trim();
+  const rawStatus = (await row.locator('td').nth(1).innerText({ timeout: UI_TIMEOUT })).trim();
+  const status = rawStatus.replace(/\s+\?\s*$/, '').trim();
   const progressText = (await row.locator('td').nth(2).innerText({ timeout: UI_TIMEOUT })).trim();
   const progressMatch = progressText.match(/(\d+)\s*%/);
   const progress = progressMatch ? Number(progressMatch[1]) : -1;

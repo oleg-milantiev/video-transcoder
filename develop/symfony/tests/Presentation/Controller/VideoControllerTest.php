@@ -117,6 +117,8 @@ final class VideoControllerTest extends WebTestCase
         // tariff storage
         self::assertArrayHasKey('tariff', $config);
         self::assertIsArray($config['tariff']);
+        self::assertArrayHasKey('delay', $config['tariff']);
+        self::assertArrayHasKey('instance', $config['tariff']);
         self::assertSame(0, $config['tariff']['storage']['now'] ?? 0);
         self::assertSame(0, $config['tariff']['storage']['max'] ?? 0);
 
