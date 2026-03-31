@@ -13,6 +13,7 @@ use App\Application\Factory\VideoFactory;
 use App\Application\Service\Video\VideoRealtimeNotifier;
 use App\Domain\User\Entity\Tariff;
 use App\Domain\User\Entity\User;
+use App\Domain\User\ValueObject\TariffStorageGb;
 use App\Domain\User\ValueObject\TariffVideoSize;
 use App\Domain\Video\Entity\Video;
 use App\Domain\Video\ValueObject\FileExtension;
@@ -88,6 +89,7 @@ class CreateVideoHandlerTest extends TestCase
 
                 return $saveCall === 1 ? $savedVideo : $video;
             });
+        $videoRepository->method('getStorageSize')->willReturn(1000);
 
         $storage = $this->createMock(StorageInterface::class);
         $storage->expects($this->once())
@@ -95,13 +97,18 @@ class CreateVideoHandlerTest extends TestCase
             ->willReturn('source/user/video.mp4');
         $storage->method('sourceKey')->willReturn('source/user/video.mp4');
 
-        $notifier = new VideoRealtimeNotifier($commandBus, $storage, $this->createStub(TaskRepositoryInterface::class));
+        $taskRepository = $this->createStub(TaskRepositoryInterface::class);
+        $taskRepository->method('getStorageSize')->willReturn(0);
+
+        $notifier = new VideoRealtimeNotifier($commandBus, $storage, $taskRepository);
         $logService = $this->createStub(LogServiceInterface::class);
 
         // Create user with tariff that allows the file size
         $userWithTariff = $this->createStub(User::class);
         $tariff = $this->createStub(Tariff::class);
         $tariff->method('videoSize')->willReturn(new TariffVideoSize(1000.0)); // 1000 MB limit
+        $tariff->method('storageGb')->willReturn(new TariffStorageGb(5));
+        $userWithTariff->method('id')->willReturn($userId);
         $userWithTariff->method('tariff')->willReturn($tariff);
 
         $userRepository = $this->createStub(UserRepositoryInterface::class);
@@ -117,7 +124,7 @@ class CreateVideoHandlerTest extends TestCase
             $storage,
             new VideoFactory(),
             new FlashNotificationFactory(),
-            $this->createStub(TaskRepositoryInterface::class),
+            $taskRepository,
         );
 
         $handler->__invoke($command);
