@@ -34,6 +34,7 @@ class GetVideoDetailsHandlerTest extends TestCase
                 [
                     'id' => '11111111-1111-4111-8111-111111111111',
                     'title' => 'HD',
+                    'expectedFileSize' => 999333,
                     'task' => [
                         'id' => '42424242-4242-4242-8242-424242424242',
                         'status' => 3,
@@ -66,6 +67,7 @@ class GetVideoDetailsHandlerTest extends TestCase
 
         $this->assertSame('PROCESSING', $dto->presetsWithTasks[0]->task->status);
         $this->assertSame('42424242-4242-4242-8242-424242424242', $dto->presetsWithTasks[0]->task->id);
+        $this->assertSame(999333, $dto->presetsWithTasks[0]->expectedFileSize);
         $this->assertTrue($dto->presetsWithTasks[0]->task->waitingTariffInstance);
         $this->assertFalse($dto->presetsWithTasks[0]->task->waitingTariffDelay);
         $this->assertSame('2024-03-18 10:05:00', $dto->presetsWithTasks[0]->task->willStartAt);
@@ -89,6 +91,7 @@ class GetVideoDetailsHandlerTest extends TestCase
                 [
                     'id' => '11111111-1111-4111-8111-111111111111',
                     'title' => 'HD',
+                    'expectedFileSize' => 999333,
                     'task' => [
                         'id' => '42424242-4242-4242-8242-424242424242',
                         'status' => 1,
@@ -119,6 +122,7 @@ class GetVideoDetailsHandlerTest extends TestCase
         $dto = $handler(new GetVideoDetailsQuery($video->id()->toRfc4122()));
 
         $this->assertSame('PENDING', $dto->presetsWithTasks[0]->task->status);
+        $this->assertSame(999333, $dto->presetsWithTasks[0]->expectedFileSize);
         $this->assertNull($dto->presetsWithTasks[0]->task->waitingTariffInstance);
         $this->assertNull($dto->presetsWithTasks[0]->task->waitingTariffDelay);
         $this->assertNull($dto->presetsWithTasks[0]->task->willStartAt);

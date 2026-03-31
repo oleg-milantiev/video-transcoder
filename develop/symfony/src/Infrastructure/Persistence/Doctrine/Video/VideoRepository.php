@@ -138,6 +138,7 @@ class VideoRepository extends ServiceEntityRepository implements VideoRepository
             SELECT
                 p.id,
                 p.title,
+                ((p.bitrate/8*1000*1000+128/8*1000) * COALESCE((v.meta->>'duration')::float, 0.0))::int expected_file_size,
                 t.id AS task_id,
                 t.status,
                 pt.waiting_tariff_instance,
@@ -148,7 +149,7 @@ class VideoRepository extends ServiceEntityRepository implements VideoRepository
                 TO_CHAR(t.created_at, 'YYYY-MM-DD HH24:MI') as created_at
             FROM preset p
                      LEFT JOIN task t ON p.id = t.preset_id AND t.video_id = :video_id
-                     LEFT JOIN video v ON t.video_id = v.id
+                     LEFT JOIN video v ON v.id = :video_id
                      LEFT JOIN pending_tasks pt on t.id = pt.id
             ORDER BY p.title
         SQL;
@@ -161,6 +162,7 @@ class VideoRepository extends ServiceEntityRepository implements VideoRepository
             $presetsWithTasks[] = [
                 'id' => $row['id'],
                 'title' => $row['title'],
+                'expectedFileSize' => (int)$row['expected_file_size'],
                 'task' => $row['task_id'] !== null ? [
                     'id' => $row['task_id'],
                     'status' => (int)$row['status'],

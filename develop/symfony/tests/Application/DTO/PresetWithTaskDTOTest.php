@@ -21,10 +21,11 @@ class PresetWithTaskDTOTest extends TestCase
             waitingTariffDelay: false,
             willStartAt: null,
         );
-        $dto = new PresetWithTaskDTO('11111111-1111-4111-8111-111111111111', '4K', task: $task);
+        $dto = new PresetWithTaskDTO('11111111-1111-4111-8111-111111111111', '4K', 999333, task: $task);
 
         $this->assertSame('11111111-1111-4111-8111-111111111111', $dto->id);
         $this->assertSame('4K', $dto->title);
+        $this->assertSame(999333, $dto->expectedFileSize);
         $this->assertSame($task, $dto->task);
         $this->assertFalse($dto->task->waitingTariffInstance);
         $this->assertFalse($dto->task->waitingTariffDelay);

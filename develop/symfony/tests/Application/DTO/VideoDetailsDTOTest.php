@@ -39,6 +39,7 @@ class VideoDetailsDTOTest extends TestCase
         $presetDto = new PresetWithTaskDTO(
             id: '123e4567-e89b-42d3-a456-426614174005',
             title: 'Mobile',
+            expectedFileSize: 999333,
             task: new TaskInfoDTO(
                 status: 'PENDING',
                 progress: 0,
@@ -68,6 +69,7 @@ class VideoDetailsDTOTest extends TestCase
         $this->assertSame('expired', $dto->expiredInterval);
         $this->assertNull($dto->updatedAt);
         $this->assertSame([$presetDto], $dto->presetsWithTasks);
+        $this->assertSame(999333, $dto->presetsWithTasks[0]->expectedFileSize);
         $this->assertTrue($dto->presetsWithTasks[0]->task->waitingTariffInstance);
         $this->assertTrue($dto->presetsWithTasks[0]->task->waitingTariffDelay);
         $this->assertSame('2026-03-18 09:20:00', $dto->presetsWithTasks[0]->task->willStartAt);

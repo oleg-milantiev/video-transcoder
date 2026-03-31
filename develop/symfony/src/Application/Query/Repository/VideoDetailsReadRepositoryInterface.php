@@ -11,6 +11,7 @@ interface VideoDetailsReadRepositoryInterface
      * @return array<array{
      *     id: string,
      *     title: string,
+     *     expectedFileSize: int,
      *     task: ?array{
      *         id: string,
      *         status: int,

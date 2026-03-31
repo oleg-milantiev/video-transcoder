@@ -58,6 +58,7 @@ final readonly class GetVideoDetailsHandler
             $presetsWithTasks[] = new PresetWithTaskDTO(
                 id: $presetData['id'],
                 title: $presetData['title'],
+                expectedFileSize: $presetData['expectedFileSize'],
                 task: $taskDto,
             );
         }
