@@ -1,4 +1,5 @@
 import { h } from 'vue';
+import { bytesToHuman } from '../shared.js';
 
 function formatDelayClock(seconds) {
     const normalized = Number(seconds);
@@ -42,6 +43,52 @@ function buildPendingStatusHint(vm, task) {
     return ['Why isn\'t my video transcoding?', '', ...messages.map((message) => `• ${message}`)].join('\n');
 }
 
+function renderHelpIcon(tooltipText, className = 'text-secondary border-secondary') {
+    return h(
+        'span',
+        {
+            class: `d-inline-flex align-items-center justify-content-center rounded-circle border fw-semibold ${className}`,
+            title: tooltipText,
+            'aria-label': tooltipText,
+            tabindex: '0',
+            role: 'img',
+            style: 'width: 1rem; height: 1rem; font-size: 0.75rem; line-height: 1; cursor: help; user-select: none; flex-shrink: 0;',
+        },
+        '?'
+    );
+}
+
+function getRemainingStorage(vm) {
+    const storage = vm.config?.tariff?.storage || {};
+    const used = Number(storage.now);
+    const max = Number(storage.max);
+
+    if (!Number.isFinite(used) || !Number.isFinite(max)) {
+        return null;
+    }
+
+    return Math.max(0, max - used);
+}
+
+function buildExpectedFileSizeHint() {
+    return 'This video cannot be transcoded to this preset because it most likely will not fit into the storage available on your tariff. Delete videos or change your tariff to transcode it.';
+}
+
+function renderExpectedFileSize(vm, preset, isTooLarge) {
+    const sizeLabel = `Expected size: ${bytesToHuman(preset.expectedFileSize)}`;
+
+    if (!isTooLarge) {
+        return h('div', { class: 'small text-muted mt-2' }, sizeLabel);
+    }
+
+    const tooltipText = buildExpectedFileSizeHint();
+
+    return h('div', { class: 'small text-danger mt-2 d-inline-flex align-items-center gap-1 flex-wrap' }, [
+        h('span', sizeLabel),
+        renderHelpIcon(tooltipText, 'text-danger border-danger'),
+    ]);
+}
+
 function renderTaskStatus(vm, task) {
     if (!task) {
         return h('em', 'No task');
@@ -54,18 +101,7 @@ function renderTaskStatus(vm, task) {
 
     return h('span', { class: 'd-inline-flex align-items-center gap-1' }, [
         h('span', task.status),
-        h(
-            'span',
-            {
-                class: 'd-inline-flex align-items-center justify-content-center rounded-circle border border-secondary text-secondary fw-semibold',
-                title: tooltipText,
-                'aria-label': tooltipText,
-                tabindex: '0',
-                role: 'img',
-                style: 'width: 1rem; height: 1rem; font-size: 0.75rem; line-height: 1; cursor: help; user-select: none;',
-            },
-            '?'
-        ),
+        renderHelpIcon(tooltipText),
     ]);
 }
 
@@ -103,16 +139,22 @@ function createTaskAction(vm, preset) {
         }
     }
 
-    return h(
-        'button',
-        {
-            type: 'button',
-            class: 'btn btn-outline-primary btn-sm',
-            disabled: vm.activeActionKey === 'transcode-' + String(preset.id),
-            onClick: () => vm.startTranscode(preset.id),
-        },
-        vm.activeActionKey === 'transcode-' + String(preset.id) ? 'Processing...' : 'Transcode'
-    );
+    const remainingStorage = getRemainingStorage(vm);
+    const isTooLargeForStorage = remainingStorage !== null && preset.expectedFileSize > remainingStorage;
+
+    return h('div', { class: 'd-inline-flex flex-column align-items-start' }, [
+        h(
+            'button',
+            {
+                type: 'button',
+                class: 'btn btn-outline-primary btn-sm',
+                disabled: isTooLargeForStorage || vm.activeActionKey === 'transcode-' + String(preset.id),
+                onClick: () => vm.startTranscode(preset.id),
+            },
+            vm.activeActionKey === 'transcode-' + String(preset.id) ? 'Processing...' : 'Transcode'
+        ),
+        renderExpectedFileSize(vm, preset, isTooLargeForStorage),
+    ]);
 }
 
 function renderPresetRows(vm) {
