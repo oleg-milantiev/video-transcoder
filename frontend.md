@@ -130,3 +130,43 @@ window.dispatchEvent(new CustomEvent('app:flash', {
 - `imageUrl` (или `image`), `imageAlt`
 - `timer` (мс)
 - `position` (например `top-end`)
+
+
+## Frontend Unit Tests
+
+Тесты расположены в `develop/symfony/assets/tests/` — обычные `.mjs` файлы, запускаемые через `node` без каких-либо фреймворков.  
+Используется встроенный модуль `node:assert/strict`.
+
+### Запуск
+
+```bash
+bash develop/symfony/assets/tests.sh
+```
+
+### Структура
+
+```
+assets/tests/
+  uploadHint.test.mjs    # formatBytes, buildUploadHint
+```
+
+### Как устроены тесты
+
+Каждый файл — самостоятельный ES-модуль (`.mjs`):
+- импортирует нужный модуль через относительный путь (`../home/...`)
+- проверяет поведение через `assert`
+- выводит `✓ <название>` для каждой пройденной группы
+- падает с ненулевым exit-кодом при первом несоответствии
+
+```js
+import assert from 'node:assert/strict';
+import { myFn } from '../home/path/to/module.js';
+
+assert.equal(myFn(1), 2);
+console.log('✓ myFn');
+```
+
+### Добавление нового теста
+
+Создай файл `assets/tests/<name>.test.mjs` — скрипт `tests.sh` подхватит его автоматически.
+
