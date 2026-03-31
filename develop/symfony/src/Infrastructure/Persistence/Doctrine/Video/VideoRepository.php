@@ -105,21 +105,55 @@ class VideoRepository extends ServiceEntityRepository implements VideoRepository
 
         // SQL query to fetch all presets with their tasks for this video, sorted by preset title
         $sql = <<<SQL
+            WITH
+            user_metrics AS (
+                 -- from scheduler for one user.id
+                 SELECT
+                     t.user_id,
+                     COUNT(CASE WHEN t.status IN (2, 3) THEN 1 END) AS active_count, -- щас выполняется N
+                     MAX(t.started_at) AS last_start_time                            -- последний запуск в хх:хх:хх
+                 FROM task t
+                 WHERE t.user_id = (SELECT v.user_id FROM video v WHERE v.id = :video_id)
+                 GROUP BY t.user_id
+             ),
+             user_metrics_tariff AS (
+                 SELECT
+                     m.*, -- user_id,active_count,last_start_time
+                     tt.instance,
+                     tt.delay
+                 FROM user_metrics m
+                          JOIN "user" u ON u.id = m.user_id
+                          JOIN tariff tt ON tt.id = u.tariff_id
+            ),
+            pending_tasks AS (
+                SELECT
+                    t.id,
+                    active_count >= instance AS waiting_tariff_instance,
+                    last_start_time + (m.delay || ' seconds')::interval > now() AS waiting_tariff_delay,
+                    last_start_time + (m.delay || ' seconds')::interval AS will_start_at
+                FROM task t
+                JOIN user_metrics_tariff m ON t.user_id = m.user_id
+                WHERE t.status = 1 AND t.deleted = false
+            )
             SELECT
                 p.id,
                 p.title,
                 t.id AS task_id,
                 t.status,
+                pt.waiting_tariff_instance,
+                pt.waiting_tariff_delay,
+                pt.will_start_at,
                 t.progress,
                 CONCAT(v.title, ' - ', p.title) as download_filename,
                 TO_CHAR(t.created_at, 'YYYY-MM-DD HH24:MI') as created_at
             FROM preset p
-            LEFT JOIN task t ON p.id = t.preset_id AND t.video_id = :videoId
-            LEFT JOIN video v ON t.video_id = v.id
+                     LEFT JOIN task t ON p.id = t.preset_id AND t.video_id = :video_id
+                     LEFT JOIN video v ON t.video_id = v.id
+                     LEFT JOIN pending_tasks pt on t.id = pt.id
             ORDER BY p.title
         SQL;
 
-        $result = $conn->executeQuery($sql, ['videoId' => $videoId->toRfc4122()]);
+        $result = $conn->executeQuery($sql, ['video_id' => $videoId->toRfc4122()]);
         $rows = $result->fetchAllAssociative();
 
         $presetsWithTasks = [];
@@ -132,6 +166,9 @@ class VideoRepository extends ServiceEntityRepository implements VideoRepository
                     'status' => (int)$row['status'],
                     'progress' => (int)$row['progress'],
                     'createdAt' => $row['created_at'],
+                    'waitingTariffInstance' => $row['waiting_tariff_instance'],
+                    'waitingTariffDelay' => $row['waiting_tariff_delay'],
+                    'willStartAt' => $row['will_start_at'],
                     'downloadFilename' => $row['download_filename'],
                 ] : null,
             ];

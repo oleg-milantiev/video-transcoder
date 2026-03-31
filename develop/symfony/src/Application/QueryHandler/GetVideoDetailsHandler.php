@@ -47,7 +47,11 @@ final readonly class GetVideoDetailsHandler
                     status: TaskStatus::tryFrom((int)$presetData['task']['status'])?->name ?? 'UNKNOWN',
                     progress: $presetData['task']['progress'],
                     createdAt: $presetData['task']['createdAt'],
+                    // todo перевести генерацию download filename в фронт
                     downloadFilename: $presetData['task']['downloadFilename'],
+                    waitingTariffInstance: $presetData['task']['waitingTariffInstance'],
+                    waitingTariffDelay: $presetData['task']['waitingTariffDelay'],
+                    willStartAt: $presetData['task']['willStartAt'],
                     id: $presetData['task']['id'],
                 );
             }

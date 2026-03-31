@@ -39,7 +39,16 @@ class VideoDetailsDTOTest extends TestCase
         $presetDto = new PresetWithTaskDTO(
             id: '123e4567-e89b-42d3-a456-426614174005',
             title: 'Mobile',
-            task: new TaskInfoDTO('PENDING', 0, '2026-03-18 08:50', 'mobile-file.mp4', '123e4567-e89b-42d3-a456-426614174055'),
+            task: new TaskInfoDTO(
+                status: 'PENDING',
+                progress: 0,
+                createdAt: '2026-03-18 08:50',
+                downloadFilename: 'mobile-file.mp4',
+                waitingTariffInstance: true,
+                waitingTariffDelay: true,
+                willStartAt: '2026-03-18 09:20:00',
+                id: '123e4567-e89b-42d3-a456-426614174055',
+            ),
         );
 
         $storage = $this->createStub(StorageInterface::class);
@@ -59,6 +68,9 @@ class VideoDetailsDTOTest extends TestCase
         $this->assertSame('expired', $dto->expiredInterval);
         $this->assertNull($dto->updatedAt);
         $this->assertSame([$presetDto], $dto->presetsWithTasks);
+        $this->assertTrue($dto->presetsWithTasks[0]->task->waitingTariffInstance);
+        $this->assertTrue($dto->presetsWithTasks[0]->task->waitingTariffDelay);
+        $this->assertSame('2026-03-18 09:20:00', $dto->presetsWithTasks[0]->task->willStartAt);
         $this->assertSame('/uploads/' . $uuid->toRfc4122() . '.jpg', $dto->poster);
         $this->assertArrayHasKey('duration', $dto->meta);
         $this->assertArrayHasKey('bitrate', $dto->meta);

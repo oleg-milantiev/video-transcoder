@@ -10,6 +10,9 @@ readonly class TaskInfoDTO
         public int $progress,
         public string $createdAt,
         public string $downloadFilename,
+        public ?bool $waitingTariffInstance,
+        public ?bool $waitingTariffDelay,
+        public ?string $willStartAt,
         public ?string $id = null,
     ) {}
 }

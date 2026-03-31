@@ -17,7 +17,7 @@ use Symfony\Bundle\SecurityBundle\Security;
 
 class GetVideoDetailsHandlerTest extends TestCase
 {
-    public function testConvertsNumericStatusIntoEnumName(): void
+    public function testMapsTaskStatusAndSchedulingFields(): void
     {
         $video = VideoFake::create();
 
@@ -40,6 +40,9 @@ class GetVideoDetailsHandlerTest extends TestCase
                         'progress' => 75,
                         'createdAt' => '2024-03-18 10:00',
                         'downloadFilename' => 'HD - example.mp4',
+                        'waitingTariffInstance' => true,
+                        'waitingTariffDelay' => false,
+                        'willStartAt' => '2024-03-18 10:05:00',
                     ],
                 ],
             ]);
@@ -63,6 +66,62 @@ class GetVideoDetailsHandlerTest extends TestCase
 
         $this->assertSame('PROCESSING', $dto->presetsWithTasks[0]->task->status);
         $this->assertSame('42424242-4242-4242-8242-424242424242', $dto->presetsWithTasks[0]->task->id);
+        $this->assertTrue($dto->presetsWithTasks[0]->task->waitingTariffInstance);
+        $this->assertFalse($dto->presetsWithTasks[0]->task->waitingTariffDelay);
+        $this->assertSame('2024-03-18 10:05:00', $dto->presetsWithTasks[0]->task->willStartAt);
+    }
+
+    public function testKeepsSchedulingFieldsNullable(): void
+    {
+        $video = VideoFake::create();
+
+        $repository = $this->createMock(VideoRepositoryInterface::class);
+        $repository->expects($this->once())
+            ->method('findById')
+            ->with($video->id())
+            ->willReturn($video);
+
+        $videoDetailsRepository = $this->createMock(VideoDetailsReadRepositoryInterface::class);
+        $videoDetailsRepository->expects($this->once())
+            ->method('getDetailsByVideoId')
+            ->with($video->id())
+            ->willReturn([
+                [
+                    'id' => '11111111-1111-4111-8111-111111111111',
+                    'title' => 'HD',
+                    'task' => [
+                        'id' => '42424242-4242-4242-8242-424242424242',
+                        'status' => 1,
+                        'progress' => 0,
+                        'createdAt' => '2024-03-18 10:00',
+                        'downloadFilename' => 'HD - example.mp4',
+                        'waitingTariffInstance' => null,
+                        'waitingTariffDelay' => null,
+                        'willStartAt' => null,
+                    ],
+                ],
+            ]);
+
+        $user = new UserEntity();
+        $user->tariff = TariffFake::create();
+        $user->tariff->storageHour = 24;
+
+        $security = $this->createMock(Security::class);
+        $security->expects($this->once())
+            ->method('isGranted')
+            ->with(VideoAccessVoter::CAN_VIEW_DETAILS, $video)
+            ->willReturn(true);
+        $security->expects($this->once())
+            ->method('getUser')
+            ->willReturn($user);
+
+        $handler = new GetVideoDetailsHandler($repository, $videoDetailsRepository, $this->createStub(StorageInterface::class), $security);
+        $dto = $handler(new GetVideoDetailsQuery($video->id()->toRfc4122()));
+
+        $this->assertSame('PENDING', $dto->presetsWithTasks[0]->task->status);
+        $this->assertNull($dto->presetsWithTasks[0]->task->waitingTariffInstance);
+        $this->assertNull($dto->presetsWithTasks[0]->task->waitingTariffDelay);
+        $this->assertNull($dto->presetsWithTasks[0]->task->willStartAt);
     }
 
     public function testThrowsWhenVideoNotFound(): void
