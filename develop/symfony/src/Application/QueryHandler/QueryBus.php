@@ -19,6 +19,7 @@ class QueryBus
 
     public function query(object $query): mixed
     {
+        // todo может быть тут разворачивать HandlerFailedException до $e->getPrevious()?
         return $this->handle($query);
     }
 }

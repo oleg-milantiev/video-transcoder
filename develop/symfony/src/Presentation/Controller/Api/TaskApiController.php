@@ -73,6 +73,7 @@ class TaskApiController extends AbstractController
         } catch (HandlerFailedException $e) {
             // todo образец. Размножить на остальные API
             $return = match ($e->getPrevious()::class) {
+                // todo рефакторинг папок application/exception
                 InvalidUuidException::class => $this->apiError('INVALID_TASK_ID', $e->getPrevious()->getMessage(), 400),
                 TaskNotFoundException::class => $this->apiError('TASK_NOT_FOUND', $e->getPrevious()->getMessage(), 404),
                 VideoNotFoundException::class => $this->apiError('VIDEO_NOT_FOUND', $e->getPrevious()->getMessage(), 404),
