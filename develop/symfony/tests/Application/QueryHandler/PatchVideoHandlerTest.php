@@ -100,7 +100,8 @@ final class PatchVideoHandlerTest extends TestCase
         $videoRepository = $this->createMock(VideoRepositoryInterface::class);
         $videoRepository->expects($this->once())->method('findById')->with($videoId)->willReturn($video);
         $videoRepository->expects($this->once())->method('save')->with($this->callback(static function (Video $v): bool {
-            return $v->title()->value() === 'New title';
+            return $v->id()->equals(Uuid::fromString('11111111-1111-4111-8111-111111111111'))
+                && $v->title()->value() === 'New Title';
         }))->willReturnCallback(static fn (Video $v) => $v);
 
         $security = $this->createMock(Security::class);
@@ -122,7 +123,7 @@ final class PatchVideoHandlerTest extends TestCase
 
         $handler(new PatchVideoQuery($videoId->toRfc4122(), $this->getRequestWithTitle('New Title'), $userId->toRfc4122()));
 
-        $this->assertSame('New title', $video->title()->value());
+        $this->assertSame('New Title', $video->title()->value());
     }
 
     public function testUpdatesTasksWhenTitleChanges(): void
@@ -146,7 +147,8 @@ final class PatchVideoHandlerTest extends TestCase
         $videoRepository = $this->createMock(VideoRepositoryInterface::class);
         $videoRepository->expects($this->once())->method('findById')->with($videoId)->willReturn($video);
         $videoRepository->expects($this->once())->method('save')->with($this->callback(static function (Video $v): bool {
-            return $v->title()->value() === 'New title';
+            return $v->id()->equals(Uuid::fromString('11111111-1111-4111-8111-111111111111'))
+                && $v->title()->value() === 'New Title';
         }))->willReturnCallback(static fn (Video $v) => $v);
 
         $security = $this->createMock(Security::class);
@@ -161,7 +163,7 @@ final class PatchVideoHandlerTest extends TestCase
         $eventBus->method('dispatch')->willReturn(new Envelope(new \stdClass()));
 
         $taskRepository = $this->createMock(TaskRepositoryInterface::class);
-        $taskRepository->expects($this->once())->method('findByVideoId')->with($videoId)->willReturn([$task]);
+        $taskRepository->expects($this->exactly(2))->method('findByVideoId')->with($videoId)->willReturn([$task]);
 
         $taskRealtimeNotifier = new TaskRealtimeNotifier($notifierBus, $this->createStub(PresetRepositoryInterface::class), $this->createStub(VideoRepositoryInterface::class));
 
@@ -173,7 +175,7 @@ final class PatchVideoHandlerTest extends TestCase
 
         $handler(new PatchVideoQuery($videoId->toRfc4122(), $this->getRequestWithTitle('New Title'), $userId->toRfc4122()));
 
-        $this->assertSame('New title', $video->title()->value());
+        $this->assertSame('New Title', $video->title()->value());
     }
 
     public function testThrowsWhenSaveFailsAndDispatchesFail(): void
@@ -219,10 +221,6 @@ final class PatchVideoHandlerTest extends TestCase
         );
 
         $this->expectException(\RuntimeException::class);
-        try {
-            $handler(new PatchVideoQuery($videoId->toRfc4122(), $this->getRequestWithTitle('New Title'), $userId->toRfc4122()));
-        } finally {
-            // Verify that PatchVideoFail event was dispatched
-        }
+        $handler(new PatchVideoQuery($videoId->toRfc4122(), $this->getRequestWithTitle('New Title'), $userId->toRfc4122()));
     }
 }

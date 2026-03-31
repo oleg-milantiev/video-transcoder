@@ -58,7 +58,7 @@ final readonly class PatchVideoHandler
         try {
             $wasTitle = $video->title()->value();
             $video->changeTitle(new VideoTitle($query->title));
-            $this->videoRepository->save($video);
+            $video = $this->videoRepository->save($video);
         } catch (\Throwable $e) {
             $this->eventBus->dispatch(new PatchVideoFail(
                 error: $e->getMessage(),

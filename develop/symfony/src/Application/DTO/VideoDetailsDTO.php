@@ -29,7 +29,6 @@ readonly class VideoDetailsDTO
     {
         $hasPreview = ($video->meta()['preview'] ?? false) === true;
         $expiredAt = $video->createdAt()->add(new \DateInterval('PT' . $tariff->storageHour()->value() . 'H'));
-        $expiredInterval = $expiredAt->diff(new \DateTimeImmutable());
 
         return new self(
             id: $video->id()->toRfc4122(),
