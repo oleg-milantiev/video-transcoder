@@ -13,9 +13,11 @@ class HumanReadableHelper
         $dateInterval = $date->diff($now);
 
         return $date > $now
-            ? ($dateInterval < new \DateInterval('PT1H')
+            ? ($date->sub(new \DateInterval('PT1H')) < $now
                 ? 'in less than an hour'
-                : $dateInterval->format('in %a days %h hours'))
+                : ($date->sub(new \DateInterval('PT24H')) < $now
+                    ? $dateInterval->format('in %h hours')
+                    : $dateInterval->format('in %a days %h hours')))
             : 'expired';
     }
 }
