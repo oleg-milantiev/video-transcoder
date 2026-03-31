@@ -30,7 +30,7 @@ export function renderHomeTabs(vm) {
             renderTabButton(vm, 'tasks', 'Tasks'),
         ]),
         h('div', { class: 'tab-content border border-top-0 p-4 bg-light' }, [
-            renderUploadPane(paneClass(vm, 'upload'), vm.uppyReady),
+            renderUploadPane(paneClass(vm, 'upload'), vm.uppyReady, vm.tariff),
             renderVideosPane(vm, paneClass(vm, 'videos')),
             renderTasksPane(vm, paneClass(vm, 'tasks')),
         ]),

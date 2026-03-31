@@ -1,6 +1,7 @@
 import { h } from 'vue';
+import { buildUploadHint } from './uploadHint.js';
 
-export function renderUploadPane(paneClass, uppyReady) {
+export function renderUploadPane(paneClass, uppyReady, tariff) {
     // #drag-drop-area must be the FIRST child (stable position) with a stable key
     // so Vue's reconciliation preserves it — and the Uppy content inside it — when
     // the loading overlay is removed.  The overlay is pushed after (not unshifted
@@ -18,6 +19,16 @@ export function renderUploadPane(paneClass, uppyReady) {
                     h('span', { class: 'visually-hidden' }, 'Loading…'),
                 ]),
             ])
+        );
+    }
+
+    const hint = buildUploadHint(tariff);
+    if (hint) {
+        children.push(
+            h('p', {
+                key: 'upload-hint',
+                class: 'text-muted small mt-2 mb-0',
+            }, hint)
         );
     }
 
