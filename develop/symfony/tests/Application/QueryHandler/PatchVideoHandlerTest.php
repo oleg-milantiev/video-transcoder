@@ -17,7 +17,9 @@ use App\Domain\Video\Entity\Video;
 use App\Domain\Video\Entity\Task;
 use App\Domain\Video\Repository\VideoRepositoryInterface;
 use App\Domain\Video\ValueObject\FileExtension;
+use App\Domain\Video\ValueObject\Progress;
 use App\Domain\Video\ValueObject\TaskDates;
+use App\Domain\Video\ValueObject\TaskStatus;
 use App\Domain\Video\ValueObject\VideoDates;
 use App\Domain\Video\ValueObject\VideoTitle;
 use App\Domain\Shared\ValueObject\Uuid;
@@ -105,7 +107,7 @@ final class PatchVideoHandlerTest extends TestCase
         $security->expects($this->once())->method('isGranted')->with(VideoAccessVoter::CAN_EDIT, $video)->willReturn(true);
 
         $notifierBus = $this->createMock(MessageBusInterface::class);
-        $notifierBus->expects($this->once())->method('dispatch')->willReturnCallback(static function ($m) { return new \Symfony\Component\Messenger\Envelope($m); });
+        $notifierBus->expects($this->once())->method('dispatch')->willReturnCallback(static function ($m) { return new Envelope($m); });
 
         $videoRealtimeNotifier = new VideoRealtimeNotifier($notifierBus, $this->createStub(StorageInterface::class), $this->createStub(TaskRepositoryInterface::class));
 
@@ -135,8 +137,8 @@ final class PatchVideoHandlerTest extends TestCase
             videoId: $videoId,
             presetId: $presetId,
             userId: $userId,
-            status: \App\Domain\Video\ValueObject\TaskStatus::COMPLETED,
-            progress: new \App\Domain\Video\ValueObject\Progress(100),
+            status: TaskStatus::COMPLETED,
+            progress: new Progress(100),
             dates: TaskDates::create(),
             id: $taskId,
         );
@@ -151,7 +153,7 @@ final class PatchVideoHandlerTest extends TestCase
         $security->expects($this->once())->method('isGranted')->with(VideoAccessVoter::CAN_EDIT, $video)->willReturn(true);
 
         $notifierBus = $this->createMock(MessageBusInterface::class);
-        $notifierBus->expects($this->exactly(2))->method('dispatch')->willReturnCallback(static function ($m) { return new \Symfony\Component\Messenger\Envelope($m); });
+        $notifierBus->expects($this->exactly(2))->method('dispatch')->willReturnCallback(static function ($m) { return new Envelope($m); });
 
         $videoRealtimeNotifier = new VideoRealtimeNotifier($notifierBus, $this->createStub(StorageInterface::class), $this->createStub(TaskRepositoryInterface::class));
 
