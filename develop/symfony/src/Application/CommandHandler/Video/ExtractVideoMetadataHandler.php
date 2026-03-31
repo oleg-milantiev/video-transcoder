@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace App\Application\CommandHandler\Video;
 
+use App\Application\Command\Video\CleanupDeletedVideoMedia;
 use App\Application\Command\Video\CreateVideoPreview;
 use App\Application\Command\Video\ExtractVideoMetadata;
 use App\Application\Event\ExtractVideoMetadataFail;
@@ -114,6 +115,8 @@ final readonly class ExtractVideoMetadataHandler
             $tasks = $this->taskRepository->findByVideoId($video->id());
             $video->markDeleted($tasks);
             $this->videoRepository->save($video);
+
+            $this->commandBus->dispatch(new CleanupDeletedVideoMedia($video->id()));
         } catch (\Exception $deleteError) {
             $this->logger->error('Failed to mark video for deletion', [
                 'videoId' => $videoId,
