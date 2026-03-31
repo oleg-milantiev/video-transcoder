@@ -1,7 +1,9 @@
 <?php
+declare(strict_types=1);
 
 namespace App\Application\DTO;
 
+use App\Application\Helper\HumanReadableHelper;
 use App\Domain\User\Entity\Tariff;
 use App\Domain\Video\Entity\Video;
 use App\Domain\Video\Service\Storage\StorageInterface;
@@ -36,7 +38,7 @@ readonly class VideoDetailsDTO
             createdAt: $video->createdAt()->format('Y-m-d H:i'),
             updatedAt: $video->updatedAt()?->format('Y-m-d H:i'),
             expiredAt: $expiredAt->format('Y-m-d H:i'),
-            expiredInterval: $expiredAt > new \DateTimeImmutable() ? $expiredInterval->format('in %a days %h hours') : 'expired',
+            expiredInterval: HumanReadableHelper::formatDateExpired($expiredAt),
             meta: self::sanitizeMeta($video->meta()),
             poster: $hasPreview ? $storage->publicUrl($storage->previewKey($video)) : null,
             deleted: $video->isDeleted(),
