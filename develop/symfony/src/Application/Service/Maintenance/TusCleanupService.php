@@ -1,5 +1,4 @@
 <?php
-
 declare(strict_types=1);
 
 // TODO кажется, место ему в инфраструктуре / Tus
