@@ -8,6 +8,8 @@ use App\Application\Command\Task\TranscodeVideo;
 use App\Application\Event\TranscodeVideoFail;
 use App\Application\Event\TranscodeVideoStart;
 use App\Application\Event\TranscodeVideoSuccess;
+use App\Application\Exception\StorageSizeExceedsQuota;
+use App\Infrastructure\Persistence\Doctrine\User\UserRepository;
 use Psr\Log\LogLevel;
 use App\Application\Logging\LogServiceInterface;
 use App\Application\Service\Task\TranscodeProcessService;
@@ -41,6 +43,7 @@ final readonly class TranscodeVideoHandler
         private TranscodeProcessService $transcodeProcessService,
         private TranscodeTaskPreparationService $transcodeTaskPreparationService,
         private TranscodeTaskFinalizationService $transcodeTaskFinalizationService,
+        private UserRepository $userRepository,
     ) {
     }
 
@@ -49,6 +52,7 @@ final readonly class TranscodeVideoHandler
      */
     public function __invoke(TranscodeVideo $command): void
     {
+        // todo зачем эта матрёшка?
         $scheduledTask = $command->scheduledTask;
         $this->eventBus->dispatch(new TranscodeVideoStart(
             taskId: $scheduledTask->taskId->toRfc4122(),
@@ -105,6 +109,19 @@ final readonly class TranscodeVideoHandler
             return;
         }
 
+        // tariff checks (storage)
+        // todo ckeck it
+        $user = $this->userRepository->findById($scheduledTask->userId);
+        $tariff = $user->tariff();
+
+        $fileSizeMb = $video->size();
+        $storageNowMb = ($this->videoRepository->getStorageSize($user->id()) + $this->taskRepository->getStorageSize($user->id()))/1024/1024;
+        $storageCapacityMb = $tariff->storageGb()->value()*1024;
+        if ($fileSizeMb + $storageNowMb > $storageCapacityMb) {
+            throw StorageSizeExceedsQuota::create($fileSizeMb, $storageNowMb, $storageCapacityMb);
+        }
+
+        // all good. Start transcode
         $context = $this->transcodeTaskPreparationService->prepare($task, $video);
         try {
             $transcodeReport = $this->transcodeProcessService->run($context);

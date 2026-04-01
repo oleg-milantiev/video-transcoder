@@ -25,7 +25,10 @@ export function initHomeLegacyWidgets(config) {
     const apiBearerToken = config.token ? (config.token.access || null) : null;
     const authHeader = createAuthHeader(apiBearerToken);
 
-    const maxFileSize = (config.tariff && config.tariff.videoSize) ? parseFloat(config.tariff.videoSize) * 1024 * 1024 : null;
+    let maxFileSize = Math.min(
+        config.tariff.storage.max - config.tariff.storage.now,
+        parseFloat(config.tariff.videoSize) * 1024 * 1024
+    );
 
     const uppyConfig = {
         autoProceed: true,

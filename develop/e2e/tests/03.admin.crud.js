@@ -58,7 +58,7 @@ test('admin area full smoke with CRUD checks', async ({ page }, testInfo) => {
     width: 1920,
     height: 1280,
     codec: 'h264',
-    bitrate: 5.0,
+    bitrate: 6.0,
   }, testInfo);
   await shot(page, testInfo, '03-presets-created.png');
 

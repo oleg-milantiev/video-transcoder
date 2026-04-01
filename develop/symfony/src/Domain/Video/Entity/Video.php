@@ -130,6 +130,11 @@ class Video
         return $this->meta['duration'] ?? null;
     }
 
+    public function size(): ?int
+    {
+        return $this->meta['size'] ?? null;
+    }
+
     public function clearSourceKey(): void
     {
         $this->meta['sourceKey'] = null;

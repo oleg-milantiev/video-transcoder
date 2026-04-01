@@ -13,8 +13,8 @@ class User
     private ?Uuid $id;
     private UserEmail $email;
     private UserRoles $roles;
-    private ?PasswordHash $password = null;
-    private ?Tariff $tariff = null;
+    private ?PasswordHash $password;
+    private ?Tariff $tariff;
 
     public function __construct(
         UserEmail $email,
