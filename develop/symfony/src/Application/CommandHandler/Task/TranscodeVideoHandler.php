@@ -9,7 +9,9 @@ use App\Application\Event\TranscodeVideoFail;
 use App\Application\Event\TranscodeVideoStart;
 use App\Application\Event\TranscodeVideoSuccess;
 use App\Application\Exception\StorageSizeExceedsQuota;
-use App\Infrastructure\Persistence\Doctrine\User\UserRepository;
+use App\Domain\User\Exception\TariffNotFound;
+use App\Domain\User\Exception\UserNotFound;
+use App\Domain\User\Repository\UserRepositoryInterface;
 use Psr\Log\LogLevel;
 use App\Application\Logging\LogServiceInterface;
 use App\Application\Service\Task\TranscodeProcessService;
@@ -43,7 +45,7 @@ final readonly class TranscodeVideoHandler
         private TranscodeProcessService $transcodeProcessService,
         private TranscodeTaskPreparationService $transcodeTaskPreparationService,
         private TranscodeTaskFinalizationService $transcodeTaskFinalizationService,
-        private UserRepository $userRepository,
+        private UserRepositoryInterface $userRepository,
     ) {
     }
 
@@ -76,54 +78,60 @@ final readonly class TranscodeVideoHandler
             return;
         }
 
-        $video = $this->videoRepository->findById($task->videoId());
-        if (!$video) {
-            $this->eventBus->dispatch(new TranscodeVideoFail('Video not found for transcoding', $task->id()->toRfc4122()));
-            $this->logService->log('task', $task->id(), LogLevel::ERROR, 'Video not found for transcoding');
-            throw new \RuntimeException('Video not found for transcoding');
-        }
-
-        if ($this->cancellationTrigger->isRequested($task->id())) {
-            if ($task->canBeCancelled()) {
-                $task->cancel();
-                $task->updateMeta([
-                    'cancelledAt' => new \DateTimeImmutable()->format(DATE_ATOM),
-                ]);
-                $this->taskRepository->save($task);
-                $this->logService->log('task', $task->id(), LogLevel::INFO, 'Task cancelled before ffmpeg start');
+        try {
+            $video = $this->videoRepository->findById($task->videoId());
+            if (!$video) {
+                $this->eventBus->dispatch(new TranscodeVideoFail('Video not found for transcoding', $task->id()->toRfc4122()));
+                $this->logService->log('task', $task->id(), LogLevel::ERROR, 'Video not found for transcoding');
+                throw new \RuntimeException('Video not found for transcoding');
             }
 
-            $this->cancellationTrigger->clear($task->id());
-            $this->eventBus->dispatch(new TranscodeVideoFail('Task cancelled before ffmpeg start', $task->id()->toRfc4122()));
+            if ($this->cancellationTrigger->isRequested($task->id())) {
+                if ($task->canBeCancelled()) {
+                    $task->cancel();
+                    $task->updateMeta([
+                        'cancelledAt' => new \DateTimeImmutable()->format(DATE_ATOM),
+                    ]);
+                    $this->taskRepository->save($task);
+                    $this->logService->log('task', $task->id(), LogLevel::INFO, 'Task cancelled before ffmpeg start');
+                }
 
-            return;
-        }
+                $this->cancellationTrigger->clear($task->id());
+                $this->eventBus->dispatch(new TranscodeVideoFail('Task cancelled before ffmpeg start', $task->id()->toRfc4122()));
 
-        if (!$task->canStart($video->duration())) {
-            $this->eventBus->dispatch(new TranscodeVideoFail('Task cannot be started for transcoding (invalid state or video duration).', $task->id()->toRfc4122()));
-            $this->logService->log('task', $task->id(), LogLevel::WARNING, 'Task cannot be started for transcoding (invalid state or video duration).', [
-                'duration' => $video->duration(),
-                'status' => $task->status()->name,
-                'startedAt' => $task->startedAt()?->format(DATE_ATOM),
-            ]);
-            return;
-        }
+                return;
+            }
 
-        // tariff checks (storage)
-        // todo ckeck it
-        $user = $this->userRepository->findById($scheduledTask->userId);
-        $tariff = $user->tariff();
+            if (!$task->canStart($video->duration())) {
+                $this->eventBus->dispatch(new TranscodeVideoFail('Task cannot be started for transcoding (invalid state or video duration).', $task->id()->toRfc4122()));
+                $this->logService->log('task', $task->id(), LogLevel::WARNING, 'Task cannot be started for transcoding (invalid state or video duration).', [
+                    'duration' => $video->duration(),
+                    'status' => $task->status()->name,
+                    'startedAt' => $task->startedAt()?->format(DATE_ATOM),
+                ]);
+                return;
+            }
 
-        $fileSizeMb = $video->size();
-        $storageNowMb = ($this->videoRepository->getStorageSize($user->id()) + $this->taskRepository->getStorageSize($user->id()))/1024/1024;
-        $storageCapacityMb = $tariff->storageGb()->value()*1024;
-        if ($fileSizeMb + $storageNowMb > $storageCapacityMb) {
-            throw StorageSizeExceedsQuota::create($fileSizeMb, $storageNowMb, $storageCapacityMb);
-        }
+            // tariff checks (storage)
+            $user = $this->userRepository->findById($scheduledTask->userId);
+            if ($user === null) {
+                throw UserNotFound::byId($scheduledTask->userId->toRfc4122());
+            }
 
-        // all good. Start transcode
-        $context = $this->transcodeTaskPreparationService->prepare($task, $video);
-        try {
+            $tariff = $user->tariff();
+            if ($tariff === null) {
+                throw TariffNotFound::forUser($user->id()?->toRfc4122() ?? $scheduledTask->userId->toRfc4122());
+            }
+
+            $fileSizeMb = ($video->size() ?? 0) / 1024 / 1024;
+            $storageNowMb = ($this->videoRepository->getStorageSize($user->id()) + $this->taskRepository->getStorageSize($user->id())) / 1024 / 1024;
+            $storageCapacityMb = $tariff->storageGb()->value() * 1024;
+            if ($fileSizeMb + $storageNowMb > $storageCapacityMb) {
+                throw StorageSizeExceedsQuota::create($fileSizeMb, $storageNowMb, $storageCapacityMb);
+            }
+
+            // all good. Start transcode
+            $context = $this->transcodeTaskPreparationService->prepare($task, $video);
             $transcodeReport = $this->transcodeProcessService->run($context);
 
             if ($transcodeReport->cancelled === true) {
@@ -140,6 +148,8 @@ final readonly class TranscodeVideoHandler
                 taskId: $context->task->id()->toRfc4122(),
                 videoId: $context->video->id()?->toRfc4122(),
             ));
+
+            $this->commandBus->dispatch(new StartTaskScheduler());
         } catch (\Throwable $exception) {
             $this->transcodeTaskFinalizationService->handleFailure($task, $exception, $context);
             $this->eventBus->dispatch(new TranscodeVideoFail(
@@ -165,7 +175,5 @@ final readonly class TranscodeVideoHandler
                 ]);
             }
         }
-
-        $this->commandBus->dispatch(new StartTaskScheduler());
     }
 }

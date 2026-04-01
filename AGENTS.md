@@ -16,6 +16,7 @@ Run phpunit and composer stan after every backend change.
   - **API**: Symfony app (`develop/symfony/`) exposes REST endpoints and handles business logic.
   - **Workers**: Symfony Messenger consumers (auto-scaled) process transcoding jobs using ffmpeg.
   - **Persistence**: PostgreSQL (see `postgres.yaml`), Doctrine ORM, entities in `Domain`/`Infrastructure`.
+  - **Persistence**: PostgreSQL (see `postgres.yaml`), Doctrine ORM, entities in `Domain`/`Infrastructure`.
   - **Messaging**: Symfony Messenger transports are Redis-based in current app config (`develop/symfony/.env`, `config/packages/messenger.yaml`); Deprecated RabbitMQ manifests are still present in `k8s/rabbitmq.yaml`.
   - **Cloud/Infra**: Terraform (`tf/`), Kubernetes manifests (`k8s/`), Docker image build contexts (`develop/docker/`).
 

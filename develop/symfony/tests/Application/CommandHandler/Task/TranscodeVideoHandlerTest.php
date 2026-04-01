@@ -14,11 +14,28 @@ use App\Application\DTO\TranscodeStartContextDTO;
 use App\Application\Event\TranscodeVideoFail;
 use App\Application\Event\TranscodeVideoStart;
 use App\Application\Event\TranscodeVideoSuccess;
+use App\Application\Exception\StorageSizeExceedsQuota;
 use App\Application\Logging\LogServiceInterface;
 use App\Application\Service\Task\TranscodeProcessService;
 use App\Application\Service\Task\TranscodeTaskFinalizationService;
 use App\Application\Service\Task\TranscodeTaskPreparationService;
 use App\Domain\Shared\ValueObject\Uuid;
+use App\Domain\User\Entity\Tariff;
+use App\Domain\User\Entity\User;
+use App\Domain\User\Exception\TariffNotFound;
+use App\Domain\User\Exception\UserNotFound;
+use App\Domain\User\Repository\UserRepositoryInterface;
+use App\Domain\User\ValueObject\TariffDelay;
+use App\Domain\User\ValueObject\TariffInstance;
+use App\Domain\User\ValueObject\TariffMaxHeight;
+use App\Domain\User\ValueObject\TariffMaxWidth;
+use App\Domain\User\ValueObject\TariffStorageGb;
+use App\Domain\User\ValueObject\TariffStorageHour;
+use App\Domain\User\ValueObject\TariffTitle;
+use App\Domain\User\ValueObject\TariffVideoDuration;
+use App\Domain\User\ValueObject\TariffVideoSize;
+use App\Domain\User\ValueObject\UserEmail;
+use App\Domain\User\ValueObject\UserRoles;
 use App\Domain\Video\Entity\Video;
 use App\Domain\Video\Repository\TaskRepositoryInterface;
 use App\Domain\Video\Repository\VideoRepositoryInterface;
@@ -86,13 +103,18 @@ class TranscodeVideoHandlerTest extends TestCase
         };
     }
 
-    private function makeVideoWithDuration(float $duration = 120.0): Video
+    private function makeVideoWithDuration(float $duration = 120.0, ?int $size = null): Video
     {
+        $meta = ['duration' => $duration];
+        if ($size !== null) {
+            $meta['size'] = $size;
+        }
+
         return Video::reconstitute(
             new VideoTitle('test-video.mp4'),
             new FileExtension('mp4'),
             Uuid::generate(),
-            ['duration' => $duration],
+            $meta,
             VideoDates::create(),
             Uuid::generate(),
         );
@@ -128,6 +150,41 @@ class TranscodeVideoHandlerTest extends TestCase
         );
     }
 
+    private function makeTariff(float $storageGb = 10.0): Tariff
+    {
+        return new Tariff(
+            new TariffTitle('Pro'),
+            new TariffDelay(60),
+            new TariffInstance(2),
+            new TariffVideoDuration(3600),
+            new TariffVideoSize(500.0),
+            new TariffMaxWidth(1920),
+            new TariffMaxHeight(1080),
+            new TariffStorageGb($storageGb),
+            new TariffStorageHour(24),
+        );
+    }
+
+    private function makeUser(?Tariff $tariff = null, ?Uuid $id = null): User
+    {
+        $scheduledTask = $this->makeScheduledTask();
+
+        return new User(
+            email: new UserEmail('user@example.com'),
+            roles: new UserRoles(['ROLE_USER']),
+            tariff: $tariff,
+            id: $id ?? $scheduledTask->userId,
+        );
+    }
+
+    private function makeUserRepository(?User $user = null): UserRepositoryInterface
+    {
+        $userRepository = $this->createStub(UserRepositoryInterface::class);
+        $userRepository->method('findById')->willReturn($user);
+
+        return $userRepository;
+    }
+
     private function makeHandler(
         MessageBusInterface $commandBus,
         MessageBusInterface $eventBus,
@@ -140,6 +197,7 @@ class TranscodeVideoHandlerTest extends TestCase
         TranscodeProcessService $transcodeProcessService,
         TranscodeTaskPreparationService $transcodeTaskPreparationService,
         TranscodeTaskFinalizationService $transcodeTaskFinalizationService,
+        UserRepositoryInterface $userRepository,
     ): TranscodeVideoHandler {
         return new TranscodeVideoHandler(
             $commandBus,
@@ -153,6 +211,7 @@ class TranscodeVideoHandlerTest extends TestCase
             $transcodeProcessService,
             $transcodeTaskPreparationService,
             $transcodeTaskFinalizationService,
+            $userRepository,
         );
     }
 
@@ -182,6 +241,7 @@ class TranscodeVideoHandlerTest extends TestCase
             $this->createStub(TranscodeProcessService::class),
             $this->createStub(TranscodeTaskPreparationService::class),
             $this->createStub(TranscodeTaskFinalizationService::class),
+            $this->createStub(UserRepositoryInterface::class),
         );
 
         $handler(new TranscodeVideo($this->makeScheduledTask()));
@@ -214,6 +274,7 @@ class TranscodeVideoHandlerTest extends TestCase
             $this->createStub(TranscodeProcessService::class),
             $this->createStub(TranscodeTaskPreparationService::class),
             $this->createStub(TranscodeTaskFinalizationService::class),
+            $this->createStub(UserRepositoryInterface::class),
         );
 
         $handler(new TranscodeVideo($this->makeScheduledTask()));
@@ -241,11 +302,12 @@ class TranscodeVideoHandlerTest extends TestCase
             $videoRepository,
             $this->createStub(LogServiceInterface::class),
             $this->createStub(LoggerInterface::class),
-            $this->makeLockFactory(acquired: true),
+            $this->makeLockFactory(acquired: true, expectRelease: true),
             new TaskCancellationTrigger(new ArrayAdapter()),
             $this->createStub(TranscodeProcessService::class),
             $this->createStub(TranscodeTaskPreparationService::class),
             $this->createStub(TranscodeTaskFinalizationService::class),
+            $this->createStub(UserRepositoryInterface::class),
         );
 
         $this->expectException(\RuntimeException::class);
@@ -282,11 +344,12 @@ class TranscodeVideoHandlerTest extends TestCase
             $videoRepository,
             $this->createStub(LogServiceInterface::class),
             $this->createStub(LoggerInterface::class),
-            $this->makeLockFactory(acquired: true),
+            $this->makeLockFactory(acquired: true, expectRelease: true),
             $cancellationTrigger,
             $this->createStub(TranscodeProcessService::class),
             $this->createStub(TranscodeTaskPreparationService::class),
             $this->createStub(TranscodeTaskFinalizationService::class),
+            $this->createStub(UserRepositoryInterface::class),
         );
 
         $handler(new TranscodeVideo($this->makeScheduledTask()));
@@ -319,11 +382,12 @@ class TranscodeVideoHandlerTest extends TestCase
             $videoRepository,
             $this->createStub(LogServiceInterface::class),
             $this->createStub(LoggerInterface::class),
-            $this->makeLockFactory(acquired: true),
+            $this->makeLockFactory(acquired: true, expectRelease: true),
             new TaskCancellationTrigger(new ArrayAdapter()),
             $this->createStub(TranscodeProcessService::class),
             $this->createStub(TranscodeTaskPreparationService::class),
             $this->createStub(TranscodeTaskFinalizationService::class),
+            $this->createStub(UserRepositoryInterface::class),
         );
 
         $handler(new TranscodeVideo($this->makeScheduledTask()));
@@ -334,7 +398,7 @@ class TranscodeVideoHandlerTest extends TestCase
     public function testSuccessfulTranscoding(): void
     {
         $task = TaskFake::create();
-        $video = $this->makeVideoWithDuration();
+        $video = $this->makeVideoWithDuration(size: 10 * 1024 * 1024);
         $report = $this->makeSuccessReport();
         $context = new TranscodeStartContextDTO($task, $video, new PresetFake(), 'output/path.mp4', '/abs/output/path.mp4', '/input/path.mp4');
 
@@ -361,6 +425,8 @@ class TranscodeVideoHandlerTest extends TestCase
         $commandBusDispatched = [];
         $commandBus = $this->makeSpyBus($commandBusDispatched);
 
+        $user = $this->makeUser($this->makeTariff());
+
         $handler = $this->makeHandler(
             $commandBus,
             $eventBus,
@@ -373,6 +439,7 @@ class TranscodeVideoHandlerTest extends TestCase
             $transcodeProcessService,
             $transcodeTaskPreparationService,
             $transcodeTaskFinalizationService,
+            $this->makeUserRepository($user),
         );
 
         $handler(new TranscodeVideo($this->makeScheduledTask()));
@@ -384,7 +451,7 @@ class TranscodeVideoHandlerTest extends TestCase
     public function testTranscodingCancelledDuringProcess(): void
     {
         $task = TaskFake::create();
-        $video = $this->makeVideoWithDuration();
+        $video = $this->makeVideoWithDuration(size: 10 * 1024 * 1024);
         $report = $this->makeCancelledReport();
         $context = new TranscodeStartContextDTO($task, $video, new PresetFake(), 'output/path.mp4', '/abs/output/path.mp4', '/input/path.mp4');
 
@@ -411,6 +478,8 @@ class TranscodeVideoHandlerTest extends TestCase
         $commandBusDispatched = [];
         $commandBus = $this->makeSpyBus($commandBusDispatched);
 
+        $user = $this->makeUser($this->makeTariff());
+
         $handler = $this->makeHandler(
             $commandBus,
             $eventBus,
@@ -423,6 +492,7 @@ class TranscodeVideoHandlerTest extends TestCase
             $transcodeProcessService,
             $transcodeTaskPreparationService,
             $transcodeTaskFinalizationService,
+            $this->makeUserRepository($user),
         );
 
         $handler(new TranscodeVideo($this->makeScheduledTask()));
@@ -434,7 +504,7 @@ class TranscodeVideoHandlerTest extends TestCase
     public function testLockReleaseExceptionIsLoggedAndSwallowed(): void
     {
         $task = TaskFake::create();
-        $video = $this->makeVideoWithDuration();
+        $video = $this->makeVideoWithDuration(size: 10 * 1024 * 1024);
         $report = $this->makeSuccessReport();
         $context = new TranscodeStartContextDTO($task, $video, new PresetFake(), 'output/path.mp4', '/abs/output/path.mp4', '/input/path.mp4');
 
@@ -473,6 +543,8 @@ class TranscodeVideoHandlerTest extends TestCase
         $commandBusDispatched = [];
         $commandBus = $this->makeSpyBus($commandBusDispatched);
 
+        $user = $this->makeUser($this->makeTariff());
+
         $handler = $this->makeHandler(
             $commandBus,
             $eventBus,
@@ -485,6 +557,7 @@ class TranscodeVideoHandlerTest extends TestCase
             $transcodeProcessService,
             $transcodeTaskPreparationService,
             $transcodeTaskFinalizationService,
+            $this->makeUserRepository($user),
         );
 
         // Exception from lock release must be swallowed — no exception propagated
@@ -497,7 +570,7 @@ class TranscodeVideoHandlerTest extends TestCase
     public function testTranscodingExceptionDispatchesFailAndRethrows(): void
     {
         $task = TaskFake::create();
-        $video = $this->makeVideoWithDuration();
+        $video = $this->makeVideoWithDuration(size: 10 * 1024 * 1024);
         $context = new TranscodeStartContextDTO($task, $video, new PresetFake(), 'output/path.mp4', '/abs/output/path.mp4', '/input/path.mp4');
 
         $taskRepository = $this->createStub(TaskRepositoryInterface::class);
@@ -532,6 +605,7 @@ class TranscodeVideoHandlerTest extends TestCase
             $transcodeProcessService,
             $transcodeTaskPreparationService,
             $transcodeTaskFinalizationService,
+            $this->makeUserRepository($this->makeUser($this->makeTariff())),
         );
 
         $this->expectException(\RuntimeException::class);
@@ -541,6 +615,123 @@ class TranscodeVideoHandlerTest extends TestCase
             $handler(new TranscodeVideo($this->makeScheduledTask()));
         } finally {
             $this->assertSame([TranscodeVideoStart::class, TranscodeVideoFail::class], $events);
+        }
+    }
+
+    public function testThrowsUserNotFoundWhenQuotaCheckCannotResolveUser(): void
+    {
+        $task = TaskFake::create();
+
+        $taskRepository = $this->createStub(TaskRepositoryInterface::class);
+        $taskRepository->method('findByIdFresh')->willReturn($task);
+
+        $videoRepository = $this->createStub(VideoRepositoryInterface::class);
+        $videoRepository->method('findById')->willReturn($this->makeVideoWithDuration(size: 10 * 1024 * 1024));
+
+        $events = [];
+        $eventBus = $this->makeSpyBus($events);
+
+        $handler = $this->makeHandler(
+            $this->createStub(MessageBusInterface::class),
+            $eventBus,
+            $taskRepository,
+            $videoRepository,
+            $this->createStub(LogServiceInterface::class),
+            $this->createStub(LoggerInterface::class),
+            $this->makeLockFactory(acquired: true, expectRelease: true),
+            new TaskCancellationTrigger(new ArrayAdapter()),
+            $this->createStub(TranscodeProcessService::class),
+            $this->createStub(TranscodeTaskPreparationService::class),
+            $this->createStub(TranscodeTaskFinalizationService::class),
+            $this->makeUserRepository(),
+        );
+
+        $this->expectException(UserNotFound::class);
+
+        try {
+            $handler(new TranscodeVideo($this->makeScheduledTask()));
+        } finally {
+            $this->assertSame([TranscodeVideoStart::class], $events);
+        }
+    }
+
+    public function testThrowsTariffNotFoundWhenQuotaCheckUserHasNoTariff(): void
+    {
+        $task = TaskFake::create();
+
+        $taskRepository = $this->createStub(TaskRepositoryInterface::class);
+        $taskRepository->method('findByIdFresh')->willReturn($task);
+
+        $videoRepository = $this->createStub(VideoRepositoryInterface::class);
+        $videoRepository->method('findById')->willReturn($this->makeVideoWithDuration(size: 10 * 1024 * 1024));
+
+        $events = [];
+        $eventBus = $this->makeSpyBus($events);
+
+        $handler = $this->makeHandler(
+            $this->createStub(MessageBusInterface::class),
+            $eventBus,
+            $taskRepository,
+            $videoRepository,
+            $this->createStub(LogServiceInterface::class),
+            $this->createStub(LoggerInterface::class),
+            $this->makeLockFactory(acquired: true, expectRelease: true),
+            new TaskCancellationTrigger(new ArrayAdapter()),
+            $this->createStub(TranscodeProcessService::class),
+            $this->createStub(TranscodeTaskPreparationService::class),
+            $this->createStub(TranscodeTaskFinalizationService::class),
+            $this->makeUserRepository($this->makeUser()),
+        );
+
+        $this->expectException(TariffNotFound::class);
+
+        try {
+            $handler(new TranscodeVideo($this->makeScheduledTask()));
+        } finally {
+            $this->assertSame([TranscodeVideoStart::class], $events);
+        }
+    }
+
+    public function testThrowsStorageSizeExceedsQuotaBeforePreparingTranscode(): void
+    {
+        $task = TaskFake::create();
+        $video = $this->makeVideoWithDuration(size: 2 * 1024 * 1024);
+
+        $taskRepository = $this->createStub(TaskRepositoryInterface::class);
+        $taskRepository->method('findByIdFresh')->willReturn($task);
+        $taskRepository->method('getStorageSize')->willReturn(0);
+
+        $videoRepository = $this->createStub(VideoRepositoryInterface::class);
+        $videoRepository->method('findById')->willReturn($video);
+        $videoRepository->method('getStorageSize')->willReturn(0);
+
+        $transcodeTaskPreparationService = $this->createMock(TranscodeTaskPreparationService::class);
+        $transcodeTaskPreparationService->expects($this->never())->method('prepare');
+
+        $events = [];
+        $eventBus = $this->makeSpyBus($events);
+
+        $handler = $this->makeHandler(
+            $this->createStub(MessageBusInterface::class),
+            $eventBus,
+            $taskRepository,
+            $videoRepository,
+            $this->createStub(LogServiceInterface::class),
+            $this->createStub(LoggerInterface::class),
+            $this->makeLockFactory(acquired: true, expectRelease: true),
+            new TaskCancellationTrigger(new ArrayAdapter()),
+            $this->createStub(TranscodeProcessService::class),
+            $transcodeTaskPreparationService,
+            $this->createStub(TranscodeTaskFinalizationService::class),
+            $this->makeUserRepository($this->makeUser($this->makeTariff(0.001))),
+        );
+
+        $this->expectException(StorageSizeExceedsQuota::class);
+
+        try {
+            $handler(new TranscodeVideo($this->makeScheduledTask()));
+        } finally {
+            $this->assertSame([TranscodeVideoStart::class], $events);
         }
     }
 }
