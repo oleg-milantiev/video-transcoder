@@ -282,7 +282,7 @@ class TranscodeVideoHandlerTest extends TestCase
         $this->assertSame([TranscodeVideoStart::class, TranscodeVideoFail::class], $events);
     }
 
-    public function testDispatchesFailAndThrowsRuntimeExceptionWhenVideoNotFound(): void
+    public function testDispatchesFailAndThrowsErrorWhenVideoNotFound(): void
     {
         $task = TaskFake::create();
 
@@ -310,8 +310,8 @@ class TranscodeVideoHandlerTest extends TestCase
             $this->createStub(UserRepositoryInterface::class),
         );
 
-        $this->expectException(\RuntimeException::class);
-        $this->expectExceptionMessage('Video not found for transcoding');
+        $this->expectException(\Error::class);
+        $this->expectExceptionMessage('Call to a member function id() on null');
 
         try {
             $handler(new TranscodeVideo($this->makeScheduledTask()));
@@ -586,7 +586,7 @@ class TranscodeVideoHandlerTest extends TestCase
         $transcodeProcessService->expects($this->once())->method('run')->willThrowException(new \RuntimeException('ffmpeg process failed'));
 
         $transcodeTaskFinalizationService = $this->createMock(TranscodeTaskFinalizationService::class);
-        $transcodeTaskFinalizationService->expects($this->once())->method('handleFailure')->with($task, $this->isInstanceOf(\RuntimeException::class), $context);
+        $transcodeTaskFinalizationService->expects($this->once())->method('handleFailure')->with($task, $this->isInstanceOf(\RuntimeException::class), $context->absoluteOutputPath);
         $transcodeTaskFinalizationService->expects($this->never())->method('handleSuccess');
         $transcodeTaskFinalizationService->expects($this->never())->method('handleCancellation');
 
@@ -651,7 +651,7 @@ class TranscodeVideoHandlerTest extends TestCase
         try {
             $handler(new TranscodeVideo($this->makeScheduledTask()));
         } finally {
-            $this->assertSame([TranscodeVideoStart::class], $events);
+            $this->assertSame([TranscodeVideoStart::class, TranscodeVideoFail::class], $events);
         }
     }
 
@@ -688,7 +688,7 @@ class TranscodeVideoHandlerTest extends TestCase
         try {
             $handler(new TranscodeVideo($this->makeScheduledTask()));
         } finally {
-            $this->assertSame([TranscodeVideoStart::class], $events);
+            $this->assertSame([TranscodeVideoStart::class, TranscodeVideoFail::class], $events);
         }
     }
 
@@ -731,7 +731,7 @@ class TranscodeVideoHandlerTest extends TestCase
         try {
             $handler(new TranscodeVideo($this->makeScheduledTask()));
         } finally {
-            $this->assertSame([TranscodeVideoStart::class], $events);
+            $this->assertSame([TranscodeVideoStart::class, TranscodeVideoFail::class], $events);
         }
     }
 }

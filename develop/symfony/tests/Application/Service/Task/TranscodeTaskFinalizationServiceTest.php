@@ -158,7 +158,7 @@ class TranscodeTaskFinalizationServiceTest extends TestCase
             absoluteOutputPath: '/tmp/output/test.mp4',
             inputPath: '/tmp/input.mp4',
         );
-        $service->handleFailure($task, new \RuntimeException('boom'), $context);
+        $service->handleFailure($task, new \RuntimeException('boom'), $context->absoluteOutputPath);
     }
 
     public function testHandleFailureSkipsSaveWhenTaskAlreadyFinished(): void
@@ -189,7 +189,7 @@ class TranscodeTaskFinalizationServiceTest extends TestCase
             absoluteOutputPath: '/tmp/not_exists_xyz.mp4',
             inputPath: '/tmp/input.mp4',
         );
-        $service->handleFailure($task, new \RuntimeException('already finished'), $context);
+        $service->handleFailure($task, new \RuntimeException('already finished'), $context->absoluteOutputPath);
     }
 
     public function testHandleFailureDeletesOutputFileWhenExists(): void
@@ -220,7 +220,7 @@ class TranscodeTaskFinalizationServiceTest extends TestCase
             absoluteOutputPath: $tmpFile,
             inputPath: '/tmp/input.mp4',
         );
-        $service->handleFailure($task, new \RuntimeException('fail with file'), $context);
+        $service->handleFailure($task, new \RuntimeException('fail with file'), $context->absoluteOutputPath);
 
         $this->assertFileDoesNotExist($tmpFile);
     }

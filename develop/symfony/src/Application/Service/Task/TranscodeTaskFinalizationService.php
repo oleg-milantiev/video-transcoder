@@ -65,7 +65,7 @@ readonly class TranscodeTaskFinalizationService
         $this->cancellationTrigger->clear($task->id());
     }
 
-    public function handleFailure(Task $task, \Throwable $exception, TranscodeStartContextDTO $context): void
+    public function handleFailure(Task $task, \Throwable $exception, ?string $absoluteOutputPath): void
     {
         if (!$task->status()->isFinished()) {
             $task->fail();
@@ -76,8 +76,8 @@ readonly class TranscodeTaskFinalizationService
             ]);
         }
 
-        if (file_exists($context->absoluteOutputPath)) {
-            unlink($context->absoluteOutputPath);
+        if ($absoluteOutputPath && file_exists($absoluteOutputPath)) {
+            unlink($absoluteOutputPath);
         }
 
         $this->logService->log('task', $task->id(), LogLevel::ERROR, 'Transcoding failed', [

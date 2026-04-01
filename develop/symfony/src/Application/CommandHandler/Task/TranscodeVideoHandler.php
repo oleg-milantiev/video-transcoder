@@ -78,6 +78,9 @@ final readonly class TranscodeVideoHandler
             return;
         }
 
+        $video = null;
+        $context = null;
+
         try {
             $video = $this->videoRepository->findById($task->videoId());
             if (!$video) {
@@ -151,7 +154,7 @@ final readonly class TranscodeVideoHandler
 
             $this->commandBus->dispatch(new StartTaskScheduler());
         } catch (\Throwable $exception) {
-            $this->transcodeTaskFinalizationService->handleFailure($task, $exception, $context);
+            $this->transcodeTaskFinalizationService->handleFailure($task, $exception, $context?->absoluteOutputPath);
             $this->eventBus->dispatch(new TranscodeVideoFail(
                 error: $exception->getMessage(),
                 taskId: $task->id()->toRfc4122(),
