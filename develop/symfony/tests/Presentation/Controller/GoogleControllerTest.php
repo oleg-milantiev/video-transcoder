@@ -21,6 +21,21 @@ final class GoogleControllerTest extends WebTestCase
         self::assertSelectorTextContains('a[href="/connect/google"]', 'Google');
     }
 
+    public function testGoogleConnectRedirectsToGoogle(): void
+    {
+        $client = static::createClient();
+        $client->request('GET', '/connect/google');
+
+        self::assertResponseRedirects();
+        $location = $client->getResponse()->headers->get('Location');
+        self::assertNotNull($location);
+        self::assertStringContainsString('accounts.google.com', $location);
+        self::assertStringContainsString('client_id=', $location);
+        self::assertStringContainsString('scope=', $location);
+        self::assertStringContainsString('state=', $location);
+        self::assertStringContainsString('response_type=code', $location);
+    }
+
     public function testGoogleCallbackWithInvalidStateShowsFlashOnLoginPage(): void
     {
         $client = static::createClient();
@@ -36,18 +51,6 @@ final class GoogleControllerTest extends WebTestCase
         self::assertSelectorTextContains('.alert.alert-danger', 'Invalid OAuth state');
     }
 
-    public function testGoogleConnectWithoutConfigurationRedirectsToLoginWithFlash(): void
-    {
-        $client = static::createClient();
-        $client->request('GET', '/connect/google');
-
-        self::assertResponseRedirects('/login');
-        $client->followRedirect();
-
-        self::assertResponseIsSuccessful();
-        self::assertSelectorExists('.alert.alert-danger');
-        self::assertSelectorTextContains('.alert.alert-danger', 'Google OAuth is not configured');
-    }
 
     public function testAuthenticatedUserIsRedirectedFromGoogleConnectToHome(): void
     {
