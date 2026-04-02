@@ -10,7 +10,7 @@
 ## Sprint 0.1.0 (первая демка)
 
 - добавить лимиты воркеру - messenger:consume [-l|--limit LIMIT] [-f|--failure-limit FAILURE-LIMIT] [-m|--memory-limit MEMORY-LIMIT] [-t|--time-limit TIME-LIMIT] [--sleep SLEEP] [-b|--bus BUS] [--queues QUEUES] [--no-reset] [--all] [--exclude-receivers EXCLUDE-RECEIVERS] [--keepalive [KEEPALIVE]
-- регистрация common юзера с free тарифом через гугль
+- регистрация common юзера с free тарифом через гугль - Free тариф
 - обновление токенов front и mercure
 - в Багдаде всё спокойно
   - Watchdog зависших процессов (+ общий таймаут кодирования)
@@ -27,7 +27,9 @@
 
 ## Sprint 0.1.1 (развитие)
 
+- дизайна хоть чуток :)
 - csrf-token
+- прыгающий loading ... при каждом переключении вкладок напрягает
 - блокировать загрузку новых видео при 100%+ заполнении хранилища. Текст "удалите чё-нить для загрузки нового"
 - предупреждение под upload и настройку upload.maxSize realtime обновлять после: удаления видео, старта и завершения кодирования видео
 - старт кодирования видео должен превентивно добавлять "expectedSize" в мета таска. И его надо учитывать в сумме, если не задан "size" (реальный размер)
