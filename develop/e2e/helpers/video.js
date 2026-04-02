@@ -171,6 +171,28 @@ async function expectAllPresetsToShowTranscodeWithExpectedSize(page) {
   return titles;
 }
 
+async function expectPresetStatusHelpIcon(page, presetTitle, { statusText, tooltipText } = {}) {
+  const row = presetRow(page, presetTitle);
+  const statusCell = row.locator('td').nth(1);
+
+  await expect(statusCell).toBeVisible({ timeout: UI_TIMEOUT });
+  if (statusText) {
+    await expect(statusCell).toContainText(statusText, { timeout: UI_TIMEOUT });
+  }
+
+  const helpIcon = statusCell.getByRole('img').first();
+  await expect(helpIcon).toBeVisible({ timeout: UI_TIMEOUT });
+  await helpIcon.hover({ timeout: UI_TIMEOUT });
+
+  if (tooltipText) {
+    const tooltipPattern = new RegExp(escapeRegExp(tooltipText), 'i');
+    await expect(helpIcon).toHaveAttribute('title', tooltipPattern, { timeout: UI_TIMEOUT });
+    await expect(helpIcon).toHaveAttribute('aria-label', tooltipPattern, { timeout: UI_TIMEOUT });
+  }
+
+  return helpIcon;
+}
+
 async function expectPresetTranscodeDisabledWithHint(page, presetTitle, { expectedSizeText, tooltipText } = {}) {
   const row = presetRow(page, presetTitle);
   const transcodeButton = row.getByRole('button', { name: 'Transcode' });
@@ -281,6 +303,7 @@ module.exports = {
   waitForPosterAndMeta,
   getAllPresetTitles,
   expectAllPresetsToShowTranscodeWithExpectedSize,
+  expectPresetStatusHelpIcon,
   expectPresetTranscodeDisabledWithHint,
   waitForDeletedVideoDetailsWithoutPoster,
   clickTranscodeForPreset,

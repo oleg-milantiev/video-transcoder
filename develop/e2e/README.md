@@ -146,6 +146,7 @@ End-to-end scenario that exercises the full lifecycle across three presets with 
 - Iterates over all presets currently in the system and clicks `Transcode` on each
 - Waits 3 seconds (tasks stay `PENDING` because the Free tariff's delay has not elapsed and the scheduler has not run)
 - Asserts that every preset row shows status `PENDING`
+- Verifies preset rows `180p` and `FHD` show the `?` help icon next to `PENDING`, and that its tooltip begins with `Why isn't my video transcoding?`
 - Signs out
 
 #### Phase 2 — Admin: assign Premium tariff + create 720p preset
@@ -220,7 +221,7 @@ Verifies that two worker replicas pick up two tasks simultaneously when the user
 - `03` ensures presets `180p` and `FHD`, tariffs (`Free`, `Premium`), and user tariff assignment (`Free` for `test@test.com`) are ready. Additionally, `03` performs admin-side `Mark deleted` actions on the first Task and on the specific Video and verifies UI changes.
 - `04` uploads the source fixture a second time as `2022_10_04_Two_Maxes-04.mp4` and validates the full transcode + delete lifecycle for the `-04` video using preset `180p`.
 - `05` re-uploads the source fixture as `2022_10_04_Two_Maxes-05.mp4` and uses `FHD` from `03` for long-running state-flow checks (progress/cancel/restart).
-- `06` uploads the source fixture as `2022_10_04_Two_Maxes-06.mp4`; relies on `test@test.com` having Free tariff (set by `03`) so that initial tasks stay `PENDING`, then switches to Premium and adds preset `720p` via admin, and validates all three presets complete and produce downloadable files.
+- `06` uploads the source fixture as `2022_10_04_Two_Maxes-06.mp4`; relies on `test@test.com` having Free tariff (set by `03`) so that initial tasks stay `PENDING`, verifies the pending-status help tooltip for `180p` and `FHD`, then switches to Premium and adds preset `720p` via admin, and validates all three presets complete and produce downloadable files.
 - `07` relies on `test@test.com` having Premium tariff (`instance=2`, set by `06`) and on preset `720p` existing (created by `06`). Uploads `-07` video and validates simultaneous PROCESSING of `FHD` + `720p` across two worker replicas.
 - `08` relies on baseline tariffs/presets created earlier (`03`, `06`) and intentionally uses `-08-*` file suffixes to avoid clashing with `07`'s existing `-07` fixture name. It mutates the admin user's tariff repeatedly, so it must stay last in the sequence.
 

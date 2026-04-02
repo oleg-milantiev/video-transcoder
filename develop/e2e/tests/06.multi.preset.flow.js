@@ -15,6 +15,7 @@ const {
   getAllPresetTitles,
   clickTranscodeForPreset,
   expectPresetStatus,
+  expectPresetStatusHelpIcon,
   waitForAllPresetsToComplete,
   presetRow,
   logoutToPublic,
@@ -84,77 +85,86 @@ test('multi-preset flow: upload, trigger tasks, admin tariff + new preset, full 
     }
     await shot(page, testInfo, '08-all-presets-pending.png');
 
-    // Step 9 — Sign out
+    // Step 9 — Verify the ? help icon is shown near PENDING and exposes the pending-transcode tooltip
+    for (const title of ['180p', 'FHD']) {
+      await expectPresetStatusHelpIcon(page, title, {
+        statusText: 'PENDING',
+        tooltipText: "Why isn't my video transcoding?",
+      });
+    }
+    await shot(page, testInfo, '09-pending-status-tooltips.png');
+
+    // Step 10 — Sign out
     await logoutToPublic(page);
-    await shot(page, testInfo, '09-sign-out-test.png');
+    await shot(page, testInfo, '10-sign-out-test.png');
 
     // ── Phase 2: Admin — assign Premium tariff + create 720p preset ───────────
 
-    // Step 10 — Login as admin and open admin dashboard
+    // Step 11 — Login as admin and open admin dashboard
     await loginAsAdmin(page);
-    await shot(page, testInfo, '10-admin-login.png');
+    await shot(page, testInfo, '11-admin-login.png');
     await openAdminDashboardFromHome(page);
 
-    // Step 11 — Change test@test.com tariff to Premium
-    await assignTariffToUser(page, testUserEmail, 'Premium', testInfo, '11-premium-assigned.png');
+    // Step 12 — Change test@test.com tariff to Premium
+    await assignTariffToUser(page, testUserEmail, 'Premium', testInfo, '12-premium-assigned.png');
 
-    // Step 12 — Create new preset 720p (width=1280, height=720, bitrate=3)
+    // Step 13 — Create new preset 720p (width=1280, height=720, bitrate=3)
     await createOrUpdatePreset(page, newPreset, testInfo);
-    await shot(page, testInfo, '12-preset-720p-created.png');
+    await shot(page, testInfo, '13-preset-720p-created.png');
 
-    // Step 13 — Return to main page and sign out
+    // Step 14 — Return to main page and sign out
     await openHome(page);
-    await shot(page, testInfo, '13-home-after-admin.png');
+    await shot(page, testInfo, '14-home-after-admin.png');
     await logoutToPublic(page);
-    await shot(page, testInfo, '13-sign-out-admin.png');
+    await shot(page, testInfo, '14-sign-out-admin.png');
 
     // ── Phase 3: Test user — full transcode flow with all 3 presets ───────────
 
-    // Step 14 — Login as test user again
+    // Step 15 — Login as test user again
     await loginAsTest(page);
-    await shot(page, testInfo, '14-login-test-again.png');
+    await shot(page, testInfo, '15-login-test-again.png');
 
-    // Step 15 — Navigate to Videos, find the -06 video and open its card
+    // Step 16 — Navigate to Videos, find the -06 video and open its card
     await openVideosTab(page);
     await expectVideosTableVisible(page);
     const videoRow2 = videoRowByTitle(page, baseName);
     await expect(videoRow2).toBeVisible({ timeout: NAV_TIMEOUT });
     await videoRow2.click({ timeout: UI_TIMEOUT });
     await waitForVideoDetailsVisible(page);
-    await shot(page, testInfo, '15-video-card-reopened.png');
+    await shot(page, testInfo, '16-video-card-reopened.png');
 
-    // Step 16 — Verify preset statuses: 180p and FHD still PENDING, 720p has No task
+    // Step 17 — Verify preset statuses: 180p and FHD still PENDING, 720p has No task
     await expectPresetStatus(page, '180p', 'PENDING');
     await expectPresetStatus(page, 'FHD', 'PENDING');
     await expectPresetStatus(page, '720p', 'No task');
-    await shot(page, testInfo, '16-statuses-180p-fhd-pending-720p-notask.png');
+    await shot(page, testInfo, '17-statuses-180p-fhd-pending-720p-notask.png');
 
-    // Step 17 — Click Transcode on 720p; this triggers the scheduler which starts all eligible tasks
+    // Step 18 — Click Transcode on 720p; this triggers the scheduler which starts all eligible tasks
     await clickTranscodeForPreset(page, '720p');
-    await shot(page, testInfo, '17-transcode-720p-clicked.png');
+    await shot(page, testInfo, '18-transcode-720p-clicked.png');
 
-    // Step 18 — Poll with 5s intervals until all three presets reach COMPLETED
+    // Step 19 — Poll with 5s intervals until all three presets reach COMPLETED
     await waitForAllPresetsToComplete(page, allPresets);
-    await shot(page, testInfo, '18-all-presets-completed.png');
+    await shot(page, testInfo, '19-all-presets-completed.png');
 
-    // Step 19 — Verify Download button is visible for every preset row
+    // Step 20 — Verify Download button is visible for every preset row
     for (const title of allPresets) {
       await expect(presetRow(page, title).getByRole('link', { name: 'Download' })).toBeVisible({ timeout: UI_TIMEOUT });
     }
-    await shot(page, testInfo, '19-all-download-buttons-visible.png');
+    await shot(page, testInfo, '20-all-download-buttons-visible.png');
 
-    // Step 20 — Download each file and verify filename matches "{baseName} - {presetName}"
+    // Step 21 — Download each file and verify filename matches "{baseName} - {presetName}"
     for (const title of allPresets) {
       const row = presetRow(page, title);
       const expectedFilename = `${baseName} - ${title}`;
       await expectRowDownloadFilename(row, expectedFilename);
       await clickDownloadAndVerifyMp4(page, row);
-      await shot(page, testInfo, `20-download-verified-${title}.png`);
+      await shot(page, testInfo, `21-download-verified-${title}.png`);
     }
 
-    // Step 21 — Sign out
+    // Step 22 — Sign out
     await logoutToPublic(page);
-    await shot(page, testInfo, '21-sign-out-final.png');
+    await shot(page, testInfo, '22-sign-out-final.png');
   } finally {
     try {
       const sseMessages = await page.evaluate(() => (window.__mercure_messages || []));
