@@ -70,14 +70,14 @@ test('task state flow with 4k preset: progress, cancel, restart, complete', asyn
     await expect(videoRow).toBeVisible({ timeout: UI_TIMEOUT });
     await videoRow.click({ timeout: UI_TIMEOUT });
 
-    // Step 7 — Open video details and verify the 4k preset is present
+    // Step 7 — Open video details and verify the FHD preset is present
     await waitForVideoDetailsVisible(page);
     await expect(presetRow(page, presetTitle)).toBeVisible({ timeout: UI_TIMEOUT });
-    await shot(page, testInfo, '02-video-details-with-4k-preset.png');
+    await shot(page, testInfo, '02-video-details-with-fhd-preset.png');
 
     const startButton = presetRow(page, presetTitle).getByRole('button', { name: 'Transcode' });
     await expect(startButton).toBeVisible({ timeout: UI_TIMEOUT });
-    // Step 8 — Start 4k transcode
+    // Step 8 — Start FHD transcode
     await startButton.click({ timeout: UI_TIMEOUT });
 
     await expect
@@ -146,7 +146,7 @@ test('task state flow with 4k preset: progress, cancel, restart, complete', asyn
 
     await expect
       .poll(async () => (await readPresetTaskState(page, presetTitle)).status, {
-        timeout: 60000,
+        timeout: 45000,
         intervals: [1000, 2000, 5000],
       })
       .toMatch(/PENDING|PROCESSING|COMPLETED/);
@@ -172,7 +172,7 @@ test('task state flow with 4k preset: progress, cancel, restart, complete', asyn
       }
 
       // wait for realtime update (worker emits every ~5s)
-      await page.waitForTimeout(6000);
+      await page.waitForTimeout(5000);
     }
 
     expect(completed).toBe(true);

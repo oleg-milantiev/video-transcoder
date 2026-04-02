@@ -184,6 +184,25 @@ Verifies that two worker replicas pick up two tasks simultaneously when the user
 - For each preset (`FHD`, `720p`) verifies the link's `download` attribute matches `{baseName} - {presetTitle}` and clicks download confirming a valid `.mp4` response
 - Signs out
 
+### `08.tariff.js` — tariff restrictions: upload limits, invalid uploads, disabled transcode by storage
+
+- Logs in as admin, remove old 05 test as this test need empty storage
+- Assigns tariff `Free` to the admin user, then re-logs in so the SPA gets refreshed tariff limits
+- Uploads the source fixture under the unique `-08-success` suffix and verifies in `Videos` list + `Video Details` that the upload is successful, the title is correct, and the poster/meta are ready
+- Verifies every preset row exposes a `Transcode` button and an `Expected size:` hint under the button
+- Opens EasyAdmin and creates/updates four tariff variants cloned from `Free`:
+  - `Free-filesize` — `videoSize=3 MB`
+  - `Free-storage` — `storageGb=0.01`
+  - `Free-resolution` — `maxWidth=320`, `maxHeight=180`
+  - `Free-duration` — `videoDuration=2 sec`
+- Applies each tariff to the admin user one by one, re-logs in, opens `Upload`, and uploads the same fixture under unique names:
+  - `-08-filesize` — upload hint contains `Max file size: 3 MB.`, upload is rejected with `exceeds maximum allowed size`
+  - `-08-storage` — upload hint contains `as storage is running low`, upload is rejected with `exceeds maximum allowed size`
+  - `-08-resolution` — upload hint contains `Max resolution: 320`, upload reaches `Videos`, then the video becomes deleted and has no poster in list/details
+  - `-08-duration` — upload reaches `Videos`, then the video becomes deleted and has no poster in list/details
+- Reassigns `Free-storage` to the admin user, re-opens the successfully uploaded `-08-success` video, and verifies preset `FHD` has disabled `Transcode`, red `Expected size: 4.7 MB`, and the help icon tooltip text starts with `This video cannot be transcoded`
+- Performs `Sign out`
+
 ## Execution order
 
 - `01.admin.login.js`
@@ -193,6 +212,7 @@ Verifies that two worker replicas pick up two tasks simultaneously when the user
 - `05.task.state.flow.js`
 - `06.multi.preset.flow.js`
 - `07.parallel.transcode.js`
+- `08.tariff.js`
 
 ## Data dependencies
 
@@ -202,6 +222,7 @@ Verifies that two worker replicas pick up two tasks simultaneously when the user
 - `05` re-uploads the source fixture as `2022_10_04_Two_Maxes-05.mp4` and uses `FHD` from `03` for long-running state-flow checks (progress/cancel/restart).
 - `06` uploads the source fixture as `2022_10_04_Two_Maxes-06.mp4`; relies on `test@test.com` having Free tariff (set by `03`) so that initial tasks stay `PENDING`, then switches to Premium and adds preset `720p` via admin, and validates all three presets complete and produce downloadable files.
 - `07` relies on `test@test.com` having Premium tariff (`instance=2`, set by `06`) and on preset `720p` existing (created by `06`). Uploads `-07` video and validates simultaneous PROCESSING of `FHD` + `720p` across two worker replicas.
+- `08` relies on baseline tariffs/presets created earlier (`03`, `06`) and intentionally uses `-08-*` file suffixes to avoid clashing with `07`'s existing `-07` fixture name. It mutates the admin user's tariff repeatedly, so it must stay last in the sequence.
 
 ## Local run in release stack
 

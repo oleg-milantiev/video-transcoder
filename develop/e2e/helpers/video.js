@@ -2,6 +2,10 @@ const { expect } = require('@playwright/test');
 const { UI_TIMEOUT, NAV_TIMEOUT } = require('./constants');
 const { shot } = require('./screenshot');
 
+function escapeRegExp(value) {
+  return String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 async function expectDetailsValue(page, label) {
   const dt = page.locator('dt', { hasText: label }).first();
   await expect(dt).toBeVisible({ timeout: UI_TIMEOUT });
@@ -65,8 +69,11 @@ async function readPresetTaskState(page, presetTitle) {
   return { status, progress };
 }
 
-async function waitForVideoDetailsVisible(page) {
+async function waitForVideoDetailsVisible(page, { requirePresets = true } = {}) {
   await expect(page.getByRole('heading', { name: 'Video Details' })).toBeVisible({ timeout: UI_TIMEOUT });
+  if (!requirePresets) {
+    return;
+  }
   await expect(page.getByRole('heading', { name: 'Presets' })).toBeVisible({ timeout: UI_TIMEOUT });
   await expect(presetsTable(page)).toBeVisible({ timeout: UI_TIMEOUT });
 }
@@ -151,6 +158,66 @@ async function getAllPresetTitles(page) {
   return titles;
 }
 
+async function expectAllPresetsToShowTranscodeWithExpectedSize(page) {
+  const titles = await getAllPresetTitles(page);
+  expect(titles.length).toBeGreaterThan(0);
+
+  for (const title of titles) {
+    const row = presetRow(page, title);
+    await expect(row.getByRole('button', { name: 'Transcode' })).toBeVisible({ timeout: UI_TIMEOUT });
+    await expect(row.locator('td').nth(4)).toContainText('Expected size:', { timeout: UI_TIMEOUT });
+  }
+
+  return titles;
+}
+
+async function expectPresetTranscodeDisabledWithHint(page, presetTitle, { expectedSizeText, tooltipText } = {}) {
+  const row = presetRow(page, presetTitle);
+  const transcodeButton = row.getByRole('button', { name: 'Transcode' });
+  await expect(transcodeButton).toBeDisabled({ timeout: UI_TIMEOUT });
+
+  const actionCell = row.locator('td').nth(4);
+  if (expectedSizeText) {
+    await expect(actionCell).toContainText(expectedSizeText, { timeout: UI_TIMEOUT });
+  } else {
+    await expect(actionCell).toContainText('Expected size:', { timeout: UI_TIMEOUT });
+  }
+
+  const helpIcon = actionCell.getByRole('img').first();
+  await expect(helpIcon).toBeVisible({ timeout: UI_TIMEOUT });
+  await helpIcon.hover({ timeout: UI_TIMEOUT });
+
+  if (tooltipText) {
+    const tooltipPattern = new RegExp(escapeRegExp(tooltipText), 'i');
+    await expect(helpIcon).toHaveAttribute('title', tooltipPattern, { timeout: UI_TIMEOUT });
+    await expect(helpIcon).toHaveAttribute('aria-label', tooltipPattern, { timeout: UI_TIMEOUT });
+  }
+
+  return helpIcon;
+}
+
+async function waitForDeletedVideoDetailsWithoutPoster(page, expectedTitle, maxAttempts = 8, delayMs = 5000) {
+  for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+    await waitForVideoDetailsVisible(page, { requirePresets: false });
+
+    const deletedTitle = page.locator('dd.video-title-deleted').first();
+    const hasDeletedTitle = (await deletedTitle.count()) > 0;
+    const hasPoster = (await page.locator('.card-body img.img-fluid').count()) > 0;
+
+    if (hasDeletedTitle && !hasPoster) {
+      await expect(deletedTitle).toContainText(expectedTitle, { timeout: UI_TIMEOUT });
+      return;
+    }
+
+    if (attempt < maxAttempts) {
+      await page.waitForTimeout(delayMs);
+      await page.reload({ waitUntil: 'domcontentloaded', timeout: NAV_TIMEOUT });
+    }
+  }
+
+  throw new Error(`Video ${expectedTitle} did not become deleted without poster after ${maxAttempts} checks`);
+}
+
 async function clickTranscodeForPreset(page, presetTitle) {
   const row = presetRow(page, presetTitle);
   const btn = row.getByRole('button', { name: 'Transcode' });
@@ -213,6 +280,9 @@ module.exports = {
   expectFlashPopupTitle,
   waitForPosterAndMeta,
   getAllPresetTitles,
+  expectAllPresetsToShowTranscodeWithExpectedSize,
+  expectPresetTranscodeDisabledWithHint,
+  waitForDeletedVideoDetailsWithoutPoster,
   clickTranscodeForPreset,
   expectPresetStatus,
   waitForAllPresetsToComplete,
