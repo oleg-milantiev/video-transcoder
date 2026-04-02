@@ -7,25 +7,44 @@ use App\Infrastructure\Persistence\Doctrine\User\UserEntity;
 use App\Infrastructure\Google\GoogleAuthenticator;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Bundle\SecurityBundle\Security;
+use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
-use Symfony\Component\Routing\Annotation\Route;
-use Symfony\Component\Security\Core\Authentication\Token\UsernamePasswordToken;
-use Symfony\Component\Security\Http\Event\InteractiveLoginEvent;
-use Symfony\Component\EventDispatcher\EventDispatcherInterface;
+use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Security\Http\Util\TargetPathTrait;
 
 class GoogleController extends AbstractController
 {
+    use TargetPathTrait;
+
+    private const string FIREWALL_NAME = 'main';
+
     #[Route('/connect/google', name: 'connect_google_start')]
-    public function connect(GoogleAuthenticator $googleAuth): Response
+    public function connect(Request $request, GoogleAuthenticator $googleAuth): Response
     {
         if ($this->getUser()) {
             return $this->redirectToRoute('app_home');
         }
 
-        $authUrl = $googleAuth->getAuthorizationUrl();
-        return $this->redirect($authUrl);
+        $targetPath = $request->query->getString('_target_path');
+        if ('' !== $targetPath) {
+            $this->saveTargetPath($request->getSession(), self::FIREWALL_NAME, $targetPath);
+        }
+
+        try {
+            return $this->redirect($googleAuth->getAuthorizationUrl());
+        } catch (\Throwable $e) {
+            $this->addFlash('error', 'Ошибка при входе через Google: ' . $e->getMessage());
+
+            $routeParameters = [];
+            if ('' !== $targetPath) {
+                $routeParameters['_target_path'] = $targetPath;
+            }
+
+            return $this->redirectToRoute('app_login', $routeParameters);
+        }
     }
 
     #[Route('/connect/google/check', name: 'connect_google_check')]
@@ -34,17 +53,22 @@ class GoogleController extends AbstractController
         GoogleAuthenticator $googleAuth,
         EntityManagerInterface $entityManager,
         UserPasswordHasherInterface $passwordHasher,
-        EventDispatcherInterface $eventDispatcher
+        Security $security
     ): Response {
         try {
             $googleUser = $googleAuth->getUserFromCode($request);
-            $email = $googleUser->getEmail();
+            $email = mb_strtolower(trim((string) $googleUser->getEmail()));
 
             if (!$email) {
-                throw new \Exception('Email not provided');
+                throw new \RuntimeException('Email not provided');
+            }
+
+            if ($googleUser->getEmailVerified() !== true) {
+                throw new \RuntimeException('Google account email is not verified');
             }
 
             // Поиск или создание пользователя
+            /** @var UserEntity|null $user */
             $user = $entityManager->getRepository(UserEntity::class)->findOneBy(['email' => $email]);
 
             if (!$user) {
@@ -59,20 +83,29 @@ class GoogleController extends AbstractController
                 $entityManager->flush();
             }
 
-            // Создаём и устанавливаем аутентификационный токен
-            $token = new UsernamePasswordToken($user, 'google_provider', $user->getRoles());
-            $this->container->get('security.token_storage')->setToken($token);
+            $response = $security->login($user, 'form_login', self::FIREWALL_NAME);
+            if ($response instanceof Response) {
+                return $response;
+            }
 
-            // Отправляем событие интерактивного входа
-            $event = new InteractiveLoginEvent($request, $token);
-            $eventDispatcher->dispatch($event, InteractiveLoginEvent::class);
+            $targetPath = $this->getTargetPath($request->getSession(), self::FIREWALL_NAME);
+            if ($targetPath !== null) {
+                $this->removeTargetPath($request->getSession(), self::FIREWALL_NAME);
 
-            // Перенаправляем на главную страницу
+                return new RedirectResponse($targetPath);
+            }
+
             return $this->redirectToRoute('app_home');
-
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             $this->addFlash('error', 'Ошибка при входе через Google: ' . $e->getMessage());
-            return $this->redirectToRoute('app_login');
+
+            $routeParameters = [];
+            $targetPath = $this->getTargetPath($request->getSession(), self::FIREWALL_NAME);
+            if ($targetPath !== null) {
+                $routeParameters['_target_path'] = $targetPath;
+            }
+
+            return $this->redirectToRoute('app_login', $routeParameters);
         }
     }
 }

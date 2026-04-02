@@ -5,6 +5,12 @@
 {% block body %}
 <div class="row justify-content-center">
     <div class="col-md-6">
+        {% set targetPath = app.request.query.get('_target_path') %}
+
+        {% for message in app.flashes('error') %}
+            <div class="alert alert-danger">{{ message }}</div>
+        {% endfor %}
+
         <form method="post">
             {% if error %}
                 <div class="alert alert-danger">{{ error.messageKey|trans(error.messageData, 'security') }}</div>
@@ -47,6 +53,15 @@
                 Sign in
             </button>
         </form>
+
+        <div class="text-center my-4 text-muted">or</div>
+
+        <a
+            class="btn btn-lg btn-outline-danger w-100"
+            href="{{ path('connect_google_start', targetPath is not empty ? {'_target_path': targetPath} : {}) }}"
+        >
+            Sign in with Google
+        </a>
     </div>
 </div>
 {% endblock %}
