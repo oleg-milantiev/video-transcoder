@@ -1,4 +1,5 @@
 import { h } from 'vue';
+import { humanReadableDateTime } from '../../shared.js';
 
 function renderTaskAction(vm, task) {
     if (task.status === 'COMPLETED' && task.id) {
@@ -46,7 +47,7 @@ export function renderTasksPane(vm, paneClass) {
                               h('td', task.presetTitle || '-'),
                               h('td', task.status || '-'),
                               h('td', typeof task.progress === 'number' ? String(task.progress) + '%' : '-'),
-                              h('td', task.createdAt || '-'),
+                              h('td', humanReadableDateTime(task.createdAt)),
                               h('td', [renderTaskAction(vm, task)]),
                           ])
                       )

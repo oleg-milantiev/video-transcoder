@@ -34,7 +34,7 @@ readonly class TranscodeTaskFinalizationService
 
         $cancelledTask->updateMeta([
             'transcode' => [
-                'cancelledAt' => new \DateTimeImmutable()->format(DATE_ATOM),
+                'cancelledAt' => new \DateTimeImmutable()->format(\DateTimeInterface::ATOM),
                 'report' => $report->toArray(),
             ],
         ]);
@@ -51,7 +51,7 @@ readonly class TranscodeTaskFinalizationService
             'size' => filesize($context->absoluteOutputPath),
             'output' => $context->relativeOutputPath,
             'transcode' => [
-                'finishedAt' => new \DateTimeImmutable()->format(DATE_ATOM),
+                'finishedAt' => new \DateTimeImmutable()->format(\DateTimeInterface::ATOM),
                 'report' => $report->toArray(),
             ],
         ]);

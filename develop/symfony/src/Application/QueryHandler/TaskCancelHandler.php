@@ -48,7 +48,7 @@ final readonly class TaskCancelHandler
 
         $task->updateMeta([
             'cancelledByUserId' => $query->requestedByUserId->toRfc4122(),
-            'cancelRequestedAt' => new \DateTimeImmutable()->format(DATE_ATOM),
+            'cancelRequestedAt' => new \DateTimeImmutable()->format(\DateTimeInterface::ATOM),
         ]);
 
         $cancelledNow = $task->status() === TaskStatus::PENDING || $task->status() === TaskStatus::STARTING;

@@ -236,7 +236,7 @@ export function createVideoDetailsActions(params) {
                     progress: typeof update.progress === 'number' ? update.progress : currentTask.progress,
                     createdAt: typeof update.createdAt === 'string' ? update.createdAt : currentTask.createdAt,
                     updatedAt: typeof update.updatedAt === 'string' ? update.updatedAt : currentTask.updatedAt,
-                    expiredAt: typeof update.expiredAt === 'string' ? update.expiredAt : currentTask.expiriedAt,
+                    expiredAt: typeof update.expiredAt === 'string' ? update.expiredAt : currentTask.expiredAt,
                     waitingTariffInstance: typeof update.waitingTariffInstance === 'boolean' ? update.waitingTariffInstance : (currentTask.waitingTariffInstance ?? null),
                     waitingTariffDelay: typeof update.waitingTariffDelay === 'boolean' ? update.waitingTariffDelay : (currentTask.waitingTariffDelay ?? null),
                     willStartAt: typeof update.willStartAt === 'string' ? update.willStartAt : (update.willStartAt === null ? null : (currentTask.willStartAt ?? null)),

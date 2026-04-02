@@ -39,11 +39,11 @@ class GetVideoDetailsHandlerTest extends TestCase
                         'id' => '42424242-4242-4242-8242-424242424242',
                         'status' => 3,
                         'progress' => 75,
-                        'createdAt' => '2024-03-18 10:00',
+                        'createdAt' => '2024-03-18T10:00:00+00:00',
                         'downloadFilename' => 'HD - example.mp4',
                         'waitingTariffInstance' => true,
                         'waitingTariffDelay' => false,
-                        'willStartAt' => '2024-03-18 10:05:00',
+                        'willStartAt' => '2024-03-18T10:05:00+00:00',
                     ],
                 ],
             ]);
@@ -70,7 +70,7 @@ class GetVideoDetailsHandlerTest extends TestCase
         $this->assertSame(999333, $dto->presetsWithTasks[0]->expectedFileSize);
         $this->assertTrue($dto->presetsWithTasks[0]->task->waitingTariffInstance);
         $this->assertFalse($dto->presetsWithTasks[0]->task->waitingTariffDelay);
-        $this->assertSame('2024-03-18 10:05:00', $dto->presetsWithTasks[0]->task->willStartAt);
+        $this->assertSame('2024-03-18T10:05:00+00:00', $dto->presetsWithTasks[0]->task->willStartAt);
     }
 
     public function testKeepsSchedulingFieldsNullable(): void
@@ -96,7 +96,7 @@ class GetVideoDetailsHandlerTest extends TestCase
                         'id' => '42424242-4242-4242-8242-424242424242',
                         'status' => 1,
                         'progress' => 0,
-                        'createdAt' => '2024-03-18 10:00',
+                        'createdAt' => '2024-03-18T10:00:00+00:00',
                         'downloadFilename' => 'HD - example.mp4',
                         'waitingTariffInstance' => null,
                         'waitingTariffDelay' => null,

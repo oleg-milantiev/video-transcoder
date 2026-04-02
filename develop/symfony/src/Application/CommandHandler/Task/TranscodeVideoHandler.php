@@ -93,7 +93,7 @@ final readonly class TranscodeVideoHandler
                 if ($task->canBeCancelled()) {
                     $task->cancel();
                     $task->updateMeta([
-                        'cancelledAt' => new \DateTimeImmutable()->format(DATE_ATOM),
+                        'cancelledAt' => new \DateTimeImmutable()->format(\DateTimeInterface::ATOM),
                     ]);
                     $this->taskRepository->save($task);
                     $this->logService->log('task', $task->id(), LogLevel::INFO, 'Task cancelled before ffmpeg start');
@@ -110,7 +110,7 @@ final readonly class TranscodeVideoHandler
                 $this->logService->log('task', $task->id(), LogLevel::WARNING, 'Task cannot be started for transcoding (invalid state or video duration).', [
                     'duration' => $video->duration(),
                     'status' => $task->status()->name,
-                    'startedAt' => $task->startedAt()?->format(DATE_ATOM),
+                    'startedAt' => $task->startedAt()?->format(\DateTimeInterface::ATOM),
                 ]);
                 return;
             }

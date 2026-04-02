@@ -23,6 +23,8 @@ interface VideoDetailsReadRepositoryInterface
      *         willStartAt: ?string
      *     }
      * }>
+     *
+     * Date fields are expected to be serialized as ISO 8601 / ATOM strings in UTC.
      */
     public function getDetailsByVideoId(Uuid $videoId): array;
 }

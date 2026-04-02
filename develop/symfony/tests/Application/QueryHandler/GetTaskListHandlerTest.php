@@ -85,14 +85,14 @@ class GetTaskListHandlerTest extends TestCase
         $this->assertSame($preset1->title()->value(), $response->items[0]->presetTitle);
         $this->assertSame($task1->status()->name, $response->items[0]->status);
         $this->assertSame($task1->progress()->value(), $response->items[0]->progress);
-        $this->assertSame($task1->createdAt()->format('Y-m-d H:i'), $response->items[0]->createdAt);
+        $this->assertSame($task1->createdAt()->format(\DateTimeInterface::ATOM), $response->items[0]->createdAt);
 
         $this->assertSame($task2->id()->toRfc4122(), $response->items[1]->id);
         $this->assertSame($video2->title()->value(), $response->items[1]->videoTitle);
         $this->assertSame($preset2->title()->value(), $response->items[1]->presetTitle);
         $this->assertSame($task2->status()->name, $response->items[1]->status);
         $this->assertSame($task2->progress()->value(), $response->items[1]->progress);
-        $this->assertSame($task2->createdAt()->format('Y-m-d H:i'), $response->items[1]->createdAt);
+        $this->assertSame($task2->createdAt()->format(\DateTimeInterface::ATOM), $response->items[1]->createdAt);
     }
 
     private function initializeUserId(GetTaskListQuery $query, Uuid $userId): void

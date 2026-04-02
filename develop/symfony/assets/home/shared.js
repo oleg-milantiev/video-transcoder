@@ -62,3 +62,32 @@ export function megabytesToHuman(mb) {
     return `${gb} GB`;
 }
 
+const humanReadableDateTimeFormatter = new Intl.DateTimeFormat('en', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+});
+
+export function humanReadableDateTime(value, fallback = '-') {
+    if (typeof value !== 'string' || value.trim() === '') {
+        return fallback;
+    }
+
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) {
+        return fallback;
+    }
+
+    const parts = humanReadableDateTimeFormatter.formatToParts(date);
+    const lookup = Object.fromEntries(parts.filter((part) => part.type !== 'literal').map((part) => [part.type, part.value]));
+
+    if (!lookup.day || !lookup.month || !lookup.year || !lookup.hour || !lookup.minute) {
+        return fallback;
+    }
+
+    return `${lookup.day} ${lookup.month} ${lookup.year} ${lookup.hour}:${lookup.minute}`;
+}
+

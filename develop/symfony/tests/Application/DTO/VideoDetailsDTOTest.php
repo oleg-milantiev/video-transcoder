@@ -22,6 +22,8 @@ class VideoDetailsDTOTest extends TestCase
     public function testFromDomainSanitizesMetaAndKeepsPresets(): void
     {
         $uuid = Uuid::fromString('33333333-3333-4333-8333-333333333333');
+        $createdAt = new \DateTimeImmutable('2026-03-18 08:45:00', new \DateTimeZone('UTC'));
+        $willStartAt = new \DateTimeImmutable('2026-03-18 09:20:00', new \DateTimeZone('UTC'));
         $meta = [
             'duration' => 120,
             'preview' => true,
@@ -32,7 +34,7 @@ class VideoDetailsDTOTest extends TestCase
             new FileExtension('mov'),
             Uuid::fromString('123e4567-e89b-42d3-a456-426614174007'),
             $meta,
-            VideoDates::create(new \DateTimeImmutable('2026-03-18 08:45:00')),
+            VideoDates::create($createdAt),
             $uuid,
         );
 
@@ -43,11 +45,11 @@ class VideoDetailsDTOTest extends TestCase
             task: new TaskInfoDTO(
                 status: 'PENDING',
                 progress: 0,
-                createdAt: '2026-03-18 08:50',
+                createdAt: (new \DateTimeImmutable('2026-03-18 08:50:00', new \DateTimeZone('UTC')))->format(\DateTimeInterface::ATOM),
                 downloadFilename: 'mobile-file.mp4',
                 waitingTariffInstance: true,
                 waitingTariffDelay: true,
-                willStartAt: '2026-03-18 09:20:00',
+                willStartAt: $willStartAt->format(\DateTimeInterface::ATOM),
                 id: '123e4567-e89b-42d3-a456-426614174055',
             ),
         );
@@ -64,15 +66,15 @@ class VideoDetailsDTOTest extends TestCase
         $this->assertSame($uuid->toRfc4122(), $dto->id);
         $this->assertSame('Detailed Video', $dto->title);
         $this->assertSame('mov', $dto->extension);
-        $this->assertSame('2026-03-18 08:45', $dto->createdAt);
-        $this->assertSame('2026-03-19 08:45', $dto->expiredAt);
+        $this->assertSame($createdAt->format(\DateTimeInterface::ATOM), $dto->createdAt);
+        $this->assertSame($createdAt->add(new \DateInterval('PT24H'))->format(\DateTimeInterface::ATOM), $dto->expiredAt);
         $this->assertSame('expired', $dto->expiredInterval);
         $this->assertNull($dto->updatedAt);
         $this->assertSame([$presetDto], $dto->presetsWithTasks);
         $this->assertSame(999333, $dto->presetsWithTasks[0]->expectedFileSize);
         $this->assertTrue($dto->presetsWithTasks[0]->task->waitingTariffInstance);
         $this->assertTrue($dto->presetsWithTasks[0]->task->waitingTariffDelay);
-        $this->assertSame('2026-03-18 09:20:00', $dto->presetsWithTasks[0]->task->willStartAt);
+        $this->assertSame($willStartAt->format(\DateTimeInterface::ATOM), $dto->presetsWithTasks[0]->task->willStartAt);
         $this->assertSame('/uploads/' . $uuid->toRfc4122() . '.jpg', $dto->poster);
         $this->assertArrayHasKey('duration', $dto->meta);
         $this->assertArrayHasKey('bitrate', $dto->meta);

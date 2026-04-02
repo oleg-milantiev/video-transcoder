@@ -46,7 +46,7 @@ class PresetRepository extends ServiceEntityRepository implements PresetReposito
         $log[] = [
             'level' => $level,
             'text' => $text,
-            'timestamp' => new \DateTimeImmutable()->format(DATE_ATOM),
+            'timestamp' => new \DateTimeImmutable()->format(\DateTimeInterface::ATOM),
         ];
         $preset->log = $log;
         $em->persist($preset);

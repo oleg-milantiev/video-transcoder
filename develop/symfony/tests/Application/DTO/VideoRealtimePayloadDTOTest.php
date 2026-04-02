@@ -22,13 +22,14 @@ final class VideoRealtimePayloadDTOTest extends TestCase
     {
         $videoId = Uuid::fromString('11111111-1111-4111-8111-111111111111');
         $userId = Uuid::fromString('22222222-2222-4222-8222-222222222222');
+        $createdAt = new \DateTimeImmutable('2026-03-28 10:00:00', new \DateTimeZone('UTC'));
 
         $video = Video::reconstitute(
             new VideoTitle('Realtime Video'),
             new FileExtension('mp4'),
             $userId,
             ['duration' => 120],
-            VideoDates::create(new \DateTimeImmutable('2026-03-28 10:00:00')),
+            VideoDates::create($createdAt),
             $videoId,
         );
 
@@ -50,7 +51,7 @@ final class VideoRealtimePayloadDTOTest extends TestCase
         $this->assertSame(['duration' => 120], $dto->meta);
         $this->assertFalse($dto->deleted);
         $this->assertTrue($dto->canBeDeleted);
-        $this->assertStringContainsString('2026-03-28', $dto->createdAt);
+        $this->assertSame($createdAt->format(\DateTimeInterface::ATOM), $dto->createdAt);
     }
 
     public function testFromVideoWithActiveTaskCannotBeDeleted(): void

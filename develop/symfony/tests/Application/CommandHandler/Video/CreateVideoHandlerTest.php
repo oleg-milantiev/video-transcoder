@@ -138,7 +138,7 @@ class CreateVideoHandlerTest extends TestCase
         $this->assertSame('source/user/video.mp4', $extractCommands[0]->video()->meta()['sourceKey'] ?? null);
 
         // Cleanup
-        @unlink($tempFile);
+        $this->cleanupTempFile($tempFile);
     }
 
     public function testStorageUploadExceptionDispatchesCreateVideoFail(): void
@@ -232,7 +232,7 @@ class CreateVideoHandlerTest extends TestCase
         $this->assertTrue($found, 'CreateVideoFail event was not dispatched');
 
         // Cleanup
-        @unlink($tempFile);
+        $this->cleanupTempFile($tempFile);
     }
 
     public function testFileSizeExceedingTariffLimitDispatchesCreateVideoFail(): void
@@ -241,7 +241,10 @@ class CreateVideoHandlerTest extends TestCase
 
         // Create a temp file with known size - use 100 MB file to test against 50 MB limit
         $tempFile = tempnam(sys_get_temp_dir(), 'test_');
-        file_put_contents($tempFile, str_repeat('x', 100 * 1024 * 1024)); // 100 MB file
+        $handle = fopen($tempFile, 'cb');
+        self::assertIsResource($handle);
+        ftruncate($handle, 100 * 1024 * 1024);
+        fclose($handle);
 
         $file = $this->createStub(TusFile::class);
         $file->method('getName')->willReturn('video.mp4');
@@ -307,7 +310,7 @@ class CreateVideoHandlerTest extends TestCase
         $this->assertTrue($found, 'CreateVideoFail event with size limit error was not dispatched');
 
         // Cleanup
-        @unlink($tempFile);
+        $this->cleanupTempFile($tempFile);
     }
 
     public function testMissingFileDispatchesCreateVideoFail(): void
@@ -426,7 +429,7 @@ class CreateVideoHandlerTest extends TestCase
         $this->assertTrue($found, 'CreateVideoFail event with user not found error was not dispatched');
 
         // Cleanup
-        @unlink($tempFile);
+        $this->cleanupTempFile($tempFile);
     }
 
     public function testTariffNotFoundDispatchesCreateVideoFail(): void
@@ -495,6 +498,16 @@ class CreateVideoHandlerTest extends TestCase
         $this->assertTrue($found, 'CreateVideoFail event with tariff not found error was not dispatched');
 
         // Cleanup
-        @unlink($tempFile);
+        $this->cleanupTempFile($tempFile);
+
+    }
+
+    private function cleanupTempFile(string|false $tempFile): void
+    {
+        if (!is_string($tempFile) || $tempFile === '' || !file_exists($tempFile)) {
+            return;
+        }
+
+        unlink($tempFile);
     }
 }

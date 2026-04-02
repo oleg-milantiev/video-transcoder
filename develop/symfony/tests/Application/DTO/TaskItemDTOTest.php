@@ -26,6 +26,7 @@ class TaskItemDTOTest extends TestCase
     public function testFromDomainUsesProvidedEntities(): void
     {
         $videoId = Uuid::fromString('22222222-2222-4222-8222-222222222222');
+        $taskCreatedAt = new \DateTimeImmutable('2026-03-18 10:00:00', new \DateTimeZone('UTC'));
         $video = Video::reconstitute(
             new VideoTitle('Task Source Video'),
             new FileExtension('mkv'),
@@ -49,7 +50,7 @@ class TaskItemDTOTest extends TestCase
             userId: Uuid::fromString('99999999-9999-4999-8999-999999999999'),
             status: TaskStatus::processing(),
             progress: new Progress(75),
-            dates: TaskDates::fromPersistence(new \DateTimeImmutable('2026-03-18 10:00:00'), null, null),
+            dates: TaskDates::fromPersistence($taskCreatedAt, null, null),
             id: Uuid::fromString('55555555-5555-4555-8555-555555555555'),
         );
 
@@ -60,7 +61,7 @@ class TaskItemDTOTest extends TestCase
         $this->assertSame('HD 1080p', $dto->presetTitle);
         $this->assertSame('PROCESSING', $dto->status);
         $this->assertSame(75, $dto->progress);
-        $this->assertSame('2026-03-18 10:00', $dto->createdAt);
+        $this->assertSame($taskCreatedAt->format(\DateTimeInterface::ATOM), $dto->createdAt);
     }
 
     public function testFromDomainThrowsWhenTaskHasNoId(): void

@@ -147,7 +147,7 @@ class VideoRepository extends ServiceEntityRepository implements VideoRepository
                 pt.will_start_at,
                 t.progress,
                 CONCAT(v.title, ' - ', p.title) as download_filename,
-                TO_CHAR(t.created_at, 'YYYY-MM-DD HH24:MI') as created_at
+                t.created_at
             FROM preset p
                      LEFT JOIN task t ON p.id = t.preset_id AND t.video_id = :video_id
                      LEFT JOIN video v ON v.id = :video_id
@@ -168,16 +168,31 @@ class VideoRepository extends ServiceEntityRepository implements VideoRepository
                     'id' => $row['task_id'],
                     'status' => (int)$row['status'],
                     'progress' => (int)$row['progress'],
-                    'createdAt' => $row['created_at'],
+                    'createdAt' => self::formatDateTimeAtom($row['created_at']),
                     'waitingTariffInstance' => $row['waiting_tariff_instance'],
                     'waitingTariffDelay' => $row['waiting_tariff_delay'],
-                    'willStartAt' => $row['will_start_at'],
+                    'willStartAt' => self::formatDateTimeAtom($row['will_start_at']),
                     'downloadFilename' => $row['download_filename'],
                 ] : null,
             ];
         }
 
         return $presetsWithTasks;
+    }
+
+    private static function formatDateTimeAtom(mixed $value): ?string
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
+
+        $dateTime = $value instanceof \DateTimeInterface
+            ? $value
+            : new \DateTimeImmutable((string) $value, new \DateTimeZone('UTC'));
+
+        return $dateTime
+            ->setTimezone(new \DateTimeZone('UTC'))
+            ->format(\DateTimeInterface::ATOM);
     }
 
     public function deleteExpiredVideosAndTasks(): int

@@ -32,8 +32,8 @@ final class TaskRealtimePayloadDTO
             presetId: $task->presetId()->toRfc4122(),
             status: $task->status()->name,
             progress: $task->progress()->value(),
-            createdAt: $task->createdAt()->format('Y-m-d H:i'),
-            updatedAt: $task->updatedAt()?->format('Y-m-d H:i'),
+            createdAt: $task->createdAt()->format(\DateTimeInterface::ATOM),
+            updatedAt: $task->updatedAt()?->format(\DateTimeInterface::ATOM),
             deleted: $task->isDeleted(),
         );
     }

@@ -23,12 +23,13 @@ class VideoItemDTOTest extends TestCase
     public function testFromDomainMapsAllFields(): void
     {
         $uuid = Uuid::fromString('11111111-1111-4111-8111-111111111111');
+        $createdAt = new \DateTimeImmutable('2026-03-18 10:15:00', new \DateTimeZone('UTC'));
         $video = Video::reconstitute(
             new VideoTitle('Demo Video'),
             new FileExtension('mp4'),
             Uuid::fromString('42424242-4242-4242-8242-424242424242'),
             ['preview' => true],
-            VideoDates::create(new \DateTimeImmutable('2026-03-18 10:15:00')),
+            VideoDates::create($createdAt),
             $uuid,
         );
 
@@ -40,7 +41,7 @@ class VideoItemDTOTest extends TestCase
 
         $this->assertSame($uuid->toRfc4122(), $dto->uuid);
         $this->assertSame('Demo Video', $dto->title);
-        $this->assertSame('2026-03-18 10:15', $dto->createdAt);
+        $this->assertSame($createdAt->format(\DateTimeInterface::ATOM), $dto->createdAt);
         $this->assertFalse($dto->deleted);
         $this->assertSame('/uploads/' . $uuid->toRfc4122() . '.jpg', $dto->poster);
     }

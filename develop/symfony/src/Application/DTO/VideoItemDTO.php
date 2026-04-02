@@ -34,7 +34,7 @@ readonly class VideoItemDTO
         return new self(
             uuid: $video->id()?->toRfc4122() ?? '',
             title: $video->title()->value(),
-            createdAt: $video->createdAt()->format('Y-m-d H:i'),
+            createdAt: $video->createdAt()->format(\DateTimeInterface::ATOM),
             deleted: $video->isDeleted(),
             canBeDeleted: $canBeDeleted,
             poster: $poster,

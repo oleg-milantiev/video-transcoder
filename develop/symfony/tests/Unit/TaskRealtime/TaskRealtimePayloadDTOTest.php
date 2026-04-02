@@ -55,13 +55,14 @@ final class TaskRealtimePayloadDTOTest extends TestCase
 
     public function testAddVideoPresetFields(): void
     {
+        $createdAt = new \DateTimeImmutable('2026-03-28 10:00:00', new \DateTimeZone('UTC'));
         $dto = new TaskRealtimePayloadDTO(
             taskId: Uuid::generate()->toRfc4122(),
             videoId: Uuid::generate()->toRfc4122(),
             presetId: Uuid::generate()->toRfc4122(),
             status: 'PENDING',
             progress: 0,
-            createdAt: (new \DateTimeImmutable())->format('Y-m-d H:i'),
+            createdAt: $createdAt->format(\DateTimeInterface::ATOM),
             updatedAt: null,
             deleted: false,
         );

@@ -29,6 +29,7 @@ final class TaskRealtimePayloadDTOTest extends TestCase
         $videoId = Uuid::fromString('22222222-2222-4222-8222-222222222222');
         $presetId = Uuid::fromString('33333333-3333-4333-8333-333333333333');
         $userId = Uuid::fromString('44444444-4444-4444-8444-444444444444');
+        $createdAt = new \DateTimeImmutable('2026-03-28 10:00:00', new \DateTimeZone('UTC'));
 
         $task = Task::reconstitute(
             videoId: $videoId,
@@ -36,7 +37,7 @@ final class TaskRealtimePayloadDTOTest extends TestCase
             userId: $userId,
             status: TaskStatus::PROCESSING,
             progress: new Progress(75),
-            dates: TaskDates::create(new \DateTimeImmutable('2026-03-28 10:00:00')),
+            dates: TaskDates::create($createdAt),
             id: $taskId,
         );
 
@@ -47,7 +48,7 @@ final class TaskRealtimePayloadDTOTest extends TestCase
         $this->assertSame($presetId->toRfc4122(), $dto->presetId);
         $this->assertSame('PROCESSING', $dto->status);
         $this->assertSame(75, $dto->progress);
-        $this->assertStringContainsString('2026-03-28', $dto->createdAt);
+        $this->assertSame($createdAt->format(\DateTimeInterface::ATOM), $dto->createdAt);
         $this->assertFalse($dto->deleted);
     }
 
@@ -101,6 +102,7 @@ final class TaskRealtimePayloadDTOTest extends TestCase
         $videoId = Uuid::fromString('22222222-2222-4222-8222-222222222222');
         $presetId = Uuid::fromString('33333333-3333-4333-8333-333333333333');
         $userId = Uuid::fromString('44444444-4444-4444-8444-444444444444');
+        $createdAt = new \DateTimeImmutable('2026-03-28 10:00:00', new \DateTimeZone('UTC'));
 
         $task = Task::reconstitute(
             videoId: $videoId,
@@ -108,7 +110,7 @@ final class TaskRealtimePayloadDTOTest extends TestCase
             userId: $userId,
             status: TaskStatus::FAILED,
             progress: new Progress(50),
-            dates: TaskDates::create(new \DateTimeImmutable('2026-03-28 10:00:00')),
+            dates: TaskDates::create($createdAt),
             id: $taskId,
         );
 
@@ -143,7 +145,7 @@ final class TaskRealtimePayloadDTOTest extends TestCase
         $this->assertFalse($array['deleted']);
         $this->assertSame('My Video', $array['videoTitle']);
         $this->assertSame('Full HD', $array['presetTitle']);
-        $this->assertArrayHasKey('createdAt', $array);
+        $this->assertSame($createdAt->format(\DateTimeInterface::ATOM), $array['createdAt']);
         $this->assertArrayHasKey('updatedAt', $array);
     }
 

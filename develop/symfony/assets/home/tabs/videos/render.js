@@ -1,4 +1,5 @@
 import { h } from 'vue';
+import { humanReadableDateTime } from '../../shared.js';
 
 function renderPoster(video) {
     if (video.poster) {
@@ -64,7 +65,7 @@ export function renderVideosPane(vm, paneClass) {
                               [
                                   h('td', [renderPoster(video)]),
                                   h('td', { class: video.deleted === true ? 'video-title-deleted' : '' }, video.title || '-'),
-                                  h('td', video.createdAt || '-'),
+                                   h('td', humanReadableDateTime(video.createdAt)),
                                   h('td', [renderDeleteButton(vm, video)]),
                               ]
                           )

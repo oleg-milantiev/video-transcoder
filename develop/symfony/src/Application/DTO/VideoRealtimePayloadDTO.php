@@ -40,8 +40,8 @@ final class VideoRealtimePayloadDTO
             title: $video->title()->value(),
             poster: $poster,
             meta: $video->meta(),
-            createdAt: $video->createdAt()->format(DATE_ATOM),
-            updatedAt: $video->updatedAt()?->format(DATE_ATOM),
+            createdAt: $video->createdAt()->format(\DateTimeInterface::ATOM),
+            updatedAt: $video->updatedAt()?->format(\DateTimeInterface::ATOM),
             deleted: $video->isDeleted(),
             canBeDeleted: $canBeDeleted,
         );

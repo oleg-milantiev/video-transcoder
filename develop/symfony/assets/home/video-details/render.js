@@ -1,5 +1,5 @@
 import { h } from 'vue';
-import { bytesToHuman } from '../shared.js';
+import { bytesToHuman, humanReadableDateTime } from '../shared.js';
 
 function formatDelayClock(seconds) {
     const normalized = Number(seconds);
@@ -32,7 +32,7 @@ function buildPendingStatusHint(vm, task) {
 
     if (task.waitingTariffDelay === true) {
         messages.push(
-            `Your tariff allows transcoding tasks to start no more often than every ${formatDelayClock(tariff.delay)}. The next video will start at ${task.willStartAt || '-'}.`
+            `Your tariff allows transcoding tasks to start no more often than every ${formatDelayClock(tariff.delay)}. The next video will start at ${humanReadableDateTime(task.willStartAt)}.`
         );
     }
 
@@ -166,7 +166,7 @@ function renderPresetRows(vm) {
             h('td', preset.title),
             h('td', renderTaskStatus(vm, task)),
             h('td', task ? String(task.progress) + '%' : '-'),
-            h('td', task ? task.createdAt : '-'),
+            h('td', task ? humanReadableDateTime(task.createdAt) : '-'),
             h('td', [actionNode]),
         ]);
     });
@@ -202,6 +202,10 @@ export function renderVideoDetails(vm) {
 
     const rows = renderPresetRows(vm);
     const metaEntries = Object.entries(vm.dto.meta || {});
+    const createdAt = humanReadableDateTime(vm.dto.createdAt);
+    const updatedAt = humanReadableDateTime(vm.dto.updatedAt);
+    const expiredAt = humanReadableDateTime(vm.dto.expiredAt);
+    const expiredAtLabel = expiredAt === '-' ? '-' : `${expiredAt} (${vm.dto.expiredInterval})`;
 
     return h('div', { class: 'py-4' }, [
         h('div', { class: 'd-flex justify-content-between align-items-center mb-3' }, [
@@ -260,11 +264,11 @@ export function renderVideoDetails(vm) {
                     h('dt', { class: 'col-sm-3' }, 'Extension'),
                     h('dd', { class: 'col-sm-9' }, vm.dto.extension),
                     h('dt', { class: 'col-sm-3' }, 'Created At'),
-                    h('dd', { class: 'col-sm-9' }, vm.dto.createdAt),
+                    h('dd', { class: 'col-sm-9' }, createdAt),
                     h('dt', { class: 'col-sm-3' }, 'Updated At'),
-                    h('dd', { class: 'col-sm-9' }, vm.dto.updatedAt || '-'),
+                    h('dd', { class: 'col-sm-9' }, updatedAt),
                     h('dt', { class: 'col-sm-3' }, 'Expired At'),
-                    h('dd', { class: 'col-sm-9' }, vm.dto.expiredAt + ' (' + vm.dto.expiredInterval + ')' || '-'),
+                    h('dd', { class: 'col-sm-9' }, expiredAtLabel),
                 ]),
             ]),
         ]),
