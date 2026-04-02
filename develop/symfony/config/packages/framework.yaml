@@ -2,6 +2,9 @@
 framework:
     secret: '%env(APP_SECRET)%'
 
+    trusted_proxies: '0.0.0.0/0'
+    trusted_headers: ['x-forwarded-for', 'x-forwarded-proto', 'x-forwarded-host', 'x-forwarded-port']
+
     uid:
         # Keep UUID generation aligned with Doctrine entity type hints (?UuidV4).
         default_uuid_version: 4
