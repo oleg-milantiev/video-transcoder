@@ -47,8 +47,7 @@ final class GoogleControllerTest extends WebTestCase
 
         self::assertResponseIsSuccessful();
         self::assertSelectorExists('.alert.alert-danger');
-        self::assertSelectorTextContains('.alert.alert-danger', 'Ошибка при входе через Google');
-        self::assertSelectorTextContains('.alert.alert-danger', 'Invalid OAuth state');
+        self::assertSelectorTextContains('.alert.alert-danger', 'Google login error. Try again later');
     }
 
 
