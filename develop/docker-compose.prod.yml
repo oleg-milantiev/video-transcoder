@@ -121,6 +121,8 @@ services:
             - nginx
         working_dir: /work/e2e
         command: ["bash", "-lc", "sleep infinity"]
+        extra_hosts:
+            - "yc.milantiev.com:host-gateway"
         volumes:
             - ./e2e:/work/e2e
             - ./release.check:/work/release.check
@@ -141,7 +143,7 @@ services:
                 cors_origins *
                 anonymous 0
         ports:
-            - 281:8080
+            - 8080:8080
 
 networks:
     appnet:
