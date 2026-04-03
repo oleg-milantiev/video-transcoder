@@ -9,7 +9,6 @@ use App\Infrastructure\Persistence\Doctrine\User\TariffEntity;
 use App\Infrastructure\Persistence\Doctrine\User\UserEntity;
 use App\Infrastructure\Google\GoogleAuthenticator;
 use Doctrine\ORM\EntityManagerInterface;
-use Monolog\Logger;
 use Psr\Log\LoggerInterface;
 use Psr\Log\LogLevel;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -20,6 +19,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Util\TargetPathTrait;
+use Symfony\Component\Uid\UuidV4 as SymfonyUuid;
 
 class GoogleController extends AbstractController
 {
@@ -93,7 +93,7 @@ class GoogleController extends AbstractController
                 $user->email = $email;
                 $user->setPassword($passwordHasher->hashPassword($user, bin2hex(random_bytes(32))));
                 $user->setRoles(['ROLE_USER']);
-                $user->tariff = $em->getReference(TariffEntity::class, self::TARIFF_FREE_ID);
+                $user->tariff = $em->getReference(TariffEntity::class, SymfonyUuid::fromString(self::TARIFF_FREE_ID));
 
                 $em->persist($user);
                 $em->flush();

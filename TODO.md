@@ -10,7 +10,6 @@
 ## Sprint 0.1.0 (первая демка)
 
 - добавить лимиты воркеру - messenger:consume [-l|--limit LIMIT] [-f|--failure-limit FAILURE-LIMIT] [-m|--memory-limit MEMORY-LIMIT] [-t|--time-limit TIME-LIMIT] [--sleep SLEEP] [-b|--bus BUS] [--queues QUEUES] [--no-reset] [--all] [--exclude-receivers EXCLUDE-RECEIVERS] [--keepalive [KEEPALIVE]
-- регистрация common юзера с free тарифом через гугль - Free тариф
 - обновление токенов front и mercure
 - в Багдаде всё спокойно
   - Watchdog зависших процессов (+ общий таймаут кодирования)
@@ -27,6 +26,7 @@
 
 ## Sprint 0.1.1 (развитие)
 
+- очень не всегда появляется uppy
 - дизайна хоть чуток :)
 - csrf-token
 - прыгающий loading ... при каждом переключении вкладок напрягает
