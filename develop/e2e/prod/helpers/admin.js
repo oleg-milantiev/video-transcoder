@@ -185,7 +185,6 @@ async function setTariffForFilteredUser(page, userText, tariffTitle, testInfo, s
   }
 
   await submitCrudForm(page);
-  await filterUsersByEmail(page, userText, testInfo, screenshotName);
   await expect(userRowByText(page, userText)).toContainText(tariffTitle, { timeout: UI_TIMEOUT });
 }
 
