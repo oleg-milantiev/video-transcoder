@@ -37,6 +37,7 @@ services:
         expose:
             - 9000
         volumes:
+            # todo chown -R 82:82 public/uploads/
             - uploads:/var/www/yc/public/uploads
 
     ffmpeg:

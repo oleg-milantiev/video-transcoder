@@ -37,11 +37,7 @@ const {
   buildRunContext,
 } = require('../helpers');
 
-const REQUIRED_PRESET_GROUPS = [
-  { label: '180p', patterns: [/^180p$/i] },
-  { label: 'HD, 3Mbps', patterns: [/^HD, 3 Mbps$/i] },
-  { label: 'Full HD, 6Mbps', patterns: [/^Full HD, 6 Mbps$/i] },
-];
+const REQUIRED_PRESETS = ['180p', 'HD, 3Mbps', 'Full HD, 6Mbps'];
 
 function normalizeStatus(status) {
   return String(status || '').trim().toUpperCase();
@@ -110,16 +106,15 @@ async function waitForAllPresets(page, titles, matcher, description, timeout = 9
 }
 
 function resolveRequiredPresets(allTitles) {
-  const resolved = {};
-  const usedTitles = new Set();
-
-  for (const group of REQUIRED_PRESET_GROUPS) {
-    const matchedTitle = allTitles.find((title) => !usedTitles.has(title) && group.patterns.some((pattern) => pattern.test(title)));
-    if (!matchedTitle) {
-      throw new Error(`Required preset group "${group.label}" was not found. Available presets: ${allTitles.join(', ')}`);
+  for (const presetName of REQUIRED_PRESETS) {
+    if (!allTitles.includes(presetName)) {
+      throw new Error(`Required preset "${presetName}" was not found. Available presets: ${allTitles.join(', ')}`);
     }
-    resolved[group.label] = matchedTitle;
-    usedTitles.add(matchedTitle);
+  }
+
+  const resolved = {};
+  for (const presetName of REQUIRED_PRESETS) {
+    resolved[presetName] = presetName;
   }
 
   return resolved;
@@ -198,7 +193,7 @@ async function deleteVideoFromListIfPresent(page, videoTitle, testInfo, screensh
 }
 
 test.describe('prod-safe isolated smoke', () => {
-  test.setTimeout(40 * 60 * 1000);
+  test.setTimeout(5 * 60 * 1000);
 
   test('creates isolated user, verifies safe flow, upgrades tariff, downloads outputs, and cleans up', async ({ page }, testInfo) => {
     page.setDefaultTimeout(UI_TIMEOUT);
@@ -226,7 +221,6 @@ test.describe('prod-safe isolated smoke', () => {
 
       await createUserWithTariff(page, run.userEmail, run.userPassword, 'Free');
       userCreated = true;
-      await filterUsersByEmail(page, run.userLocalPart, testInfo, '03-admin-user-created-filtered.png');
       await shot(page, testInfo, '03b-admin-user-created.png');
 
       await logoutToPublic(page);

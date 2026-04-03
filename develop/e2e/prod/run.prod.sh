@@ -5,12 +5,11 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 E2E_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 DEVELOP_ROOT="$(cd "$E2E_ROOT/.." && pwd)"
-COMPOSE_FILE="$DEVELOP_ROOT/docker-compose.prod.yml"
 
 cd "$DEVELOP_ROOT"
 
 export BASE_URL="${BASE_URL:-http://nginx}"
-export PROJECT_NAME="${PROJECT_NAME:-prod_$(date +%Y%m%d_%H%M%S)}"
+export PROJECT_NAME="${PROJECT_NAME:-prod_$(date +%Y%m%d_%H%M)}"
 export PROD_DATE_SUFFIX="${PROD_DATE_SUFFIX:-$(date +%Y%m%d)}"
 export PROD_USER_LOCAL_PART="${PROD_USER_LOCAL_PART:-prod-${PROD_DATE_SUFFIX}}"
 export PROD_USER_DOMAIN="${PROD_USER_DOMAIN:-example.test}"
@@ -43,9 +42,7 @@ printf '  PROD_DATE_SUFFIX=%s\n' "$PROD_DATE_SUFFIX"
 printf '  PROD_USER_LOCAL_PART=%s\n' "$PROD_USER_LOCAL_PART"
 printf '  E2E_ARTIFACTS_DIR=%s\n' "$E2E_ARTIFACTS_DIR"
 
-docker compose -f "$COMPOSE_FILE" up -d playwright
-
-docker compose -f "$COMPOSE_FILE" exec -T playwright bash -lc "
+docker compose exec -T playwright bash -lc "
   set -euo pipefail
   cd /work/e2e
   npm install --no-audit --no-fund

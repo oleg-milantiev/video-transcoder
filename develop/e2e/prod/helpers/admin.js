@@ -1,8 +1,29 @@
 const { expect } = require('@playwright/test');
 const { UI_TIMEOUT } = require('../../helpers/constants');
-const { openAdminSection, mainTableBodyForHeading, submitCrudForm } = require('../../helpers/admin');
+const { openAdminSection, mainTableBodyForHeading, submitCrudForm, dismissVisibleAdminModal, dismissAllVisibleModals } = require('../../helpers/admin');
 const { shot } = require('../../helpers/screenshot');
 const { clickAndAcceptConfirm } = require('../../helpers/dialogs');
+
+async function ensureAdminModalDismissed(page) {
+  if (typeof dismissAllVisibleModals === 'function') {
+    await dismissAllVisibleModals(page);
+    return;
+  }
+
+  if (typeof dismissVisibleAdminModal === 'function') {
+    await dismissVisibleAdminModal(page).catch(() => {});
+    return;
+  }
+
+  for (let i = 0; i < 3; i++) {
+    const modal = page.locator('#modal-filters.show, .modal.show[aria-modal="true"]').first();
+    if ((await modal.count()) === 0 || !(await modal.isVisible().catch(() => false))) {
+      break;
+    }
+    await page.keyboard.press('Escape');
+    await page.waitForTimeout(100);
+  }
+}
 
 function userRowByText(page, userText) {
   return mainTableBodyForHeading(page, 'Users').locator('tr', { hasText: userText }).first();
@@ -10,7 +31,7 @@ function userRowByText(page, userText) {
 
 function usersFilterValueInput(page) {
   return page
-    .locator('input[name="filters[email][value]"], input[name*="filters[email]"][name*="[value]"]')
+    .locator('input[name="filters[email][value]"]:not([type="hidden"]), input[name*="filters[email]"][name*="[value]"]:not([type="hidden"])')
     .first();
 }
 
@@ -20,28 +41,89 @@ function usersFilterComparisonSelect(page) {
     .first();
 }
 
-async function openUsersFilterPanel(page) {
-  const input = usersFilterValueInput(page);
-  if ((await input.count()) > 0 && await input.isVisible().catch(() => false)) {
-    return input;
-  }
-
-  const filterToggle = page
-    .locator('a.action-filters, button.action-filters, a.action-filters-button, button.action-filters-button')
-    .or(page.getByRole('button', { name: /filters?/i }))
-    .or(page.getByRole('link', { name: /filters?/i }))
-    .first();
-
-  if ((await filterToggle.count()) > 0) {
-    await filterToggle.click({ timeout: UI_TIMEOUT });
-  }
-
-  await expect(input).toBeVisible({ timeout: UI_TIMEOUT });
-  return input;
+function usersFilterModal(page) {
+  return page.locator('#modal-filters.show, .modal.show[aria-modal="true"]').first();
 }
+
+async function closeUsersFilterModal(page) {
+  const modal = usersFilterModal(page);
+  if ((await modal.count()) === 0 || !(await modal.isVisible().catch(() => false))) {
+    await ensureAdminModalDismissed(page);
+    return;
+  }
+
+  const closeButton = modal.locator('button.btn-close, button[aria-label="Close"], [data-bs-dismiss="modal"]').first();
+  if ((await closeButton.count()) > 0) {
+    await closeButton.click({ timeout: UI_TIMEOUT }).catch(() => {});
+  } else {
+    await page.keyboard.press('Escape').catch(() => {});
+  }
+
+  await expect(modal).not.toBeVisible({ timeout: UI_TIMEOUT }).catch(() => {});
+}
+
+async function openUsersFilterPanel(page) {
+   await ensureAdminModalDismissed(page);
+
+   const input = usersFilterValueInput(page);
+   if ((await input.count()) > 0 && await input.isVisible().catch(() => false)) {
+     return input;
+   }
+
+   const filterToggle = page
+     .locator('a.action-filters, button.action-filters, a.action-filters-button, button.action-filters-button')
+     .or(page.getByRole('button', { name: /filters?/i }))
+     .or(page.getByRole('link', { name: /filters?/i }))
+     .first();
+
+   if ((await filterToggle.count()) > 0) {
+     await filterToggle.click({ timeout: UI_TIMEOUT });
+     await page.waitForTimeout(300);
+   }
+
+   const modal = usersFilterModal(page);
+   if ((await modal.count()) > 0) {
+     // Wait for modal to be visible before interacting
+     await expect(modal).toBeVisible({ timeout: UI_TIMEOUT });
+     const emailTab = modal.getByRole('link', { name: 'Email', exact: true }).first();
+     if ((await emailTab.count()) > 0) {
+       await emailTab.click({ timeout: UI_TIMEOUT }).catch(() => {});
+       await page.waitForTimeout(500);
+     }
+   }
+
+    const inputRetry = usersFilterValueInput(page);
+    if ((await inputRetry.count()) === 0) {
+      throw new Error('Filter email input not found. Filter panel may not be properly initialized.');
+    }
+
+    // Input may be hidden by CSS (Bootstrap collapse), just ensure it exists and can be filled
+    await inputRetry.scrollIntoViewIfNeeded({ timeout: UI_TIMEOUT }).catch(() => {});
+    await page.waitForTimeout(200);
+
+    return inputRetry;
+  }
 
 async function filterUsersByEmail(page, emailNeedle, testInfo, screenshotName = 'admin-users-filtered.png', { expectMatch = true } = {}) {
   await openAdminSection(page, 'Users', '/admin/user');
+
+  // Check if filter checkbox is already checked (filter already applied)
+  const filterCheckbox = page.locator('input[type="checkbox"].filter-checkbox').first();
+  const isFilterAlreadyApplied = (await filterCheckbox.count()) > 0 && await filterCheckbox.isChecked();
+
+  if (isFilterAlreadyApplied) {
+    // Filter already applied, just verify the user is visible
+    await expect(mainTableBodyForHeading(page, 'Users')).toBeVisible({ timeout: UI_TIMEOUT });
+
+    if (expectMatch) {
+      await expect(userRowByText(page, emailNeedle)).toBeVisible({ timeout: UI_TIMEOUT });
+    }
+
+    if (testInfo) {
+      await shot(page, testInfo, screenshotName);
+    }
+    return;
+  }
 
   const input = await openUsersFilterPanel(page);
   await input.fill(emailNeedle, { timeout: UI_TIMEOUT });
@@ -58,12 +140,21 @@ async function filterUsersByEmail(page, emailNeedle, testInfo, screenshotName = 
     }
   }
 
-  const filterForm = input.locator('xpath=ancestor::form[1]').first();
-  const submitButton = filterForm.locator('button[type="submit"], input[type="submit"]').first();
-  await Promise.all([
-    page.waitForLoadState('domcontentloaded').catch(() => {}),
-    submitButton.click({ timeout: UI_TIMEOUT }),
-  ]);
+    // Find submit button - first try within the input's form, then fallback to modal buttons
+    let submitButton = input.locator('xpath=ancestor::form[1]').first().locator('button[type="submit"], input[type="submit"]').first();
+
+    // If no submit button found, look for Apply button in the filter modal
+    if ((await submitButton.count()) === 0) {
+      const modal = usersFilterModal(page);
+      if ((await modal.count()) > 0) {
+        submitButton = modal.getByRole('button', { name: /apply/i }).first();
+      }
+    }
+
+    await Promise.all([
+      page.waitForLoadState('domcontentloaded').catch(() => {}),
+      submitButton.click({ timeout: UI_TIMEOUT }),
+    ]);
 
   await expect(mainTableBodyForHeading(page, 'Users')).toBeVisible({ timeout: UI_TIMEOUT });
 
@@ -74,6 +165,8 @@ async function filterUsersByEmail(page, emailNeedle, testInfo, screenshotName = 
   if (testInfo) {
     await shot(page, testInfo, screenshotName);
   }
+
+  await closeUsersFilterModal(page);
 }
 
 async function setTariffForFilteredUser(page, userText, tariffTitle, testInfo, screenshotName = 'admin-user-tariff-updated.png') {

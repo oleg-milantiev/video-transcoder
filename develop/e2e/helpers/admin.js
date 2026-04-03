@@ -10,7 +10,51 @@ function mainTableBodyForHeading(page, heading) {
   return page.locator('article', { has: page.getByRole('heading', { name: heading }) }).locator('table tbody').first();
 }
 
+async function dismissVisibleAdminModal(page) {
+  const modal = page.locator('.modal.show[aria-modal="true"], #modal-filters.show').first();
+  if ((await modal.count()) === 0) {
+    return;
+  }
+
+  if (!(await modal.isVisible().catch(() => false))) {
+    return;
+  }
+
+  const closeButton = modal
+    .locator('button.btn-close, button[aria-label="Close"], [data-bs-dismiss="modal"]')
+    .first();
+
+  if ((await closeButton.count()) > 0) {
+    await closeButton.click({ timeout: UI_TIMEOUT }).catch(() => {});
+  } else {
+    await page.keyboard.press('Escape').catch(() => {});
+  }
+
+  await expect(modal).not.toBeVisible({ timeout: UI_TIMEOUT });
+}
+
+async function dismissAllVisibleModals(page) {
+  for (let i = 0; i < 3; i++) {
+    const modal = page.locator('.modal.show[aria-modal="true"], #modal-filters.show').first();
+    if ((await modal.count()) === 0 || !(await modal.isVisible().catch(() => false))) {
+      break;
+    }
+    await page.keyboard.press('Escape');
+    await page.waitForTimeout(100);
+  }
+}
+
 async function openAdminSection(page, sectionName, pathSuffix) {
+  await dismissAllVisibleModals(page);
+
+  if (page.url().includes(pathSuffix)) {
+    const heading = page.getByRole('heading', { name: sectionName }).first();
+    if ((await heading.count()) > 0 && await heading.isVisible().catch(() => false)) {
+      await expect(mainTableBodyForHeading(page, sectionName)).toBeVisible({ timeout: UI_TIMEOUT });
+      return;
+    }
+  }
+
   await adminMenuLink(page, pathSuffix).click({ timeout: UI_TIMEOUT });
   await expect(page).toHaveURL(/\/admin/, { timeout: NAV_TIMEOUT });
   await expect(page.getByRole('heading', { name: sectionName }).first()).toBeVisible({ timeout: UI_TIMEOUT });
@@ -181,6 +225,8 @@ module.exports = {
   openAdminDashboardFromHome,
   submitCrudForm,
   ensureAdminMenuSectionsVisible,
+  dismissVisibleAdminModal,
+  dismissAllVisibleModals,
   createOrUpdatePreset,
   createOrUpdateTariffByTitle,
   assignTariffToUser,
