@@ -9,6 +9,7 @@ use App\Application\Event\StartTaskSchedulerFail;
 use App\Application\Event\StartTaskSchedulerStart;
 use App\Application\Event\StartTaskSchedulerSuccess;
 use App\Application\Query\Repository\ScheduledTaskReadRepositoryInterface;
+use App\Infrastructure\Task\TaskCancellationTrigger;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
@@ -25,6 +26,7 @@ final readonly class StartTaskSchedulerHandler
         private MessageBusInterface $commandBus,
         #[Autowire(service: 'messenger.bus.event')]
         private MessageBusInterface $eventBus,
+        private TaskCancellationTrigger $cancellationTrigger,
     ) {
     }
 
@@ -45,6 +47,7 @@ final readonly class StartTaskSchedulerHandler
                     'userId' => $item->userId,
                     'videoId' => $item->videoId,
                 ]);
+                $this->cancellationTrigger->clear($item->taskId);
                 $this->commandBus->dispatch(new TranscodeVideo($item));
             }
 
