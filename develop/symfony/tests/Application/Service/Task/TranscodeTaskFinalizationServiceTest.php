@@ -56,7 +56,7 @@ class TranscodeTaskFinalizationServiceTest extends TestCase
         $logService = $this->createMock(LogServiceInterface::class);
         $logService->expects($this->once())
             ->method('log')
-            ->with('task', $taskId, LogLevel::INFO, 'Transcoding cancelled');
+            ->with('task', 'cancel', $taskId, LogLevel::INFO, 'Transcoding cancelled');
 
         $cancellationTrigger = new TaskCancellationTrigger(new ArrayAdapter());
         $cancellationTrigger->request($taskId);
@@ -99,7 +99,7 @@ class TranscodeTaskFinalizationServiceTest extends TestCase
         $logService = $this->createMock(LogServiceInterface::class);
         $logService->expects($this->once())
             ->method('log')
-            ->with('task', $taskId, LogLevel::INFO, 'Transcoding finished successfully');
+            ->with('task', 'complete', $taskId, LogLevel::INFO, 'Transcoding finished successfully');
 
         $cancellationTrigger = new TaskCancellationTrigger(new ArrayAdapter());
         $cancellationTrigger->request($taskId);
@@ -141,7 +141,7 @@ class TranscodeTaskFinalizationServiceTest extends TestCase
         $logService = $this->createMock(LogServiceInterface::class);
         $logService->expects($this->once())
             ->method('log')
-            ->with('task', $taskId, LogLevel::ERROR, 'Transcoding failed', ['message' => 'boom']);
+            ->with('task', 'fail', $taskId, LogLevel::ERROR, 'Transcoding failed', ['message' => 'boom']);
 
         $commandBus = $this->createMock(MessageBusInterface::class);
         $commandBus->expects($this->once())

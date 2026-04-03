@@ -40,20 +40,22 @@ final class AdminCrudAuditListenerTest extends TestCase
         $logService = $this->createMock(LogServiceInterface::class);
         $logService->expects($this->exactly(2))
             ->method('log')
-            ->willReturnCallback(static function (string $name, Uuid $objectId, string $level, string $text, array $context) use (&$calls): void {
-                $calls[] = [$name, $objectId->toRfc4122(), $level, $text, $context];
+            ->willReturnCallback(static function (string $name, string $action, Uuid $objectId, string $level, string $text, array $context) use (&$calls): void {
+                $calls[] = [$name, $action, $objectId->toRfc4122(), $level, $text, $context];
             });
 
         $listener = new AdminCrudAuditListener($logService, $security, $requestStack);
         $listener->onEntityUpdated(new AfterEntityUpdatedEvent($entity));
 
         self::assertSame('admin', $calls[0][0]);
-        self::assertSame('11111111-1111-4111-8111-111111111111', $calls[0][1]);
+        self::assertSame('updated', $calls[0][1]);
+        self::assertSame('11111111-1111-4111-8111-111111111111', $calls[0][2]);
         self::assertSame('audittest', $calls[1][0]);
-        self::assertSame('22222222-2222-4222-8222-222222222222', $calls[1][1]);
-        self::assertSame('Admin updated AuditTestEntity', $calls[0][3]);
-        self::assertSame('updated', $calls[0][4]['action']);
-        self::assertSame('admin', $calls[0][4]['route']);
+        self::assertSame('updated', $calls[1][1]);
+        self::assertSame('22222222-2222-4222-8222-222222222222', $calls[1][2]);
+        self::assertSame('Admin updated AuditTestEntity', $calls[0][4]);
+        self::assertSame('updated', $calls[0][5]['action']);
+        self::assertSame('admin', $calls[0][5]['route']);
     }
 
     public function testSkipsLoggingWhenNoAuthenticatedAdmin(): void

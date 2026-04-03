@@ -185,7 +185,7 @@ final class TaskApiControllerTest extends ApiWebTestCase
         $this->replaceService(TaskRepositoryInterface::class, $taskRepository);
 
         $logService = $this->createMock(LogServiceInterface::class);
-        $logService->expects($this->atLeast(3))->method('log');
+        $logService->expects($this->atLeast(1))->method('log');
         $this->replaceService(LogServiceInterface::class, $logService);
 
         $videoRepository = $this->createMock(VideoRepositoryInterface::class);
@@ -226,7 +226,7 @@ final class TaskApiControllerTest extends ApiWebTestCase
         $this->replaceService(TaskRepositoryInterface::class, $taskRepository);
 
         $logService = $this->createMock(LogServiceInterface::class);
-        $logService->expects($this->atLeast(3))->method('log');
+        $logService->expects($this->atLeast(1))->method('log');
         $this->replaceService(LogServiceInterface::class, $logService);
 
         $videoRepository = $this->createMock(VideoRepositoryInterface::class);

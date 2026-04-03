@@ -168,17 +168,17 @@ final class DeleteVideoHandlerTest extends TestCase
             ->with($videoId)
             ->willReturn([$task]);
 
-        $queryBus = $this->createMock(QueryBus::class);
-        $queryBus->expects($this->once())
-            ->method('query')
-            ->with($this->callback(static function (object $query) use ($task, $userId): bool {
-                return $query instanceof DeleteTaskQuery
-                    && $query->taskId->toRfc4122() === $task->id()?->toRfc4122()
-                    && $query->requestedByUserId->toRfc4122() === $userId->toRfc4122();
-            }));
+         $queryBus = $this->createMock(QueryBus::class);
+         $queryBus->expects($this->once())
+             ->method('query')
+             ->with($this->callback(static function (object $query) use ($task, $userId): bool {
+                 return $query instanceof DeleteTaskQuery
+                     && $query->taskId->toRfc4122() === $task->id()?->toRfc4122()
+                     && $query->requestedByUserId->toRfc4122() === $userId->toRfc4122();
+             }));
 
-        $logService = $this->createMock(LogServiceInterface::class);
-        $logService->expects($this->exactly(2))->method('log');
+         $logService = $this->createMock(LogServiceInterface::class);
+         $logService->expects($this->exactly(1))->method('log');
 
         $cleanupCommandBus = $this->createMock(MessageBusInterface::class);
         $cleanupCommandBus->expects($this->once())
@@ -377,15 +377,15 @@ final class DeleteVideoHandlerTest extends TestCase
             ->with($videoId)
             ->willReturn([$task1, $task2]);
 
-        $queryBus = $this->createMock(QueryBus::class);
-        $queryBus->expects($this->exactly(2))
-            ->method('query')
-            ->willReturnCallback(static function (object $query) {
-                return null;
-            });
+         $queryBus = $this->createMock(QueryBus::class);
+         $queryBus->expects($this->exactly(2))
+             ->method('query')
+             ->willReturnCallback(static function (object $query) {
+                 return null;
+             });
 
-        $logService = $this->createMock(LogServiceInterface::class);
-        $logService->expects($this->exactly(2))->method('log');
+         $logService = $this->createMock(LogServiceInterface::class);
+         $logService->expects($this->exactly(1))->method('log');
 
         $cleanupCommandBus = $this->createMock(MessageBusInterface::class);
         $cleanupCommandBus->expects($this->once())

@@ -46,7 +46,7 @@ class TranscodeTaskPreparationServiceTest extends TestCase
         $logService = $this->createMock(LogServiceInterface::class);
         $logService->expects($this->once())
             ->method('log')
-            ->with('task', Uuid::fromString('123e4567-e89b-42d3-a456-426614174013'), LogLevel::INFO, 'Transcoding started');
+            ->with('task', 'transcode', Uuid::fromString('123e4567-e89b-42d3-a456-426614174013'), LogLevel::INFO, 'Transcoding started');
 
         $presetRepository = $this->createMock(PresetRepositoryInterface::class);
         $presetRepository->expects($this->once())
@@ -100,7 +100,7 @@ class TranscodeTaskPreparationServiceTest extends TestCase
         $logService = $this->createMock(LogServiceInterface::class);
         $logService->expects($this->once())
             ->method('log')
-            ->with('task', Uuid::fromString('123e4567-e89b-42d3-a456-426614174013'), LogLevel::ERROR, 'Preset not found for task');
+            ->with('task', 'transcode', Uuid::fromString('123e4567-e89b-42d3-a456-426614174013'), LogLevel::ERROR, 'Preset not found for task');
 
         $presetRepository = $this->createMock(PresetRepositoryInterface::class);
         $presetRepository->expects($this->once())

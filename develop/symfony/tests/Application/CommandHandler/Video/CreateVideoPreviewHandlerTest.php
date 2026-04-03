@@ -78,7 +78,7 @@ class CreateVideoPreviewHandlerTest extends TestCase
         $logService = $this->createMock(LogServiceInterface::class);
         $logService->expects($this->once())
             ->method('log')
-            ->with('video', $video->id(), LogLevel::INFO, 'Preview Created');
+            ->with('video', 'preview', $video->id(), LogLevel::INFO, 'Preview Created');
 
         $processRunner = $this->createMock(ProcessRunnerInterface::class);
         $processRunner->expects($this->once())
@@ -127,7 +127,7 @@ class CreateVideoPreviewHandlerTest extends TestCase
         $logService = $this->createMock(LogServiceInterface::class);
         $logService->expects($this->once())
             ->method('log')
-            ->with('video', $video->id(), LogLevel::ERROR, 'Error Create Preview', ['message' => 'ffmpeg boom']);
+            ->with('video', 'preview', $video->id(), LogLevel::ERROR, 'Error Create Preview', ['message' => 'ffmpeg boom']);
 
         $processRunner = $this->createStub(ProcessRunnerInterface::class);
         $processRunner->method('mustRun')->willThrowException(new \RuntimeException('ffmpeg boom'));

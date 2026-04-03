@@ -122,7 +122,7 @@ class StartTranscodeHandlerTest extends TestCase
             ->willReturn(true);
 
         $logService = $this->createMock(LogServiceInterface::class);
-        $logService->expects($this->exactly(3))->method('log');
+        $logService->expects($this->exactly(2))->method('log');
 
         $handler = new StartTranscodeHandler($commandBus, $eventBus, $videoRepo, $presetRepo, $taskRepo, $userRepo, $logService, $security);
         $query = new StartTranscodeQuery($videoId->toRfc4122(), $preset->id()->toRfc4122(), $user->id()->toRfc4122());
@@ -217,7 +217,7 @@ class StartTranscodeHandlerTest extends TestCase
             ->willReturn(true);
 
         $logService = $this->createMock(LogServiceInterface::class);
-        $logService->expects($this->exactly(3))->method('log');
+        $logService->expects($this->exactly(2))->method('log');
 
         $handler = new StartTranscodeHandler($commandBus, $eventBus, $videoRepo, $presetRepo, $taskRepo, $userRepo, $logService, $security);
         $query = new StartTranscodeQuery($videoId->toRfc4122(), $preset->id()->toRfc4122(), $user->id()->toRfc4122());

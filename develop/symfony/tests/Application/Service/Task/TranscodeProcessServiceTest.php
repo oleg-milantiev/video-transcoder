@@ -57,7 +57,7 @@ final class TranscodeProcessServiceTest extends TestCase
         $logService = $this->createMock(LogServiceInterface::class);
         $logService->expects($this->once())
             ->method('log')
-            ->with('task', $task->id(), LogLevel::INFO, 'Transcoding progress', ['progress' => 99]);
+            ->with('task', 'progress', $task->id(), LogLevel::INFO, 'Transcoding progress', ['progress' => 99]);
 
         $commandBus = $this->createMock(MessageBusInterface::class);
         $commandBus->expects($this->once())->method('dispatch')->willReturn(new \Symfony\Component\Messenger\Envelope(new \stdClass()));

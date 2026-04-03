@@ -144,13 +144,13 @@ final class DeleteTaskHandlerTest extends TestCase
         $videoRepository = $this->createStub(VideoRepositoryInterface::class);
         $videoRepository->method('findById')->willReturn($video);
 
-        $calls = [];
-        $logService = $this->createMock(LogServiceInterface::class);
-        $logService->expects($this->exactly(3))
-            ->method('log')
-            ->willReturnCallback(function ($entity, $id, $level, $message, $context) use (&$calls) {
-                $calls[] = [$entity, $id, $level, $message, $context];
-            });
+         $calls = [];
+         $logService = $this->createMock(LogServiceInterface::class);
+         $logService->expects($this->exactly(1))
+             ->method('log')
+             ->willReturnCallback(function ($entity, $action, $id, $level, $message, $context) use (&$calls) {
+                 $calls[] = [$entity, $action, $id, $level, $message, $context];
+             });
 
         $security = $this->createMock(Security::class);
         $security->expects($this->once())->method('isGranted')->with(VideoAccessVoter::CAN_DELETE, $video)->willReturn(true);
@@ -159,13 +159,10 @@ final class DeleteTaskHandlerTest extends TestCase
 
         $handler->__invoke($query);
 
-        // Assert log calls were made in expected order with expected messages
-        $this->assertCount(3, $calls);
-        $this->assertSame('task', $calls[0][0]);
-        $this->assertSame('Task marked as deleted', $calls[0][3]);
-        $this->assertSame('video', $calls[1][0]);
-        $this->assertSame('Task deleted for video', $calls[1][3]);
-        $this->assertSame('user', $calls[2][0]);
-        $this->assertSame('User deleted task', $calls[2][3]);
+         // Assert log calls were made in expected order with expected messages
+         $this->assertCount(1, $calls);
+         $this->assertSame('task', $calls[0][0]);
+         $this->assertSame('delete', $calls[0][1]);
+         $this->assertSame('Task marked as deleted', $calls[0][4]);
     }
 }
