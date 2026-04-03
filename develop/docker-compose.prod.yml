@@ -1,0 +1,129 @@
+services:
+    nginx:
+        restart: always
+        image: olegmilantiev/yc-nginx:${PROJECT_VERSION}
+        ports:
+            # Каскадно через внешний nginx, отвечающий за сертификат
+            - 280:80
+        depends_on:
+            - php
+        volumes:
+            - uploads:/var/www/yc/public/uploads:ro
+
+    php:
+        restart: always
+        image: olegmilantiev/yc-php:${PROJECT_VERSION}
+        env_file:
+            - .env
+        depends_on:
+            mercure:
+                condition: service_healthy
+            redis:
+                condition: service_healthy
+            postgres:
+                condition: service_healthy
+        expose:
+            - 9000
+        volumes:
+            - uploads:/var/www/yc/public/uploads
+
+    ffmpeg:
+        restart: always
+        image: olegmilantiev/yc-ffmpeg:${PROJECT_VERSION}
+        env_file:
+            - .env
+        depends_on:
+            mercure:
+                condition: service_healthy
+            redis:
+                condition: service_healthy
+            postgres:
+                condition: service_healthy
+        command: sh -c '/var/www/yc/bin/console messenger:consume async -vvv'
+        mem_limit: 256m
+        deploy:
+            replicas: 1
+            resources:
+                limits:
+                    memory: 256M
+        volumes:
+            - uploads:/var/www/yc/public/uploads
+
+    ffmpeg-transcode:
+        restart: always
+        image: olegmilantiev/yc-ffmpeg:${PROJECT_VERSION}
+        env_file:
+            - .env
+        depends_on:
+            mercure:
+                condition: service_healthy
+            redis:
+                condition: service_healthy
+            postgres:
+                condition: service_healthy
+        command: sh -c '/var/www/yc/bin/console messenger:consume async_transcode -vvv'
+        mem_limit: 512m
+        deploy:
+            # todo test with 2 replicas
+            replicas: 2
+            # todo limit memory. Ex.: 4k use 2g+ :(
+            resources:
+                limits:
+                    memory: 512M
+        volumes:
+            - uploads:/var/www/yc/public/uploads
+
+    redis:
+        restart: always
+        image: redis:7
+        expose:
+            - 6379
+        healthcheck:
+            test: ["CMD", "redis-cli", "ping"]
+            interval: 5s
+            timeout: 3s
+            retries: 5
+
+    postgres:
+        restart: always
+        image: docker.io/postgres:16.2
+        shm_size: 1g
+        healthcheck:
+            test: ["CMD-SHELL", "pg_isready -U yc"]
+            interval: 5s
+            timeout: 5s
+            retries: 5
+        expose:
+            - 5432
+        environment:
+            - POSTGRES_USER=yc
+            - POSTGRES_PASSWORD=yc
+        volumes:
+            - ./postgresql:/host
+            - db-data:/var/lib/postgresql/data
+
+    mercure:
+        restart: always
+        image: dunglas/mercure:v0.16
+        healthcheck:
+            test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://mercure:8080/.well-known/mercure?topic=health"]
+            interval: 5s
+            timeout: 5s
+            retries: 5
+        environment:
+            SERVER_NAME: ':8080'
+            MERCURE_PUBLISHER_JWT_KEY: ${MERCURE_PUBLISHER_JWT_KEY}
+            MERCURE_SUBSCRIBER_JWT_KEY: ${MERCURE_SUBSCRIBER_JWT_KEY}
+            MERCURE_EXTRA_DIRECTIVES: |
+                cors_origins *
+                anonymous 0
+        ports:
+            - 281:8080
+
+networks:
+    appnet:
+        driver: bridge
+
+volumes:
+    uploads:
+    db-data:
