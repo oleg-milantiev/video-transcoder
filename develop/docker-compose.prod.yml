@@ -1,7 +1,6 @@
 services:
     grafana:
         image: grafana/grafana-oss:12.4.2
-        container_name: grafana
         depends_on:
             - postgres
         ports:
