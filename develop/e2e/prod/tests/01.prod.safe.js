@@ -379,6 +379,7 @@ test.describe('prod-safe isolated smoke', () => {
         await shot(page, testInfo, `29-download-verified-${actualTitle.replace(/[^a-zA-Z0-9._-]+/g, '_')}.png`);
       }
 
+      await openHome(page);
       await openVideosTab(page);
       await expectVideosTableVisible(page);
       const deleted = await deleteVideoFromListIfPresent(page, run.videoBaseName, testInfo, '30-user-video-deleted.png');
