@@ -12,6 +12,7 @@ use App\Application\Event\StartTaskSchedulerFail;
 use App\Application\Event\StartTaskSchedulerStart;
 use App\Application\Event\StartTaskSchedulerSuccess;
 use App\Application\Query\Repository\ScheduledTaskReadRepositoryInterface;
+use App\Infrastructure\Task\TaskCancellationTrigger;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Messenger\Envelope;
@@ -46,12 +47,15 @@ class StartTaskSchedulerHandlerTest extends TestCase
 
                 return new Envelope($message);
             });
+        $taskCancellationTrigger = $this->createStub(TaskCancellationTrigger::class);
+        $taskCancellationTrigger->method('clear');
 
         $handler = new StartTaskSchedulerHandler(
             $this->createStub(LoggerInterface::class),
             $taskRepository,
             $commandBus,
             $eventBus,
+            $taskCancellationTrigger,
         );
 
         $handler(new StartTaskScheduler());
@@ -88,11 +92,15 @@ class StartTaskSchedulerHandlerTest extends TestCase
                 return new Envelope($message);
             });
 
+        $taskCancellationTrigger = $this->createStub(TaskCancellationTrigger::class);
+        $taskCancellationTrigger->method('clear');
+
         $handler = new StartTaskSchedulerHandler(
             $this->createStub(LoggerInterface::class),
             $taskRepository,
             $commandBus,
             $eventBus,
+            $taskCancellationTrigger,
         );
 
         $this->expectException(\RuntimeException::class);
