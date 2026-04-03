@@ -66,7 +66,7 @@ final class AuthApiController extends AbstractController
             return new JsonResponse(['error' => 'Invalid credentials.'], Response::HTTP_UNAUTHORIZED);
         }
 
-        $this->logService->log('user', Uuid::fromString($user->id->toRfc4122()), LogLevel::INFO, 'User signed in via API token', [
+        $this->logService->log('user', 'token', Uuid::fromString($user->id->toRfc4122()), LogLevel::INFO, 'User signed in via API token', [
             'email' => $user->getUserIdentifier(),
             'ip' => $request->getClientIp(),
             'route' => (string) $request->attributes->get('_route', 'api_auth_token'),

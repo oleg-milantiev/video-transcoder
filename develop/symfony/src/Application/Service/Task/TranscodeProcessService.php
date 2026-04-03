@@ -138,7 +138,7 @@ readonly class TranscodeProcessService
     {
         $task->updateProgress(new Progress($value));
         $this->taskRepository->save($task);
-        $this->logService->log('task', $task->id(), LogLevel::INFO, 'Transcoding progress', [
+        $this->logService->log('task', 'progress', $task->id(), LogLevel::INFO, 'Transcoding progress', [
             'progress' => $value,
         ]);
         $this->taskRealtimeNotifier->notifyTaskUpdated($task, 'progress');

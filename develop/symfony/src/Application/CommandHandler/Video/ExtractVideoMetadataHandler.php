@@ -94,7 +94,7 @@ final readonly class ExtractVideoMetadataHandler
                 $this->handleMetadataExtractionError($video, VideoMetadataInvalid::durationExceedsLimit($duration, $maxDuration));
             }
 
-            $this->logService->log('video', $video->id(), LogLevel::INFO, 'Metadata extracted');
+            $this->logService->log('video', 'meta', $video->id(), LogLevel::INFO, 'Metadata extracted');
             $this->notifier->notifyVideoUpdated($video, 'meta');
 
             $this->commandBus->dispatch(new CreateVideoPreview($video));
@@ -124,7 +124,7 @@ final readonly class ExtractVideoMetadataHandler
             ]);
         }
 
-        $this->logService->log('video', $video->id(), LogLevel::ERROR, 'Metadata validation failed', [
+        $this->logService->log('video', 'meta', $video->id(), LogLevel::ERROR, 'Metadata validation failed', [
             'message' => $e->getMessage(),
         ]);
 

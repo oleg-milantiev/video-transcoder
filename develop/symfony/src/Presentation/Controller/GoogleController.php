@@ -98,13 +98,13 @@ class GoogleController extends AbstractController
                 $em->persist($user);
                 $em->flush();
 
-                $this->logService->log('user', Uuid::fromString($user->id->toRfc4122()), LogLevel::INFO, 'Created User via Google', [
+                $this->logService->log('user', 'create', Uuid::fromString($user->id->toRfc4122()), LogLevel::INFO, 'Created User via Google', [
                     'email' => $email,
                     'tariff' => 'Free',
                 ]);
             }
 
-            $this->logService->log('user', Uuid::fromString($user->id->toRfc4122()), LogLevel::INFO, 'Login via Google', [
+            $this->logService->log('user', 'login', Uuid::fromString($user->id->toRfc4122()), LogLevel::INFO, 'Login via Google', [
                 'email' => $email,
             ]);
 

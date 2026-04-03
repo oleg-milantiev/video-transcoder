@@ -71,9 +71,7 @@ class TaskController extends AbstractController
             'output' => $output,
             'downloadedByUserId' => $downloadedByUserId?->toRfc4122(),
         ];
-        $this->logService->log('task', $task->id(), LogLevel::INFO, 'Transcode result downloaded', $context);
-        $this->logService->log('video', $video->id(), LogLevel::INFO, 'Video transcode result downloaded', $context);
-        $this->logService->log('user', $downloadedByUserId, LogLevel::INFO, 'User downloaded transcode result', $context);
+        $this->logService->log('task', 'download', $task->id(), LogLevel::INFO, 'Transcode result downloaded', $context);
 
         return $this->redirect($this->storage->publicUrl($output));
     }

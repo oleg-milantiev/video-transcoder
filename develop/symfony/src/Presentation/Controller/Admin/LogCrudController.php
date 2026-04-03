@@ -46,6 +46,7 @@ class LogCrudController extends AbstractCrudController
     {
         return $filters
             ->add(TextFilter::new('name'))
+            ->add(TextFilter::new('action'))
             ->add(TextFilter::new('objectId'))
             ->add(ChoiceFilter::new('level')->setChoices([
                 LogLevel::EMERGENCY => LogLevel::EMERGENCY,

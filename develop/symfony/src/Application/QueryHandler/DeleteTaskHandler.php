@@ -54,8 +54,6 @@ final readonly class DeleteTaskHandler
             'requestedByUserId' => $query->requestedByUserId->toRfc4122(),
         ];
 
-        $this->logService->log('task', $task->id(), LogLevel::INFO, 'Task marked as deleted', $context);
-        $this->logService->log('video', $task->videoId(), LogLevel::INFO, 'Task deleted for video', $context);
-        $this->logService->log('user', $query->requestedByUserId, LogLevel::INFO, 'User deleted task', $context);
+        $this->logService->log('task', 'delete', $task->id(), LogLevel::INFO, 'Task marked as deleted', $context);
     }
 }

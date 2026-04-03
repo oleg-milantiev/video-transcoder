@@ -85,7 +85,7 @@ final readonly class TranscodeVideoHandler
             $video = $this->videoRepository->findById($task->videoId());
             if (!$video) {
                 $this->eventBus->dispatch(new TranscodeVideoFail('Video not found for transcoding', $task->id()->toRfc4122()));
-                $this->logService->log('task', $task->id(), LogLevel::ERROR, 'Video not found for transcoding');
+                $this->logService->log('task', 'transcode', $task->id(), LogLevel::ERROR, 'Video not found for transcoding');
                 throw new \RuntimeException('Video not found for transcoding');
             }
 
@@ -96,7 +96,7 @@ final readonly class TranscodeVideoHandler
                         'cancelledAt' => new \DateTimeImmutable()->format(\DateTimeInterface::ATOM),
                     ]);
                     $this->taskRepository->save($task);
-                    $this->logService->log('task', $task->id(), LogLevel::INFO, 'Task cancelled before ffmpeg start');
+                    $this->logService->log('task', 'transcode', $task->id(), LogLevel::INFO, 'Task cancelled before ffmpeg start');
                 }
 
                 $this->cancellationTrigger->clear($task->id());
@@ -107,7 +107,7 @@ final readonly class TranscodeVideoHandler
 
             if (!$task->canStart($video->duration())) {
                 $this->eventBus->dispatch(new TranscodeVideoFail('Task cannot be started for transcoding (invalid state or video duration).', $task->id()->toRfc4122()));
-                $this->logService->log('task', $task->id(), LogLevel::WARNING, 'Task cannot be started for transcoding (invalid state or video duration).', [
+                $this->logService->log('task', 'transcode', $task->id(), LogLevel::ERROR, 'Task cannot be started for transcoding (invalid state or video duration).', [
                     'duration' => $video->duration(),
                     'status' => $task->status()->name,
                     'startedAt' => $task->startedAt()?->format(\DateTimeInterface::ATOM),

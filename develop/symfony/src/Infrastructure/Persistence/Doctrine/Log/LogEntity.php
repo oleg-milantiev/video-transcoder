@@ -25,6 +25,9 @@ class LogEntity
     #[ORM\Column(length: 100)]
     public string $name;
 
+    #[ORM\Column(length: 100)]
+    public string $action;
+
     #[ORM\Column(type: 'uuid')]
     public ?SymfonyUuid $objectId = null;
 
@@ -45,6 +48,7 @@ class LogEntity
         $this->createdAt = new \DateTimeImmutable();
         $this->level = LogLevel::INFO;
         $this->name = '';
+        $this->action = '';
         $this->text = '';
     }
 }

@@ -68,10 +68,10 @@ final readonly class AdminCrudAuditListener
 
 		$message = sprintf('Admin %s %s', $action, $shortClass);
 
-		$this->logService->log('admin', Uuid::fromString($actor->id->toRfc4122()), LogLevel::INFO, $message, $context);
+		$this->logService->log('admin', $action, Uuid::fromString($actor->id->toRfc4122()), LogLevel::INFO, $message, $context);
 
 		if ($entityId !== null) {
-			$this->logService->log($entityName, Uuid::fromString($entityId->toRfc4122()), LogLevel::INFO, $message, $context);
+			$this->logService->log($entityName, $action, Uuid::fromString($entityId->toRfc4122()), LogLevel::INFO, $message, $context);
 		}
 	}
 }

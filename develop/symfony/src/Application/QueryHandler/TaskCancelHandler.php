@@ -55,28 +55,16 @@ final readonly class TaskCancelHandler
 
         if ($cancelledNow) {
             $task->cancel();
-            $this->logService->log('task', $task->id(), LogLevel::INFO, 'Task cancelled before start', [
+            $this->logService->log('task', 'cancel', $task->id(), LogLevel::INFO, 'Task cancelled before start', [
                 'videoId' => $video->id()?->toRfc4122(),
-                'requestedByUserId' => $query->requestedByUserId?->toRfc4122(),
+                'userId' => $query->requestedByUserId?->toRfc4122(),
             ]);
         } else {
-            $this->logService->log('task', $task->id(), LogLevel::INFO, 'Cancellation requested in progress', [
+            $this->logService->log('task', 'cancel', $task->id(), LogLevel::INFO, 'Cancellation requested in progress', [
                 'videoId' => $video->id()?->toRfc4122(),
-                'requestedByUserId' => $query->requestedByUserId?->toRfc4122(),
+                'userId' => $query->requestedByUserId?->toRfc4122(),
             ]);
         }
-
-        $this->logService->log('video', $video->id(), LogLevel::INFO, 'Cancellation requested for video task', [
-            'taskId' => $task->id()->toRfc4122(),
-            'requestedByUserId' => $query->requestedByUserId?->toRfc4122(),
-            'cancelledNow' => $cancelledNow,
-        ]);
-
-        $this->logService->log('user', $query->requestedByUserId, LogLevel::INFO, 'User requested transcode cancellation', [
-            'taskId' => $task->id()->toRfc4122(),
-            'videoId' => $video->id()?->toRfc4122(),
-            'cancelledNow' => $cancelledNow,
-        ]);
 
         $this->taskRepository->save($task);
 

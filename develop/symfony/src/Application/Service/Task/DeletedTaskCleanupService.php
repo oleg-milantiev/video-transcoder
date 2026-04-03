@@ -78,6 +78,7 @@ final readonly class DeletedTaskCleanupService
 
         $this->logService->log(
             'task',
+            'delete',
             $task->id(),
             LogLevel::INFO,
             $deleted ? 'Deleted transcoded output for removed task' : 'Transcoded output already missing for removed task',

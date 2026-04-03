@@ -29,7 +29,7 @@ readonly class TranscodeTaskPreparationService
     {
         $preset = $this->presetRepository->findById($task->presetId());
         if (!$preset) {
-            $this->logService->log('task', $task->id(), LogLevel::ERROR, 'Preset not found for task');
+            $this->logService->log('task', 'transcode', $task->id(), LogLevel::ERROR, 'Preset not found for task');
             throw new \RuntimeException('Preset not found for task');
         }
 
@@ -38,7 +38,7 @@ readonly class TranscodeTaskPreparationService
 
         $task->start($video->duration());
         $this->taskRepository->save($task);
-        $this->logService->log('task', $task->id(), LogLevel::INFO, 'Transcoding started');
+        $this->logService->log('task', 'transcode', $task->id(), LogLevel::INFO, 'Transcoding started');
         $this->taskRealtimeNotifier->notifyTaskUpdated($task, 'started', [
             'notification' => $this->flashNotificationFactory->transcodeStarted($task)->toArray(),
         ]);

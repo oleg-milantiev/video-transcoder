@@ -99,8 +99,7 @@ final readonly class DeleteVideoHandler
                 'requestedByUserId' => $query->requestedByUserId->toRfc4122(),
                 'deletedTaskCount' => $deletedTaskCount,
             ];
-            $this->logService->log('video', $video->id(), LogLevel::INFO, 'Video marked as deleted', $context);
-            $this->logService->log('user', $query->requestedByUserId, LogLevel::INFO, 'User deleted video', $context);
+            $this->logService->log('video', 'delete', $video->id(), LogLevel::INFO, 'Video marked as deleted', $context);
             $this->videoRealtimeNotifier->notifyVideoUpdated($video, 'deleted', [
                 'deleted' => true,
             ]);

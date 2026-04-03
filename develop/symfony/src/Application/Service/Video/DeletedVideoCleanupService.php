@@ -51,6 +51,7 @@ final readonly class DeletedVideoCleanupService
 
         $this->logService->log(
             'video',
+            'delete',
             $video->id(),
             LogLevel::INFO,
             $deleted ? 'Deleted source file for removed video' : 'Source file already missing for removed video',

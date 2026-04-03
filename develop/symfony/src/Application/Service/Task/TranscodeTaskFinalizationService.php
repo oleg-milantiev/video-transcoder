@@ -40,7 +40,7 @@ readonly class TranscodeTaskFinalizationService
         ]);
 
         $this->taskRepository->save($cancelledTask);
-        $this->logService->log('task', $cancelledTask->id(), LogLevel::INFO, 'Transcoding cancelled');
+        $this->logService->log('task', 'cancel', $cancelledTask->id(), LogLevel::INFO, 'Transcoding cancelled');
         $this->taskRealtimeNotifier->notifyTaskUpdated($cancelledTask, 'cancelled');
         $this->cancellationTrigger->clear($cancelledTask->id());
     }
@@ -58,7 +58,7 @@ readonly class TranscodeTaskFinalizationService
         $task->updateProgress(new Progress(100));
 
         $this->taskRepository->save($task);
-        $this->logService->log('task', $task->id(), LogLevel::INFO, 'Transcoding finished successfully');
+        $this->logService->log('task', 'complete', $task->id(), LogLevel::INFO, 'Transcoding finished successfully');
         $this->taskRealtimeNotifier->notifyTaskUpdated($task, 'completed', [
             'notification' => $this->flashNotificationFactory->transcodeCompleted($task)->toArray(),
         ]);
@@ -80,7 +80,7 @@ readonly class TranscodeTaskFinalizationService
             unlink($absoluteOutputPath);
         }
 
-        $this->logService->log('task', $task->id(), LogLevel::ERROR, 'Transcoding failed', [
+        $this->logService->log('task', 'fail', $task->id(), LogLevel::ERROR, 'Transcoding failed', [
             'message' => $exception->getMessage(),
         ]);
     }

@@ -96,9 +96,8 @@ final readonly class StartTranscodeHandler
                 'userId' => $user->id()?->toRfc4122(),
                 'isRestart' => $task->status()->name !== 'PENDING',
             ];
-            $this->logService->log('task', $task->id(), LogLevel::INFO, 'Transcode requested', $context);
-            $this->logService->log('video', $video->id(), LogLevel::INFO, 'Transcode started for video', $context);
-            $this->logService->log('user', $user->id(), LogLevel::INFO, 'User started transcoding', $context);
+            $this->logService->log('task', 'transcode', $task->id(), LogLevel::INFO, 'Transcode requested', $context);
+            $this->logService->log('video', 'transcode', $video->id(), LogLevel::INFO, 'Transcode started for video', $context);
         } catch (\Throwable $e) {
             $this->eventBus->dispatch(new StartTranscodeFail('Failed to create task', $query->uuid->toRfc4122(), $query->presetId->toRfc4122(), $query->userId->toRfc4122()));
             throw new TaskCreationFailedException('Failed to create task', previous: $e);

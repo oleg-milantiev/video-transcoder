@@ -106,11 +106,11 @@ final readonly class CreateVideoHandler
             ]);
             $video = $this->videoRepository->save($video);
 
-            $this->logService->log('video', $video->id(), LogLevel::INFO, 'Video created', [
+            $this->logService->log('video', 'create', $video->id(), LogLevel::INFO, 'Video created', [
                 'video' => VideoItemDTO::fromDomain($video, $this->storage, $this->taskRepository),
                 'file' => $command->file()->details(),
             ]);
-            $this->logService->log('user', $command->userId(), LogLevel::INFO, 'User uploaded video', [
+            $this->logService->log('user', 'upload', $command->userId(), LogLevel::INFO, 'User uploaded video', [
                 'videoId' => $video->id()?->toRfc4122(),
                 'file' => $command->file()->details(),
             ]);

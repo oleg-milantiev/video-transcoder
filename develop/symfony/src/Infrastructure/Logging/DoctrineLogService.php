@@ -18,12 +18,13 @@ final readonly class DoctrineLogService implements LogServiceInterface
     ) {
     }
 
-    public function log(string $name, Uuid $objectId, string $level, string $text, array $context = []): void
+    public function log(string $name, string $action, Uuid $objectId, string $level, string $text, array $context = []): void
     {
         $this->logger->log($level, $text, $context);
 
         $entity = new LogEntity();
         $entity->name = $name;
+        $entity->action = $action;
         $entity->objectId = SymfonyUuid::fromString($objectId->toRfc4122());
         $entity->level = $level;
         $entity->text = $text;

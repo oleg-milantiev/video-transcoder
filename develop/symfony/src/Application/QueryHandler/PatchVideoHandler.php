@@ -64,7 +64,7 @@ final readonly class PatchVideoHandler
                 error: $e->getMessage(),
                 videoId: $query->videoId->toRfc4122(),
             ));
-            $this->logService->log('video', $video->id(), LogLevel::ERROR, 'Error Video title update', [
+            $this->logService->log('video', 'patch', $video->id(), LogLevel::ERROR, 'Error Video title update', [
                 'videoId' => $video->id()->toRfc4122(),
                 'message' => $e->getMessage(),
             ]);
@@ -77,7 +77,7 @@ final readonly class PatchVideoHandler
             wasTitle: $wasTitle,
             nowTitle: $video->title()->value(),
         ));
-        $this->logService->log('video', $video->id(), LogLevel::INFO, 'Video title updated', ['videoId' => $video->id()->toRfc4122()]);
+        $this->logService->log('video', 'patch', $video->id(), LogLevel::INFO, 'Video title updated', ['videoId' => $video->id()->toRfc4122()]);
         $this->videoRealtimeNotifier->notifyVideoUpdated($video, 'updated', ['title' => $video->title()->value()]);
         $tasks = $this->taskRepository->findByVideoId($query->videoId);
         foreach ($tasks as $task) {

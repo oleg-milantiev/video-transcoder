@@ -53,12 +53,12 @@ final readonly class CreateVideoPreviewHandler
             $video->updateMeta(['preview' => true]);
             $this->videoRepository->save($video);
 
-            $this->logService->log('video', $video->id(), LogLevel::INFO, 'Preview Created');
+            $this->logService->log('video', 'preview', $video->id(), LogLevel::INFO, 'Preview Created');
             $this->notifier->notifyVideoUpdated($video, 'preview');
 
             $this->eventBus->dispatch(new CreateVideoPreviewSuccess($videoId));
         } catch (\Exception $e) {
-            $this->logService->log('video', $video->id(), LogLevel::ERROR, 'Error Create Preview', [
+            $this->logService->log('video', 'preview', $video->id(), LogLevel::ERROR, 'Error Create Preview', [
                 'message' => $e->getMessage(),
             ]);
             $this->eventBus->dispatch(new CreateVideoPreviewFail($e->getMessage(), $videoId));
