@@ -60,7 +60,8 @@ class UserCrudController extends AbstractCrudController
         return $crud
             ->showEntityActionsInlined()
             ->setEntityLabelInSingular('User')
-            ->setEntityLabelInPlural('Users');
+            ->setEntityLabelInPlural('Users')
+            ->setDefaultSort(['email' => 'asc']);
     }
 
     public function configureActions(Actions $actions): Actions
@@ -87,7 +88,10 @@ class UserCrudController extends AbstractCrudController
                 ->setFormType(PasswordType::class)
                 ->onlyOnForms(),
             ArrayField::new('roles'),
-            AssociationField::new('tariff'),
+            AssociationField::new('tariff')
+                ->setFormTypeOption('query_builder', static function(\Doctrine\ORM\EntityRepository $repository) {
+                    return $repository->createQueryBuilder('t')->orderBy('t.title', 'ASC');
+                }),
         ];
     }
 
