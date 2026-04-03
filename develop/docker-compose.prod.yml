@@ -1,9 +1,21 @@
 services:
+    grafana:
+        image: grafana/grafana-oss:12.4.2
+        container_name: grafana
+        depends_on:
+            - postgres
+        ports:
+            - "3000:3000"
+        volumes:
+            - ./grafana:/var/lib/grafana
+        environment:
+            - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD}
+        restart: always
+
     nginx:
         restart: always
         image: olegmilantiev/yc-nginx:${PROJECT_VERSION}
         ports:
-            # Каскадно через внешний nginx, отвечающий за сертификат
             - 280:80
         depends_on:
             - php
