@@ -15,7 +15,7 @@
       }
     ]
   },
-  "description": "Yc",
+  "description": "Log Monitoring with Action Tracking",
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
@@ -105,7 +105,7 @@
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT \r\n  name,\r\n  COUNT(DISTINCT object_id) as unique_objects,\r\n  COUNT(*) as total_logs\r\nFROM log\r\nWHERE $__timeFilter(created_at)\r\nGROUP BY name\r\nORDER BY unique_objects DESC",
+          "rawSql": "SELECT \r\n  CONCAT(name, ' - ', action) as category,\r\n  COUNT(DISTINCT object_id) as unique_objects,\r\n  COUNT(*) as total_calls\r\nFROM log\r\nWHERE $__timeFilter(created_at)\r\nGROUP BY name, action\r\nORDER BY total_calls DESC\r\nLIMIT 15",
           "refId": "A",
           "sql": {
             "columns": [
@@ -126,7 +126,7 @@
           }
         }
       ],
-      "title": "Objects in Category",
+      "title": "Top Actions by Call Count",
       "type": "barchart"
     },
     {
@@ -148,7 +148,7 @@
             "barAlignment": 0,
             "barWidthFactor": 0.6,
             "drawStyle": "line",
-            "fillOpacity": 0,
+            "fillOpacity": 10,
             "gradientMode": "none",
             "hideFrom": {
               "legend": false,
@@ -157,7 +157,7 @@
             },
             "insertNulls": false,
             "lineInterpolation": "linear",
-            "lineWidth": 1,
+            "lineWidth": 2,
             "pointSize": 5,
             "scaleDistribution": {
               "type": "linear"
@@ -167,7 +167,7 @@
             "spanNulls": false,
             "stacking": {
               "group": "A",
-              "mode": "none"
+              "mode": "normal"
             },
             "thresholdsStyle": {
               "mode": "off"
@@ -200,13 +200,13 @@
       "options": {
         "legend": {
           "calcs": [],
-          "displayMode": "list",
-          "placement": "bottom",
+          "displayMode": "table",
+          "placement": "right",
           "showLegend": true
         },
         "tooltip": {
           "hideZeros": false,
-          "mode": "single",
+          "mode": "multi",
           "sort": "none"
         }
       },
@@ -217,7 +217,7 @@
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT \r\n  DATE_TRUNC('hour', created_at) as time,\r\n  COUNT(*) as count,\r\n  COUNT(CASE WHEN level = 'error' THEN 1 END) as errors\r\nFROM log\r\nWHERE $__timeFilter(created_at)\r\nGROUP BY DATE_TRUNC('hour', created_at)\r\nORDER BY time",
+          "rawSql": "SELECT \r\n  DATE_TRUNC('hour', created_at) as time,\r\n  CONCAT(name, ' - ', action) as action_type,\r\n  COUNT(*) as count\r\nFROM log\r\nWHERE $__timeFilter(created_at)\r\nGROUP BY DATE_TRUNC('hour', created_at), name, action\r\nORDER BY time DESC",
           "refId": "A",
           "sql": {
             "columns": [
@@ -238,7 +238,7 @@
           }
         }
       ],
-      "title": "Hourly Activity",
+      "title": "Action Dynamics by Hour",
       "type": "timeseries"
     },
     {
@@ -325,7 +325,7 @@
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT \r\n  name,\r\n  level,\r\n  COUNT(*) as count\r\nFROM log\r\nWHERE $__timeFilter(created_at)\r\nGROUP BY name, level\r\nORDER BY name, level",
+          "rawSql": "SELECT \r\n  CONCAT(name, ' - ', action) as action_type,\r\n  level,\r\n  COUNT(*) as count\r\nFROM log\r\nWHERE $__timeFilter(created_at)\r\nGROUP BY name, action, level\r\nORDER BY name, action, level DESC",
           "refId": "A",
           "sql": {
             "columns": [
@@ -346,7 +346,7 @@
           }
         }
       ],
-      "title": "Problem Zones",
+      "title": "Error Status by Action",
       "type": "barchart"
     },
     {
@@ -417,7 +417,7 @@
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT \r\n  name,\r\n  DATE(created_at) as day,\r\n  COUNT(*) as count\r\nFROM log\r\nWHERE $__timeFilter(created_at)\r\nGROUP BY name, DATE(created_at)\r\nORDER BY day, name",
+          "rawSql": "SELECT \r\n  CONCAT(name, ' - ', action) as action,\r\n  DATE(created_at) as day,\r\n  COUNT(*) as count\r\nFROM log\r\nWHERE $__timeFilter(created_at)\r\nGROUP BY name, action, DATE(created_at)\r\nORDER BY day, name, action",
           "refId": "A",
           "sql": {
             "columns": [
@@ -438,7 +438,7 @@
           }
         }
       ],
-      "title": "Activity ",
+      "title": "Action Activity Heatmap (Daily)",
       "type": "heatmap"
     },
     {
@@ -470,8 +470,12 @@
                 "value": 0
               },
               {
+                "color": "yellow",
+                "value": 5
+              },
+              {
                 "color": "red",
-                "value": 80
+                "value": 10
               }
             ]
           }
@@ -496,7 +500,7 @@
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT \r\n  name,\r\n  object_id,\r\n  COUNT(*) as error_count\r\nFROM log\r\nWHERE level = 'error' \r\n  AND $__timeFilter(created_at)\r\nGROUP BY name, object_id\r\nORDER BY error_count DESC\r\nLIMIT 10",
+          "rawSql": "SELECT \r\n  CONCAT(name, ' - ', action) as action_type,\r\n  object_id,\r\n  COUNT(*) as total_calls,\r\n  COUNT(CASE WHEN level = 'error' THEN 1 END) as error_count,\r\n  ROUND(100.0 * COUNT(CASE WHEN level = 'error' THEN 1 END) / COUNT(*), 2) as error_rate_pct\r\nFROM log\r\nWHERE $__timeFilter(created_at) AND level = 'error'\r\nGROUP BY name, action, object_id\r\nORDER BY error_count DESC\r\nLIMIT 15",
           "refId": "A",
           "sql": {
             "columns": [
@@ -517,7 +521,7 @@
           }
         }
       ],
-      "title": "Top Error Objects",
+      "title": "Top Errors by Action and Object",
       "type": "table"
     },
     {
@@ -588,7 +592,7 @@
         },
         "orientation": "auto",
         "showValue": "auto",
-        "stacking": "none",
+        "stacking": "normal",
         "tooltip": {
           "hideZeros": false,
           "mode": "single",
@@ -604,7 +608,7 @@
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT \r\n  level,\r\n  COUNT(*) as count\r\nFROM log\r\nWHERE $__timeFilter(created_at)\r\nGROUP BY level\r\nORDER BY count DESC\r\n",
+          "rawSql": "SELECT \r\n  name as category,\r\n  level,\r\n  COUNT(*) as count\r\nFROM log\r\nWHERE $__timeFilter(created_at)\r\nGROUP BY name, level\r\nORDER BY name, level\r\n",
           "refId": "A",
           "sql": {
             "columns": [
@@ -625,7 +629,7 @@
           }
         }
       ],
-      "title": "Log Level",
+      "title": "Log Levels by Category",
       "type": "barchart"
     },
     {
@@ -647,7 +651,7 @@
             "barAlignment": 0,
             "barWidthFactor": 0.6,
             "drawStyle": "line",
-            "fillOpacity": 0,
+            "fillOpacity": 10,
             "gradientMode": "none",
             "hideFrom": {
               "legend": false,
@@ -656,7 +660,7 @@
             },
             "insertNulls": false,
             "lineInterpolation": "linear",
-            "lineWidth": 1,
+            "lineWidth": 2,
             "pointSize": 5,
             "scaleDistribution": {
               "type": "linear"
@@ -720,7 +724,7 @@
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT \r\n  DATE(created_at) as time,\r\n  COUNT(*) as count,\r\n  COUNT(CASE WHEN level = 'error' THEN 1 END) as errors\r\nFROM log\r\nWHERE $__timeFilter(created_at)\r\nGROUP BY DATE(created_at)\r\nORDER BY time",
+          "rawSql": "SELECT \r\n  DATE_TRUNC('hour', created_at) as time,\r\n  COUNT(*) as total,\r\n  COUNT(CASE WHEN level = 'error' THEN 1 END) as errors,\r\n  ROUND(100.0 * COUNT(CASE WHEN level = 'error' THEN 1 END) / COUNT(*), 2) as error_rate\r\nFROM log\r\nWHERE $__timeFilter(created_at)\r\nGROUP BY DATE_TRUNC('hour', created_at)\r\nORDER BY time",
           "refId": "A",
           "sql": {
             "columns": [
@@ -741,8 +745,120 @@
           }
         }
       ],
-      "title": "Errors / total",
+      "title": "Errors / Total (Hourly)",
       "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "afhybzup80t8gd"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "fillOpacity": 80,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineWidth": 1,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "yellow",
+                "value": 50
+              },
+              {
+                "color": "red",
+                "value": 100
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 24
+      },
+      "id": 8,
+      "options": {
+        "barRadius": 0,
+        "barWidth": 0.97,
+        "fullHighlight": false,
+        "groupWidth": 0.7,
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "orientation": "auto",
+        "showValue": "auto",
+        "stacking": "none",
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        },
+        "xTickLabelRotation": 0,
+        "xTickLabelSpacing": 0
+      },
+      "pluginVersion": "12.4.2",
+      "targets": [
+        {
+          "dataset": "yc",
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT \r\n  action,\r\n  COUNT(*) as total_calls\r\nFROM log\r\nWHERE $__timeFilter(created_at)\r\nGROUP BY action\r\nORDER BY total_calls DESC",
+          "refId": "A",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          }
+        }
+      ],
+      "title": "Total Calls by Action",
+      "type": "barchart"
     }
   ],
   "preload": false,
@@ -757,8 +873,8 @@
   },
   "timepicker": {},
   "timezone": "browser",
-  "title": "Logs",
+  "title": "Logs - Action & Dynamics Monitor",
   "uid": "ad4nbs6",
-  "version": 11,
+  "version": 12,
   "weekStart": ""
 }

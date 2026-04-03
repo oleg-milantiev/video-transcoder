@@ -10,6 +10,7 @@
 - **[EVENTS.md](EVENTS.md)** — Event-driven architecture and message flows
 - **[frontend.md](frontend.md)** — Frontend architecture and Vue SPA modules
 - **[develop/e2e/README.md](develop/e2e/README.md)** — End-to-end testing guide with Playwright
+- **[grafana/README.md](grafana/README.md)** — Grafana dashboard configuration for monitoring logs and errors
 
 ## По-русски
 
