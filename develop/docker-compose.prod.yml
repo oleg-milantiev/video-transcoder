@@ -114,6 +114,16 @@ services:
             - ./postgresql:/host
             - db-data:/var/lib/postgresql/data
 
+    playwright:
+        image: mcr.microsoft.com/playwright:v1.53.0-jammy
+        depends_on:
+            - nginx
+        working_dir: /work/e2e
+        command: ["bash", "-lc", "sleep infinity"]
+        volumes:
+            - ./e2e:/work/e2e
+            - ./release.check:/work/release.check
+
     mercure:
         restart: always
         image: dunglas/mercure:v0.16
