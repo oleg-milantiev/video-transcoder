@@ -34,6 +34,7 @@ final readonly class CreateVideoPreviewHandler
 
     public function __invoke(CreateVideoPreview $command): void
     {
+        $ms = microtime(true);
         $video = $command->video();
         $videoId = $video->id()?->toRfc4122();
 
@@ -49,16 +50,21 @@ final readonly class CreateVideoPreviewHandler
             $captureTime = min($duration, 1.0);
             $this->videoPreviewGenerator->generate($inputPath, $outputPath, $captureTime);
             $this->storage->publishLocalFile($outputPath, $previewKey);
+            $fileSize = filesize($outputPath);
 
             $video->updateMeta(['preview' => true]);
             $this->videoRepository->save($video);
 
-            $this->logService->log('video', 'preview', $video->id(), LogLevel::INFO, 'Preview Created');
             $this->notifier->notifyVideoUpdated($video, 'preview');
+            $this->logService->log('video', 'preview', $video->id(), LogLevel::INFO, 'Preview Created', [
+                'time' => microtime(true) - $ms,
+                'size' => $fileSize,
+            ]);
 
             $this->eventBus->dispatch(new CreateVideoPreviewSuccess($videoId));
         } catch (\Exception $e) {
             $this->logService->log('video', 'preview', $video->id(), LogLevel::ERROR, 'Error Create Preview', [
+                'time' => microtime(true) - $ms,
                 'message' => $e->getMessage(),
             ]);
             $this->eventBus->dispatch(new CreateVideoPreviewFail($e->getMessage(), $videoId));
@@ -66,5 +72,4 @@ final readonly class CreateVideoPreviewHandler
             throw VideoPreviewGenerationFailed::fromVideoId($video->id()->toString(), $e->getMessage());
         }
     }
-
 }

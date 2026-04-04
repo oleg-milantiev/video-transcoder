@@ -51,7 +51,7 @@ services:
                 condition: service_healthy
             postgres:
                 condition: service_healthy
-        command: sh -c '/var/www/yc/bin/console messenger:consume async -vvv'
+        command: sh -c '/var/www/yc/bin/console messenger:consume async -v --no-ansi'
         mem_limit: 256m
         deploy:
             replicas: 1
@@ -73,7 +73,7 @@ services:
                 condition: service_healthy
             postgres:
                 condition: service_healthy
-        command: sh -c '/var/www/yc/bin/console messenger:consume async_transcode -vvv'
+        command: sh -c '/var/www/yc/bin/console messenger:consume async_transcode -v --no-ansi'
         mem_limit: 512m
         deploy:
             # todo test with 2 replicas

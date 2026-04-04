@@ -51,6 +51,7 @@ final readonly class ExtractVideoMetadataHandler
      */
     public function __invoke(ExtractVideoMetadata $command): void
     {
+        $ms = microtime(true);
         $video = $command->video();
         $videoId = $video->id()?->toRfc4122();
 
@@ -68,7 +69,8 @@ final readonly class ExtractVideoMetadataHandler
 
             $inputPath = $this->storage->localPathForRead($this->storage->sourceKey($video));
             $metadata = $this->videoMetadataExtractor->extract($inputPath);
-            $this->logger->debug('Extract Video Metadata: data extracted', [
+            $this->logService->log('video', 'meta', $video->id(), LogLevel::DEBUG, 'Metadata extracted', [
+                'time' => microtime(true) - $ms,
                 'meta' => $metadata,
             ]);
             $video->updateMeta($metadata);
@@ -94,8 +96,10 @@ final readonly class ExtractVideoMetadataHandler
                 $this->handleMetadataExtractionError($video, VideoMetadataInvalid::durationExceedsLimit($duration, $maxDuration));
             }
 
-            $this->logService->log('video', 'meta', $video->id(), LogLevel::INFO, 'Metadata extracted');
             $this->notifier->notifyVideoUpdated($video, 'meta');
+            $this->logService->log('video', 'meta', $video->id(), LogLevel::INFO, 'Metadata extracted and saved', [
+                'time' => microtime(true) - $ms,
+            ]);
 
             $this->commandBus->dispatch(new CreateVideoPreview($video));
             $this->eventBus->dispatch(new ExtractVideoMetadataSuccess($videoId));
