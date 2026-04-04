@@ -11,20 +11,12 @@ mkdir -p "$ARTIFACTS_DIR"
 
 cleanup() {
 echo exit
-#  docker compose -p "$PROJECT_NAME" -f docker-compose.release.yml cp php:/var/www/yc/var/log/prod.log "$ARTIFACTS_DIR/php.log" || true
-#  docker compose -p "$PROJECT_NAME" -f docker-compose.release.yml cp ffmpeg:/var/www/yc/var/log/prod.log "$ARTIFACTS_DIR/ffmpeg.log" || true
-#  docker compose -p "$PROJECT_NAME" -f docker-compose.release.yml cp ffmpeg-transcode:/var/www/yc/var/log/prod.log "$ARTIFACTS_DIR/ffmpeg-transcode.log" || true
   docker compose -p "$PROJECT_NAME" -f docker-compose.release.yml logs > "$ARTIFACTS_DIR/docker-compose.log" || true
   rsync -avr --delete /root/video-transcoder/develop/release.check/$PROJECT_NAME/playwright/html-report/ 192.168.2.198:/mnt/goodwin/milantiev/www/oleg/oleg.milantiev.com/www/html-report
   docker compose -p "$PROJECT_NAME" -f docker-compose.release.yml down -v || true
 }
 
 trap cleanup EXIT
-
-# build + push
-#cd /root/video-transcoder/develop/docker/yc-php && ./build.sh
-#cd /root/video-transcoder/develop/docker/yc-ffmpeg && ./build.sh
-#cd /root/video-transcoder/develop/docker/yc-nginx && ./build.sh
 
 # release test stack up (without workers)
 cd /root/video-transcoder/develop
@@ -47,12 +39,6 @@ PROJECT_VERSION=$PROJECT_VERSION docker compose \
   -p "$PROJECT_NAME" \
   -f docker-compose.release.yml \
   up -d --wait ffmpeg ffmpeg-transcode
-
-# no phpUnit and stan in prod env
-#docker compose -p "$PROJECT_NAME" -f docker-compose.release.yml exec -T php \
-#  vendor/bin/phpunit tests/
-#docker compose -p "$PROJECT_NAME" -f docker-compose.release.yml exec -T php \
-#  composer stan
 
 docker compose -p "$PROJECT_NAME" -f docker-compose.release.yml exec -T playwright bash -lc "
   cd /work/e2e
