@@ -54,6 +54,8 @@ final readonly class TranscodeVideoHandler
      */
     public function __invoke(TranscodeVideo $command): void
     {
+        $ms = microtime(true);
+
         // todo зачем эта матрёшка?
         $scheduledTask = $command->scheduledTask;
         $this->eventBus->dispatch(new TranscodeVideoStart(
@@ -66,7 +68,7 @@ final readonly class TranscodeVideoHandler
 
         if (!$task) {
             $this->eventBus->dispatch(new TranscodeVideoFail('Scheduled task not found for transcoding', $scheduledTask->taskId->toRfc4122()));
-            $this->logger->error('Scheduled task not found for transcoding', ['taskId' => $scheduledTask->taskId->toRfc4122()]);
+            $this->logService->log('task', 'transcode', $task->id(), LogLevel::ERROR, 'Scheduled task not found for transcoding');
             return;
         }
 
@@ -74,7 +76,7 @@ final readonly class TranscodeVideoHandler
         $acquired = $lock->acquire();
         if (!$acquired) {
             $this->eventBus->dispatch(new TranscodeVideoFail('Skipping task because mutex is already acquired by another worker', $scheduledTask->taskId->toRfc4122()));
-            $this->logger->info('Skipping task because mutex is already acquired by another worker', ['taskId' => $scheduledTask->taskId->toRfc4122()]);
+            $this->logService->log('task', 'transcode', $task->id(), LogLevel::WARNING, 'Skipping task because mutex is already acquired by another worker');
             return;
         }
 
@@ -134,7 +136,7 @@ final readonly class TranscodeVideoHandler
             }
 
             // all good. Start transcode
-            $context = $this->transcodeTaskPreparationService->prepare($task, $video);
+            $context = $this->transcodeTaskPreparationService->prepare($task, $video, $ms);
             $transcodeReport = $this->transcodeProcessService->run($context);
 
             if ($transcodeReport->cancelled === true) {
@@ -146,7 +148,7 @@ final readonly class TranscodeVideoHandler
                 return;
             }
 
-            $this->transcodeTaskFinalizationService->handleSuccess($context->task, $context, $transcodeReport);
+            $this->transcodeTaskFinalizationService->handleSuccess($context, $transcodeReport);
             $this->eventBus->dispatch(new TranscodeVideoSuccess(
                 taskId: $context->task->id()->toRfc4122(),
                 videoId: $context->video->id()?->toRfc4122(),
@@ -160,12 +162,6 @@ final readonly class TranscodeVideoHandler
                 taskId: $task->id()->toRfc4122(),
                 videoId: $video->id()->toRfc4122(),
             ));
-            // TODO масло масляное. Выше TranscodeVideoFail уже логирует
-            $this->logger->error('TranscodeVideoHandler failed', [
-                'taskId' => $task->id()->toRfc4122(),
-                'videoId' => $video->id()->toRfc4122(),
-                'exception' => $exception,
-            ]);
 
             throw $exception;
         } finally {

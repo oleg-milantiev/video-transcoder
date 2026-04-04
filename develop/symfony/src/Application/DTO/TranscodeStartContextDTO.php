@@ -16,7 +16,7 @@ readonly class TranscodeStartContextDTO
         public string $relativeOutputPath,
         public string $absoluteOutputPath,
         public string $inputPath,
+        public float $timeStart,
     ) {
     }
 }
-

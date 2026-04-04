@@ -25,7 +25,7 @@ readonly class TranscodeTaskPreparationService
     ) {
     }
 
-    public function prepare(Task $task, Video $video): TranscodeStartContextDTO
+    public function prepare(Task $task, Video $video, float $timeStart): TranscodeStartContextDTO
     {
         $preset = $this->presetRepository->findById($task->presetId());
         if (!$preset) {
@@ -52,6 +52,7 @@ readonly class TranscodeTaskPreparationService
             relativeOutputPath: $relativeOutputPath,
             absoluteOutputPath: $absoluteOutputPath,
             inputPath: $inputPath,
+            timeStart: $timeStart,
         );
     }
 }

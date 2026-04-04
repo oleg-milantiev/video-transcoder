@@ -45,10 +45,12 @@ readonly class TranscodeTaskFinalizationService
         $this->cancellationTrigger->clear($cancelledTask->id());
     }
 
-    public function handleSuccess(Task $task, TranscodeStartContextDTO $context, TranscodeReportDTO $report): void
+    public function handleSuccess(TranscodeStartContextDTO $context, TranscodeReportDTO $report): void
     {
+        $task = $context->task;
+        $fileSize = filesize($context->absoluteOutputPath);
         $task->updateMeta([
-            'size' => filesize($context->absoluteOutputPath),
+            'size' => $fileSize,
             'output' => $context->relativeOutputPath,
             'transcode' => [
                 'finishedAt' => new \DateTimeImmutable()->format(\DateTimeInterface::ATOM),
@@ -58,11 +60,14 @@ readonly class TranscodeTaskFinalizationService
         $task->updateProgress(new Progress(100));
 
         $this->taskRepository->save($task);
-        $this->logService->log('task', 'complete', $task->id(), LogLevel::INFO, 'Transcoding finished successfully');
         $this->taskRealtimeNotifier->notifyTaskUpdated($task, 'completed', [
             'notification' => $this->flashNotificationFactory->transcodeCompleted($task)->toArray(),
         ]);
         $this->cancellationTrigger->clear($task->id());
+        $this->logService->log('task', 'transcode', $task->id(), LogLevel::INFO, 'Transcoding finished successfully', [
+            'time' => microtime(true) - $context->timeStart,
+            'size' => $fileSize,
+        ]);
     }
 
     public function handleFailure(Task $task, \Throwable $exception, ?string $absoluteOutputPath): void
@@ -80,9 +85,8 @@ readonly class TranscodeTaskFinalizationService
             unlink($absoluteOutputPath);
         }
 
-        $this->logService->log('task', 'fail', $task->id(), LogLevel::ERROR, 'Transcoding failed', [
+        $this->logService->log('task', 'transcode', $task->id(), LogLevel::ERROR, 'Transcoding failed', [
             'message' => $exception->getMessage(),
         ]);
     }
 }
-
