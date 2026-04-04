@@ -15,6 +15,16 @@ framework:
     #esi: true
     #fragments: true
 
+when@prod:
+    framework:
+        exceptions:
+            Symfony\Component\HttpKernel\Exception\NotFoundHttpException:
+                log_level: debug
+            Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException:
+                log_level: debug
+            Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException:
+                log_level: debug
+
 when@test:
     framework:
         test: true
