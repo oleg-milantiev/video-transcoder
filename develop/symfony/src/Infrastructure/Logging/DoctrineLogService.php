@@ -7,21 +7,17 @@ use App\Application\Logging\LogServiceInterface;
 use App\Domain\Shared\ValueObject\Uuid;
 use App\Infrastructure\Persistence\Doctrine\Log\LogEntity;
 use Doctrine\ORM\EntityManagerInterface;
-use Psr\Log\LoggerInterface;
 use Symfony\Component\Uid\UuidV4 as SymfonyUuid;
 
 final readonly class DoctrineLogService implements LogServiceInterface
 {
     public function __construct(
         private EntityManagerInterface $entityManager,
-        private LoggerInterface $logger,
     ) {
     }
 
     public function log(string $name, string $action, Uuid $objectId, string $level, string $text, array $context = []): void
     {
-        $this->logger->log($level, $text, $context);
-
         $entity = new LogEntity();
         $entity->name = $name;
         $entity->action = $action;

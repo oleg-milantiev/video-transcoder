@@ -16,7 +16,7 @@
   - ежедневные автотесты playwright в prod
   - grafana
     - docker логи через Grafana Loki (PLG Stack). Состоит из Promtail (агент сбора), Loki (движок хранения) и Grafana (визуализация)
-  - алерты мне (проверить flow логов и в в севис через async consumer мне телегой)
+  - алерты мне через Grafana Alerting в телегу с Group interval
     - на первом этапе
       - регистрация юзера
       - загрузка видео
