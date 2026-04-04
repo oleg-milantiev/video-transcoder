@@ -29,4 +29,4 @@ docker build \
 	--build-arg DEFAULT_URI="${DEFAULT_URI}" \
 	-t olegmilantiev/yc-php:${PROJECT_VERSION} \
 	-f "$TMP_REPO_DIR/develop/docker/yc-php/Dockerfile" \
-	"$TMP_REPO_DIR/develop" && docker push olegmilantiev/yc-php:${PROJECT_VERSION}
+	"$TMP_REPO_DIR/develop/docker/yc-php" && docker push olegmilantiev/yc-php:${PROJECT_VERSION}
