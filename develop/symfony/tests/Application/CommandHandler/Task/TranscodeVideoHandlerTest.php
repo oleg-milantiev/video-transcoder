@@ -400,7 +400,7 @@ class TranscodeVideoHandlerTest extends TestCase
         $task = TaskFake::create();
         $video = $this->makeVideoWithDuration(size: 10 * 1024 * 1024);
         $report = $this->makeSuccessReport();
-        $context = new TranscodeStartContextDTO($task, $video, new PresetFake(), 'output/path.mp4', '/abs/output/path.mp4', '/input/path.mp4');
+        $context = new TranscodeStartContextDTO($task, $video, new PresetFake(), 'output/path.mp4', '/abs/output/path.mp4', '/input/path.mp4', 0.0);
 
         $taskRepository = $this->createStub(TaskRepositoryInterface::class);
         $taskRepository->method('findByIdFresh')->willReturn($task);
@@ -409,13 +409,13 @@ class TranscodeVideoHandlerTest extends TestCase
         $videoRepository->method('findById')->willReturn($video);
 
         $transcodeTaskPreparationService = $this->createMock(TranscodeTaskPreparationService::class);
-        $transcodeTaskPreparationService->expects($this->once())->method('prepare')->with($task, $video)->willReturn($context);
+        $transcodeTaskPreparationService->expects($this->once())->method('prepare')->with($task, $video, $this->anything())->willReturn($context);
 
         $transcodeProcessService = $this->createMock(TranscodeProcessService::class);
         $transcodeProcessService->expects($this->once())->method('run')->with($context)->willReturn($report);
 
         $transcodeTaskFinalizationService = $this->createMock(TranscodeTaskFinalizationService::class);
-        $transcodeTaskFinalizationService->expects($this->once())->method('handleSuccess')->with($task, $context, $report);
+        $transcodeTaskFinalizationService->expects($this->once())->method('handleSuccess')->with($context, $report);
         $transcodeTaskFinalizationService->expects($this->never())->method('handleCancellation');
         $transcodeTaskFinalizationService->expects($this->never())->method('handleFailure');
 
@@ -453,7 +453,7 @@ class TranscodeVideoHandlerTest extends TestCase
         $task = TaskFake::create();
         $video = $this->makeVideoWithDuration(size: 10 * 1024 * 1024);
         $report = $this->makeCancelledReport();
-        $context = new TranscodeStartContextDTO($task, $video, new PresetFake(), 'output/path.mp4', '/abs/output/path.mp4', '/input/path.mp4');
+        $context = new TranscodeStartContextDTO($task, $video, new PresetFake(), 'output/path.mp4', '/abs/output/path.mp4', '/input/path.mp4', 0.0);
 
         $taskRepository = $this->createStub(TaskRepositoryInterface::class);
         $taskRepository->method('findByIdFresh')->willReturn($task);
@@ -506,7 +506,7 @@ class TranscodeVideoHandlerTest extends TestCase
         $task = TaskFake::create();
         $video = $this->makeVideoWithDuration(size: 10 * 1024 * 1024);
         $report = $this->makeSuccessReport();
-        $context = new TranscodeStartContextDTO($task, $video, new PresetFake(), 'output/path.mp4', '/abs/output/path.mp4', '/input/path.mp4');
+        $context = new TranscodeStartContextDTO($task, $video, new PresetFake(), 'output/path.mp4', '/abs/output/path.mp4', '/input/path.mp4', 0.0);
 
         $taskRepository = $this->createStub(TaskRepositoryInterface::class);
         $taskRepository->method('findByIdFresh')->willReturn($task);
@@ -571,7 +571,7 @@ class TranscodeVideoHandlerTest extends TestCase
     {
         $task = TaskFake::create();
         $video = $this->makeVideoWithDuration(size: 10 * 1024 * 1024);
-        $context = new TranscodeStartContextDTO($task, $video, new PresetFake(), 'output/path.mp4', '/abs/output/path.mp4', '/input/path.mp4');
+        $context = new TranscodeStartContextDTO($task, $video, new PresetFake(), 'output/path.mp4', '/abs/output/path.mp4', '/input/path.mp4', 0.0);
 
         $taskRepository = $this->createStub(TaskRepositoryInterface::class);
         $taskRepository->method('findByIdFresh')->willReturn($task);

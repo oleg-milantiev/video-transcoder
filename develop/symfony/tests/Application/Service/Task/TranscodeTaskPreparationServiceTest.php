@@ -79,7 +79,7 @@ class TranscodeTaskPreparationServiceTest extends TestCase
         $taskRealtimeNotifier = new TaskRealtimeNotifier($commandBus, $this->createStub(PresetRepositoryInterface::class), $this->createStub(VideoRepositoryInterface::class));
 
         $service = new TranscodeTaskPreparationService($presetRepository, $taskRepository, $logService, $taskRealtimeNotifier, new FlashNotificationFactory(), $storage);
-        $context = $service->prepare($task, $video);
+        $context = $service->prepare($task, $video, 0.0);
 
         $this->assertSame(sprintf('%s/%s.mp4', $video->id()->toRfc4122(), '123e4567-e89b-42d3-a456-426614174005'), $context->relativeOutputPath);
         $this->assertSame(sprintf('/var/storage/%s/%s.mp4', $video->id()->toRfc4122(), '123e4567-e89b-42d3-a456-426614174005'), $context->absoluteOutputPath);
@@ -118,7 +118,7 @@ class TranscodeTaskPreparationServiceTest extends TestCase
         $this->expectException(\RuntimeException::class);
         $this->expectExceptionMessage('Preset not found for task');
 
-        $service->prepare($task, $video);
+        $service->prepare($task, $video, 0.0);
     }
 
     private function createVideo(float $duration): Video

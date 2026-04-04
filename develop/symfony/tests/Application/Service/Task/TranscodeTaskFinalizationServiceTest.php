@@ -99,7 +99,9 @@ class TranscodeTaskFinalizationServiceTest extends TestCase
         $logService = $this->createMock(LogServiceInterface::class);
         $logService->expects($this->once())
             ->method('log')
-            ->with('task', 'complete', $taskId, LogLevel::INFO, 'Transcoding finished successfully');
+            ->with('task', 'transcode', $taskId, LogLevel::INFO, 'Transcoding finished successfully', $this->callback(function (array $context): bool {
+                return isset($context['time']) && is_float($context['time']) && isset($context['size']);
+            }));
 
         $cancellationTrigger = new TaskCancellationTrigger(new ArrayAdapter());
         $cancellationTrigger->request($taskId);
@@ -117,10 +119,11 @@ class TranscodeTaskFinalizationServiceTest extends TestCase
             relativeOutputPath: 'video/11.mp4',
             absoluteOutputPath: $tmpOutputFile,
             inputPath: '/tmp/input.mp4',
+            timeStart: 0.0,
         );
 
         $service = new TranscodeTaskFinalizationService($taskRepository, $logService, $taskRealtimeNotifier, new FlashNotificationFactory(), $cancellationTrigger);
-        $service->handleSuccess($task, $context , $report);
+        $service->handleSuccess($context, $report);
 
         $this->assertFalse($cancellationTrigger->isRequested($taskId));
 
@@ -141,7 +144,7 @@ class TranscodeTaskFinalizationServiceTest extends TestCase
         $logService = $this->createMock(LogServiceInterface::class);
         $logService->expects($this->once())
             ->method('log')
-            ->with('task', 'fail', $taskId, LogLevel::ERROR, 'Transcoding failed', ['message' => 'boom']);
+            ->with('task', 'transcode', $taskId, LogLevel::ERROR, 'Transcoding failed', ['message' => 'boom']);
 
         $commandBus = $this->createMock(MessageBusInterface::class);
         $commandBus->expects($this->once())
@@ -157,6 +160,7 @@ class TranscodeTaskFinalizationServiceTest extends TestCase
             relativeOutputPath: 'output/test.mp4',
             absoluteOutputPath: '/tmp/output/test.mp4',
             inputPath: '/tmp/input.mp4',
+            timeStart: 0.0,
         );
         $service->handleFailure($task, new \RuntimeException('boom'), $context->absoluteOutputPath);
     }
@@ -188,6 +192,7 @@ class TranscodeTaskFinalizationServiceTest extends TestCase
             relativeOutputPath: 'output/test.mp4',
             absoluteOutputPath: '/tmp/not_exists_xyz.mp4',
             inputPath: '/tmp/input.mp4',
+            timeStart: 0.0,
         );
         $service->handleFailure($task, new \RuntimeException('already finished'), $context->absoluteOutputPath);
     }
@@ -219,6 +224,7 @@ class TranscodeTaskFinalizationServiceTest extends TestCase
             relativeOutputPath: 'output/test.mp4',
             absoluteOutputPath: $tmpFile,
             inputPath: '/tmp/input.mp4',
+            timeStart: 0.0,
         );
         $service->handleFailure($task, new \RuntimeException('fail with file'), $context->absoluteOutputPath);
 

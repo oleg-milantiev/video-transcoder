@@ -49,8 +49,8 @@ final readonly class CreateVideoPreviewHandler
             $duration = $video->duration() ?? 0.0;
             $captureTime = min($duration, 1.0);
             $this->videoPreviewGenerator->generate($inputPath, $outputPath, $captureTime);
+            $fileSize = file_exists($outputPath) ? filesize($outputPath) : 0;
             $this->storage->publishLocalFile($outputPath, $previewKey);
-            $fileSize = filesize($outputPath);
 
             $video->updateMeta(['preview' => true]);
             $this->videoRepository->save($video);

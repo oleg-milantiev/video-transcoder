@@ -68,7 +68,7 @@ final readonly class TranscodeVideoHandler
 
         if (!$task) {
             $this->eventBus->dispatch(new TranscodeVideoFail('Scheduled task not found for transcoding', $scheduledTask->taskId->toRfc4122()));
-            $this->logService->log('task', 'transcode', $task->id(), LogLevel::ERROR, 'Scheduled task not found for transcoding');
+            $this->logService->log('task', 'transcode', $scheduledTask->taskId, LogLevel::ERROR, 'Scheduled task not found for transcoding');
             return;
         }
 

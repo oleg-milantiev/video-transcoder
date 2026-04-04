@@ -41,6 +41,7 @@ final class TranscodeProcessServiceTest extends TestCase
             relativeOutputPath: 'output/test.mp4',
             absoluteOutputPath: '/tmp/output/test.mp4',
             inputPath: '/tmp/input.mp4',
+            timeStart: 0.0,
         );
 
         $saved = false;
@@ -118,6 +119,7 @@ final class TranscodeProcessServiceTest extends TestCase
             relativeOutputPath: 'output/test.mp4',
             absoluteOutputPath: '/tmp/output/test.mp4',
             inputPath: '/tmp/input.mp4',
+            timeStart: 0.0,
         );
 
         $taskRepository = $this->createStub(TaskRepositoryInterface::class);
@@ -175,6 +177,7 @@ final class TranscodeProcessServiceTest extends TestCase
             relativeOutputPath: 'output/test.mp4',
             absoluteOutputPath: '/tmp/output/test.mp4',
             inputPath: '/tmp/input.mp4',
+            timeStart: 0.0,
         );
 
         $taskRepository = $this->createStub(TaskRepositoryInterface::class);
@@ -216,6 +219,7 @@ final class TranscodeProcessServiceTest extends TestCase
             relativeOutputPath: 'output/test.mp4',
             absoluteOutputPath: '/tmp/output/test.mp4',
             inputPath: '/tmp/input.mp4',
+            timeStart: 0.0,
         );
 
         $taskRepository = $this->createStub(TaskRepositoryInterface::class);
@@ -260,6 +264,7 @@ final class TranscodeProcessServiceTest extends TestCase
             relativeOutputPath: 'output/test.mp4',
             absoluteOutputPath: '/tmp/output/test.mp4',
             inputPath: '/tmp/input.mp4',
+            timeStart: 0.0,
         );
 
         $taskRepository = $this->createStub(TaskRepositoryInterface::class);
@@ -308,6 +313,7 @@ final class TranscodeProcessServiceTest extends TestCase
             relativeOutputPath: 'output/test.mp4',
             absoluteOutputPath: '/tmp/output/test.mp4',
             inputPath: '/tmp/input.mp4',
+            timeStart: 0.0,
         );
 
         $taskRepository = $this->createStub(TaskRepositoryInterface::class);
@@ -352,6 +358,7 @@ final class TranscodeProcessServiceTest extends TestCase
             relativeOutputPath: 'output/test.mp4',
             absoluteOutputPath: '/tmp/output/test.mp4',
             inputPath: '/tmp/input.mp4',
+            timeStart: 0.0,
         );
 
         $taskRepository = $this->createStub(TaskRepositoryInterface::class);
@@ -398,6 +405,7 @@ final class TranscodeProcessServiceTest extends TestCase
             relativeOutputPath: 'output/test.mp4',
             absoluteOutputPath: '/tmp/output/test.mp4',
             inputPath: '/tmp/input.mp4',
+            timeStart: 0.0,
         );
 
         // save() must NOT be called — not enough time elapsed and progress is between 1–98
@@ -446,6 +454,7 @@ final class TranscodeProcessServiceTest extends TestCase
             relativeOutputPath: 'output/test.mp4',
             absoluteOutputPath: '/tmp/output/test.mp4',
             inputPath: '/tmp/input.mp4',
+            timeStart: 0.0,
         );
 
         // save() must NOT be called — progress stays at 0, no change to persist
