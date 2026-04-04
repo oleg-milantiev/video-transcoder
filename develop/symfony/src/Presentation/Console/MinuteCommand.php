@@ -31,7 +31,6 @@ final class MinuteCommand extends Command
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $this->logger->info('app:minute started');
-        $output->writeln('Attempting to acquire mutex...');
 
         $lock = $this->lockFactory->createLock('app:minute', self::MUTEX_TTL);
         $acquired = false;
@@ -40,33 +39,26 @@ final class MinuteCommand extends Command
             $acquired = $lock->acquire();
             if (!$acquired) {
                 $this->logger->info('Another instance is already running, exiting.');
-                $output->writeln('Another instance is already running, exiting.');
+
                 return Command::SUCCESS;
             }
 
-            $output->writeln('Dispatching StartTaskScheduler...');
             try {
                 $this->commandBus->dispatch(new StartTaskScheduler());
                 $this->logger->info('StartTaskScheduler dispatched');
-                $output->writeln('Dispatched successfully.');
+
                 return Command::SUCCESS;
-            } catch (MessengerExceptionInterface $e) {
-                $this->logger->error('Failed to dispatch StartTaskScheduler (messenger): ' . $e->getMessage(), ['exception' => $e]);
-                $output->writeln('<error>Messenger error: ' . $e->getMessage() . '</error>');
-                return Command::FAILURE;
             } catch (\Throwable $e) {
-                $this->logger->error('Failed to dispatch StartTaskScheduler: ' . $e->getMessage(), ['exception' => $e]);
-                $output->writeln('<error>Error: ' . $e->getMessage() . '</error>');
+                $this->logger->error('Failed to dispatch StartTaskScheduler', ['exception' => $e]);
+
                 return Command::FAILURE;
             }
         } finally {
             if ($acquired) {
                 try {
                     $lock->release();
-                    $this->logger->info('Mutex released');
                 } catch (\Throwable $e) {
-                    // Log and continue — releasing a lock should not fail the command
-                    $this->logger->error('Failed to release mutex: ' . $e->getMessage(), ['exception' => $e]);
+                    $this->logger->error('Failed to release mutex', ['exception' => $e]);
                 }
             }
         }
