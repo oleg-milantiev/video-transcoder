@@ -9,9 +9,7 @@
 
 ## Sprint 0.1.0 (первая демка)
 
-- скачать инфра из прод (и parent nginx conf!)
 - проверить prod e2e из-за перехода http -> https в подключении mercure
-- добавить лимиты воркеру - messenger:consume [-l|--limit LIMIT] [-f|--failure-limit FAILURE-LIMIT] [-m|--memory-limit MEMORY-LIMIT] [-t|--time-limit TIME-LIMIT] [--sleep SLEEP] [-b|--bus BUS] [--queues QUEUES] [--no-reset] [--all] [--exclude-receivers EXCLUDE-RECEIVERS] [--keepalive [KEEPALIVE]
 - в Багдаде всё спокойно
   - АЙ анализатор логов за сутки (за объём не больше контекстного окна)
   - ежедневные автотесты playwright в prod в лог

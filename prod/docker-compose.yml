@@ -39,7 +39,8 @@ services:
                 condition: service_healthy
             postgres:
                 condition: service_healthy
-        command: sh -c '/var/www/yc/bin/console messenger:consume async -v --no-ansi'
+        # todo --memory-limit MEMORY-LIMIT
+        command: sh -c '/var/www/yc/bin/console messenger:consume async -v --no-ansi --limit=30'
         mem_limit: 256m
         deploy:
             replicas: 1
@@ -61,12 +62,12 @@ services:
                 condition: service_healthy
             postgres:
                 condition: service_healthy
-        command: sh -c '/var/www/yc/bin/console messenger:consume async_transcode -v --no-ansi'
+        # todo --memory-limit MEMORY-LIMIT (fill after logs fill and check)
+        command: sh -c '/var/www/yc/bin/console messenger:consume async_transcode -v --no-ansi --limit=10'
         mem_limit: 512m
         deploy:
-            # todo test with 2 replicas
             replicas: 2
-            # todo limit memory. Ex.: 4k use 2g+ :(
+            # todo up memory limit. Ex.: 4k use 2g+ :(
             resources:
                 limits:
                     memory: 512M
