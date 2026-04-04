@@ -69,6 +69,7 @@ class LogCrudController extends AbstractCrudController
                 ->hideOnForm()
                 ->formatValue(static fn ($value) => is_object($value) && method_exists($value, 'toRfc4122') ? $value->toRfc4122() : (string) $value),
             TextField::new('name'),
+            TextField::new('action'),
             TextField::new('objectId')
                 ->formatValue(static fn ($value) => is_object($value) && method_exists($value, 'toRfc4122') ? $value->toRfc4122() : (string) $value),
             TextField::new('level'),
