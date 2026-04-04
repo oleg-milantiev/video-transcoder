@@ -1,0 +1,17 @@
+{
+  "level": "info",
+  "ts": 1775318915.8675742,
+  "logger": "http.handlers.mercure",
+  "msg": "New subscriber",
+  "subscriber": {
+    "id": "urn:uuid:4b7118d6-7d76-44db-9d89-7ef703248fcc",
+    "last_event_id": "",
+    "remote_addr": "172.25.0.1:36096",
+    "topic_selectors": [
+      "https://yc.milantiev.com/user/123e4567-e89b-42d3-a456-426614174000"
+    ],
+    "topics": [
+      "https://yc.milantiev.com/user/123e4567-e89b-42d3-a456-426614174000"
+    ]
+  }
+}

@@ -1,0 +1,63 @@
+server:
+  http_listen_port: 9080
+  grpc_listen_port: 0
+
+positions:
+  filename: /tmp/positions.yaml
+
+clients:
+  - url: http://loki:3100/loki/api/v1/push
+    batchwait: 1s
+    batchsize: 102400
+    timeout: 10s
+
+scrape_configs:
+  - job_name: docker
+    docker_sd_configs:
+      - host: unix:///var/run/docker.sock
+        refresh_interval: 10s
+        filters:
+          - name: label
+            values: ["com.docker.compose.project=video-transcoder"]
+
+    relabel_configs:
+      - source_labels: ['__meta_docker_container_name']
+        regex: '/(.*)'
+        target_label: 'container'
+      - source_labels: ['__meta_docker_container_label_com_docker_compose_service']
+        target_label: 'service'
+      - source_labels: ['__meta_docker_container_label_com_docker_compose_project']
+        target_label: 'project'
+
+    pipeline_stages:
+      - docker: {}
+
+      # Drop mercure health check
+      - match:
+          selector: '{service="mercure"}'
+          stages:
+            # 1. Достаем URI запроса из JSON
+            - json:
+                expressions:
+                  request: request
+            - json:
+                expressions:
+                  uri: uri
+                source: request
+
+            # 2. Достаем топики из структуры subscriber (для логов New subscriber)
+            - json:
+                expressions:
+                  subscriber: subscriber
+            - json:
+                expressions:
+                  topics: topics
+                source: subscriber
+
+            # 3. Дропаем, если это healthcheck в любом из полей
+            - drop:
+                source: uri
+                expression: ".*topic=health.*"
+            - drop:
+                source: topics
+                expression: ".*health.*"

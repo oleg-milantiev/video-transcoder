@@ -21,9 +21,10 @@
   - k3s на мастер ноде или managed kubernetes cluster
   - postgresql на мастер ноде или managed postgresql cluster
   - redis на мастер ноде
-  - rabbitmq на мастер ноде или managed broker
-  - временный bastion ssh host (может уберу в сторону kuberctl туннеля)
+  - mercure для realtime нотификаций
   - сети, подсети, sa, firewall
+  - grafana, loki, promtail для логов и алертов
+  - s3-хранилище для видео
 - kubernetes с его ingress, развёртыванием, поддержанием и масштабированием подов
 - VueJS статик front
 - Symfony API
@@ -37,10 +38,13 @@
   - php-fpm
   - postgresql
   - redis
-  - rabbitmq (пока не используется. Может обойдусь redis)
   - ffmpeg воркер meta и preview
   - N ffmpeg-transcoder workers
   - cron шедулера и garbage collector
+  - mercure
+  - grafana, promtail, loki
+
+Пример такой сборки в prod/
 
 ### Сценарий использования
 

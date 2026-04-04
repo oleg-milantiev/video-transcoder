@@ -1,0 +1,25 @@
+{
+  "message": "User signed in",
+  "context": {
+    "firewall": "main",
+    "route": "app_login",
+    "ip": "212.237.218.136",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36",
+    "action": "login",
+    "name": "user",
+    "uuid": "123e4567-e89b-42d3-a456-426614174000"
+  },
+  "level": 200,
+  "level_name": "INFO",
+  "channel": "app",
+  "datetime": "2026-04-04T13:39:47.710837+00:00",
+  "extra": {
+    "uid": "c26c944",
+    "url": "/login",
+    "ip": "172.25.0.1",
+    "http_method": "POST",
+    "server": "yc.milantiev.com",
+    "referrer": "https://yc.milantiev.com/login",
+    "memory_usage": "4 MB"
+  }
+}

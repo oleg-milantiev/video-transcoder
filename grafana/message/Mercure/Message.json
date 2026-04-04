@@ -1,0 +1,57 @@
+{
+  "level": "info",
+  "ts": 1775319154.210942,
+  "logger": "http.log.access.log0",
+  "msg": "handled request",
+  "request": {
+    "remote_ip": "172.25.0.9",
+    "remote_port": "55012",
+    "client_ip": "172.25.0.9",
+    "proto": "HTTP/1.1",
+    "method": "POST",
+    "host": "mercure:8080",
+    "uri": "/.well-known/mercure",
+    "headers": {
+      "Content-Type": [
+        "application/x-www-form-urlencoded"
+      ],
+      "User-Agent": [
+        "Symfony HttpClient (Curl)"
+      ],
+      "Accept-Encoding": [
+        "gzip"
+      ],
+      "Content-Length": [
+        "941"
+      ],
+      "Authorization": [
+        "REDACTED"
+      ],
+      "Accept": [
+        "*/*"
+      ]
+    }
+  },
+  "bytes_read": 941,
+  "user_id": "",
+  "duration": 0.00278483,
+  "size": 45,
+  "status": 200,
+  "resp_headers": {
+    "X-Frame-Options": [
+      "DENY"
+    ],
+    "X-Content-Type-Options": [
+      "nosniff"
+    ],
+    "X-Xss-Protection": [
+      "1; mode=block"
+    ],
+    "Content-Security-Policy": [
+      "default-src 'self'"
+    ],
+    "Server": [
+      "Caddy"
+    ]
+  }
+}

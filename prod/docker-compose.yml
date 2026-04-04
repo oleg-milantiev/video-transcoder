@@ -1,16 +1,4 @@
 services:
-    grafana:
-        image: grafana/grafana-oss:12.4.2
-        depends_on:
-            - postgres
-        ports:
-            - "3000:3000"
-        volumes:
-            - ./grafana:/var/lib/grafana
-        environment:
-            - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD}
-        restart: always
-
     nginx:
         restart: always
         image: olegmilantiev/yc-nginx:${PROJECT_VERSION}
@@ -131,7 +119,7 @@ services:
         image: dunglas/mercure:v0.16
         healthcheck:
             test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://mercure:8080/.well-known/mercure?topic=health"]
-            interval: 5s
+            interval: 15s
             timeout: 5s
             retries: 5
         environment:
@@ -142,7 +130,52 @@ services:
                 cors_origins *
                 anonymous 0
         ports:
-            - 8080:8080
+            - 281:8080
+
+    loki:
+        image: grafana/loki:3.6
+        restart: always
+        command: -config.file=/etc/loki/loki-config.yaml
+        volumes:
+            - ./loki/loki-config.yaml:/etc/loki/loki-config.yaml:ro
+            - loki-data:/loki
+        expose:
+            - 3100
+        healthcheck:
+            test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3100/ready"]
+            interval: 30s
+            timeout: 5s
+            retries: 3
+
+    promtail:
+        image: grafana/promtail:3.6
+        restart: always
+        command: -config.file=/etc/promtail/promtail-config.yaml
+        volumes:
+            - ./promtail/promtail-config.yaml:/etc/promtail/promtail-config.yaml:ro
+            - /var/run/docker.sock:/var/run/docker.sock:ro 
+        expose:
+            - 9080
+        depends_on:
+            - loki
+
+    grafana:
+        image: grafana/grafana-oss:12.4.2
+        depends_on:
+            - postgres
+            - loki
+        ports:
+            - "3000:3000"
+        volumes:
+            - ./grafana:/var/lib/grafana
+            - ./grafana-provisioning:/etc/grafana/provisioning
+        environment:
+            - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD}
+            - GF_INSTALL_PLUGINS=grafana-piechart-panel
+            - http_proxy=http://212.237.218.136:8888
+            - https_proxy=http://212.237.218.136:8888
+            - no_proxy=localhost,127.0.0.1,postgres,loki
+        restart: always
 
 networks:
     appnet:
@@ -151,3 +184,4 @@ networks:
 volumes:
     uploads:
     db-data:
+    loki-data:
