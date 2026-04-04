@@ -36,7 +36,7 @@ CMD ["php-fpm"]
 FROM base AS prod
 
 # disable php-fpm logs. Use only symfony json logs on prod
-COPY docker.conf /usr/local/etc/php-fpm.d/docker.conf
+COPY ./docker/yc-php/docker.conf /usr/local/etc/php-fpm.d/docker.conf
 
 COPY symfony/ /var/www/yc/
 
