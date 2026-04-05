@@ -14,7 +14,7 @@ class CompositeLogService implements LogServiceInterface
         private readonly iterable $loggers
     ) {}
 
-    public function log(string $name, string $action, Uuid $objectId, string $level, string $text, array $context = []): void
+    public function log(string $name, string $action, ?Uuid $objectId, string $level, string $text, array $context = []): void
     {
         foreach ($this->loggers as $logger) {
             $logger->log($name, $action, $objectId, $level, $text, $context);

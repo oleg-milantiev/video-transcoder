@@ -30,7 +30,7 @@ class LogEntity
     #[ORM\Column(length: 100)]
     public string $action;
 
-    #[ORM\Column(type: 'uuid')]
+    #[ORM\Column(type: 'uuid', nullable: true)]
     public ?SymfonyUuid $objectId = null;
 
     #[ORM\Column(length: 20)]

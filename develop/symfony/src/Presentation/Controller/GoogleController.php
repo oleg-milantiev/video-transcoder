@@ -9,7 +9,6 @@ use App\Infrastructure\Persistence\Doctrine\User\TariffEntity;
 use App\Infrastructure\Persistence\Doctrine\User\UserEntity;
 use App\Infrastructure\Google\GoogleAuthenticator;
 use Doctrine\ORM\EntityManagerInterface;
-use Psr\Log\LoggerInterface;
 use Psr\Log\LogLevel;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Bundle\SecurityBundle\Security;
@@ -31,7 +30,6 @@ class GoogleController extends AbstractController
     public function __construct(
         private readonly GoogleAuthenticator $googleAuth,
         private readonly LogServiceInterface $logService,
-        private readonly LoggerInterface $logger,
     ) {
     }
 
@@ -50,9 +48,7 @@ class GoogleController extends AbstractController
         try {
             return $this->redirect($this->googleAuth->getAuthorizationUrl());
         } catch (\Throwable $e) {
-            $this->logger->error('Google connect error', [
-                'request' => $request->query->all(),
-                'exceptionClass' => $e::class,
+            $this->logService->log('user', 'google', null, LogLevel::ERROR, 'Google connect error', [
                 'message' => $e->getMessage(),
             ]);
             $this->addFlash('error', 'Google connect error. Try again later');
@@ -122,12 +118,9 @@ class GoogleController extends AbstractController
 
             return $this->redirectToRoute('app_home');
         } catch (\Throwable $e) {
-            $this->logger->error('Google login error', [
-                'request' => $request->query->all(),
-                'exceptionClass' => $e::class,
+            $this->logService->log('user', 'google', null, LogLevel::ERROR, 'Google login error', [
                 'message' => $e->getMessage(),
             ]);
-
             $this->addFlash('error', 'Google login error. Try again later');
 
             $routeParameters = [];

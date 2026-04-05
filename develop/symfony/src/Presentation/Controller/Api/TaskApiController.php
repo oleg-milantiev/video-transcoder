@@ -10,19 +10,17 @@ use App\Application\Exception\TaskNotFoundException;
 use App\Application\Exception\VideoNotFoundException;
 use App\Application\Query\TaskCancelQuery;
 use App\Application\Logging\LogServiceInterface;
-use Psr\Log\LoggerInterface;
 use App\Application\Query\GetTaskListQuery;
 use App\Application\QueryHandler\QueryBus;
-use App\Application\Response\TaskListResponse;
 use App\Domain\Shared\ValueObject\Uuid;
 use App\Domain\Video\Repository\TaskRepositoryInterface;
 use App\Domain\Video\Repository\VideoRepositoryInterface;
 use Psr\Cache\InvalidArgumentException;
+use Psr\Log\LogLevel;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\Messenger\Exception\HandlerFailedException;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
@@ -37,7 +35,6 @@ class TaskApiController extends AbstractController
         private readonly TaskRepositoryInterface $taskRepository,
         private readonly VideoRepositoryInterface $videoRepository,
         private readonly LogServiceInterface $logService,
-        private readonly LoggerInterface $logger,
         private readonly Security $security,
     ) {
     }
@@ -52,9 +49,12 @@ class TaskApiController extends AbstractController
                 )
             );
         } catch (QueryException $e) {
+            // todo many user-friendly errors
             return $this->apiError('QUERY_FAILED', $e->getMessage(), 400);
         } catch (\Throwable $e) {
-            $this->logger->critical('Failed to list tasks', ['exception' => $e]);
+            $this->logService->log('task', 'index', null, LogLevel::CRITICAL, 'Fail', [
+                'message' => $e->getMessage(),
+            ]);
             return $this->apiError('INTERNAL_ERROR', 'Failed to list tasks', 500);
         }
     }
@@ -79,7 +79,11 @@ class TaskApiController extends AbstractController
         } catch (TaskCancelAccessDeniedException $e) {
             return $this->apiError('ACCESS_DENIED', $e->getMessage(), 403);
         } catch (\Throwable $e ) {
-            $this->logger->critical('Failed to cancel task', ['exception' => $e]);
+            $this->logService->log('task', 'cancel', Uuid::fromStringNullable($id), LogLevel::CRITICAL, 'Fail', [
+                'id' => $id,
+                'message' => $e->getMessage(),
+            ]);
+
             return $this->apiError('INTERNAL_ERROR', 'Failed to cancel task', 500);
         }
     }

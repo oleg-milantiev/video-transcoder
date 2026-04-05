@@ -16,7 +16,7 @@ final class Version20260322071016 extends AbstractMigration
 
     public function up(Schema $schema): void
     {
-        $this->addSql('CREATE TABLE log (id UUID NOT NULL, name VARCHAR(100) NOT NULL, object_id UUID NOT NULL, level VARCHAR(20) NOT NULL, text TEXT NOT NULL, created_at TIMESTAMP(0) WITHOUT TIME ZONE NOT NULL, context JSONB NOT NULL, PRIMARY KEY (id))');
+        $this->addSql('CREATE TABLE log (id UUID NOT NULL, name VARCHAR(100) NOT NULL, object_id UUID DEFAULT NULL, level VARCHAR(20) NOT NULL, text TEXT NOT NULL, created_at TIMESTAMP(0) WITHOUT TIME ZONE NOT NULL, context JSONB NOT NULL, PRIMARY KEY (id))');
         $this->addSql('CREATE TABLE preset (id UUID NOT NULL, title VARCHAR(255) NOT NULL, width INT NOT NULL, height INT NOT NULL, codec VARCHAR(50) NOT NULL, bitrate DOUBLE PRECISION NOT NULL, log JSONB DEFAULT NULL, PRIMARY KEY (id))');
         $this->addSql('CREATE TABLE tariff (id UUID NOT NULL, title VARCHAR(255) NOT NULL, delay INT NOT NULL, instance INT NOT NULL, PRIMARY KEY (id))');
         $this->addSql('CREATE TABLE task (id UUID NOT NULL, status INT NOT NULL, progress INT NOT NULL, created_at TIMESTAMP(0) WITHOUT TIME ZONE NOT NULL, updated_at TIMESTAMP(0) WITHOUT TIME ZONE DEFAULT NULL, started_at TIMESTAMP(0) WITHOUT TIME ZONE DEFAULT NULL, meta JSON NOT NULL, deleted BOOLEAN DEFAULT FALSE NOT NULL, video_id UUID NOT NULL, preset_id UUID NOT NULL, user_id UUID DEFAULT NULL, PRIMARY KEY (id))');

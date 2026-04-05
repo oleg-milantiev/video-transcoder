@@ -3,9 +3,10 @@ declare(strict_types=1);
 
 namespace App\Presentation\Console;
 
+use App\Application\Logging\LogServiceInterface;
 use App\Application\Service\Maintenance\TusCleanupService;
 use App\Domain\Video\Repository\VideoRepositoryInterface;
-use Psr\Log\LoggerInterface;
+use Psr\Log\LogLevel;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
@@ -18,8 +19,8 @@ final class HourCommand extends Command
     private const int MUTEX_TTL = 4000;
 
     public function __construct(
+        private readonly LogServiceInterface $logService,
         private readonly TusCleanupService $tusCleanupService,
-        private readonly LoggerInterface $logger,
         private readonly LockFactory $lockFactory,
         private readonly VideoRepositoryInterface $videoRepository,
     ) {
@@ -28,8 +29,8 @@ final class HourCommand extends Command
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        $this->logger->info('app:hour started');
-        $output->writeln('Attempting to acquire mutex...');
+        $ms = microtime(true);
+        $this->logService->log('cron', 'hour', null, LogLevel::INFO, 'Start');
 
         $lock = $this->lockFactory->createLock('app:hour', self::MUTEX_TTL);
         $acquired = false;
@@ -37,31 +38,41 @@ final class HourCommand extends Command
         try {
             $acquired = $lock->acquire();
             if (!$acquired) {
-                $this->logger->info('Another app:hour instance is already running, exiting.');
-                $output->writeln('Another instance is already running, exiting.');
+                $this->logService->log('cron', 'hour', null, LogLevel::DEBUG, 'Another instance is already running');
 
                 return Command::SUCCESS;
             }
 
             $deleted = $this->tusCleanupService->cleanupExpiredUploads();
-            $tusCount = count($deleted);
-            $this->logger->info('app:hour tus cleanup finished', ['deletedCount' => $tusCount]);
-
             $expiredCount = $this->videoRepository->deleteExpiredVideosAndTasks();
-            $this->logger->info('app:hour delete expired videos finished', ['deletedCount' => $expiredCount]);
+
+            $this->logService->log('cron', 'hour', null, LogLevel::INFO, 'Finish', [
+                'time' => microtime(true) - $ms,
+                'tus' => [
+                    'deleted' => count($deleted),
+                ],
+                'video' => [
+                    'deleted' => $expiredCount,
+                ],
+            ]);
 
             return Command::SUCCESS;
         } catch (\Throwable $e) {
-            $this->logger->error('app:hour failed: ' . $e->getMessage(), ['exception' => $e]);
-            $output->writeln('<error>Error: ' . $e->getMessage() . '</error>');
+            $this->logService->log('cron', 'hour', null, LogLevel::ERROR, 'Fail', [
+                'message' => $e->getMessage(),
+            ]);
 
             return Command::FAILURE;
         } finally {
             if ($acquired) {
                 try {
                     $lock->release();
+
+                    return Command::SUCCESS;
                 } catch (\Throwable $e) {
-                    $this->logger->error('Failed to release app:hour mutex: ' . $e->getMessage(), ['exception' => $e]);
+                    $this->logService->log('cron', 'hour', null, LogLevel::ERROR, 'Fail', [
+                        'message' => $e->getMessage(),
+                    ]);
                 }
             }
         }

@@ -20,7 +20,6 @@ use App\Application\Service\Task\TranscodeTaskFinalizationService;
 use App\Domain\Video\Repository\TaskRepositoryInterface;
 use App\Domain\Video\Repository\VideoRepositoryInterface;
 use App\Infrastructure\Task\TaskCancellationTrigger;
-use Psr\Log\LoggerInterface;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 use Symfony\Component\Messenger\MessageBusInterface;
@@ -39,7 +38,6 @@ final readonly class TranscodeVideoHandler
         private TaskRepositoryInterface $taskRepository,
         private VideoRepositoryInterface $videoRepository,
         private LogServiceInterface $logService,
-        private LoggerInterface $logger,
         private LockFactory $lockFactory,
         private TaskCancellationTrigger $cancellationTrigger,
         private TranscodeProcessService $transcodeProcessService,
@@ -168,9 +166,8 @@ final readonly class TranscodeVideoHandler
             try {
                 $lock->release();
             } catch (\Throwable $exception) {
-                $this->logger->error('Failed to release transcode task mutex', [
-                    'taskId' => $scheduledTask->taskId->toRfc4122(),
-                    'exception' => $exception,
+                $this->logService->log('task', 'transcode', $task->id(), LogLevel::ERROR, 'Failed to release transcode task mutex', [
+                    'message' => $exception->getMessage(),
                 ]);
             }
         }

@@ -3,9 +3,10 @@ declare(strict_types=1);
 
 namespace App\Presentation\Console;
 
+use App\Application\Logging\LogServiceInterface;
 use App\Application\Service\Task\DeletedTaskCleanupService;
 use App\Application\Service\Video\DeletedVideoCleanupService;
-use Psr\Log\LoggerInterface;
+use Psr\Log\LogLevel;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
@@ -18,7 +19,7 @@ final class DayCommand extends Command
     private const int MUTEX_TTL = 4000;
 
     public function __construct(
-        private readonly LoggerInterface $logger,
+        private readonly LogServiceInterface $logService,
         private readonly LockFactory $lockFactory,
         private readonly DeletedVideoCleanupService $deletedVideoCleanupService,
         private readonly DeletedTaskCleanupService $deletedTaskCleanupService,
@@ -28,8 +29,8 @@ final class DayCommand extends Command
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        $this->logger->info('app:day started');
-        $output->writeln('Attempting to acquire mutex...');
+        $ms = microtime(true);
+        $this->logService->log('cron', 'day', null, LogLevel::INFO, 'Start');
 
         $lock = $this->lockFactory->createLock('app:day', self::MUTEX_TTL);
         $acquired = false;
@@ -37,9 +38,7 @@ final class DayCommand extends Command
         try {
             $acquired = $lock->acquire();
             if (!$acquired) {
-                // todo оставить только log, убрать write во всех командах
-                $this->logger->info('Another app:day instance is already running, exiting.');
-                $output->writeln('Another instance is already running, exiting.');
+                $this->logService->log('cron', 'day', null, LogLevel::DEBUG, 'Another instance is already running');
 
                 return Command::SUCCESS;
             }
@@ -49,23 +48,33 @@ final class DayCommand extends Command
             $videoResult = $this->deletedVideoCleanupService->cleanup();
             $taskResult = $this->deletedTaskCleanupService->cleanup();
 
-            $this->logger->info('Deleted media cleanup finished', [
-                'videoResult' => $videoResult,
-                'taskResult' => $taskResult,
+            $this->logService->log('cron', 'day', null, LogLevel::INFO, 'Finish', [
+                'time' => microtime(true) - $ms,
+                'video' => [
+                    'candidates' => $videoResult['candidates'],
+                    'deleted' => $videoResult['filesDeleted'],
+                ],
+                'task' => [
+                    'candidates' => $taskResult['candidates'],
+                    'deleted' => $taskResult['filesDeleted'],
+                ],
             ]);
         } catch (\Throwable $e) {
-            $this->logger->error('app:day failed: ' . $e->getMessage(), ['exception' => $e]);
-            $output->writeln('<error>Error: ' . $e->getMessage() . '</error>');
+            $this->logService->log('cron', 'day', null, LogLevel::ERROR, 'Fail', [
+                'message' => $e->getMessage(),
+            ]);
 
             return Command::FAILURE;
         } finally {
             if ($acquired) {
                 try {
                     $lock->release();
-                    $this->logger->info('app:day tus cleanup finished');
+
                     return Command::SUCCESS;
                 } catch (\Throwable $e) {
-                    $this->logger->error('Failed to release app:day mutex: ' . $e->getMessage(), ['exception' => $e]);
+                    $this->logService->log('cron', 'day', null, LogLevel::ERROR, 'Fail', [
+                        'message' => $e->getMessage(),
+                    ]);
                 }
             }
         }

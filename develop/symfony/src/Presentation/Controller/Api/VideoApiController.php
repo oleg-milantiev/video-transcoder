@@ -10,17 +10,17 @@ use App\Application\Exception\TaskCreationFailedException;
 use App\Application\Exception\TranscodeAccessDeniedException;
 use App\Application\Exception\UserNotFoundException;
 use App\Application\Exception\VideoNotFoundException;
+use App\Application\Logging\LogServiceInterface;
 use App\Application\Query\DeleteVideoQuery;
 use App\Application\Query\GetVideoDetailsQuery;
 use App\Application\Query\GetVideoListQuery;
 use App\Application\Query\PatchVideoQuery;
 use App\Application\Query\StartTranscodeQuery;
 use App\Application\QueryHandler\QueryBus;
-use App\Application\Response\VideoListResponse;
 use App\Domain\Shared\ValueObject\Uuid;
 use App\Domain\Video\Exception\VideoAlreadyDeleted;
 use App\Domain\Video\Exception\VideoHasTranscodingTasks;
-use Psr\Log\LoggerInterface;
+use Psr\Log\LogLevel;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -35,7 +35,7 @@ class VideoApiController extends AbstractController
 
     public function __construct(
         private readonly QueryBus $queryBus,
-        private readonly LoggerInterface $logger,
+        private readonly LogServiceInterface $logService,
     ) {
     }
 
@@ -51,7 +51,9 @@ class VideoApiController extends AbstractController
         } catch (QueryException $e) {
             return $this->apiError('QUERY_FAILED', $e->getMessage(), 400);
         } catch (\Throwable $e) {
-            $this->logger->critical('Failed to list videos', ['exception' => $e]);
+            $this->logService->log('video', 'index', null, LogLevel::CRITICAL, 'Fail', [
+                'message' => $e->getMessage(),
+            ]);
             return $this->apiError('INTERNAL_ERROR', 'Failed to list videos', 500);
         }
     }
@@ -72,7 +74,10 @@ class VideoApiController extends AbstractController
             // todo переделать
             return $this->apiError('ACCESS_DENIED', $e->getMessage(), 403);
         } catch (\Throwable $e) {
-            $this->logger->critical('Failed to get video details', ['exception' => $e]);
+            $this->logService->log('video', 'details', Uuid::fromStringNullable($id), LogLevel::CRITICAL, 'Fail', [
+                'id' => $id,
+                'message' => $e->getMessage(),
+            ]);
             return $this->apiError('INTERNAL_ERROR', 'Failed to get video details', 500);
         }
     }
@@ -104,7 +109,11 @@ class VideoApiController extends AbstractController
         } catch (\DomainException $e) {
             return $this->apiError('ACCESS_DENIED', $e->getMessage(), 403);
         } catch (\Throwable $e) {
-            $this->logger->critical('Failed to start transcode', ['exception' => $e]);
+            $this->logService->log('video', 'transcode', Uuid::fromStringNullable($id), LogLevel::CRITICAL, 'Fail', [
+                'id' => $id,
+                'presetId' => $presetId,
+                'message' => $e->getMessage(),
+            ]);
             return $this->apiError('INTERNAL_ERROR', 'Failed to start transcode', 500);
         }
     }
@@ -125,23 +134,26 @@ class VideoApiController extends AbstractController
         } catch (\DomainException $e) {
             return $this->apiError('ACCESS_DENIED', $e->getMessage(), 403);
         } catch (\Throwable $e) {
-            $this->logger->critical('Failed to patch video', ['exception' => $e]);
+            $this->logService->log('video', 'patch', Uuid::fromStringNullable($id), LogLevel::CRITICAL, 'Fail', [
+                'id' => $id,
+                'message' => $e->getMessage(),
+            ]);
             return $this->apiError('INTERNAL_ERROR', 'Failed to patch video', 500);
         }
     }
 
-    #[Route('/{uuid}', name: 'api_video_delete', methods: ['DELETE'])]
-    public function delete(string $uuid): Response
+    #[Route('/{id}', name: 'api_video_delete', methods: ['DELETE'])]
+    public function delete(string $id): Response
     {
         try {
             $this->queryBus->query(
-                new DeleteVideoQuery($uuid, $this->getUser()->id->toRfc4122())
+                new DeleteVideoQuery($id, $this->getUser()->id->toRfc4122())
             );
 
             // todo что за новый контракт? :(
             return $this->apiSuccess([
                 'video' => [
-                    'id' => $uuid,
+                    'id' => $id,
                     'deleted' => true,
                 ],
             ]);
@@ -158,7 +170,10 @@ class VideoApiController extends AbstractController
         } catch (\DomainException $e) {
             return $this->apiError('DELETE_NOT_ALLOWED', $e->getMessage(), 409);
         } catch (\Throwable $e) {
-            $this->logger->critical('Failed to delete video', ['exception' => $e]);
+            $this->logService->log('video', 'delete', Uuid::fromStringNullable($id), LogLevel::CRITICAL, 'Fail', [
+                'id' => $id,
+                'message' => $e->getMessage(),
+            ]);
             return $this->apiError('INTERNAL_ERROR', 'Failed to delete video', 500);
         }
     }

@@ -44,6 +44,15 @@ class Uuid
         return new self($value);
     }
 
+    public static function fromStringNullable(string $value): ?self
+    {
+        try {
+            return new self($value);
+        } catch (InvalidUuidException) {
+            return null;
+        }
+    }
+
     public static function isValid(string $value): bool
     {
         // RFC 4122 for UUID v4: variant 8-9-a-b

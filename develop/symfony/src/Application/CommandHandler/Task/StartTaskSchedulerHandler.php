@@ -8,9 +8,10 @@ use App\Application\Command\Task\TranscodeVideo;
 use App\Application\Event\StartTaskSchedulerFail;
 use App\Application\Event\StartTaskSchedulerStart;
 use App\Application\Event\StartTaskSchedulerSuccess;
+use App\Application\Logging\LogServiceInterface;
 use App\Application\Query\Repository\ScheduledTaskReadRepositoryInterface;
 use App\Infrastructure\Task\TaskCancellationTrigger;
-use Psr\Log\LoggerInterface;
+use Psr\Log\LogLevel;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 use Symfony\Component\Messenger\Exception\ExceptionInterface;
@@ -20,7 +21,7 @@ use Symfony\Component\Messenger\MessageBusInterface;
 final readonly class StartTaskSchedulerHandler
 {
     public function __construct(
-        private LoggerInterface $logger,
+        private LogServiceInterface $logService,
         private ScheduledTaskReadRepositoryInterface $taskReadRepository,
         #[Autowire(service: 'messenger.bus.command')]
         private MessageBusInterface $commandBus,
@@ -39,11 +40,12 @@ final readonly class StartTaskSchedulerHandler
             $this->eventBus->dispatch(new StartTaskSchedulerStart());
 
             $scheduled = $this->taskReadRepository->getScheduled();
-            $this->logger->info('Tasks found for start', ['count' => count($scheduled)]);
+            $this->logService->log('task', 'scheduler', null, LogLevel::INFO, 'Tasks found for start', [
+                'count' => count($scheduled),
+            ]);
 
             foreach ($scheduled as $item) {
-                $this->logger->info('Dispatching transcode for scheduled', [
-                    'taskId' => $item->taskId,
+                $this->logService->log('task', 'scheduler', $item->taskId, LogLevel::INFO, 'Dispatching transcode', [
                     'userId' => $item->userId,
                     'videoId' => $item->videoId,
                 ]);
