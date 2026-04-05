@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace App\Tests\Presentation\Console;
 
+use App\Application\Logging\LogServiceInterface;
 use App\Application\Service\Maintenance\TusCleanupService;
 use App\Domain\Video\Repository\VideoRepositoryInterface;
 use App\Presentation\Console\HourCommand;
 use PHPUnit\Framework\TestCase;
-use Psr\Log\LoggerInterface;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Tester\CommandTester;
 use Symfony\Component\Lock\LockFactory;
@@ -27,7 +27,7 @@ final class HourCommandTest extends TestCase
                 ['name' => 'chunk-b', 'file_path' => '/tmp/tus/chunk-b'],
             ]);
 
-        $tusCleanupService = new TusCleanupService($server, $this->createStub(LoggerInterface::class));
+        $tusCleanupService = new TusCleanupService($server, $this->createStub(LogServiceInterface::class));
 
         $lock = $this->createMock(SharedLockInterface::class);
         $lock->expects($this->once())->method('acquire')->willReturn(true);
@@ -40,8 +40,8 @@ final class HourCommandTest extends TestCase
             ->willReturn($lock);
 
         $command = new HourCommand(
+            $this->createStub(LogServiceInterface::class),
             $tusCleanupService,
-            $this->createStub(LoggerInterface::class),
             $lockFactory,
             $this->createStub(VideoRepositoryInterface::class),
         );

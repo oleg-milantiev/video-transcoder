@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace App\Tests\Presentation\Console;
 
 use App\Application\Command\Task\StartTaskScheduler;
+use App\Application\Logging\LogServiceInterface;
 use App\Presentation\Console\MinuteCommand;
 use PHPUnit\Framework\TestCase;
-use Psr\Log\LoggerInterface;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Tester\CommandTester;
 use Symfony\Component\Lock\LockFactory;
@@ -37,7 +37,7 @@ final class MinuteCommandTest extends TestCase
 
         $command = new MinuteCommand(
             $commandBus,
-            $this->createStub(LoggerInterface::class),
+            $this->createStub(LogServiceInterface::class),
             $lockFactory,
         );
 

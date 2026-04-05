@@ -11,10 +11,10 @@ use App\Application\DTO\ScheduledTaskDTO;
 use App\Application\Event\StartTaskSchedulerFail;
 use App\Application\Event\StartTaskSchedulerStart;
 use App\Application\Event\StartTaskSchedulerSuccess;
+use App\Application\Logging\LogServiceInterface;
 use App\Application\Query\Repository\ScheduledTaskReadRepositoryInterface;
 use App\Infrastructure\Task\TaskCancellationTrigger;
 use PHPUnit\Framework\TestCase;
-use Psr\Log\LoggerInterface;
 use Symfony\Component\Messenger\Envelope;
 use Symfony\Component\Messenger\MessageBusInterface;
 use App\Domain\Shared\ValueObject\Uuid;
@@ -51,7 +51,7 @@ class StartTaskSchedulerHandlerTest extends TestCase
         $taskCancellationTrigger->method('clear');
 
         $handler = new StartTaskSchedulerHandler(
-            $this->createStub(LoggerInterface::class),
+            $this->createStub(LogServiceInterface::class),
             $taskRepository,
             $commandBus,
             $eventBus,
@@ -96,7 +96,7 @@ class StartTaskSchedulerHandlerTest extends TestCase
         $taskCancellationTrigger->method('clear');
 
         $handler = new StartTaskSchedulerHandler(
-            $this->createStub(LoggerInterface::class),
+            $this->createStub(LogServiceInterface::class),
             $taskRepository,
             $commandBus,
             $eventBus,
