@@ -1,4 +1,17 @@
 services:
+    cron:
+        restart: always
+        image: olegmilantiev/yc-php:${PROJECT_VERSION}
+        command: crond -f -l 2 -c /etc/crontabs
+        env_file:
+            - .env
+        depends_on:
+            - redis
+            - postgres
+        volumes:
+            - uploads:/var/www/yc/public/uploads
+            - ./crontabs:/etc/crontabs/root # alpine
+
     nginx:
         restart: always
         image: olegmilantiev/yc-nginx:${PROJECT_VERSION}
