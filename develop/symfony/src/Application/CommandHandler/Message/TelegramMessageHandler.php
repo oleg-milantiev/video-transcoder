@@ -17,6 +17,7 @@ final readonly class TelegramMessageHandler
     private const int RATE_LIMIT_MAX = 10; // Max consecutive deferred messages before flood
     private const int RATE_LIMIT_SKIP_TIME = 300; // Skip messages for 5 minutes in flood mode
     private const float MIN_INTERVAL = 1.0; // Minimum 1 second between messages
+    public const array TEST_CHAT_IDS = [123456789, -123456789, 987654321, 111111111, 222222222];
 
     public function __construct(
         #[Autowire('%env(TELEGRAM_TOKEN)%')]
@@ -91,7 +92,7 @@ final readonly class TelegramMessageHandler
 
     private function sendTelegramMessage(int $chatId, string $text, bool $silent): void
     {
-        if (in_array($chatId, TelegramMessageHandlerTest::TEST_CHAT_IDS)) {
+        if (in_array($chatId, self::TEST_CHAT_IDS)) {
             return;
         }
 
