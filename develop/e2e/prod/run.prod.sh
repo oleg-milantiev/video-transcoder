@@ -19,6 +19,12 @@ export ADMIN_PASSWORD="${ADMIN_PASSWORD:-admin}"
 export E2E_ARTIFACTS_DIR="${E2E_ARTIFACTS_DIR:-$DEVELOP_ROOT/release.check/$PROJECT_NAME/playwright-prod}"
 CONTAINER_ARTIFACTS_DIR="/work/release.check/$PROJECT_NAME/playwright-prod"
 
+cleanup() {
+  docker compose exec -T php bin/console app:smoke:result "$CONTAINER_ARTIFACTS_DIR"
+}
+
+trap cleanup EXIT
+
 if [[ -z "${PROD_USER_PASSWORD:-}" ]]; then
   PROD_USER_PASSWORD="$(printf '%04x%04x' "$RANDOM" "$RANDOM")"
   export PROD_USER_PASSWORD

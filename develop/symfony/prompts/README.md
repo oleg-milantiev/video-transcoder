@@ -3,6 +3,7 @@
 ## Backend 
 
 - [Новые поля в домен](new-domain-fields.md)
+- [Новая консольная команда](create-new-command.md)
 
 ## Frontend
 

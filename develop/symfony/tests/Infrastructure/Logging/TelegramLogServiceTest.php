@@ -4,15 +4,18 @@ declare(strict_types=1);
 
 namespace App\Tests\Infrastructure\Logging;
 
+use App\Application\Command\Message\TelegramMessage;
 use App\Application\Logging\LogServiceInterface;
 use App\Domain\Shared\ValueObject\Uuid;
 use App\Infrastructure\Logging\TelegramLogService;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LogLevel;
+use Symfony\Component\Messenger\Envelope;
 use Symfony\Component\Messenger\MessageBusInterface;
 use Twig\Environment;
 use Twig\Error\LoaderError;
 use Twig\Error\SyntaxError;
+use Twig\Loader\ArrayLoader;
 
 final class TelegramLogServiceTest extends TestCase
 {
@@ -234,5 +237,116 @@ final class TelegramLogServiceTest extends TestCase
             ->method('log');
 
         $this->telegramLogService->log('task', 'transcode', $objectId, LogLevel::INFO, $text);
+    }
+
+    public function testSmokeResultInfoRendersPassedTemplateAndDispatches(): void
+    {
+        // setUp mocks are not used — this test creates its own service with real Twig
+        $this->logService->expects($this->never())->method('log');
+        $this->twig->expects($this->never())->method('createTemplate');
+
+        $twig = new Environment(new ArrayLoader());
+
+        $dispatchedMessage = null;
+        $commandBus = $this->createMock(MessageBusInterface::class);
+        $commandBus->expects($this->once())
+            ->method('dispatch')
+            ->with($this->callback(static function (object $msg) use (&$dispatchedMessage): bool {
+                if (!$msg instanceof TelegramMessage) {
+                    return false;
+                }
+                $dispatchedMessage = $msg;
+
+                return true;
+            }))
+            ->willReturnCallback(static fn (object $msg): Envelope => new Envelope($msg));
+
+        $service = new TelegramLogService($commandBus, $this->createStub(LogServiceInterface::class), $twig);
+        $service->log('smoke', 'result', null, LogLevel::INFO, 'Smoke tests passed', [
+            'status' => 'passed',
+            'failedTests' => [],
+        ]);
+
+        $this->assertNotNull($dispatchedMessage);
+        $this->assertInstanceOf(TelegramMessage::class, $dispatchedMessage);
+        $this->assertSame(self::ADMIN_USER_ID, $dispatchedMessage->chatId);
+        $this->assertStringContainsString('✅ Smoke', $dispatchedMessage->text);
+        $this->assertStringContainsString('Smoke tests passed', $dispatchedMessage->text);
+        $this->assertStringContainsString('passed', $dispatchedMessage->text);
+    }
+
+    public function testSmokeResultErrorWithFailedTestsRendersAndDispatches(): void
+    {
+        // setUp mocks are not used — this test creates its own service with real Twig
+        $this->logService->expects($this->never())->method('log');
+        $this->twig->expects($this->never())->method('createTemplate');
+
+        $twig = new Environment(new ArrayLoader());
+
+        $dispatchedMessage = null;
+        $commandBus = $this->createMock(MessageBusInterface::class);
+        $commandBus->expects($this->once())
+            ->method('dispatch')
+            ->with($this->callback(static function (object $msg) use (&$dispatchedMessage): bool {
+                if (!$msg instanceof TelegramMessage) {
+                    return false;
+                }
+                $dispatchedMessage = $msg;
+
+                return true;
+            }))
+            ->willReturnCallback(static fn (object $msg): Envelope => new Envelope($msg));
+
+        $service = new TelegramLogService($commandBus, $this->createStub(LogServiceInterface::class), $twig);
+        $service->log('smoke', 'result', null, LogLevel::ERROR, 'Smoke tests failed', [
+            'status' => 'failed',
+            'failedTests' => ['tests/01.admin.login.js', 'tests/02.upload.video.js'],
+        ]);
+
+        $this->assertNotNull($dispatchedMessage);
+        $this->assertInstanceOf(TelegramMessage::class, $dispatchedMessage);
+        $this->assertSame(self::ADMIN_USER_ID, $dispatchedMessage->chatId);
+        $this->assertStringContainsString('🚨 Smoke', $dispatchedMessage->text);
+        $this->assertStringContainsString('Smoke tests failed', $dispatchedMessage->text);
+        $this->assertStringContainsString('Failed (2)', $dispatchedMessage->text);
+        $this->assertStringContainsString('tests/01.admin.login.js', $dispatchedMessage->text);
+        $this->assertStringContainsString('tests/02.upload.video.js', $dispatchedMessage->text);
+    }
+
+    public function testSmokeResultErrorWithMissingFileRendersAndDispatches(): void
+    {
+        // setUp mocks are not used — this test creates its own service with real Twig
+        $this->logService->expects($this->never())->method('log');
+        $this->twig->expects($this->never())->method('createTemplate');
+
+        $twig = new Environment(new ArrayLoader());
+
+        $dispatchedMessage = null;
+        $commandBus = $this->createMock(MessageBusInterface::class);
+        $commandBus->expects($this->once())
+            ->method('dispatch')
+            ->with($this->callback(static function (object $msg) use (&$dispatchedMessage): bool {
+                if (!$msg instanceof TelegramMessage) {
+                    return false;
+                }
+                $dispatchedMessage = $msg;
+
+                return true;
+            }))
+            ->willReturnCallback(static fn (object $msg): Envelope => new Envelope($msg));
+
+        $service = new TelegramLogService($commandBus, $this->createStub(LogServiceInterface::class), $twig);
+        $service->log('smoke', 'result', null, LogLevel::ERROR, 'Result file not found', [
+            'status' => 'unknown',
+            'file' => '/work/release.check/run/test-results/.last-run.json',
+        ]);
+
+        $this->assertNotNull($dispatchedMessage);
+        $this->assertInstanceOf(TelegramMessage::class, $dispatchedMessage);
+        $this->assertSame(self::ADMIN_USER_ID, $dispatchedMessage->chatId);
+        $this->assertStringContainsString('🚨 Smoke', $dispatchedMessage->text);
+        $this->assertStringContainsString('Result file not found', $dispatchedMessage->text);
+        $this->assertStringContainsString('unknown', $dispatchedMessage->text);
+        $this->assertStringContainsString('/work/release.check/run/test-results/.last-run.json', $dispatchedMessage->text);
     }
 }

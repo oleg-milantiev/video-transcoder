@@ -67,6 +67,27 @@ TWIG,
                 ],
             ]
         ],
+        'smoke' => [
+            'result' => [
+                LogLevel::INFO => [
+                    'template' => <<< TWIG
+✅ Smoke: {{ text }}
+Status: {{ status }}
+TWIG,
+                    'userIds' => [self::ADMIN_USER_ID],
+                ],
+                LogLevel::ERROR => [
+                    'template' => <<< TWIG
+🚨 Smoke: {{ text }}
+Status: {{ status }}{% if failedTests is defined and failedTests|length > 0 %}
+Failed ({{ failedTests|length }}):{% for t in failedTests %}
+  — {{ t }}{% endfor %}{% endif %}{% if file is defined %}
+File: {{ file }}{% endif %}
+TWIG,
+                    'userIds' => [self::ADMIN_USER_ID],
+                ],
+            ],
+        ],
     ];
 
     private const string TEMPLATE_ERROR = <<<TWIG
