@@ -40,6 +40,7 @@ framework:
         routing:
             App\Application\Command\Task\TranscodeVideo: async_transcode
 
+            App\Application\Command\Message\TelegramMessage: async
             App\Application\Command\Video\ExtractVideoMetadata: async
             App\Application\Command\Video\CreateVideoPreview: async
             App\Application\Command\Video\CleanupDeletedVideoMedia: async

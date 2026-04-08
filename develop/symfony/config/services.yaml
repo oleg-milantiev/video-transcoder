@@ -80,3 +80,6 @@ services:
     App\Infrastructure\Logging\DoctrineLogService:
         tags: ['app.logger']
 
+    App\Infrastructure\Logging\TelegramLogService:
+        tags: ['app.logger']
+
