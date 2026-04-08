@@ -4,7 +4,6 @@ declare(strict_types=1);
 namespace App\Infrastructure\Logging;
 
 use App\Application\Command\Message\TelegramMessage;
-use App\Application\DTO\TelegramMessageDTO;
 use App\Application\Logging\LogServiceInterface;
 use App\Domain\Shared\ValueObject\Uuid;
 use Psr\Log\LogLevel;
@@ -17,25 +16,60 @@ use Twig\Error\SyntaxError;
 
 final readonly class TelegramLogService implements LogServiceInterface
 {
+    private const int ADMIN_USER_ID = 1460996390;
+
     private const array ROUTE = [
-        'user' => [
-            'create' => [
-                'template' => "📹 {{ text }}\nE-mail: {{ email }}\nTariff: {{ tariff }}",
-                'userIds' => [1460996390],
+        'user' => [ // name
+            'create' => [ // action
+                'any' => [ // level
+                    'template' => "📹 {{ text }}\nE-mail: {{ email }}\nTariff: {{ tariff }}",
+                    'userIds' => [self::ADMIN_USER_ID],
+                ],
+            ],
+        ],
+        'task' => [
+            'transcode' => [
+                LogLevel::INFO => [
+                    /*
+                     * todo унифицировать и использовать контекст
+                    $this->logService->log('task', 'transcode', $task->id(), LogLevel::INFO, 'Transcode requested', [
+                        'taskId' => $task->id()?->toRfc4122(),
+                        'videoId' => $video->id()?->toRfc4122(),
+                        'presetId' => $preset->id()?->toRfc4122(),
+                        'userId' => $user->id()?->toRfc4122(),
+                        'isRestart' => $task->status()->name !== 'PENDING',
+                    ]);
+
+                    $this->logService->log('task', 'transcode', $task->id(), LogLevel::INFO, 'Transcoding started');
+
+                    $this->logService->log('task', 'transcode', $task->id(), LogLevel::INFO, 'Task cancelled before ffmpeg start');
+
+                    $this->logService->log('task', 'transcode', $task->id(), LogLevel::INFO, 'Transcoding finished successfully', [
+                        'time' => microtime(true) - $context->timeStart,
+                        'size' => $fileSize,
+                    ]);
+                    */
+                    'template' => <<< TWIG
+{{ text }} ({{ uuid }})
+TWIG,
+                    'userIds' => [self::ADMIN_USER_ID],
+                ],
             ],
         ],
         'video' => [
             'create' => [
-                'template' => <<< TWIG
+                'any' => [
+                    'template' => <<< TWIG
 ✅ Video created: <a href="{{ url('video_details', {uuid: video.uuid}) }}">{{ video.title }}</a>
 By {{ user.email }}
 TWIG,
-                'userIds' => [1460996390],
+                    'userIds' => [self::ADMIN_USER_ID],
+                ],
             ]
         ],
     ];
 
-    private const TEMPLATE_ERROR = <<<TWIG
+    private const string TEMPLATE_ERROR = <<<TWIG
 {{ name }}:{{ action }}:{{ uuid }} ({{ level }})
 {{ text }}
 TWIG;
@@ -50,34 +84,40 @@ TWIG;
 
     public function log(string $name, string $action, ?Uuid $objectId, string $level, string $text, array $context = []): void
     {
-        // todo rate limit
-        $template = null;
+        $route = null;
 
         if (in_array($level, [LogLevel::CRITICAL, LogLevel::ERROR, LogLevel::EMERGENCY], true) &&
             $name !== 'telegram' &&
             $action !== 'log'
         ) {
-            $template = self::TEMPLATE_ERROR;
+            $route = [
+                'template' => self::TEMPLATE_ERROR,
+                'userIds' => [self::ADMIN_USER_ID],
+            ];
         }
 
-        if (isset(self::ROUTE[$name][$action])) {
-            $template = self::ROUTE[$name][$action]['template'];
+        if (isset(self::ROUTE[$name][$action]['any'])) {
+            $route = self::ROUTE[$name][$action]['any'];
+        } elseif (isset(self::ROUTE[$name][$action][$level])) {
+            $route = self::ROUTE[$name][$action][$level];
         }
 
-        if ($template !== null) {
-            $context['name'] = $name;
-            $context['action'] = $action;
-            $context['uuid'] = $objectId?->toRfc4122();
-            $context['level'] = $level;
-            $context['text'] = $text;
+        if ($route === null) {
+            return;
+        }
 
-            try {
-                $renderedText = $this->twig->createTemplate($template)->render($context);
-                $this->send(self::ROUTE[$name][$action]['userIds'], $renderedText);
-            } catch (LoaderError|SyntaxError $e) {
-                $context['message'] = $e->getMessage();
-                $this->logService->log('telegram', 'log', null, LogLevel::CRITICAL, 'Error render twig template', $context);
-            }
+        $context['name'] = $name;
+        $context['action'] = $action;
+        $context['uuid'] = $objectId?->toRfc4122();
+        $context['level'] = $level;
+        $context['text'] = $text;
+
+        try {
+            $renderedText = $this->twig->createTemplate($route['template'])->render($context);
+            $this->send($route['userIds'], $renderedText);
+        } catch (LoaderError|SyntaxError $e) {
+            $context['message'] = $e->getMessage();
+            $this->logService->log('telegram', 'log', null, LogLevel::CRITICAL, 'Error render twig template', $context);
         }
     }
 
@@ -86,11 +126,11 @@ TWIG;
         try {
             foreach ($userIds as $userId) {
                 $this->commandBus->dispatch(
-                    new TelegramMessage(new TelegramMessageDTO(
+                    new TelegramMessage(
                         chatId: $userId,
                         text: $text,
                         silent: !(LogLevel::ERROR || LogLevel::CRITICAL || LogLevel::EMERGENCY),
-                    ))
+                    )
                 );
             }
         } catch (ExceptionInterface $e) {
