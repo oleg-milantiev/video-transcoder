@@ -5,6 +5,7 @@ namespace App\Application\CommandHandler\Message;
 
 use App\Application\Command\Message\TelegramMessage;
 use App\Application\Logging\LogServiceInterface;
+use App\Tests\Application\CommandHandler\Message\TelegramMessageHandlerTest;
 use Psr\Cache\CacheItemPoolInterface;
 use Psr\Log\LogLevel;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
@@ -90,6 +91,10 @@ final readonly class TelegramMessageHandler
 
     private function sendTelegramMessage(int $chatId, string $text, bool $silent): void
     {
+        if (in_array($chatId, TelegramMessageHandlerTest::TEST_CHAT_IDS)) {
+            return;
+        }
+
         $data = array(
             'chat_id' => $chatId,
             'text' => $text,
