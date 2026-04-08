@@ -7,46 +7,29 @@ use App\Application\Logging\LogServiceInterface;
 use Psr\Log\LogLevel;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
-use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Input\StreamableInputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
-#[AsCommand(name: 'app:smoke:result', description: 'Process e2e smoke test result from artifacts directory')]
+#[AsCommand(name: 'app:smoke:result', description: 'Process e2e smoke test result from STDIN (JSON or null)')]
 final class SmokeResultCommand extends Command
 {
-    private const string RESULT_FILE = 'test-results/.last-run.json';
-
     public function __construct(
         private readonly LogServiceInterface $logService,
     ) {
         parent::__construct();
     }
 
-    protected function configure(): void
-    {
-        $this->addArgument('artifacts-dir', InputArgument::REQUIRED, 'Path to the e2e artifacts directory');
-    }
-
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        /** @var string $artifactsDir */
-        $artifactsDir = $input->getArgument('artifacts-dir');
+        $stream = $input instanceof StreamableInputInterface
+            ? ($input->getStream() ?? STDIN)
+            : STDIN;
 
-        $jsonFile = rtrim($artifactsDir, '/') . '/' . self::RESULT_FILE;
+        $raw = trim((string) stream_get_contents($stream));
 
-        if (!file_exists($jsonFile)) {
+        if ($raw === '' || $raw === 'null') {
             $this->logService->log('smoke', 'result', null, LogLevel::ERROR, 'Result file not found', [
-                'file' => $jsonFile,
-                'status' => 'unknown',
-            ]);
-
-            return Command::FAILURE;
-        }
-
-        $content = file_get_contents($jsonFile);
-        if ($content === false) {
-            $this->logService->log('smoke', 'result', null, LogLevel::ERROR, 'Failed to read result file', [
-                'file' => $jsonFile,
                 'status' => 'unknown',
             ]);
 
@@ -54,11 +37,10 @@ final class SmokeResultCommand extends Command
         }
 
         /** @var array{status?: string, failedTests?: list<mixed>}|null $data */
-        $data = json_decode($content, true);
+        $data = json_decode($raw, true);
 
         if (!is_array($data)) {
             $this->logService->log('smoke', 'result', null, LogLevel::ERROR, 'Invalid result file format', [
-                'file' => $jsonFile,
                 'status' => 'unknown',
             ]);
 

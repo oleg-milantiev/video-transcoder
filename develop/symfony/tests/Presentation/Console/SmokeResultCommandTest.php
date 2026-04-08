@@ -13,7 +13,7 @@ use Symfony\Component\Console\Tester\CommandTester;
 
 final class SmokeResultCommandTest extends TestCase
 {
-    public function testMissingFileLogsErrorAndReturnsFailure(): void
+    public function testNullStdinLogsFileMissingAndReturnsFailure(): void
     {
         $logService = $this->createMock(LogServiceInterface::class);
         $logService->expects($this->once())
@@ -24,25 +24,18 @@ final class SmokeResultCommandTest extends TestCase
                 null,
                 LogLevel::ERROR,
                 'Result file not found',
-                $this->callback(static fn (array $ctx): bool => isset($ctx['file'])),
+                $this->callback(static fn (array $ctx): bool => $ctx['status'] === 'unknown'),
             );
 
-        $command = new SmokeResultCommand($logService);
-        $tester = new CommandTester($command);
-        $exitCode = $tester->execute(['artifacts-dir' => '/non/existent/path']);
+        $tester = new CommandTester(new SmokeResultCommand($logService));
+        $tester->setInputs(['null']);
+        $exitCode = $tester->execute([]);
 
         $this->assertSame(Command::FAILURE, $exitCode);
     }
 
-    public function testPassedTestsLogsInfoAndReturnsSuccess(): void
+    public function testPassedJsonLogsInfoAndReturnsSuccess(): void
     {
-        $tmpDir = sys_get_temp_dir() . '/smoke_test_' . uniqid('', true);
-        mkdir($tmpDir . '/test-results', 0777, true);
-        file_put_contents($tmpDir . '/test-results/.last-run.json', (string) json_encode([
-            'status' => 'passed',
-            'failedTests' => [],
-        ]));
-
         $logService = $this->createMock(LogServiceInterface::class);
         $logService->expects($this->once())
             ->method('log')
@@ -55,26 +48,15 @@ final class SmokeResultCommandTest extends TestCase
                 $this->callback(static fn (array $ctx): bool => $ctx['status'] === 'passed' && $ctx['failedTests'] === []),
             );
 
-        $command = new SmokeResultCommand($logService);
-        $tester = new CommandTester($command);
-        $exitCode = $tester->execute(['artifacts-dir' => $tmpDir]);
+        $tester = new CommandTester(new SmokeResultCommand($logService));
+        $tester->setInputs([(string) json_encode(['status' => 'passed', 'failedTests' => []])]);
+        $exitCode = $tester->execute([]);
 
         $this->assertSame(Command::SUCCESS, $exitCode);
-
-        unlink($tmpDir . '/test-results/.last-run.json');
-        rmdir($tmpDir . '/test-results');
-        rmdir($tmpDir);
     }
 
-    public function testFailedTestsLogsErrorAndReturnsFailure(): void
+    public function testFailedJsonLogsErrorAndReturnsFailure(): void
     {
-        $tmpDir = sys_get_temp_dir() . '/smoke_test_' . uniqid('', true);
-        mkdir($tmpDir . '/test-results', 0777, true);
-        file_put_contents($tmpDir . '/test-results/.last-run.json', (string) json_encode([
-            'status' => 'failed',
-            'failedTests' => ['tests/01.admin.login.js', 'tests/02.upload.video.js'],
-        ]));
-
         $logService = $this->createMock(LogServiceInterface::class);
         $logService->expects($this->once())
             ->method('log')
@@ -87,23 +69,18 @@ final class SmokeResultCommandTest extends TestCase
                 $this->callback(static fn (array $ctx): bool => $ctx['status'] === 'failed' && count($ctx['failedTests']) === 2),
             );
 
-        $command = new SmokeResultCommand($logService);
-        $tester = new CommandTester($command);
-        $exitCode = $tester->execute(['artifacts-dir' => $tmpDir]);
+        $tester = new CommandTester(new SmokeResultCommand($logService));
+        $tester->setInputs([(string) json_encode([
+            'status' => 'failed',
+            'failedTests' => ['tests/01.admin.login.js', 'tests/02.upload.video.js'],
+        ])]);
+        $exitCode = $tester->execute([]);
 
         $this->assertSame(Command::FAILURE, $exitCode);
-
-        unlink($tmpDir . '/test-results/.last-run.json');
-        rmdir($tmpDir . '/test-results');
-        rmdir($tmpDir);
     }
 
     public function testInvalidJsonLogsErrorAndReturnsFailure(): void
     {
-        $tmpDir = sys_get_temp_dir() . '/smoke_test_' . uniqid('', true);
-        mkdir($tmpDir . '/test-results', 0777, true);
-        file_put_contents($tmpDir . '/test-results/.last-run.json', 'not-valid-json');
-
         $logService = $this->createMock(LogServiceInterface::class);
         $logService->expects($this->once())
             ->method('log')
@@ -113,17 +90,13 @@ final class SmokeResultCommandTest extends TestCase
                 null,
                 LogLevel::ERROR,
                 'Invalid result file format',
-                $this->callback(static fn (array $ctx): bool => isset($ctx['file'])),
+                $this->callback(static fn (array $ctx): bool => $ctx['status'] === 'unknown'),
             );
 
-        $command = new SmokeResultCommand($logService);
-        $tester = new CommandTester($command);
-        $exitCode = $tester->execute(['artifacts-dir' => $tmpDir]);
+        $tester = new CommandTester(new SmokeResultCommand($logService));
+        $tester->setInputs(['not-valid-json']);
+        $exitCode = $tester->execute([]);
 
         $this->assertSame(Command::FAILURE, $exitCode);
-
-        unlink($tmpDir . '/test-results/.last-run.json');
-        rmdir($tmpDir . '/test-results');
-        rmdir($tmpDir);
     }
 }

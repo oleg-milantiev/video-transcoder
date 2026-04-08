@@ -20,7 +20,13 @@ export E2E_ARTIFACTS_DIR="${E2E_ARTIFACTS_DIR:-$DEVELOP_ROOT/release.check/$PROJ
 CONTAINER_ARTIFACTS_DIR="/work/release.check/$PROJECT_NAME/playwright-prod"
 
 cleanup() {
-  docker compose exec -T php bin/console app:smoke:result "$CONTAINER_ARTIFACTS_DIR"
+  FILE="${E2E_ARTIFACTS_DIR}/test-results/.last-run.json"
+
+  if [ -f "$FILE" ]; then
+    cat "$FILE" | docker compose exec -T php bin/console app:smoke:result
+  else
+    echo "null" | docker compose exec -T php bin/console app:smoke:result
+  fi
 }
 
 trap cleanup EXIT
