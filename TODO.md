@@ -56,6 +56,7 @@
 
 ## Backlog
 
+- uuid в public uppy widget
 - все даты на фронт через хелпер в human readable 
 - как-то pipeline надо в одной сущности делать, кажется, описывая порядок классов. Через yield?
 

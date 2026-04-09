@@ -143,12 +143,29 @@ window.dispatchEvent(new CustomEvent('app:flash', {
 bash develop/symfony/assets/tests.sh
 ```
 
+Скрипт рекурсивно ищет все `*.test.mjs` во вложенных папках.  
+Через `--experimental-loader assets/tests/loader.mjs` браузерные bare-спецификаторы (`vue`, `sweetalert2`, …) перенаправляются в локальные vendor-файлы, поэтому любой модуль приложения можно импортировать напрямую без бандлера.
+
 ### Структура
 
 ```
 assets/tests/
-  uploadHint.test.mjs    # formatBytes, buildUploadHint
+  loader.mjs                      # ESM loader: remaps vue/sweetalert2/… → vendor files
+  uploadHint.test.mjs             # formatBytes, buildUploadHint
+  shared.test.mjs                 # replaceTemplateValue, normalizeErrorMessage,
+                                  # extractApiErrorMessage, secondsToHuman,
+                                  # bytesToHuman, megabytesToHuman, humanReadableDateTime
+  realtime.test.mjs               # parseAppTaskMessage, parseAppVideoMessage
+  apiAuth.test.mjs                # initAuth, getAccessToken, getAuthHeader, getJsonAuthHeaders
+  tasks-actions.test.mjs          # isTaskActive, getTaskDownloadUrl, applyTaskRealtimeUpdate
+  videos-actions.test.mjs         # applyVideoRealtimeUpdate (videos tab)
+  video-details-actions.test.mjs  # formatMetaValue, taskDownloadUrl,
+                                  # applyTaskRealtimeUpdate, applyVideoRealtimeUpdate (video details)
+  flash.test.mjs                  # normalizeNotification, toSwalOptions
 ```
+
+> **Примечание.** Чтобы `flash.test.mjs` мог напрямую тестировать `normalizeNotification` и
+> `toSwalOptions`, эти функции экспортированы из `flash/bindFlashNotifications.js`.
 
 ### Как устроены тесты
 
@@ -166,7 +183,16 @@ assert.equal(myFn(1), 2);
 console.log('✓ myFn');
 ```
 
+### Loader (ESM bare-specifier resolver)
+
+`assets/tests/loader.mjs` — кастомный Node.js ESM loader, который перехватывает bare-импорты
+(`vue`, `vue-router`, `@vue/*`, `sweetalert2`, …) и перенаправляет их в соответствующие
+vendor-файлы из `assets/vendor/`. Позволяет тестировать любой модуль приложения напрямую
+в Node.js без бандлера и без установки npm-пакетов.
+
+Loader используется автоматически через `tests.sh` (`--experimental-loader`).
+
 ### Добавление нового теста
 
-Создай файл `assets/tests/<name>.test.mjs` — скрипт `tests.sh` подхватит его автоматически.
+Создай файл `assets/tests/<name>.test.mjs` (или в любой вложенной папке) — скрипт `tests.sh` подхватит его автоматически.
 

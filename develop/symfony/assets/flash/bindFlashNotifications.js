@@ -11,7 +11,7 @@ const ICON_BY_LEVEL = {
     danger: 'error',
 };
 
-function normalizeNotification(detail) {
+export function normalizeNotification(detail) {
     if (typeof detail === 'string') {
         return {
             html: detail,
@@ -33,7 +33,7 @@ function normalizeNotification(detail) {
     };
 }
 
-function toSwalOptions(notification) {
+export function toSwalOptions(notification) {
     const icon = ICON_BY_LEVEL[String(notification.level || '').toLowerCase()] || 'info';
     const options = {
         toast: true,
