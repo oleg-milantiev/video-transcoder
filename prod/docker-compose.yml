@@ -188,7 +188,7 @@ services:
             - GF_INSTALL_PLUGINS=grafana-piechart-panel
             - http_proxy=http://212.237.218.136:8888
             - https_proxy=http://212.237.218.136:8888
-            - no_proxy=localhost,127.0.0.1,postgres,loki
+            - no_proxy=localhost,127.0.0.1,postgres,loki,nginx,prometheus
         restart: always
 
     prometheus:
