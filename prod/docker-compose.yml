@@ -191,6 +191,15 @@ services:
             - no_proxy=localhost,127.0.0.1,postgres,loki
         restart: always
 
+    prometheus:
+        image: prom/prometheus:v3
+        restart: always
+        volumes:
+            - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+            - prometheus-data:/prometheus
+        expose:
+            - 9090
+
 networks:
     appnet:
         driver: bridge
@@ -199,3 +208,4 @@ volumes:
     uploads:
     db-data:
     loki-data:
+    prometheus-data:

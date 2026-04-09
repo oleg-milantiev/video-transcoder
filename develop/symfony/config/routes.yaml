@@ -9,3 +9,7 @@
 
 controllers:
     resource: routing.controllers
+
+app_metrics:
+    path: /metrics/prometheus
+    controller: artprima_prometheus_metrics.controller:prometheus

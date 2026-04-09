@@ -10,6 +10,7 @@
         "ext-pdo_pgsql": "*",
         "ext-redis": "*",
         "ankitpokhrel/tus-php": "^2.4",
+        "artprima/prometheus-metrics-bundle": "^1.21",
         "doctrine/doctrine-bundle": "^3.2.2",
         "doctrine/doctrine-migrations-bundle": "^4.0",
         "doctrine/orm": "^3.6.2",
