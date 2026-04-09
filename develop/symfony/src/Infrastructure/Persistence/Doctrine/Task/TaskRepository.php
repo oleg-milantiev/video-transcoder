@@ -142,8 +142,7 @@ class TaskRepository extends ServiceEntityRepository implements TaskRepositoryIn
     {
         $conn = $this->getEntityManager()->getConnection();
 
-        // todo index
-        $sql = "SELECT sum((t.meta->>'size')::bigint)
+        $sql = "SELECT sum((COALESCE(t.meta->>'size', t.meta->>'sizeExpected'))::bigint)
             FROM task t
             WHERE t.user_id = :userId
                 AND t.deleted = false";

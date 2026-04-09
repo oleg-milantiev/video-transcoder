@@ -85,6 +85,7 @@ final readonly class StartTranscodeHandler
                 $task->restart();
             } else {
                 $task = Task::create($video->id(), $preset->id(), $user->id());
+                $task->updateMeta(['sizeExpected' => (int)($video->duration() * $preset->bitrate()->value() / 8 * 1024 * 1024)]);
             }
 
             $this->taskRepository->save($task);

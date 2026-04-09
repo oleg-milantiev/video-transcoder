@@ -13,8 +13,7 @@ use Symfony\Component\Uid\UuidV4 as SymfonyUuid;
 #[ORM\Entity(repositoryClass: TaskRepository::class)]
 #[ORM\Table(name: 'task')]
 #[ORM\Index(name: 'idx_task_video_id', columns: ['video_id'])]
-// for videoRepository->deleteExpiredVideosAndTasks
-// CREATE INDEX idx_task_video_id ON task (video_id) WHERE (deleted = false)
+#[ORM\Index(name: 'idx_task_user_storage', columns: ['user_id'])]
 class TaskEntity
 {
     #[ORM\Id]
