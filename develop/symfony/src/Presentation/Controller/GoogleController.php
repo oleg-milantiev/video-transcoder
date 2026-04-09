@@ -100,6 +100,9 @@ class GoogleController extends AbstractController
                 ]);
             }
 
+            $user->loginedAt = new \DateTimeImmutable();
+            $em->flush();
+
             $this->logService->log('user', 'login', Uuid::fromString($user->id->toRfc4122()), LogLevel::INFO, 'Login via Google', [
                 'email' => $email,
             ]);

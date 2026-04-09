@@ -15,6 +15,7 @@ use EasyCorp\Bundle\EasyAdminBundle\Config\Filters;
 use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractCrudController;
 use EasyCorp\Bundle\EasyAdminBundle\Field\ArrayField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\AssociationField;
+use EasyCorp\Bundle\EasyAdminBundle\Field\DateTimeField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\TextField;
 use EasyCorp\Bundle\EasyAdminBundle\Filter\EntityFilter;
 use EasyCorp\Bundle\EasyAdminBundle\Filter\TextFilter;
@@ -61,7 +62,7 @@ class UserCrudController extends AbstractCrudController
             ->showEntityActionsInlined()
             ->setEntityLabelInSingular('User')
             ->setEntityLabelInPlural('Users')
-            ->setDefaultSort(['email' => 'asc']);
+            ->setDefaultSort(['createdAt' => 'desc']);
     }
 
     public function configureActions(Actions $actions): Actions
@@ -92,6 +93,10 @@ class UserCrudController extends AbstractCrudController
                 ->setFormTypeOption('query_builder', static function(\Doctrine\ORM\EntityRepository $repository) {
                     return $repository->createQueryBuilder('t')->orderBy('t.title', 'ASC');
                 }),
+            DateTimeField::new('createdAt')
+                ->hideOnForm(),
+            DateTimeField::new('loginedAt')
+                ->hideOnForm(),
         ];
     }
 

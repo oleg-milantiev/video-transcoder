@@ -19,6 +19,8 @@ use App\Domain\User\ValueObject\TariffVideoDuration;
 use App\Domain\User\ValueObject\TariffVideoSize;
 use App\Domain\User\ValueObject\UserEmail;
 use App\Domain\User\ValueObject\UserRoles;
+use App\Domain\User\ValueObject\UserCreatedAt;
+use App\Domain\User\ValueObject\UserLoginedAt;
 use PHPUnit\Framework\TestCase;
 
 final class UserTest extends TestCase
@@ -120,5 +122,67 @@ final class UserTest extends TestCase
         );
 
         $this->assertSame('display@example.com', (string) $user);
+    }
+
+    public function testCreatedAtIsAutoSetOnConstruction(): void
+    {
+        $before = new \DateTimeImmutable();
+        $user = new User(
+            email: new UserEmail('user@example.com'),
+            roles: new UserRoles(['ROLE_USER']),
+        );
+        $after = new \DateTimeImmutable();
+
+        $this->assertGreaterThanOrEqual($before, $user->createdAt()->value());
+        $this->assertLessThanOrEqual($after, $user->createdAt()->value());
+    }
+
+    public function testCreatedAtCanBeProvidedExplicitly(): void
+    {
+        $dt = new \DateTimeImmutable('2024-01-01 00:00:00');
+        $user = new User(
+            email: new UserEmail('user@example.com'),
+            roles: new UserRoles(['ROLE_USER']),
+            createdAt: new UserCreatedAt($dt),
+        );
+
+        $this->assertSame($dt, $user->createdAt()->value());
+    }
+
+    public function testLoginedAtIsNullByDefault(): void
+    {
+        $user = new User(
+            email: new UserEmail('user@example.com'),
+            roles: new UserRoles(['ROLE_USER']),
+        );
+
+        $this->assertNull($user->loginedAt());
+    }
+
+    public function testUpdateLoginedAt(): void
+    {
+        $user = new User(
+            email: new UserEmail('user@example.com'),
+            roles: new UserRoles(['ROLE_USER']),
+        );
+
+        $dt = new \DateTimeImmutable('2025-06-15 12:00:00');
+        $user->updateLoginedAt(new UserLoginedAt($dt));
+
+        $this->assertNotNull($user->loginedAt());
+        $this->assertSame($dt, $user->loginedAt()->value());
+    }
+
+    public function testLoginedAtCanBeProvidedInConstructor(): void
+    {
+        $dt = new \DateTimeImmutable('2025-06-15 12:00:00');
+        $user = new User(
+            email: new UserEmail('user@example.com'),
+            roles: new UserRoles(['ROLE_USER']),
+            loginedAt: new UserLoginedAt($dt),
+        );
+
+        $this->assertNotNull($user->loginedAt());
+        $this->assertSame($dt, $user->loginedAt()->value());
     }
 }

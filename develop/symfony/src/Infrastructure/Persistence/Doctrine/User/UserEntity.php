@@ -21,18 +21,10 @@ class UserEntity implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(type: 'uuid', unique: true)]
     #[ORM\GeneratedValue(strategy: 'CUSTOM')]
     #[ORM\CustomIdGenerator(class: 'doctrine.uuid_generator')]
-    public ?SymfonyUuid $id = null {
-        get {
-            return $this->id;
-        }
-    }
+    public ?SymfonyUuid $id = null;
 
     #[ORM\Column(length: 180)]
-    public ?string $email = null {
-        get {
-            return $this->email;
-        }
-    }
+    public ?string $email = null;
 
     /**
      * @var list<string> The user roles
@@ -64,9 +56,16 @@ class UserEntity implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\OneToMany(targetEntity: VideoEntity::class, mappedBy: 'user', orphanRemoval: true)]
     public Collection $videos;
 
+    #[ORM\Column]
+    public \DateTimeImmutable $createdAt;
+
+    #[ORM\Column(nullable: true)]
+    public ?\DateTimeImmutable $loginedAt;
+
     public function __construct()
     {
         $this->videos = new ArrayCollection();
+        $this->createdAt = new \DateTimeImmutable();
     }
 
     /**

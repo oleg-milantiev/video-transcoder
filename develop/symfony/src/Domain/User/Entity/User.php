@@ -5,7 +5,9 @@ namespace App\Domain\User\Entity;
 
 use App\Domain\Shared\ValueObject\Uuid;
 use App\Domain\User\ValueObject\PasswordHash;
+use App\Domain\User\ValueObject\UserCreatedAt;
 use App\Domain\User\ValueObject\UserEmail;
+use App\Domain\User\ValueObject\UserLoginedAt;
 use App\Domain\User\ValueObject\UserRoles;
 
 class User
@@ -15,6 +17,8 @@ class User
     private UserRoles $roles;
     private ?PasswordHash $password;
     private ?Tariff $tariff;
+    private UserCreatedAt $createdAt;
+    private ?UserLoginedAt $loginedAt;
 
     public function __construct(
         UserEmail $email,
@@ -22,12 +26,16 @@ class User
         ?PasswordHash $password = null,
         ?Tariff $tariff = null,
         ?Uuid $id = null,
+        ?UserCreatedAt $createdAt = null,
+        ?UserLoginedAt $loginedAt = null,
     ) {
         $this->id = $id;
         $this->email = $email;
         $this->roles = $roles;
         $this->password = $password;
         $this->tariff = $tariff;
+        $this->createdAt = $createdAt ?? new UserCreatedAt(new \DateTimeImmutable());
+        $this->loginedAt = $loginedAt;
     }
 
     public function id(): ?Uuid
@@ -86,6 +94,21 @@ class User
     public function hasRole(string $role): bool
     {
         return $this->roles->has($role);
+    }
+
+    public function createdAt(): UserCreatedAt
+    {
+        return $this->createdAt;
+    }
+
+    public function loginedAt(): ?UserLoginedAt
+    {
+        return $this->loginedAt;
+    }
+
+    public function updateLoginedAt(UserLoginedAt $loginedAt): void
+    {
+        $this->loginedAt = $loginedAt;
     }
 
     public function __toString(): string
