@@ -10,7 +10,6 @@ use App\Application\Event\CreateVideoPreviewSuccess;
 use App\Application\Service\Video\VideoRealtimeNotifier;
 use Psr\Log\LogLevel;
 use App\Application\Logging\LogServiceInterface;
-use App\Domain\Video\Exception\VideoPreviewGenerationFailed;
 use App\Domain\Video\Repository\VideoRepositoryInterface;
 use App\Domain\Video\Service\Storage\StorageInterface;
 use App\Infrastructure\Ffmpeg\VideoPreviewGenerator;
@@ -68,8 +67,6 @@ final readonly class CreateVideoPreviewHandler
                 'message' => $e->getMessage(),
             ]);
             $this->eventBus->dispatch(new CreateVideoPreviewFail($e->getMessage(), $videoId));
-
-            throw VideoPreviewGenerationFailed::fromVideoId($video->id()->toString(), $e->getMessage());
         }
     }
 }

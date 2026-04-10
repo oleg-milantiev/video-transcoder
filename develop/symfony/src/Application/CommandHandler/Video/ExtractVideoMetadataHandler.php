@@ -16,7 +16,6 @@ use App\Application\Service\Video\VideoRealtimeNotifier;
 use App\Domain\User\Exception\TariffNotFound;
 use App\Domain\User\Exception\UserNotFound;
 use App\Domain\User\Repository\UserRepositoryInterface;
-use App\Domain\Video\Exception\VideoMetadataExtractionFailed;
 use App\Domain\Video\Exception\VideoMetadataInvalid;
 use App\Domain\Video\Repository\TaskRepositoryInterface;
 use App\Domain\Video\Repository\VideoRepositoryInterface;
@@ -63,11 +62,11 @@ final readonly class ExtractVideoMetadataHandler
 
             $user = $this->userRepository->findById($video->userId());
             if ($user === null) {
-                $this->handleMetadataExtractionError($video, UserNotFound::byId($video->userId()->toRfc4122()));
+                throw UserNotFound::byId($video->userId()->toRfc4122());
             }
             $tariff = $user->tariff();
             if ($tariff === null) {
-                $this->handleMetadataExtractionError($video, TariffNotFound::forUser($user->id()->toRfc4122()));
+                throw TariffNotFound::forUser($user->id()->toRfc4122());
             }
 
             $inputPath = $this->storage->localPathForRead($this->storage->sourceKey($video));
@@ -82,21 +81,21 @@ final readonly class ExtractVideoMetadataHandler
             $width = $metadata['width'] ?? null;
             $height = $metadata['height'] ?? null;
             if ($width === null || $height === null) {
-                $this->handleMetadataExtractionError($video, VideoMetadataInvalid::missingResolution());
+                throw VideoMetadataInvalid::missingResolution();
             }
             $maxWidth = $tariff->maxWidth()->value();
             $maxHeight = $tariff->maxHeight()->value();
             if ($width > $maxWidth || $height > $maxHeight) {
-                $this->handleMetadataExtractionError($video, VideoMetadataInvalid::resolutionExceedsLimit($width, $height, $maxWidth, $maxHeight));
+                throw VideoMetadataInvalid::resolutionExceedsLimit($width, $height, $maxWidth, $maxHeight);
             }
 
             $duration = $video->duration();
             if ($duration === null) {
-                $this->handleMetadataExtractionError($video, VideoMetadataInvalid::missingDuration());
+                throw VideoMetadataInvalid::missingDuration();
             }
             $maxDuration = $tariff->videoDuration()->value();
             if ($duration > $maxDuration) {
-                $this->handleMetadataExtractionError($video, VideoMetadataInvalid::durationExceedsLimit($duration, $maxDuration));
+                throw VideoMetadataInvalid::durationExceedsLimit($duration, $maxDuration);
             }
 
             $this->notifier->notifyVideoUpdated($video, 'meta');
@@ -141,7 +140,5 @@ final readonly class ExtractVideoMetadataHandler
         ]);
 
         $this->eventBus->dispatch(new ExtractVideoMetadataFail($e->getMessage(), $videoId));
-
-        throw VideoMetadataExtractionFailed::fromVideoId($video->id()->toString(), $e->getMessage());
     }
 }
