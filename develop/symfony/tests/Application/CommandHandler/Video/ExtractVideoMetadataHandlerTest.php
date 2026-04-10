@@ -8,30 +8,30 @@ use App\Application\Command\Video\ExtractVideoMetadata;
 use App\Application\CommandHandler\Video\ExtractVideoMetadataHandler;
 use App\Application\Event\ExtractVideoMetadataFail;
 use App\Application\Event\ExtractVideoMetadataStart;
-use App\Application\Service\StorageRealtimeNotifierInterface;
+use App\Application\Logging\LogServiceInterface;
+use App\Application\Service\Storage\StorageRealtimeNotifierInterface;
 use App\Application\Service\Video\VideoRealtimeNotifier;
+use App\Domain\Shared\ValueObject\Uuid;
 use App\Domain\User\Entity\Tariff;
 use App\Domain\User\Entity\User;
+use App\Domain\User\Repository\UserRepositoryInterface;
 use App\Domain\User\ValueObject\TariffMaxHeight;
 use App\Domain\User\ValueObject\TariffMaxWidth;
 use App\Domain\User\ValueObject\TariffVideoDuration;
-use App\Domain\Video\ValueObject\VideoDates;
-use App\Application\Logging\LogServiceInterface;
 use App\Domain\Video\Entity\Video;
 use App\Domain\Video\Exception\VideoMetadataExtractionFailed;
-use App\Domain\Video\Repository\VideoRepositoryInterface;
 use App\Domain\Video\Repository\TaskRepositoryInterface;
+use App\Domain\Video\Repository\VideoRepositoryInterface;
 use App\Domain\Video\Service\Storage\StorageInterface;
 use App\Domain\Video\ValueObject\FileExtension;
+use App\Domain\Video\ValueObject\VideoDates;
 use App\Domain\Video\ValueObject\VideoTitle;
-use App\Domain\User\Repository\UserRepositoryInterface;
 use App\Infrastructure\Ffmpeg\ProcessRunnerInterface;
 use App\Infrastructure\Ffmpeg\VideoMetadataExtractor;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Messenger\Envelope;
 use Symfony\Component\Messenger\MessageBusInterface;
-use App\Domain\Shared\ValueObject\Uuid;
 
 class ExtractVideoMetadataHandlerTest extends TestCase
 {

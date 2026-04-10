@@ -12,6 +12,7 @@ use App\Application\Event\CreateVideoSuccess;
 use App\Application\Exception\StorageSizeExceedsQuota;
 use App\Application\Factory\FlashNotificationFactory;
 use App\Application\Factory\VideoFactory;
+use App\Application\Service\Mercure\FlashRealtimeNotifier;
 use App\Application\Service\Video\VideoRealtimeNotifier;
 use App\Domain\Video\Repository\TaskRepositoryInterface;
 use App\Domain\Video\Exception\VideoSizeExceedsQuota;
@@ -37,7 +38,8 @@ final readonly class CreateVideoHandler
         private MessageBusInterface $eventBus,
         private VideoRepositoryInterface $videoRepository,
         private UserRepositoryInterface $userRepository,
-        private VideoRealtimeNotifier $notifier,
+        private VideoRealtimeNotifier $videoRealtimeNotifier,
+        private FlashRealtimeNotifier $flashRealtimeNotifier,
         private LogServiceInterface $logService,
         private StorageInterface $storage,
         private VideoFactory $videoFactory,
@@ -57,12 +59,18 @@ final readonly class CreateVideoHandler
             $filePath = $command->file()->getFilePath();
 
             if (!file_exists($filePath)) {
+                $this->logService->log('video', 'create', null, LogLevel::CRITICAL, 'File not exists', [
+                    'file' => $command->file()->details(),
+                ]);
                 throw VideoFileNotFound::cannotDetermineSize($filePath);
             }
 
             // file size tariff limits
             $fileSize = @filesize($filePath);
             if ($fileSize === false) {
+                $this->logService->log('video', 'create', null, LogLevel::CRITICAL, 'File size not found', [
+                    'file' => $command->file()->details(),
+                ]);
                 throw VideoFileNotFound::cannotDetermineSize($filePath);
             }
 
@@ -70,17 +78,28 @@ final readonly class CreateVideoHandler
 
             $user = $this->userRepository->findById($command->userId());
             if ($user === null) {
+                $this->logService->log('video', 'create', null, LogLevel::CRITICAL, 'User not found', [
+                    'file' => $command->file()->details(),
+                ]);
                 throw UserNotFound::byId($command->userId()->toRfc4122());
             }
 
             $tariff = $user->tariff();
             if ($tariff === null) {
+                $this->logService->log('video', 'create', null, LogLevel::ERROR, 'User without tariff', [
+                    'userId' => $command->userId()->toRfc4122(),
+                    'file' => $command->file()->details(),
+                ]);
                 throw TariffNotFound::forUser($command->userId()->toRfc4122());
             }
 
             $maxSizeMb = $tariff->videoSize()->value();
             if ($fileSizeMb > $maxSizeMb) {
                 unlink($filePath);
+                $this->flashRealtimeNotifier->notify(
+                    $command->userId(),
+                    $this->flashNotificationFactory->uploadFailed(null, 'File size exceeds '. $maxSizeMb.' MB')
+                );
                 // todo use app exception
                 throw VideoSizeExceedsQuota::fromSize($fileSizeMb, $maxSizeMb);
             }
@@ -90,6 +109,10 @@ final readonly class CreateVideoHandler
             $storageCapacityMb = $tariff->storageGb()->value()*1024;
             if ($fileSizeMb + $storageNowMb > $storageCapacityMb) {
                 unlink($filePath);
+                $this->flashRealtimeNotifier->notify(
+                    $command->userId(),
+                    $this->flashNotificationFactory->uploadFailed(null, 'The video doesn\'t fit in the storage')
+                );
                 throw StorageSizeExceedsQuota::create($fileSizeMb, $storageNowMb, $storageCapacityMb);
             }
 
@@ -116,7 +139,7 @@ final readonly class CreateVideoHandler
                 'file' => $command->file()->details(),
             ]);
 
-            $this->notifier->notifyVideoUpdated($video, 'uploaded', [
+            $this->videoRealtimeNotifier->notifyVideoUpdated($video, 'uploaded', [
                 'notification' => $this->flashNotificationFactory->uploadCompleted($video)->toArray(),
             ]);
 

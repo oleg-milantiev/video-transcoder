@@ -5,8 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\Application\Service;
 
 use App\Application\Command\Mercure\PublishMercureMessage;
-use App\Application\Service\StorageRealtimeNotifier;
-use App\Application\Service\StorageRealtimeNotifierInterface;
+use App\Application\Service\Storage\StorageRealtimeNotifier;
 use App\Domain\Shared\ValueObject\Uuid;
 use App\Domain\User\Entity\Tariff;
 use App\Domain\User\Entity\User;

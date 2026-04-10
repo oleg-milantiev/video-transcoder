@@ -9,19 +9,20 @@ use App\Application\Command\Video\ExtractVideoMetadata;
 use App\Application\Event\ExtractVideoMetadataFail;
 use App\Application\Event\ExtractVideoMetadataStart;
 use App\Application\Event\ExtractVideoMetadataSuccess;
-use App\Application\Service\StorageRealtimeNotifierInterface;
-use App\Application\Service\Video\VideoRealtimeNotifier;
-use Psr\Log\LogLevel;
+use App\Application\Factory\FlashNotificationFactory;
 use App\Application\Logging\LogServiceInterface;
+use App\Application\Service\Storage\StorageRealtimeNotifierInterface;
+use App\Application\Service\Video\VideoRealtimeNotifier;
+use App\Domain\User\Exception\TariffNotFound;
+use App\Domain\User\Exception\UserNotFound;
+use App\Domain\User\Repository\UserRepositoryInterface;
 use App\Domain\Video\Exception\VideoMetadataExtractionFailed;
 use App\Domain\Video\Exception\VideoMetadataInvalid;
-use App\Domain\Video\Repository\VideoRepositoryInterface;
 use App\Domain\Video\Repository\TaskRepositoryInterface;
+use App\Domain\Video\Repository\VideoRepositoryInterface;
 use App\Domain\Video\Service\Storage\StorageInterface;
-use App\Domain\User\Repository\UserRepositoryInterface;
-use App\Domain\User\Exception\UserNotFound;
-use App\Domain\User\Exception\TariffNotFound;
 use App\Infrastructure\Ffmpeg\VideoMetadataExtractor;
+use Psr\Log\LogLevel;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 use Symfony\Component\Messenger\Exception\ExceptionInterface;
@@ -42,6 +43,8 @@ final readonly class ExtractVideoMetadataHandler
         private VideoMetadataExtractor $videoMetadataExtractor,
         private VideoRealtimeNotifier $notifier,
         private LogServiceInterface $logService,
+        private FlashNotificationFactory $flashNotificationFactory,
+        private VideoRealtimeNotifier $videoRealtimeNotifier,
         private StorageRealtimeNotifierInterface $storageNotifier,
     ) {
     }
@@ -131,6 +134,10 @@ final readonly class ExtractVideoMetadataHandler
 
         $this->logService->log('video', 'meta', $video->id(), LogLevel::ERROR, 'Metadata validation failed', [
             'message' => $e->getMessage(),
+        ]);
+
+        $this->videoRealtimeNotifier->notifyVideoUpdated($video, 'meta', [
+            'notification' => $this->flashNotificationFactory->uploadFailed($video, $e->getMessage())->toArray(),
         ]);
 
         $this->eventBus->dispatch(new ExtractVideoMetadataFail($e->getMessage(), $videoId));

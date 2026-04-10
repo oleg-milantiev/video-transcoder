@@ -25,6 +25,20 @@ final readonly class FlashNotificationFactory
         return FlashNotificationDTO::fromDomain($notification);
     }
 
+    public function uploadFailed(?Video $video, string $message): FlashNotificationDTO
+    {
+        $videoId = $video->id()?->toRfc4122() ?? '';
+
+        $notification = RealtimeNotification::create(
+            level: RealtimeNotificationLevel::ERROR,
+            title: 'Upload failed',
+            html: 'Video upload failed.'. ($videoId ? ' <a href="/video/'. $videoId .'">Open details</a>' : '') .'<br>'. $message,
+            timerMs: 7000,
+        );
+
+        return FlashNotificationDTO::fromDomain($notification);
+    }
+
     public function transcodeStarted(Task $task): FlashNotificationDTO
     {
         $videoId = $task->videoId()->toRfc4122();

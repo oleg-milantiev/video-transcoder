@@ -15,8 +15,9 @@ use App\Application\Query\DeleteTaskQuery;
 use App\Application\Query\DeleteVideoQuery;
 use App\Application\QueryHandler\DeleteVideoHandler;
 use App\Application\QueryHandler\QueryBus;
-use App\Application\Service\StorageRealtimeNotifierInterface;
+use App\Application\Service\Storage\StorageRealtimeNotifierInterface;
 use App\Application\Service\Video\VideoRealtimeNotifier;
+use App\Domain\Shared\ValueObject\Uuid;
 use App\Domain\Video\Entity\Task;
 use App\Domain\Video\Entity\Video;
 use App\Domain\Video\Exception\VideoHasTranscodingTasks;
@@ -34,7 +35,6 @@ use PHPUnit\Framework\TestCase;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\Messenger\Envelope;
 use Symfony\Component\Messenger\MessageBusInterface;
-use App\Domain\Shared\ValueObject\Uuid;
 
 final class DeleteVideoHandlerTest extends TestCase
 {

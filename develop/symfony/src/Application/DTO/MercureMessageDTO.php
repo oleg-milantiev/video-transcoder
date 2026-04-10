@@ -13,7 +13,7 @@ final readonly class MercureMessageDTO
     public function __construct(
         public string $action,
         public string $entity,
-        public Uuid $id,
+        public ?Uuid $id,
         public Uuid $userId,
         public ?array $payload = null,
     ) {

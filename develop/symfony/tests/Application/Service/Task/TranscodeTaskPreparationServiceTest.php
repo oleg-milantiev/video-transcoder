@@ -4,33 +4,33 @@ declare(strict_types=1);
 
 namespace App\Tests\Application\Service\Task;
 
-use App\Application\Service\Task\TranscodeTaskPreparationService;
-use App\Application\Service\Task\TaskRealtimeNotifier;
-use App\Application\Service\StorageRealtimeNotifierInterface;
 use App\Application\Factory\FlashNotificationFactory;
-use App\Domain\Video\ValueObject\Progress;
-use App\Domain\Video\ValueObject\TaskDates;
-use App\Domain\Video\ValueObject\TaskStatus;
-use App\Domain\Video\ValueObject\VideoDates;
-use Psr\Log\LogLevel;
 use App\Application\Logging\LogServiceInterface;
+use App\Application\Service\Storage\StorageRealtimeNotifierInterface;
+use App\Application\Service\Task\TaskRealtimeNotifier;
+use App\Application\Service\Task\TranscodeTaskPreparationService;
+use App\Domain\Shared\ValueObject\Uuid;
 use App\Domain\Video\Entity\Preset;
 use App\Domain\Video\Entity\Task;
 use App\Domain\Video\Entity\Video;
 use App\Domain\Video\Repository\PresetRepositoryInterface;
 use App\Domain\Video\Repository\TaskRepositoryInterface;
+use App\Domain\Video\Repository\VideoRepositoryInterface;
 use App\Domain\Video\Service\Storage\StorageInterface;
 use App\Domain\Video\ValueObject\Bitrate;
 use App\Domain\Video\ValueObject\Codec;
 use App\Domain\Video\ValueObject\FileExtension;
 use App\Domain\Video\ValueObject\PresetTitle;
+use App\Domain\Video\ValueObject\Progress;
 use App\Domain\Video\ValueObject\Resolution;
+use App\Domain\Video\ValueObject\TaskDates;
+use App\Domain\Video\ValueObject\TaskStatus;
+use App\Domain\Video\ValueObject\VideoDates;
 use App\Domain\Video\ValueObject\VideoTitle;
 use PHPUnit\Framework\TestCase;
+use Psr\Log\LogLevel;
 use Symfony\Component\Messenger\Envelope;
 use Symfony\Component\Messenger\MessageBusInterface;
-use App\Domain\Shared\ValueObject\Uuid;
-use App\Domain\Video\Repository\VideoRepositoryInterface;
 
 class TranscodeTaskPreparationServiceTest extends TestCase
 {

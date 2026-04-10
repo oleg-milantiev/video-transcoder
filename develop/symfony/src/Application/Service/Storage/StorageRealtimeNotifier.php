@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-namespace App\Application\Service;
+namespace App\Application\Service\Storage;
 
 use App\Application\Command\Mercure\PublishMercureMessage;
 use App\Application\DTO\MercureMessageDTO;

@@ -8,26 +8,26 @@ use App\Application\DTO\TranscodeProcessReportDTO;
 use App\Application\DTO\TranscodeReportDTO;
 use App\Application\DTO\TranscodeStartContextDTO;
 use App\Application\Factory\FlashNotificationFactory;
-use App\Domain\Video\ValueObject\Progress;
-use App\Domain\Video\ValueObject\TaskDates;
-use Psr\Log\LogLevel;
 use App\Application\Logging\LogServiceInterface;
+use App\Application\Service\Storage\StorageRealtimeNotifierInterface;
 use App\Application\Service\Task\TaskRealtimeNotifier;
 use App\Application\Service\Task\TranscodeTaskFinalizationService;
-use App\Application\Service\StorageRealtimeNotifierInterface;
+use App\Domain\Shared\ValueObject\Uuid;
 use App\Domain\Video\Entity\Task;
+use App\Domain\Video\Repository\PresetRepositoryInterface;
 use App\Domain\Video\Repository\TaskRepositoryInterface;
+use App\Domain\Video\Repository\VideoRepositoryInterface;
+use App\Domain\Video\ValueObject\Progress;
+use App\Domain\Video\ValueObject\TaskDates;
 use App\Domain\Video\ValueObject\TaskStatus;
 use App\Infrastructure\Task\TaskCancellationTrigger;
+use App\Tests\Domain\Entity\PresetFake;
+use App\Tests\Domain\Entity\VideoFake;
 use PHPUnit\Framework\TestCase;
+use Psr\Log\LogLevel;
 use Symfony\Component\Cache\Adapter\ArrayAdapter;
 use Symfony\Component\Messenger\Envelope;
 use Symfony\Component\Messenger\MessageBusInterface;
-use App\Domain\Shared\ValueObject\Uuid;
-use App\Domain\Video\Repository\PresetRepositoryInterface;
-use App\Domain\Video\Repository\VideoRepositoryInterface;
-use App\Tests\Domain\Entity\VideoFake;
-use App\Tests\Domain\Entity\PresetFake;
 
 class TranscodeTaskFinalizationServiceTest extends TestCase
 {
