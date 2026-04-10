@@ -188,30 +188,31 @@ class TranscodeVideoHandlerTest extends TestCase
     private function makeHandler(
         MessageBusInterface $commandBus,
         MessageBusInterface $eventBus,
-        TaskRepositoryInterface $taskRepository,
-        VideoRepositoryInterface $videoRepository,
-        LogServiceInterface $logService,
-        LockFactory $lockFactory,
-        TaskCancellationTrigger $cancellationTrigger,
-        TranscodeProcessService $transcodeProcessService,
-        TranscodeTaskPreparationService $transcodeTaskPreparationService,
-        TranscodeTaskFinalizationService $transcodeTaskFinalizationService,
-        UserRepositoryInterface $userRepository,
-    ): TranscodeVideoHandler {
-        return new TranscodeVideoHandler(
-            $commandBus,
-            $eventBus,
-            $taskRepository,
-            $videoRepository,
-            $logService,
-            $lockFactory,
-            $cancellationTrigger,
-            $transcodeProcessService,
-            $transcodeTaskPreparationService,
-            $transcodeTaskFinalizationService,
-            $userRepository,
-        );
-    }
+         TaskRepositoryInterface $taskRepository,
+         VideoRepositoryInterface $videoRepository,
+         LogServiceInterface $logService,
+         LockFactory $lockFactory,
+         TaskCancellationTrigger $cancellationTrigger,
+         TranscodeProcessService $transcodeProcessService,
+         TranscodeTaskPreparationService $transcodeTaskPreparationService,
+         TranscodeTaskFinalizationService $transcodeTaskFinalizationService,
+         UserRepositoryInterface $userRepository,
+     ): TranscodeVideoHandler {
+         return new TranscodeVideoHandler(
+             $commandBus,
+             $eventBus,
+             $taskRepository,
+             $videoRepository,
+             $logService,
+             $lockFactory,
+             $cancellationTrigger,
+             $transcodeProcessService,
+             $transcodeTaskPreparationService,
+             $transcodeTaskFinalizationService,
+             $userRepository,
+             $this->createStub(\App\Application\Service\StorageRealtimeNotifierInterface::class),
+         );
+     }
 
     public function testDispatchesStartThenFailWhenTaskNotFound(): void
     {

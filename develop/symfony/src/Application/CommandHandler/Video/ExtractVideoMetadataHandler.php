@@ -9,6 +9,7 @@ use App\Application\Command\Video\ExtractVideoMetadata;
 use App\Application\Event\ExtractVideoMetadataFail;
 use App\Application\Event\ExtractVideoMetadataStart;
 use App\Application\Event\ExtractVideoMetadataSuccess;
+use App\Application\Service\StorageRealtimeNotifierInterface;
 use App\Application\Service\Video\VideoRealtimeNotifier;
 use Psr\Log\LogLevel;
 use App\Application\Logging\LogServiceInterface;
@@ -41,6 +42,7 @@ final readonly class ExtractVideoMetadataHandler
         private VideoMetadataExtractor $videoMetadataExtractor,
         private VideoRealtimeNotifier $notifier,
         private LogServiceInterface $logService,
+        private StorageRealtimeNotifierInterface $storageNotifier,
     ) {
     }
 
@@ -95,6 +97,8 @@ final readonly class ExtractVideoMetadataHandler
             }
 
             $this->notifier->notifyVideoUpdated($video, 'meta');
+            // todo перенести в createVideoHandler, прописав там meta.size
+            $this->storageNotifier->notifyStorageUpdated($video->userId());
             $this->logService->log('video', 'meta', $video->id(), LogLevel::INFO, 'Metadata extracted and saved', [
                 'time' => microtime(true) - $ms,
             ]);

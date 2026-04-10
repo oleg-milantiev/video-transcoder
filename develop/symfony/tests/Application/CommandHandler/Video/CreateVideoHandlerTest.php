@@ -10,7 +10,6 @@ use App\Application\CommandHandler\Video\CreateVideoHandler;
 use App\Application\Event\CreateVideoFail;
 use App\Application\Factory\FlashNotificationFactory;
 use App\Application\Factory\VideoFactory;
-use App\Application\Service\StorageRealtimeNotifierInterface;
 use App\Application\Service\Video\VideoRealtimeNotifier;
 use App\Domain\User\Entity\Tariff;
 use App\Domain\User\Entity\User;
@@ -126,7 +125,6 @@ class CreateVideoHandlerTest extends TestCase
             new VideoFactory(),
             new FlashNotificationFactory(),
             $taskRepository,
-            $this->createStub(StorageRealtimeNotifierInterface::class),
         );
 
         $handler->__invoke($command);
@@ -216,7 +214,6 @@ class CreateVideoHandlerTest extends TestCase
             $videoFactory,
             $flashFactory,
             $this->createStub(TaskRepositoryInterface::class),
-            $this->createStub(StorageRealtimeNotifierInterface::class),
         );
 
         // Invoke handler - should catch exception and dispatch CreateVideoFail
@@ -298,7 +295,6 @@ class CreateVideoHandlerTest extends TestCase
             new VideoFactory(),
             new FlashNotificationFactory(),
             $this->createStub(TaskRepositoryInterface::class),
-            $this->createStub(StorageRealtimeNotifierInterface::class),
         );
 
         $handler->__invoke($command);
@@ -357,7 +353,6 @@ class CreateVideoHandlerTest extends TestCase
             new VideoFactory(),
             new FlashNotificationFactory(),
             $this->createStub(TaskRepositoryInterface::class),
-            $this->createStub(StorageRealtimeNotifierInterface::class),
         );
 
         $handler->__invoke($command);
@@ -419,7 +414,6 @@ class CreateVideoHandlerTest extends TestCase
             new VideoFactory(),
             new FlashNotificationFactory(),
             $this->createStub(TaskRepositoryInterface::class),
-            $this->createStub(StorageRealtimeNotifierInterface::class),
         );
 
         $handler->__invoke($command);
@@ -489,7 +483,6 @@ class CreateVideoHandlerTest extends TestCase
             new VideoFactory(),
             new FlashNotificationFactory(),
             $this->createStub(TaskRepositoryInterface::class),
-            $this->createStub(StorageRealtimeNotifierInterface::class),
         );
 
         $handler->__invoke($command);

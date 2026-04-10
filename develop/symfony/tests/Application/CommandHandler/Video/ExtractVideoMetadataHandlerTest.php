@@ -8,6 +8,7 @@ use App\Application\Command\Video\ExtractVideoMetadata;
 use App\Application\CommandHandler\Video\ExtractVideoMetadataHandler;
 use App\Application\Event\ExtractVideoMetadataFail;
 use App\Application\Event\ExtractVideoMetadataStart;
+use App\Application\Service\StorageRealtimeNotifierInterface;
 use App\Application\Service\Video\VideoRealtimeNotifier;
 use App\Domain\User\Entity\Tariff;
 use App\Domain\User\Entity\User;
@@ -111,7 +112,8 @@ class ExtractVideoMetadataHandlerTest extends TestCase
         ?StorageInterface $storage = null,
         ?LogServiceInterface $logService = null,
         ?LoggerInterface $logger = null,
-        ?TaskRepositoryInterface $taskRepository = null
+        ?TaskRepositoryInterface $taskRepository = null,
+        ?StorageRealtimeNotifierInterface $storageNotifier = null
     ): ExtractVideoMetadataHandler {
         $storage ??= $this->createStub(StorageInterface::class);
         $storage->method('sourceKey')->willReturn('source.mp4');
@@ -131,60 +133,114 @@ class ExtractVideoMetadataHandlerTest extends TestCase
                 $this->createStub(TaskRepositoryInterface::class)
             ),
             $logService ?? $this->createStub(LogServiceInterface::class),
-            $logger ?? $this->createStub(LoggerInterface::class),
+            $storageNotifier ?? $this->createStub(StorageRealtimeNotifierInterface::class),
         );
     }
 
     // ===== Success Scenarios =====
 
-    public function testSuccessfulMetadataExtractionWithValidation(): void
-    {
-        $video = $this->createVideoStub();
-        $user = $this->createUserWithTariff();
+     public function testSuccessfulMetadataExtractionWithValidation(): void
+     {
+         $video = $this->createVideoStub();
+         $user = $this->createUserWithTariff();
 
-        $userRepository = $this->createStub(UserRepositoryInterface::class);
-        $userRepository->method('findById')->willReturn($user);
+         $userRepository = $this->createStub(UserRepositoryInterface::class);
+         $userRepository->method('findById')->willReturn($user);
 
-        $videoRepository = $this->createStub(VideoRepositoryInterface::class);
-        $videoRepository->method('save')->willReturnCallback(static fn (Video $v) => $v);
+         $videoRepository = $this->createStub(VideoRepositoryInterface::class);
+         $videoRepository->method('save')->willReturnCallback(static fn (Video $v) => $v);
 
-        $logService = $this->createStub(LogServiceInterface::class);
+         $logService = $this->createStub(LogServiceInterface::class);
 
-        $storage = $this->createStub(StorageInterface::class);
-        $storage->method('sourceKey')->willReturn('source.mp4');
-        $storage->method('localPathForRead')->willReturn('/tmp/source.mp4');
+         $storage = $this->createStub(StorageInterface::class);
+         $storage->method('sourceKey')->willReturn('source.mp4');
+         $storage->method('localPathForRead')->willReturn('/tmp/source.mp4');
 
-        $eventBus = $this->createStub(MessageBusInterface::class);
-        $eventBus->method('dispatch')->willReturnCallback(static fn () => new Envelope(new \stdClass()));
+         $eventBus = $this->createStub(MessageBusInterface::class);
+         $eventBus->method('dispatch')->willReturnCallback(static fn () => new Envelope(new \stdClass()));
 
-        $commandBus = $this->createStub(MessageBusInterface::class);
-        $commandBus->method('dispatch')->willReturnCallback(static fn () => new Envelope(new \stdClass()));
+         $commandBus = $this->createStub(MessageBusInterface::class);
+         $commandBus->method('dispatch')->willReturnCallback(static fn () => new Envelope(new \stdClass()));
 
-        $notifierBus = $this->createStub(MessageBusInterface::class);
-        $notifierBus->method('dispatch')->willReturnCallback(static fn () => new Envelope(new \stdClass()));
+         $notifierBus = $this->createStub(MessageBusInterface::class);
+         $notifierBus->method('dispatch')->willReturnCallback(static fn () => new Envelope(new \stdClass()));
 
-        $handler = new ExtractVideoMetadataHandler(
-            $videoRepository,
-            $userRepository,
-            $this->createStub(TaskRepositoryInterface::class),
-            $storage,
-            $commandBus,
-            $eventBus,
-            $this->createMetadataExtractor(),
-            new VideoRealtimeNotifier(
-                $notifierBus,
-                $storage,
-                $this->createStub(TaskRepositoryInterface::class)
-            ),
-            $logService,
-            $this->createStub(LoggerInterface::class),
-        );
+         $handler = new ExtractVideoMetadataHandler(
+             $videoRepository,
+             $userRepository,
+             $this->createStub(TaskRepositoryInterface::class),
+             $storage,
+             $commandBus,
+             $eventBus,
+             $this->createMetadataExtractor(),
+             new VideoRealtimeNotifier(
+                 $notifierBus,
+                 $storage,
+                 $this->createStub(TaskRepositoryInterface::class)
+             ),
+             $logService,
+             $this->createStub(StorageRealtimeNotifierInterface::class),
+         );
 
-        $handler(new ExtractVideoMetadata($video));
+         $handler(new ExtractVideoMetadata($video));
 
-        // Just verify it doesn't throw
-        $this->assertTrue(true);
-    }
+         // Just verify it doesn't throw
+         $this->assertTrue(true);
+     }
+
+     public function testSuccessfulMetadataExtractionNotifiesStorage(): void
+     {
+         $video = $this->createVideoStub();
+         $user = $this->createUserWithTariff();
+
+         $userRepository = $this->createStub(UserRepositoryInterface::class);
+         $userRepository->method('findById')->willReturn($user);
+
+         $videoRepository = $this->createStub(VideoRepositoryInterface::class);
+         $videoRepository->method('save')->willReturnCallback(static fn (Video $v) => $v);
+
+         $logService = $this->createStub(LogServiceInterface::class);
+
+         $storage = $this->createStub(StorageInterface::class);
+         $storage->method('sourceKey')->willReturn('source.mp4');
+         $storage->method('localPathForRead')->willReturn('/tmp/source.mp4');
+
+         $eventBus = $this->createStub(MessageBusInterface::class);
+         $eventBus->method('dispatch')->willReturnCallback(static fn () => new Envelope(new \stdClass()));
+
+         $commandBus = $this->createStub(MessageBusInterface::class);
+         $commandBus->method('dispatch')->willReturnCallback(static fn () => new Envelope(new \stdClass()));
+
+         $notifierBus = $this->createStub(MessageBusInterface::class);
+         $notifierBus->method('dispatch')->willReturnCallback(static fn () => new Envelope(new \stdClass()));
+
+         $storageNotifier = $this->createMock(StorageRealtimeNotifierInterface::class);
+         $storageNotifier->expects($this->once())
+             ->method('notifyStorageUpdated')
+             ->with($user->id());
+
+         $handler = new ExtractVideoMetadataHandler(
+             $videoRepository,
+             $userRepository,
+             $this->createStub(TaskRepositoryInterface::class),
+             $storage,
+             $commandBus,
+             $eventBus,
+             $this->createMetadataExtractor(),
+             new VideoRealtimeNotifier(
+                 $notifierBus,
+                 $storage,
+                 $this->createStub(TaskRepositoryInterface::class)
+             ),
+             $logService,
+             $storageNotifier,
+         );
+
+         $handler(new ExtractVideoMetadata($video));
+
+         // Verify notifyStorageUpdated was called
+         $this->assertTrue(true);
+     }
 
     // ===== User Not Found =====
 

@@ -39,7 +39,6 @@ final readonly class StorageRealtimeNotifier implements StorageRealtimeNotifierI
 
         $dto = StorageRealtimePayloadDTO::fromSizes($storageNow, $storageMax);
 
-        // todo масло масляное? Не перенести ли поля из MercureMessageDTO в PublishMercureMessage?
         $this->commandBus->dispatch(new PublishMercureMessage(new MercureMessageDTO(
             action: 'updated',
             entity: 'storage',
