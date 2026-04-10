@@ -253,6 +253,12 @@ class Task
         $this->touch();
     }
 
+    public function clearSizeExpected(): void
+    {
+        unset($this->meta['sizeExpected']);
+        $this->touch();
+    }
+
     private function touch(): void
     {
         $this->dates = $this->dates->touch();

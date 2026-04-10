@@ -6,6 +6,7 @@ namespace App\Application\Service\Task;
 use App\Application\DTO\TranscodeReportDTO;
 use App\Application\DTO\TranscodeStartContextDTO;
 use App\Application\Factory\FlashNotificationFactory;
+use App\Application\Service\StorageRealtimeNotifierInterface;
 use Psr\Log\LogLevel;
 use App\Application\Logging\LogServiceInterface;
 use App\Domain\Video\Entity\Task;
@@ -22,6 +23,7 @@ readonly class TranscodeTaskFinalizationService
         private TaskRealtimeNotifier $taskRealtimeNotifier,
         private FlashNotificationFactory $flashNotificationFactory,
         private TaskCancellationTrigger $cancellationTrigger,
+        private StorageRealtimeNotifierInterface $storageNotifier,
     ) {
     }
 
@@ -32,6 +34,7 @@ readonly class TranscodeTaskFinalizationService
             $cancelledTask->cancel();
         }
 
+        $cancelledTask->clearSizeExpected();
         $cancelledTask->updateMeta([
             'transcode' => [
                 'cancelledAt' => new \DateTimeImmutable()->format(\DateTimeInterface::ATOM),
@@ -43,6 +46,7 @@ readonly class TranscodeTaskFinalizationService
         $this->logService->log('task', 'cancel', $cancelledTask->id(), LogLevel::INFO, 'Transcoding cancelled');
         $this->taskRealtimeNotifier->notifyTaskUpdated($cancelledTask, 'cancelled');
         $this->cancellationTrigger->clear($cancelledTask->id());
+        $this->storageNotifier->notifyStorageUpdated($cancelledTask->userId());
     }
 
     public function handleSuccess(TranscodeStartContextDTO $context, TranscodeReportDTO $report): void
@@ -64,6 +68,7 @@ readonly class TranscodeTaskFinalizationService
             'notification' => $this->flashNotificationFactory->transcodeCompleted($task)->toArray(),
         ]);
         $this->cancellationTrigger->clear($task->id());
+        $this->storageNotifier->notifyStorageUpdated($task->userId());
         $this->logService->log('task', 'transcode', $task->id(), LogLevel::INFO, 'Transcoding finished successfully', [
             'time' => microtime(true) - $context->timeStart,
             'size' => $fileSize,

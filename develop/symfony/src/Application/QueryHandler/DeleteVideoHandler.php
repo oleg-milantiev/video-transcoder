@@ -12,6 +12,7 @@ use App\Application\Exception\VideoNotFoundException;
 use App\Application\Logging\LogServiceInterface;
 use App\Application\Query\DeleteTaskQuery;
 use App\Application\Query\DeleteVideoQuery;
+use App\Application\Service\StorageRealtimeNotifierInterface;
 use App\Application\Service\Video\VideoRealtimeNotifier;
 use App\Domain\Video\Repository\TaskRepositoryInterface;
 use App\Domain\Video\Repository\VideoRepositoryInterface;
@@ -36,6 +37,7 @@ final readonly class DeleteVideoHandler
         private VideoRealtimeNotifier $videoRealtimeNotifier,
         private Security $security,
         private QueryBus $queryBus,
+        private StorageRealtimeNotifierInterface $storageNotifier,
     ) {
     }
 
@@ -103,6 +105,7 @@ final readonly class DeleteVideoHandler
             $this->videoRealtimeNotifier->notifyVideoUpdated($video, 'deleted', [
                 'deleted' => true,
             ]);
+            $this->storageNotifier->notifyStorageUpdated($video->userId());
 
             $this->commandBus->dispatch(new CleanupDeletedVideoMedia($video->id()));
 

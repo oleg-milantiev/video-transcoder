@@ -8,6 +8,7 @@ use App\Application\Exception\TaskNotFoundException;
 use App\Application\Exception\VideoNotFoundException;
 use App\Application\Logging\LogServiceInterface;
 use App\Application\Query\TaskCancelQuery;
+use App\Application\Service\StorageRealtimeNotifierInterface;
 use App\Application\Service\Task\TaskRealtimeNotifier;
 use App\Domain\Video\ValueObject\TaskStatus;
 use App\Domain\Video\Repository\TaskRepositoryInterface;
@@ -28,6 +29,7 @@ final readonly class TaskCancelHandler
         private TaskCancellationTrigger $cancellationTrigger,
         private TaskRealtimeNotifier $taskRealtimeNotifier,
         private Security $security,
+        private StorageRealtimeNotifierInterface $storageNotifier,
     ) {}
 
     public function __invoke(TaskCancelQuery $query): array
@@ -55,6 +57,7 @@ final readonly class TaskCancelHandler
 
         if ($cancelledNow) {
             $task->cancel();
+            $task->clearSizeExpected();
             $this->logService->log('task', 'cancel', $task->id(), LogLevel::INFO, 'Task cancelled before start', [
                 'videoId' => $video->id()?->toRfc4122(),
                 'userId' => $query->requestedByUserId?->toRfc4122(),
@@ -70,6 +73,10 @@ final readonly class TaskCancelHandler
 
         $this->taskRealtimeNotifier->notifyTaskUpdated($task, $cancelledNow ? 'cancelled' : 'cancel_requested');
         $this->cancellationTrigger->request($task->id());
+
+        if ($cancelledNow) {
+            $this->storageNotifier->notifyStorageUpdated($task->userId());
+        }
 
         // todo DTO
         return [

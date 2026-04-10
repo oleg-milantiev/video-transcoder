@@ -15,6 +15,7 @@ use App\Application\Query\DeleteTaskQuery;
 use App\Application\Query\DeleteVideoQuery;
 use App\Application\QueryHandler\DeleteVideoHandler;
 use App\Application\QueryHandler\QueryBus;
+use App\Application\Service\StorageRealtimeNotifierInterface;
 use App\Application\Service\Video\VideoRealtimeNotifier;
 use App\Domain\Video\Entity\Task;
 use App\Domain\Video\Entity\Video;
@@ -67,6 +68,7 @@ final class DeleteVideoHandlerTest extends TestCase
             new VideoRealtimeNotifier($this->createStub(MessageBusInterface::class), $this->createStub(StorageInterface::class), $this->createStub(TaskRepositoryInterface::class)),
             $this->createStub(Security::class),
             $this->createStub(QueryBus::class),
+            $this->createStub(StorageRealtimeNotifierInterface::class),
         );
 
         $this->expectException(VideoNotFoundException::class);
@@ -114,6 +116,7 @@ final class DeleteVideoHandlerTest extends TestCase
             new VideoRealtimeNotifier($this->createStub(MessageBusInterface::class), $this->createStub(StorageInterface::class), $this->createStub(TaskRepositoryInterface::class)),
             $security,
             $this->createStub(QueryBus::class),
+            $this->createStub(StorageRealtimeNotifierInterface::class),
         );
 
         $this->expectException(TranscodeAccessDeniedException::class);
@@ -200,7 +203,7 @@ final class DeleteVideoHandlerTest extends TestCase
             ->with(VideoAccessVoter::CAN_DELETE, $video)
             ->willReturn(true);
 
-        $handler = new DeleteVideoHandler($cleanupCommandBus, $eventBus, $videoRepository, $taskRepository, $logService, $videoRealtimeNotifier, $security, $queryBus);
+        $handler = new DeleteVideoHandler($cleanupCommandBus, $eventBus, $videoRepository, $taskRepository, $logService, $videoRealtimeNotifier, $security, $queryBus, $this->createStub(StorageRealtimeNotifierInterface::class));
         $handler(new DeleteVideoQuery($videoId->toRfc4122(), $userId->toRfc4122()));
 
         $this->assertTrue($video->isDeleted());
@@ -252,6 +255,7 @@ final class DeleteVideoHandlerTest extends TestCase
             new VideoRealtimeNotifier($this->createStub(MessageBusInterface::class), $this->createStub(StorageInterface::class), $this->createStub(TaskRepositoryInterface::class)),
             $security,
             $this->createStub(QueryBus::class),
+            $this->createStub(StorageRealtimeNotifierInterface::class),
         );
 
         $this->expectException(VideoHasTranscodingTasks::class);
@@ -313,6 +317,7 @@ final class DeleteVideoHandlerTest extends TestCase
             new VideoRealtimeNotifier($this->createStub(MessageBusInterface::class), $this->createStub(StorageInterface::class), $this->createStub(TaskRepositoryInterface::class)),
             $security,
             $this->createStub(QueryBus::class),
+            $this->createStub(StorageRealtimeNotifierInterface::class),
         );
 
         $this->expectException(\RuntimeException::class);
@@ -406,7 +411,7 @@ final class DeleteVideoHandlerTest extends TestCase
             ->with(VideoAccessVoter::CAN_DELETE, $video)
             ->willReturn(true);
 
-        $handler = new DeleteVideoHandler($cleanupCommandBus, $eventBus, $videoRepository, $taskRepository, $logService, $videoRealtimeNotifier, $security, $queryBus);
+        $handler = new DeleteVideoHandler($cleanupCommandBus, $eventBus, $videoRepository, $taskRepository, $logService, $videoRealtimeNotifier, $security, $queryBus, $this->createStub(StorageRealtimeNotifierInterface::class));
         $handler(new DeleteVideoQuery($videoId->toRfc4122(), $userId->toRfc4122()));
 
         $this->assertTrue($video->isDeleted());
@@ -488,6 +493,7 @@ final class DeleteVideoHandlerTest extends TestCase
             new VideoRealtimeNotifier($notifierCommandBus, $this->createStub(StorageInterface::class), $this->createStub(TaskRepositoryInterface::class)),
             $security,
             $queryBus,
+            $this->createStub(StorageRealtimeNotifierInterface::class),
         );
 
         $handler(new DeleteVideoQuery($videoId->toRfc4122(), $userId->toRfc4122()));

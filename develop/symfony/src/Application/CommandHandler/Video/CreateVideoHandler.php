@@ -12,6 +12,7 @@ use App\Application\Event\CreateVideoSuccess;
 use App\Application\Exception\StorageSizeExceedsQuota;
 use App\Application\Factory\FlashNotificationFactory;
 use App\Application\Factory\VideoFactory;
+use App\Application\Service\StorageRealtimeNotifierInterface;
 use App\Application\Service\Video\VideoRealtimeNotifier;
 use App\Domain\Video\Repository\TaskRepositoryInterface;
 use App\Domain\Video\Exception\VideoSizeExceedsQuota;
@@ -43,6 +44,7 @@ final readonly class CreateVideoHandler
         private VideoFactory $videoFactory,
         private FlashNotificationFactory $flashNotificationFactory,
         private TaskRepositoryInterface $taskRepository,
+        private StorageRealtimeNotifierInterface $storageNotifier,
     ) {
     }
 
@@ -119,6 +121,7 @@ final readonly class CreateVideoHandler
             $this->notifier->notifyVideoUpdated($video, 'uploaded', [
                 'notification' => $this->flashNotificationFactory->uploadCompleted($video)->toArray(),
             ]);
+            $this->storageNotifier->notifyStorageUpdated($command->userId());
 
             $this->eventBus->dispatch(new CreateVideoSuccess(
                 videoId: $video->id()?->toRfc4122(),

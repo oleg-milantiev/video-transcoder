@@ -6,6 +6,7 @@ namespace App\Tests\Application\Service\Task;
 
 use App\Application\Service\Task\TranscodeTaskPreparationService;
 use App\Application\Service\Task\TaskRealtimeNotifier;
+use App\Application\Service\StorageRealtimeNotifierInterface;
 use App\Application\Factory\FlashNotificationFactory;
 use App\Domain\Video\ValueObject\Progress;
 use App\Domain\Video\ValueObject\TaskDates;
@@ -78,7 +79,7 @@ class TranscodeTaskPreparationServiceTest extends TestCase
             ->willReturn(new Envelope(new \stdClass()));
         $taskRealtimeNotifier = new TaskRealtimeNotifier($commandBus, $this->createStub(PresetRepositoryInterface::class), $this->createStub(VideoRepositoryInterface::class));
 
-        $service = new TranscodeTaskPreparationService($presetRepository, $taskRepository, $logService, $taskRealtimeNotifier, new FlashNotificationFactory(), $storage);
+        $service = new TranscodeTaskPreparationService($presetRepository, $taskRepository, $logService, $taskRealtimeNotifier, new FlashNotificationFactory(), $storage, $this->createStub(StorageRealtimeNotifierInterface::class));
         $context = $service->prepare($task, $video, 0.0);
 
         $this->assertSame(sprintf('%s/%s.mp4', $video->id()->toRfc4122(), '123e4567-e89b-42d3-a456-426614174005'), $context->relativeOutputPath);
@@ -113,7 +114,7 @@ class TranscodeTaskPreparationServiceTest extends TestCase
         $commandBus->expects($this->never())->method('dispatch');
         $taskRealtimeNotifier = new TaskRealtimeNotifier($commandBus, $this->createStub(PresetRepositoryInterface::class), $this->createStub(VideoRepositoryInterface::class));
 
-        $service = new TranscodeTaskPreparationService($presetRepository, $taskRepository, $logService, $taskRealtimeNotifier, new FlashNotificationFactory(), $storage);
+        $service = new TranscodeTaskPreparationService($presetRepository, $taskRepository, $logService, $taskRealtimeNotifier, new FlashNotificationFactory(), $storage, $this->createStub(StorageRealtimeNotifierInterface::class));
 
         $this->expectException(\RuntimeException::class);
         $this->expectExceptionMessage('Preset not found for task');

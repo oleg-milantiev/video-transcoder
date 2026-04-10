@@ -9,6 +9,7 @@ use App\Application\Event\TranscodeVideoFail;
 use App\Application\Event\TranscodeVideoStart;
 use App\Application\Event\TranscodeVideoSuccess;
 use App\Application\Exception\StorageSizeExceedsQuota;
+use App\Application\Service\StorageRealtimeNotifierInterface;
 use App\Domain\User\Exception\TariffNotFound;
 use App\Domain\User\Exception\UserNotFound;
 use App\Domain\User\Repository\UserRepositoryInterface;
@@ -44,6 +45,7 @@ final readonly class TranscodeVideoHandler
         private TranscodeTaskPreparationService $transcodeTaskPreparationService,
         private TranscodeTaskFinalizationService $transcodeTaskFinalizationService,
         private UserRepositoryInterface $userRepository,
+        private StorageRealtimeNotifierInterface $storageNotifier,
     ) {
     }
 
@@ -92,6 +94,7 @@ final readonly class TranscodeVideoHandler
             if ($this->cancellationTrigger->isRequested($task->id())) {
                 if ($task->canBeCancelled()) {
                     $task->cancel();
+                    $task->clearSizeExpected();
                     $task->updateMeta([
                         'cancelledAt' => new \DateTimeImmutable()->format(\DateTimeInterface::ATOM),
                     ]);
@@ -100,6 +103,7 @@ final readonly class TranscodeVideoHandler
                 }
 
                 $this->cancellationTrigger->clear($task->id());
+                $this->storageNotifier->notifyStorageUpdated($task->userId());
                 $this->eventBus->dispatch(new TranscodeVideoFail('Task cancelled before ffmpeg start', $task->id()->toRfc4122()));
 
                 return;
