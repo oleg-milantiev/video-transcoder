@@ -8,6 +8,7 @@ use App\Application\Command\Video\ExtractVideoMetadata;
 use App\Application\CommandHandler\Video\ExtractVideoMetadataHandler;
 use App\Application\Event\ExtractVideoMetadataFail;
 use App\Application\Event\ExtractVideoMetadataStart;
+use App\Application\Factory\FlashNotificationFactory;
 use App\Application\Logging\LogServiceInterface;
 use App\Application\Service\Storage\StorageRealtimeNotifierInterface;
 use App\Application\Service\Video\VideoRealtimeNotifier;
@@ -119,6 +120,9 @@ class ExtractVideoMetadataHandlerTest extends TestCase
         $storage->method('sourceKey')->willReturn('source.mp4');
         $storage->method('localPathForRead')->willReturn('/tmp/source.mp4');
 
+        $notifierBus = $this->createStub(MessageBusInterface::class);
+        $notifierBus->method('dispatch')->willReturnCallback(static fn (object $msg) => new Envelope($msg));
+
         return new ExtractVideoMetadataHandler(
             $videoRepository ?? $this->createMock(VideoRepositoryInterface::class),
             $userRepository ?? $this->createStub(UserRepositoryInterface::class),
@@ -128,11 +132,17 @@ class ExtractVideoMetadataHandlerTest extends TestCase
             $eventBus ?? $this->createStub(MessageBusInterface::class),
             $extractor ?? $this->createMetadataExtractor(),
             new VideoRealtimeNotifier(
-                $this->createStub(MessageBusInterface::class),
+                $notifierBus,
                 $storage,
                 $this->createStub(TaskRepositoryInterface::class)
             ),
             $logService ?? $this->createStub(LogServiceInterface::class),
+            new FlashNotificationFactory(),
+            new VideoRealtimeNotifier(
+                $notifierBus,
+                $storage,
+                $this->createStub(TaskRepositoryInterface::class)
+            ),
             $storageNotifier ?? $this->createStub(StorageRealtimeNotifierInterface::class),
         );
     }
@@ -179,6 +189,12 @@ class ExtractVideoMetadataHandlerTest extends TestCase
                  $this->createStub(TaskRepositoryInterface::class)
              ),
              $logService,
+             new FlashNotificationFactory(),
+             new VideoRealtimeNotifier(
+                 $notifierBus,
+                 $storage,
+                 $this->createStub(TaskRepositoryInterface::class)
+             ),
              $this->createStub(StorageRealtimeNotifierInterface::class),
          );
 
@@ -233,6 +249,12 @@ class ExtractVideoMetadataHandlerTest extends TestCase
                  $this->createStub(TaskRepositoryInterface::class)
              ),
              $logService,
+             new FlashNotificationFactory(),
+             new VideoRealtimeNotifier(
+                 $notifierBus,
+                 $storage,
+                 $this->createStub(TaskRepositoryInterface::class)
+             ),
              $storageNotifier,
          );
 

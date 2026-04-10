@@ -11,6 +11,7 @@ use App\Application\Event\CreateVideoFail;
 use App\Application\Factory\FlashNotificationFactory;
 use App\Application\Factory\VideoFactory;
 use App\Application\Service\Video\VideoRealtimeNotifier;
+use App\Application\Service\Mercure\FlashRealtimeNotifier;
 use App\Domain\User\Entity\Tariff;
 use App\Domain\User\Entity\User;
 use App\Domain\User\ValueObject\TariffStorageGb;
@@ -101,6 +102,7 @@ class CreateVideoHandlerTest extends TestCase
         $taskRepository->method('getStorageSize')->willReturn(0);
 
         $notifier = new VideoRealtimeNotifier($commandBus, $storage, $taskRepository);
+        $flashRealtimeNotifier = new FlashRealtimeNotifier($commandBus);
         $logService = $this->createStub(LogServiceInterface::class);
 
         // Create user with tariff that allows the file size
@@ -120,6 +122,7 @@ class CreateVideoHandlerTest extends TestCase
             $videoRepository,
             $userRepository,
             $notifier,
+            $flashRealtimeNotifier,
             $logService,
             $storage,
             new VideoFactory(),
@@ -192,6 +195,7 @@ class CreateVideoHandlerTest extends TestCase
         // instantiate real notifier with a mocked command bus to avoid mocking final class
         $storage = $this->createStub(StorageInterface::class);
         $notifier = new VideoRealtimeNotifier($commandBus, $storage, $this->createStub(TaskRepositoryInterface::class));
+        $flashRealtimeNotifier = new FlashRealtimeNotifier($commandBus);
         $logService = $this->createStub(LogServiceInterface::class);
 
         $storage->method('putFromPath')->willThrowException(new \Exception('IO error'));
@@ -209,6 +213,7 @@ class CreateVideoHandlerTest extends TestCase
             $videoRepository,
             $userRepository,
             $notifier,
+            $flashRealtimeNotifier,
             $logService,
             $storage,
             $videoFactory,
@@ -254,6 +259,7 @@ class CreateVideoHandlerTest extends TestCase
         $command = new CreateVideo($file, $userId);
 
         $commandBus = $this->createStub(MessageBusInterface::class);
+        $commandBus->method('dispatch')->willReturnCallback(static fn (object $msg) => new Envelope($msg));
 
         $eventBus = new class implements MessageBusInterface {
             public array $dispatched = [];
@@ -266,12 +272,15 @@ class CreateVideoHandlerTest extends TestCase
         };
 
         $videoRepository = $this->createStub(VideoRepositoryInterface::class);
+        $videoRepository->method('getStorageSize')->willReturn(0);
 
         // Use stubs (not mocks) for User and Tariff since no expectations are configured
         $userWithTariff = $this->createStub(User::class);
         $tariff = $this->createStub(Tariff::class);
         // Use real TariffVideoSize since it's final
         $tariff->method('videoSize')->willReturn(new TariffVideoSize(50.0));
+        $tariff->method('storageGb')->willReturn(new TariffStorageGb(5));
+        $userWithTariff->method('id')->willReturn($userId);
         $userWithTariff->method('tariff')->willReturn($tariff);
 
         $userRepository = $this->createMock(UserRepositoryInterface::class);
@@ -282,6 +291,9 @@ class CreateVideoHandlerTest extends TestCase
 
         $storage = $this->createStub(StorageInterface::class);
         $notifier = new VideoRealtimeNotifier($commandBus, $storage, $this->createStub(TaskRepositoryInterface::class));
+        $taskRepository = $this->createStub(TaskRepositoryInterface::class);
+        $taskRepository->method('getStorageSize')->willReturn(0);
+        $flashRealtimeNotifier = new FlashRealtimeNotifier($commandBus);
         $logService = $this->createStub(LogServiceInterface::class);
 
         $handler = new CreateVideoHandler(
@@ -290,11 +302,12 @@ class CreateVideoHandlerTest extends TestCase
             $videoRepository,
             $userRepository,
             $notifier,
+            $flashRealtimeNotifier,
             $logService,
             $storage,
             new VideoFactory(),
             new FlashNotificationFactory(),
-            $this->createStub(TaskRepositoryInterface::class),
+            $taskRepository,
         );
 
         $handler->__invoke($command);
@@ -340,6 +353,7 @@ class CreateVideoHandlerTest extends TestCase
         $userRepository = $this->createStub(UserRepositoryInterface::class);
         $storage = $this->createStub(StorageInterface::class);
         $notifier = new VideoRealtimeNotifier($commandBus, $storage, $this->createStub(TaskRepositoryInterface::class));
+        $flashRealtimeNotifier = new FlashRealtimeNotifier($commandBus);
         $logService = $this->createStub(LogServiceInterface::class);
 
         $handler = new CreateVideoHandler(
@@ -348,6 +362,7 @@ class CreateVideoHandlerTest extends TestCase
             $videoRepository,
             $userRepository,
             $notifier,
+            $flashRealtimeNotifier,
             $logService,
             $storage,
             new VideoFactory(),
@@ -401,6 +416,7 @@ class CreateVideoHandlerTest extends TestCase
 
         $storage = $this->createStub(StorageInterface::class);
         $notifier = new VideoRealtimeNotifier($commandBus, $storage, $this->createStub(TaskRepositoryInterface::class));
+        $flashRealtimeNotifier = new FlashRealtimeNotifier($commandBus);
         $logService = $this->createStub(LogServiceInterface::class);
 
         $handler = new CreateVideoHandler(
@@ -409,6 +425,7 @@ class CreateVideoHandlerTest extends TestCase
             $videoRepository,
             $userRepository,
             $notifier,
+            $flashRealtimeNotifier,
             $logService,
             $storage,
             new VideoFactory(),
@@ -470,6 +487,7 @@ class CreateVideoHandlerTest extends TestCase
 
         $storage = $this->createStub(StorageInterface::class);
         $notifier = new VideoRealtimeNotifier($commandBus, $storage, $this->createStub(TaskRepositoryInterface::class));
+        $flashRealtimeNotifier = new FlashRealtimeNotifier($commandBus);
         $logService = $this->createStub(LogServiceInterface::class);
 
         $handler = new CreateVideoHandler(
@@ -478,6 +496,7 @@ class CreateVideoHandlerTest extends TestCase
             $videoRepository,
             $userRepository,
             $notifier,
+            $flashRealtimeNotifier,
             $logService,
             $storage,
             new VideoFactory(),

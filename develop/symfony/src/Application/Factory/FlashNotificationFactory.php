@@ -27,7 +27,7 @@ final readonly class FlashNotificationFactory
 
     public function uploadFailed(?Video $video, string $message): FlashNotificationDTO
     {
-        $videoId = $video->id()?->toRfc4122() ?? '';
+        $videoId = $video?->id()?->toRfc4122() ?? '';
 
         $notification = RealtimeNotification::create(
             level: RealtimeNotificationLevel::ERROR,
