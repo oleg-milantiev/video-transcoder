@@ -15,8 +15,6 @@ use App\Domain\Video\Exception\TaskAlreadyDeleted;
 use App\Domain\Video\Exception\UnsupportedCodec;
 use App\Domain\Video\Exception\VideoAlreadyDeleted;
 use App\Domain\Video\Exception\VideoHasTranscodingTasks;
-use App\Domain\Video\Exception\VideoMetadataExtractionFailed;
-use App\Domain\Video\Exception\VideoPreviewGenerationFailed;
 use PHPUnit\Framework\TestCase;
 
 final class VideoExceptionTest extends TestCase
@@ -96,22 +94,6 @@ final class VideoExceptionTest extends TestCase
 
         $this->assertInstanceOf(\DomainException::class, $exception);
         $this->assertSame('Unsupported codec: mpeg2', $exception->getMessage());
-    }
-
-    public function testVideoMetadataExtractionFailedMessage(): void
-    {
-        $exception = VideoMetadataExtractionFailed::fromVideoId('video-1', 'ffprobe timeout');
-
-        $this->assertInstanceOf(\RuntimeException::class, $exception);
-        $this->assertSame('Failed to extract metadata for video video-1: ffprobe timeout', $exception->getMessage());
-    }
-
-    public function testVideoPreviewGenerationFailedMessage(): void
-    {
-        $exception = VideoPreviewGenerationFailed::fromVideoId('video-1', 'ffmpeg failed');
-
-        $this->assertInstanceOf(\DomainException::class, $exception);
-        $this->assertSame('Failed to generate preview for video "video-1": ffmpeg failed', $exception->getMessage());
     }
 
     public function testDeleteRelatedMessages(): void

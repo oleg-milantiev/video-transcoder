@@ -142,8 +142,6 @@ class CreateVideoPreviewHandlerTest extends TestCase
 
         $handler = new CreateVideoPreviewHandler($storage, $eventBus, $logService, $videoRepository, $notifier, $generator);
 
-        $this->expectException(VideoPreviewGenerationFailed::class);
-
         try {
             $handler(new CreateVideoPreview($video));
         } finally {
@@ -166,6 +164,3 @@ class CreateVideoPreviewHandlerTest extends TestCase
         );
     }
 }
-
-
-

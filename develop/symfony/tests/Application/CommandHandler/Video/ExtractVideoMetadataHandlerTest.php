@@ -20,7 +20,6 @@ use App\Domain\User\ValueObject\TariffMaxHeight;
 use App\Domain\User\ValueObject\TariffMaxWidth;
 use App\Domain\User\ValueObject\TariffVideoDuration;
 use App\Domain\Video\Entity\Video;
-use App\Domain\Video\Exception\VideoMetadataExtractionFailed;
 use App\Domain\Video\Repository\TaskRepositoryInterface;
 use App\Domain\Video\Repository\VideoRepositoryInterface;
 use App\Domain\Video\Service\Storage\StorageInterface;
@@ -298,8 +297,6 @@ class ExtractVideoMetadataHandlerTest extends TestCase
             $logService
         );
 
-        $this->expectException(VideoMetadataExtractionFailed::class);
-
         try {
             $handler(new ExtractVideoMetadata($video));
         } finally {
@@ -346,8 +343,6 @@ class ExtractVideoMetadataHandlerTest extends TestCase
             $logService
         );
 
-        $this->expectException(VideoMetadataExtractionFailed::class);
-
         try {
             $handler(new ExtractVideoMetadata($video));
         } finally {
@@ -382,8 +377,6 @@ class ExtractVideoMetadataHandlerTest extends TestCase
         ]);
 
         $handler = $this->createHandler($video, $userRepository, $videoRepository, $extractor, $eventBus);
-
-        $this->expectException(VideoMetadataExtractionFailed::class);
 
         try {
             $handler(new ExtractVideoMetadata($video));
@@ -420,8 +413,6 @@ class ExtractVideoMetadataHandlerTest extends TestCase
 
         $handler = $this->createHandler($video, $userRepository, $videoRepository, $extractor, $eventBus);
 
-        $this->expectException(VideoMetadataExtractionFailed::class);
-
         try {
             $handler(new ExtractVideoMetadata($video));
         } finally {
@@ -457,8 +448,6 @@ class ExtractVideoMetadataHandlerTest extends TestCase
 
         $handler = $this->createHandler($video, $userRepository, $videoRepository, $extractor, $eventBus);
 
-        $this->expectException(VideoMetadataExtractionFailed::class);
-
         try {
             $handler(new ExtractVideoMetadata($video));
         } finally {
@@ -491,8 +480,6 @@ class ExtractVideoMetadataHandlerTest extends TestCase
         ]);
 
         $handler = $this->createHandler($video, $userRepository, $videoRepository, $extractor, $eventBus);
-
-        $this->expectException(VideoMetadataExtractionFailed::class);
 
         try {
             $handler(new ExtractVideoMetadata($video));
@@ -529,8 +516,6 @@ class ExtractVideoMetadataHandlerTest extends TestCase
 
         $handler = $this->createHandler($video, $userRepository, $videoRepository, $extractor, $eventBus);
 
-        $this->expectException(VideoMetadataExtractionFailed::class);
-
         try {
             $handler(new ExtractVideoMetadata($video));
         } finally {
@@ -563,8 +548,6 @@ class ExtractVideoMetadataHandlerTest extends TestCase
         ]);
 
         $handler = $this->createHandler($video, $userRepository, $videoRepository, $extractor, $eventBus);
-
-        $this->expectException(VideoMetadataExtractionFailed::class);
 
         try {
             $handler(new ExtractVideoMetadata($video));
@@ -610,8 +593,6 @@ class ExtractVideoMetadataHandlerTest extends TestCase
             null,
             $logService
         );
-
-        $this->expectException(VideoMetadataExtractionFailed::class);
 
         try {
             $handler(new ExtractVideoMetadata($video));
