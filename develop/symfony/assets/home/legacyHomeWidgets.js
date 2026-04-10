@@ -13,13 +13,13 @@ function createAuthHeader(apiBearerToken) {
 export function initHomeLegacyWidgets(config) {
     if (typeof window.Uppy === 'undefined') {
         console.warn('[upload] Uppy is not loaded – skipping widget init');
-        return function noop() {};
+        return { cleanup: function noop() {}, updateStorage: function noop() {} };
     }
 
     const dropArea = document.getElementById('drag-drop-area');
     if (!dropArea) {
         console.warn('[upload] #drag-drop-area not found – skipping widget init');
-        return function noop() {};
+        return { cleanup: function noop() {}, updateStorage: function noop() {} };
     }
 
     const apiBearerToken = config.token ? (config.token.access || null) : null;
@@ -65,11 +65,24 @@ export function initHomeLegacyWidgets(config) {
         });
     });
 
-    return function cleanup() {
+    function cleanup() {
         try {
             uppy.close();
         } catch (e) {
             // Ignore cleanup errors from third-party widgets.
         }
-    };
+    }
+
+    function updateStorage(storageNow, storageMax) {
+        const videoSizeBytes = parseFloat(config.tariff.videoSize) * 1024 * 1024;
+        const remaining = storageMax - storageNow;
+        const newMaxFileSize = Math.min(remaining, videoSizeBytes);
+        try {
+            uppy.setOptions({ restrictions: { maxFileSize: newMaxFileSize } });
+        } catch (e) {
+            // ignore
+        }
+    }
+
+    return { cleanup, updateStorage };
 }

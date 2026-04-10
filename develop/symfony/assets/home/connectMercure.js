@@ -100,6 +100,10 @@ export function connectMercure(config, rootElement) {
                     window.dispatchEvent(new CustomEvent('app:task', { detail: payload }));
                 }
 
+                if (payload.entity === 'storage') {
+                    window.dispatchEvent(new CustomEvent('app:storage', { detail: payload }));
+                }
+
                 if (payload.payload && payload.payload.notification) {
                     window.dispatchEvent(new CustomEvent('app:flash', { detail: payload.payload.notification }));
                 }

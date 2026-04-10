@@ -24,7 +24,7 @@ export function createHomeTabsView(config) {
             const pageLimit = 10;
             const uploadState = createUploadTabState();
             const uploadActions = createUploadTabActions(config, uploadState);
-
+            const tariff = ref(config.tariff || null);
             const videosState = createVideosTabState(pageLimit);
             const videosActions = createVideosTabActions({
                 config,
@@ -72,6 +72,21 @@ export function createHomeTabsView(config) {
                 unbindRealtime = bindHomeRealtime({
                     onTask: tasksActions.applyTaskRealtimeUpdate,
                     onVideo: videosActions.applyVideoRealtimeUpdate,
+                    onStorage: function (payload) {
+                        // update uppy restriction
+                        uploadState.updateStorage(payload.storageNow, payload.storageMax);
+                        // update reactive tariff so hint re-renders
+                        if (tariff.value) {
+                            tariff.value = {
+                                ...tariff.value,
+                                storage: {
+                                    ...tariff.value.storage,
+                                    now: payload.storageNow,
+                                    max: payload.storageMax,
+                                },
+                            };
+                        }
+                    },
                 });
             });
 
@@ -109,7 +124,7 @@ export function createHomeTabsView(config) {
                 activeTab,
                 setTab,
                 uppyReady: uploadState.uppyReady,
-                tariff: config.tariff || null,
+                tariff,
                 userIdentifier: config.user ? config.user.identifier : '',
                 videos: videosState.videos,
                 videosMeta: videosState.videosMeta,

@@ -14,7 +14,9 @@ export function createUploadTabActions(config, uploadState) {
     }
 
     function doInit() {
-        uploadState.cleanup = initHomeLegacyWidgets(config);
+        const widgets = initHomeLegacyWidgets(config);
+        uploadState.cleanup = widgets.cleanup;
+        uploadState.updateStorage = widgets.updateStorage;
         uploadState.uppyReady.value = true;
     }
 
@@ -55,6 +57,7 @@ export function createUploadTabActions(config, uploadState) {
         stopPolling();
         uploadState.cleanup();
         uploadState.cleanup = function noop() {};
+        uploadState.updateStorage = function noop() {};
         uploadState.uppyReady.value = false;
     }
 
