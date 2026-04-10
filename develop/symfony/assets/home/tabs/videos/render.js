@@ -46,7 +46,7 @@ function renderDeleteButton(vm, video) {
 export function renderVideosPane(vm, paneClass) {
     return h('div', { class: paneClass }, [
         vm.videosError ? h('div', { class: 'alert alert-danger' }, vm.videosError) : null,
-        vm.videosLoading ? h('p', { class: 'mb-2 text-muted' }, 'Loading videos...') : null,
+        vm.videosLoading && vm.videos.length === 0 ? h('p', { class: 'mb-2 text-muted' }, 'Loading videos...') : null,
         h('table', { id: 'videosTable', class: 'table table-striped w-100 align-middle' }, [
             h('thead', [
                 h('tr', [h('th', 'Poster'), h('th', 'Name'), h('th', 'Created'), h('th', 'Actions')]),

@@ -33,7 +33,7 @@ function renderTaskAction(vm, task) {
 export function renderTasksPane(vm, paneClass) {
     return h('div', { class: paneClass }, [
         vm.tasksError ? h('div', { class: 'alert alert-danger' }, vm.tasksError) : null,
-        vm.tasksLoading ? h('p', { class: 'mb-2 text-muted' }, 'Loading tasks...') : null,
+        vm.tasksLoading && vm.tasks.length === 0 ? h('p', { class: 'mb-2 text-muted' }, 'Loading tasks...') : null,
         h('table', { id: 'tasksTable', class: 'table table-striped w-100 align-middle' }, [
             h('thead', [
                 h('tr', [h('th', 'Video'), h('th', 'Preset'), h('th', 'Status'), h('th', 'Progress'), h('th', 'Created'), h('th', 'Actions')]),
