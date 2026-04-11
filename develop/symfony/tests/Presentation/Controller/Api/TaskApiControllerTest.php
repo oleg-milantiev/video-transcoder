@@ -73,11 +73,11 @@ final class TaskApiControllerTest extends ApiWebTestCase
 
         $client->request('GET', '/api/task/');
 
-        self::assertResponseStatusCodeSame(400);
+        self::assertResponseStatusCodeSame(500);
         self::assertSame([
             'error' => [
-                'code' => 'QUERY_FAILED',
-                'message' => 'Task list failed',
+                'code' => 'INTERNAL_ERROR',
+                'message' => 'Failed to list tasks',
                 'details' => [],
             ],
         ], $this->decodeJson($client->getResponse()->getContent()));

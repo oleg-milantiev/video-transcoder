@@ -48,8 +48,6 @@ class VideoApiController extends AbstractController
                     new GetVideoListQuery($request, Uuid::fromString($this->getUser()->id->toRfc4122()))
                 )
             );
-        } catch (QueryException $e) {
-            return $this->apiError('QUERY_FAILED', $e->getMessage(), 400);
         } catch (\Throwable $e) {
             $this->logService->log('video', 'index', null, LogLevel::CRITICAL, 'Fail', [
                 'message' => $e->getMessage(),

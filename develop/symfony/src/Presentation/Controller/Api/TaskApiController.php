@@ -48,9 +48,6 @@ class TaskApiController extends AbstractController
                     new GetTaskListQuery($request, Uuid::fromString($this->getUser()->id->toRfc4122()))
                 )
             );
-        } catch (QueryException $e) {
-            // todo many user-friendly errors
-            return $this->apiError('QUERY_FAILED', $e->getMessage(), 400);
         } catch (\Throwable $e) {
             $this->logService->log('task', 'index', null, LogLevel::CRITICAL, 'Fail', [
                 'message' => $e->getMessage(),

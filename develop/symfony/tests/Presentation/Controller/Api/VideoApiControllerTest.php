@@ -70,11 +70,11 @@ final class VideoApiControllerTest extends ApiWebTestCase
 
         $client->request('GET', '/api/video/');
 
-        self::assertResponseStatusCodeSame(400);
+        self::assertResponseStatusCodeSame(500);
         self::assertSame([
             'error' => [
-                'code' => 'QUERY_FAILED',
-                'message' => 'List failed',
+                'code' => 'INTERNAL_ERROR',
+                'message' => 'Failed to list videos',
                 'details' => [],
             ],
         ], $this->decodeJson($client->getResponse()->getContent()));
