@@ -6,6 +6,8 @@ namespace App\Tests\Presentation\Controller\Api;
 
 use App\Application\Exception\QueryException;
 use App\Application\Exception\TranscodeAccessDeniedException;
+use App\Application\Exception\VideoAccessDeniedException;
+use App\Application\Exception\VideoNotFoundException;
 use App\Application\Query\DeleteVideoQuery;
 use App\Application\Query\GetVideoDetailsQuery;
 use App\Application\Query\GetVideoListQuery;
@@ -127,7 +129,7 @@ final class VideoApiControllerTest extends ApiWebTestCase
         $queryBus = $this->createMock(QueryBus::class);
         $queryBus->expects($this->once())
             ->method('query')
-            ->willThrowException(new QueryException('Video not found'));
+            ->willThrowException(new VideoNotFoundException('Video not found'));
         $this->replaceService(QueryBus::class, $queryBus);
 
         $client->request('GET', '/api/video/11111111-1111-4111-8111-111111111111');
@@ -135,7 +137,7 @@ final class VideoApiControllerTest extends ApiWebTestCase
         self::assertResponseStatusCodeSame(404);
         self::assertSame([
             'error' => [
-                'code' => 'QUERY_FAILED',
+                'code' => 'VIDEO_NOT_FOUND',
                 'message' => 'Video not found',
                 'details' => [],
             ],
@@ -200,14 +202,14 @@ final class VideoApiControllerTest extends ApiWebTestCase
     /**
      * @throws \JsonException
      */
-    public function testTranscodeReturnsForbiddenOnDomainException(): void
+    public function testTranscodeReturnsForbidden(): void
     {
         $client = $this->createBearerAuthenticatedClient();
 
         $queryBus = $this->createMock(QueryBus::class);
         $queryBus->expects($this->once())
             ->method('query')
-            ->willThrowException(new \DomainException('Access denied'));
+            ->willThrowException(new VideoAccessDeniedException('Access denied'));
         $this->replaceService(QueryBus::class, $queryBus);
 
         $client->request('POST', '/api/video/11111111-1111-4111-8111-111111111111/transcode/77777777-7777-4777-8777-777777777777');
@@ -250,7 +252,7 @@ final class VideoApiControllerTest extends ApiWebTestCase
     /**
      * @throws \JsonException
      */
-    public function testDeleteReturnsSuccessPayload(): void
+    public function testDeleteReturnsSuccess(): void
     {
         $client = $this->createBearerAuthenticatedClient(
             userId: SymfonyUuid::fromString('00000000-0000-4000-8000-000000000042'),
@@ -270,13 +272,8 @@ final class VideoApiControllerTest extends ApiWebTestCase
 
         $client->request('DELETE', '/api/video/' . $videoId->toRfc4122());
 
-        self::assertResponseStatusCodeSame(200);
-        self::assertSame([
-            'video' => [
-                'id' => $videoId->toRfc4122(),
-                'deleted' => true,
-            ],
-        ], $this->decodeJson($client->getResponse()->getContent()));
+        self::assertResponseStatusCodeSame(204);
+        self::assertSame('', $client->getResponse()->getContent());
     }
 
     /**

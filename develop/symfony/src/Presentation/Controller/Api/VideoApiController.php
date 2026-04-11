@@ -4,11 +4,11 @@ declare(strict_types=1);
 namespace App\Presentation\Controller\Api;
 
 use App\Application\Exception\InvalidUuidException;
-use App\Application\Exception\QueryException;
 use App\Application\Exception\PresetNotFoundException;
 use App\Application\Exception\TaskCreationFailedException;
 use App\Application\Exception\TranscodeAccessDeniedException;
 use App\Application\Exception\UserNotFoundException;
+use App\Application\Exception\VideoAccessDeniedException;
 use App\Application\Exception\VideoNotFoundException;
 use App\Application\Logging\LogServiceInterface;
 use App\Application\Query\DeleteVideoQuery;
@@ -18,6 +18,7 @@ use App\Application\Query\PatchVideoQuery;
 use App\Application\Query\StartTranscodeQuery;
 use App\Application\QueryHandler\QueryBus;
 use App\Domain\Shared\ValueObject\Uuid;
+use App\Domain\User\Exception\TariffNotFound;
 use App\Domain\Video\Exception\VideoAlreadyDeleted;
 use App\Domain\Video\Exception\VideoHasTranscodingTasks;
 use Psr\Log\LogLevel;
@@ -65,11 +66,13 @@ class VideoApiController extends AbstractController
                     new GetVideoDetailsQuery($id)
                 )
             );
-        } catch (QueryException $e) {
-            $status = $e->getMessage() === 'Invalid UUID' ? 400 : 404;
-            return $this->apiError('QUERY_FAILED', $e->getMessage(), $status);
-        } catch (\DomainException $e) {
-            // todo переделать
+        } catch (InvalidUuidException $e) {
+            return $this->apiError('INVALID_UUID', $e->getMessage(), 400);
+        } catch (VideoNotFoundException $e) {
+            return $this->apiError('VIDEO_NOT_FOUND', $e->getMessage(), 404);
+        } catch (TariffNotFound $e) {
+            return $this->apiError('TARIFF_NOT_FOUND', $e->getMessage(), 404);
+        } catch (VideoAccessDeniedException $e) {
             return $this->apiError('ACCESS_DENIED', $e->getMessage(), 403);
         } catch (\Throwable $e) {
             $this->logService->log('video', 'details', Uuid::fromStringNullable($id), LogLevel::CRITICAL, 'Fail', [
@@ -84,7 +87,6 @@ class VideoApiController extends AbstractController
     public function transcode(string $id, string $presetId): Response
     {
         try {
-            // todo убрал task в иерархии. тесты и front адаптировать
             return $this->apiSuccess((array)
                 $this->queryBus->query(
                      new StartTranscodeQuery($id, $presetId, $this->getUser()->id->toRfc4122())
@@ -98,14 +100,10 @@ class VideoApiController extends AbstractController
             return $this->apiError('PRESET_NOT_FOUND', $e->getMessage(), 404);
         } catch (UserNotFoundException $e) {
             return $this->apiError('USER_NOT_FOUND', $e->getMessage(), 404);
-        } catch (TranscodeAccessDeniedException $e) {
+        } catch (VideoAccessDeniedException $e) {
             return $this->apiError('ACCESS_DENIED', $e->getMessage(), 403);
         } catch (TaskCreationFailedException $e) {
             return $this->apiError('TASK_CREATION_FAILED', $e->getMessage(), 500);
-        } catch (QueryException $e) {
-            return $this->apiError('QUERY_FAILED', $e->getMessage(), 400);
-        } catch (\DomainException $e) {
-            return $this->apiError('ACCESS_DENIED', $e->getMessage(), 403);
         } catch (\Throwable $e) {
             $this->logService->log('video', 'transcode', Uuid::fromStringNullable($id), LogLevel::CRITICAL, 'Fail', [
                 'id' => $id,
@@ -147,14 +145,7 @@ class VideoApiController extends AbstractController
             $this->queryBus->query(
                 new DeleteVideoQuery($id, $this->getUser()->id->toRfc4122())
             );
-
-            // todo что за новый контракт? :(
-            return $this->apiSuccess([
-                'video' => [
-                    'id' => $id,
-                    'deleted' => true,
-                ],
-            ]);
+            return $this->apiSuccess(null, 204);
         } catch (InvalidUuidException $e) {
             return $this->apiError('INVALID_VIDEO_ID', $e->getMessage(), 400);
         } catch (TranscodeAccessDeniedException $e) {

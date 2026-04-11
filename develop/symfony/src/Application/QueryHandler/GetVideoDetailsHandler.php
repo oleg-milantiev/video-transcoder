@@ -6,9 +6,11 @@ namespace App\Application\QueryHandler;
 use App\Application\DTO\PresetWithTaskDTO;
 use App\Application\DTO\TaskInfoDTO;
 use App\Application\DTO\VideoDetailsDTO;
-use App\Application\Exception\QueryException;
+use App\Application\Exception\VideoAccessDeniedException;
+use App\Application\Exception\VideoNotFoundException;
 use App\Application\Query\GetVideoDetailsQuery;
 use App\Application\Query\Repository\VideoDetailsReadRepositoryInterface;
+use App\Domain\User\Exception\TariffNotFound;
 use App\Domain\Video\Repository\VideoRepositoryInterface;
 use App\Domain\Video\Service\Storage\StorageInterface;
 use App\Domain\Video\ValueObject\TaskStatus;
@@ -32,11 +34,11 @@ final readonly class GetVideoDetailsHandler
     {
         $video = $this->videoRepository->findById($query->uuid);
         if (!$video) {
-            throw new QueryException('Video not found');
+            throw new VideoNotFoundException('Video not found');
         }
 
         if (!$this->security->isGranted(VideoAccessVoter::CAN_VIEW_DETAILS, $video)) {
-            throw new QueryException('Access denied');
+            throw new VideoAccessDeniedException('Access denied');
         }
 
         $presetsWithTasks = [];
@@ -64,7 +66,7 @@ final readonly class GetVideoDetailsHandler
         /** @var UserEntity $user */
         $user = $this->security->getUser();
         if (!$user->tariff) {
-            throw new QueryException('Tariff not found');
+            throw new TariffNotFound('Tariff not found');
         }
         $tariff = TariffMapper::toDomain($user->tariff);
 
