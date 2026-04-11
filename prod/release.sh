@@ -78,7 +78,7 @@ case "$RESULT" in
         docker compose exec php php bin/console cache:clear
 
         echo "Running smoke tests..."
-#        docker compose exec php php bin/console app:smoke:prod
+        docker compose exec php php bin/console app:smoke:prod
 
         echo "Stopping Nginx..."
         docker compose stop nginx
@@ -120,7 +120,7 @@ case "$RESULT" in
         docker compose exec php php bin/console cache:clear
 
         echo "Running smoke tests..."
-#        docker compose exec php php bin/console app:smoke:prod
+        docker compose exec php php bin/console app:smoke:prod
 
         echo "Stopping Nginx..."
         docker compose stop nginx
