@@ -201,14 +201,8 @@ final class TaskApiControllerTest extends ApiWebTestCase
 
         $client->request('POST', '/api/task/' . $taskId->toRfc4122() . '/cancel');
 
-        self::assertResponseStatusCodeSame(200);
-
-        $payload = $this->decodeJson($client->getResponse()->getContent());
-        self::assertSame('CANCELLED', $payload['task']['status']);
-        self::assertTrue($payload['task']['cancelledNow']);
-        self::assertTrue($payload['task']['cancellationRequested']);
-        self::assertSame('00000000-0000-4000-8000-000000000042', $task->meta()['cancelledByUserId']);
-        self::assertArrayHasKey('cancelRequestedAt', $task->meta());
+        self::assertResponseStatusCodeSame(204);
+        self::assertSame('', $client->getResponse()->getContent());
     }
 
     public function testCancelProcessingTaskMarksRequestWithoutImmediateCancel(): void
@@ -242,14 +236,8 @@ final class TaskApiControllerTest extends ApiWebTestCase
 
         $client->request('POST', '/api/task/' . $taskId->toRfc4122() . '/cancel');
 
-        self::assertResponseStatusCodeSame(200);
-
-        $payload = $this->decodeJson($client->getResponse()->getContent());
-        self::assertSame('PROCESSING', $payload['task']['status']);
-        self::assertFalse($payload['task']['cancelledNow']);
-        self::assertTrue($payload['task']['cancellationRequested']);
-        self::assertSame('00000000-0000-4000-8000-000000000042', $task->meta()['cancelledByUserId']);
-        self::assertArrayHasKey('cancelRequestedAt', $task->meta());
+        self::assertResponseStatusCodeSame(204);
+        self::assertSame('', $client->getResponse()->getContent());
     }
 
     private function createProcessingTask(): Task

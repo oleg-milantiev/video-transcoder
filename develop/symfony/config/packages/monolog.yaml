@@ -22,6 +22,5 @@ when@test:
             console:
                 type: stream
                 path: "php://stderr"
-                level: debug
-                formatter: monolog.formatter.json
-                channels: []
+                level: info
+                channels: ["!event", "!doctrine"]

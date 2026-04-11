@@ -32,7 +32,7 @@ final readonly class TaskCancelHandler
         private StorageRealtimeNotifier $storageNotifier,
     ) {}
 
-    public function __invoke(TaskCancelQuery $query): array
+    public function __invoke(TaskCancelQuery $query): void
     {
         $task = $this->taskRepository->findById($query->taskId);
         if ($task === null) {
@@ -77,15 +77,5 @@ final readonly class TaskCancelHandler
         if ($cancelledNow) {
             $this->storageNotifier->notifyStorageUpdated($task->userId());
         }
-
-        // todo DTO
-        return [
-            'task' => [
-                'id' => $task->id()->toRfc4122(),
-                'status' => $task->status()->name,
-                'cancelledNow' => $cancelledNow,
-                'cancellationRequested' => true,
-            ],
-        ];
     }
 }

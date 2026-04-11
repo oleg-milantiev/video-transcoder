@@ -66,10 +66,8 @@ class TaskApiController extends AbstractController
     public function cancel(string $id): Response
     {
         try {
-            // todo DTO
-            $result = $this->queryBus->query(new TaskCancelQuery($id, $this->getUser()->id->toRfc4122()));
-
-            return $this->apiSuccess((array) $result);
+            $this->queryBus->query(new TaskCancelQuery($id, $this->getUser()->id->toRfc4122()));
+            return $this->apiSuccess(null, 204);
         } catch (InvalidUuidException $e) {
             return $this->apiError('INVALID_TASK_ID', $e->getMessage(), 400);
         } catch (TaskNotFoundException $e) {
