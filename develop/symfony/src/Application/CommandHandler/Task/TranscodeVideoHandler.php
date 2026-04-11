@@ -10,7 +10,7 @@ use App\Application\Event\TranscodeVideoStart;
 use App\Application\Event\TranscodeVideoSuccess;
 use App\Application\Exception\StorageSizeExceedsQuota;
 use App\Application\Logging\LogServiceInterface;
-use App\Application\Service\Storage\StorageRealtimeNotifierInterface;
+use App\Application\Service\Storage\StorageRealtimeNotifier;
 use App\Application\Service\Task\TranscodeProcessService;
 use App\Application\Service\Task\TranscodeTaskFinalizationService;
 use App\Application\Service\Task\TranscodeTaskPreparationService;
@@ -45,7 +45,7 @@ final readonly class TranscodeVideoHandler
         private TranscodeTaskPreparationService $transcodeTaskPreparationService,
         private TranscodeTaskFinalizationService $transcodeTaskFinalizationService,
         private UserRepositoryInterface $userRepository,
-        private StorageRealtimeNotifierInterface $storageNotifier,
+        private StorageRealtimeNotifier $storageNotifier,
     ) {
     }
 
@@ -56,7 +56,6 @@ final readonly class TranscodeVideoHandler
     {
         $ms = microtime(true);
 
-        // todo зачем эта матрёшка?
         $scheduledTask = $command->scheduledTask;
         $this->eventBus->dispatch(new TranscodeVideoStart(
             taskId: $scheduledTask->taskId->toRfc4122(),

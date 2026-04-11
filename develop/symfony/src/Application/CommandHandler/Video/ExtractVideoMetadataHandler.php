@@ -11,7 +11,7 @@ use App\Application\Event\ExtractVideoMetadataStart;
 use App\Application\Event\ExtractVideoMetadataSuccess;
 use App\Application\Factory\FlashNotificationFactory;
 use App\Application\Logging\LogServiceInterface;
-use App\Application\Service\Storage\StorageRealtimeNotifierInterface;
+use App\Application\Service\Storage\StorageRealtimeNotifier;
 use App\Application\Service\Video\VideoRealtimeNotifier;
 use App\Domain\User\Exception\TariffNotFound;
 use App\Domain\User\Exception\UserNotFound;
@@ -44,7 +44,7 @@ final readonly class ExtractVideoMetadataHandler
         private LogServiceInterface $logService,
         private FlashNotificationFactory $flashNotificationFactory,
         private VideoRealtimeNotifier $videoRealtimeNotifier,
-        private StorageRealtimeNotifierInterface $storageNotifier,
+        private StorageRealtimeNotifier $storageNotifier,
     ) {
     }
 

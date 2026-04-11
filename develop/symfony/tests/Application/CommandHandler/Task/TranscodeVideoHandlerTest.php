@@ -16,7 +16,7 @@ use App\Application\Event\TranscodeVideoStart;
 use App\Application\Event\TranscodeVideoSuccess;
 use App\Application\Exception\StorageSizeExceedsQuota;
 use App\Application\Logging\LogServiceInterface;
-use App\Application\Service\Storage\StorageRealtimeNotifierInterface;
+use App\Application\Service\Storage\StorageRealtimeNotifier;
 use App\Application\Service\Task\TranscodeProcessService;
 use App\Application\Service\Task\TranscodeTaskFinalizationService;
 use App\Application\Service\Task\TranscodeTaskPreparationService;
@@ -211,7 +211,7 @@ class TranscodeVideoHandlerTest extends TestCase
              $transcodeTaskPreparationService,
              $transcodeTaskFinalizationService,
              $userRepository,
-             $this->createStub(StorageRealtimeNotifierInterface::class),
+             $this->createStub(StorageRealtimeNotifier::class),
          );
      }
 

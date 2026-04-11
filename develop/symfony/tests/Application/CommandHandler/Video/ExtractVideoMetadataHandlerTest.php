@@ -10,7 +10,7 @@ use App\Application\Event\ExtractVideoMetadataFail;
 use App\Application\Event\ExtractVideoMetadataStart;
 use App\Application\Factory\FlashNotificationFactory;
 use App\Application\Logging\LogServiceInterface;
-use App\Application\Service\Storage\StorageRealtimeNotifierInterface;
+use App\Application\Service\Storage\StorageRealtimeNotifier;
 use App\Application\Service\Video\VideoRealtimeNotifier;
 use App\Domain\Shared\ValueObject\Uuid;
 use App\Domain\User\Entity\Tariff;
@@ -113,7 +113,7 @@ class ExtractVideoMetadataHandlerTest extends TestCase
         ?LogServiceInterface $logService = null,
         ?LoggerInterface $logger = null,
         ?TaskRepositoryInterface $taskRepository = null,
-        ?StorageRealtimeNotifierInterface $storageNotifier = null
+        ?StorageRealtimeNotifier $storageNotifier = null
     ): ExtractVideoMetadataHandler {
         $storage ??= $this->createStub(StorageInterface::class);
         $storage->method('sourceKey')->willReturn('source.mp4');
@@ -142,7 +142,7 @@ class ExtractVideoMetadataHandlerTest extends TestCase
                 $storage,
                 $this->createStub(TaskRepositoryInterface::class)
             ),
-            $storageNotifier ?? $this->createStub(StorageRealtimeNotifierInterface::class),
+            $storageNotifier ?? $this->createStub(StorageRealtimeNotifier::class),
         );
     }
 
@@ -194,7 +194,7 @@ class ExtractVideoMetadataHandlerTest extends TestCase
                  $storage,
                  $this->createStub(TaskRepositoryInterface::class)
              ),
-             $this->createStub(StorageRealtimeNotifierInterface::class),
+             $this->createStub(StorageRealtimeNotifier::class),
          );
 
          $handler(new ExtractVideoMetadata($video));
@@ -229,7 +229,7 @@ class ExtractVideoMetadataHandlerTest extends TestCase
          $notifierBus = $this->createStub(MessageBusInterface::class);
          $notifierBus->method('dispatch')->willReturnCallback(static fn () => new Envelope(new \stdClass()));
 
-         $storageNotifier = $this->createMock(StorageRealtimeNotifierInterface::class);
+         $storageNotifier = $this->createMock(StorageRealtimeNotifier::class);
          $storageNotifier->expects($this->once())
              ->method('notifyStorageUpdated')
              ->with($user->id());

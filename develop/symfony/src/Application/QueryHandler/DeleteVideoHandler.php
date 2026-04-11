@@ -12,7 +12,7 @@ use App\Application\Exception\VideoNotFoundException;
 use App\Application\Logging\LogServiceInterface;
 use App\Application\Query\DeleteTaskQuery;
 use App\Application\Query\DeleteVideoQuery;
-use App\Application\Service\Storage\StorageRealtimeNotifierInterface;
+use App\Application\Service\Storage\StorageRealtimeNotifier;
 use App\Application\Service\Video\VideoRealtimeNotifier;
 use App\Domain\Video\Repository\TaskRepositoryInterface;
 use App\Domain\Video\Repository\VideoRepositoryInterface;
@@ -37,7 +37,7 @@ final readonly class DeleteVideoHandler
         private VideoRealtimeNotifier $videoRealtimeNotifier,
         private Security $security,
         private QueryBus $queryBus,
-        private StorageRealtimeNotifierInterface $storageNotifier,
+        private StorageRealtimeNotifier $storageNotifier,
     ) {
     }
 

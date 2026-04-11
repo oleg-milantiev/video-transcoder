@@ -7,7 +7,7 @@ use App\Application\DTO\TranscodeReportDTO;
 use App\Application\DTO\TranscodeStartContextDTO;
 use App\Application\Factory\FlashNotificationFactory;
 use App\Application\Logging\LogServiceInterface;
-use App\Application\Service\Storage\StorageRealtimeNotifierInterface;
+use App\Application\Service\Storage\StorageRealtimeNotifier;
 use App\Domain\Video\Entity\Task;
 use App\Domain\Video\Repository\TaskRepositoryInterface;
 use App\Domain\Video\ValueObject\Progress;
@@ -23,7 +23,7 @@ readonly class TranscodeTaskFinalizationService
         private TaskRealtimeNotifier $taskRealtimeNotifier,
         private FlashNotificationFactory $flashNotificationFactory,
         private TaskCancellationTrigger $cancellationTrigger,
-        private StorageRealtimeNotifierInterface $storageNotifier,
+        private StorageRealtimeNotifier $storageNotifier,
     ) {
     }
 

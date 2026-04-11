@@ -8,7 +8,7 @@ use App\Application\Exception\TaskNotFoundException;
 use App\Application\Exception\VideoNotFoundException;
 use App\Application\Logging\LogServiceInterface;
 use App\Application\Query\TaskCancelQuery;
-use App\Application\Service\Storage\StorageRealtimeNotifierInterface;
+use App\Application\Service\Storage\StorageRealtimeNotifier;
 use App\Application\Service\Task\TaskRealtimeNotifier;
 use App\Domain\Video\Repository\TaskRepositoryInterface;
 use App\Domain\Video\Repository\VideoRepositoryInterface;
@@ -29,7 +29,7 @@ final readonly class TaskCancelHandler
         private TaskCancellationTrigger $cancellationTrigger,
         private TaskRealtimeNotifier $taskRealtimeNotifier,
         private Security $security,
-        private StorageRealtimeNotifierInterface $storageNotifier,
+        private StorageRealtimeNotifier $storageNotifier,
     ) {}
 
     public function __invoke(TaskCancelQuery $query): array

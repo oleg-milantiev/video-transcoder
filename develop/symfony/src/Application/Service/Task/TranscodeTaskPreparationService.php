@@ -6,7 +6,7 @@ namespace App\Application\Service\Task;
 use App\Application\DTO\TranscodeStartContextDTO;
 use App\Application\Factory\FlashNotificationFactory;
 use App\Application\Logging\LogServiceInterface;
-use App\Application\Service\Storage\StorageRealtimeNotifierInterface;
+use App\Application\Service\Storage\StorageRealtimeNotifier;
 use App\Domain\Video\Entity\Task;
 use App\Domain\Video\Entity\Video;
 use App\Domain\Video\Repository\PresetRepositoryInterface;
@@ -23,7 +23,7 @@ readonly class TranscodeTaskPreparationService
         private TaskRealtimeNotifier $taskRealtimeNotifier,
         private FlashNotificationFactory $flashNotificationFactory,
         private StorageInterface $storage,
-        private StorageRealtimeNotifierInterface $storageNotifier,
+        private StorageRealtimeNotifier $storageNotifier,
     ) {
     }
 
