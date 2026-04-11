@@ -133,3 +133,5 @@
 **Scalability:** Эластичное потребление ресурсов облака (AutoScale) в зависимости от длины очереди задач.
 
 **Reliability:** Гарантированная доставка задач через брокер сообщений и возобновление обработки при сбоях воркеров.
+
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/oleg-milantiev/video-transcoder)
