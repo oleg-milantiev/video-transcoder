@@ -17,7 +17,6 @@ class Preset
     private Codec $codec;
     private Bitrate $bitrate;
 
-    // TODO DDD подумать: PresetName и VideoFormat (resolution + codec + bitrate)
     public function __construct(
         PresetTitle $title,
         Resolution $resolution,
