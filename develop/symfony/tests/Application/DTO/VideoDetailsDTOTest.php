@@ -45,8 +45,7 @@ class VideoDetailsDTOTest extends TestCase
             task: new TaskInfoDTO(
                 status: 'PENDING',
                 progress: 0,
-                createdAt: (new \DateTimeImmutable('2026-03-18 08:50:00', new \DateTimeZone('UTC')))->format(\DateTimeInterface::ATOM),
-                downloadFilename: 'mobile-file.mp4',
+                createdAt: new \DateTimeImmutable('2026-03-18 08:50:00', new \DateTimeZone('UTC'))->format(\DateTimeInterface::ATOM),
                 waitingTariffInstance: true,
                 waitingTariffDelay: true,
                 willStartAt: $willStartAt->format(\DateTimeInterface::ATOM),

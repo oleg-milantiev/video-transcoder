@@ -16,7 +16,6 @@ class PresetWithTaskDTOTest extends TestCase
             status: 'COMPLETED',
             progress: 100,
             createdAt: '2026-03-18 08:00',
-            downloadFilename: 'completed-file.mp4',
             waitingTariffInstance: false,
             waitingTariffDelay: false,
             willStartAt: null,
