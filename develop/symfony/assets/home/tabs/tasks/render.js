@@ -2,7 +2,7 @@ import { h } from 'vue';
 import { humanReadableDateTime } from '../../shared.js';
 
 function renderTaskAction(vm, task) {
-    if (task.status === 'COMPLETED' && task.id) {
+    if (task.status === 'COMPLETED' && task.id && !task.deleted) {
         return h(
             'a',
             {
