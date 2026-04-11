@@ -21,6 +21,7 @@ services:
             - php
         volumes:
             - uploads:/var/www/yc/public/uploads:ro
+            - ./maintenance:/var/www/yc/public/maintenance:ro
 
     php:
         restart: always
