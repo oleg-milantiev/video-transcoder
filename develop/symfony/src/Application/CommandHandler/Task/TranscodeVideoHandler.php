@@ -98,7 +98,11 @@ final readonly class TranscodeVideoHandler
                         'cancelledAt' => new \DateTimeImmutable()->format(\DateTimeInterface::ATOM),
                     ]);
                     $this->taskRepository->save($task);
-                    $this->logService->log('task', 'transcode', $task->id(), LogLevel::INFO, 'Task cancelled before ffmpeg start');
+                    $this->logService->log('task', 'transcode', $task->id(), LogLevel::INFO, 'Task cancelled before ffmpeg start', [
+                        'videoId' => $video->id()?->toRfc4122(),
+                        'presetId' => $task->presetId()?->toRfc4122(),
+                        'userId' => $task->userId()?->toRfc4122(),
+                    ]);
                 }
 
                 $this->cancellationTrigger->clear($task->id());

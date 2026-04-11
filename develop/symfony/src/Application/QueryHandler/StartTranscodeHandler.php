@@ -82,8 +82,10 @@ final readonly class StartTranscodeHandler
             $task = $this->taskRepository->findForTranscode($video->id(), $preset->id(), $user->id());
 
             if ($task instanceof Task) {
+                $isRestart = true;
                 $task->restart();
             } else {
+                $isRestart = false;
                 $task = Task::create($video->id(), $preset->id(), $user->id());
                 $task->updateMeta(['sizeExpected' => (int)($video->duration() * $preset->bitrate()->value() / 8 * 1024 * 1024)]);
             }
@@ -95,10 +97,10 @@ final readonly class StartTranscodeHandler
                 'videoId' => $video->id()?->toRfc4122(),
                 'presetId' => $preset->id()?->toRfc4122(),
                 'userId' => $user->id()?->toRfc4122(),
-                'isRestart' => $task->status()->name !== 'PENDING',
+                'isRestart' => $isRestart,
             ];
-            $this->logService->log('task', 'transcode', $task->id(), LogLevel::INFO, 'Transcode requested', $context);
-            $this->logService->log('video', 'transcode', $video->id(), LogLevel::INFO, 'Transcode started for video', $context);
+            $this->logService->log('task', 'transcode', $task->id(), LogLevel::INFO, 'Transcode requested', array_diff_key($context, ['taskId' => 1]));
+            $this->logService->log('video', 'transcode', $video->id(), LogLevel::INFO, 'Transcode started for video', array_diff_key($context, ['videoId' => 1]));
         } catch (\Throwable $e) {
             $this->eventBus->dispatch(new StartTranscodeFail('Failed to create task', $query->uuid->toRfc4122(), $query->presetId->toRfc4122(), $query->userId->toRfc4122()));
             throw new TaskCreationFailedException('Failed to create task', previous: $e);

@@ -70,6 +70,9 @@ readonly class TranscodeTaskFinalizationService
         $this->cancellationTrigger->clear($task->id());
         $this->storageNotifier->notifyStorageUpdated($task->userId());
         $this->logService->log('task', 'transcode', $task->id(), LogLevel::INFO, 'Transcoding finished successfully', [
+            'videoId' => $task->videoId()?->toRfc4122(),
+            'presetId' => $task->presetId()?->toRfc4122(),
+            'userId' => $task->userId()?->toRfc4122(),
             'time' => microtime(true) - $context->timeStart,
             'size' => $fileSize,
         ]);

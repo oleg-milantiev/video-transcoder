@@ -30,27 +30,11 @@ final readonly class TelegramLogService implements LogServiceInterface
         'task' => [
             'transcode' => [
                 LogLevel::INFO => [
-                    /*
-                     * todo унифицировать и использовать контекст
-                    $this->logService->log('task', 'transcode', $task->id(), LogLevel::INFO, 'Transcode requested', [
-                        'taskId' => $task->id()?->toRfc4122(),
-                        'videoId' => $video->id()?->toRfc4122(),
-                        'presetId' => $preset->id()?->toRfc4122(),
-                        'userId' => $user->id()?->toRfc4122(),
-                        'isRestart' => $task->status()->name !== 'PENDING',
-                    ]);
-
-                    $this->logService->log('task', 'transcode', $task->id(), LogLevel::INFO, 'Transcoding started');
-
-                    $this->logService->log('task', 'transcode', $task->id(), LogLevel::INFO, 'Task cancelled before ffmpeg start');
-
-                    $this->logService->log('task', 'transcode', $task->id(), LogLevel::INFO, 'Transcoding finished successfully', [
-                        'time' => microtime(true) - $context->timeStart,
-                        'size' => $fileSize,
-                    ]);
-                    */
                     'template' => <<< TWIG
 {{ text }} ({{ uuid }})
+video: {{ videoId }}
+preset: {{ presetId }}
+user: {{ userId }}
 TWIG,
                     'userIds' => [self::ADMIN_USER_ID],
                 ],

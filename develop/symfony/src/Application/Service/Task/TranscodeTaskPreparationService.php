@@ -40,7 +40,11 @@ readonly class TranscodeTaskPreparationService
 
         $task->start($video->duration());
         $this->taskRepository->save($task);
-        $this->logService->log('task', 'transcode', $task->id(), LogLevel::INFO, 'Transcoding started');
+        $this->logService->log('task', 'transcode', $task->id(), LogLevel::INFO, 'Transcoding started', [
+            'videoId' => $video->id()?->toRfc4122(),
+            'presetId' => $preset->id()?->toRfc4122(),
+            'userId' => $task->userId()?->toRfc4122(),
+        ]);
         $this->taskRealtimeNotifier->notifyTaskUpdated($task, 'started', [
             'notification' => $this->flashNotificationFactory->transcodeStarted($task)->toArray(),
         ]);
