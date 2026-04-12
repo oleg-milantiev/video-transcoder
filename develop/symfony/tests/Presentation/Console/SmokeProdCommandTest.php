@@ -152,4 +152,203 @@ final class SmokeProdCommandTest extends TestCase
 
         $this->assertSame(Command::FAILURE, $exitCode);
     }
+
+    public function testVideoListThrowableCaughtAndReturnsFalse(): void
+    {
+        // videoList throws a non-QueryException Throwable → \Throwable catch in testVideoList
+        $emptyListResult = (object) ['items' => [], 'total' => 0, 'totalPages' => 0];
+        $taskListResult = (object) ['items' => [], 'total' => 0];
+
+        $callCount = 0;
+        $queryBus = $this->createStub(QueryBus::class);
+        $queryBus->method('query')->willReturnCallback(
+            function () use (&$callCount, $emptyListResult, $taskListResult) {
+                $callCount++;
+                if ($callCount === 1) {
+                    throw new \LogicException('network error in video list');
+                }
+                if ($callCount === 2) {
+                    return $emptyListResult; // testVideoItemsStructure
+                }
+
+                return $taskListResult; // testTaskList
+            },
+        );
+
+        $userRepository = $this->createStub(UserRepositoryInterface::class);
+        $userRepository->method('findById')->willReturn($this->makeAdminUser());
+
+        $command = new SmokeProdCommand(
+            $queryBus,
+            $userRepository,
+            $this->createStub(LogServiceInterface::class),
+        );
+
+        $tester = new CommandTester($command);
+        $exitCode = $tester->execute([]);
+
+        $this->assertSame(Command::FAILURE, $exitCode);
+        $this->assertStringContainsString('Failed:', $tester->getDisplay());
+    }
+
+    public function testVideoItemsStructureReturnsFalseForInvalidItemStructure(): void
+    {
+        // Items with empty uuid → failed++ → return false
+        $validListResult = (object) [
+            'items' => [(object) ['uuid' => 'valid-id', 'title' => 'T', 'createdAt' => '2026']],
+            'total' => 1,
+            'totalPages' => 1,
+        ];
+        $invalidItemsResult = (object) [
+            'items' => [(object) ['uuid' => '', 'title' => 'T', 'createdAt' => '2026']], // empty uuid
+            'total' => 1,
+            'totalPages' => 1,
+        ];
+        $taskListResult = (object) ['items' => [], 'total' => 0];
+
+        $queryBus = $this->createStub(QueryBus::class);
+        $queryBus->method('query')->willReturnOnConsecutiveCalls(
+            $validListResult,    // testVideoList → items is array → returns true
+            $invalidItemsResult, // testVideoItemsStructure → uuid empty → failed++ → returns false
+            $taskListResult,     // testTaskList
+        );
+
+        $userRepository = $this->createStub(UserRepositoryInterface::class);
+        $userRepository->method('findById')->willReturn($this->makeAdminUser());
+
+        $command = new SmokeProdCommand(
+            $queryBus,
+            $userRepository,
+            $this->createStub(LogServiceInterface::class),
+        );
+
+        $tester = new CommandTester($command);
+        $exitCode = $tester->execute([]);
+
+        $this->assertSame(Command::FAILURE, $exitCode);
+    }
+
+    public function testTaskListReturnsFalseWhenItemsIsNotArray(): void
+    {
+        $emptyListResult = (object) ['items' => [], 'total' => 0, 'totalPages' => 0];
+        $taskListInvalid = (object) ['items' => 'not-an-array', 'total' => 0];
+
+        $queryBus = $this->createStub(QueryBus::class);
+        $queryBus->method('query')->willReturnOnConsecutiveCalls(
+            $emptyListResult, // testVideoList
+            $emptyListResult, // testVideoItemsStructure
+            $taskListInvalid, // testTaskList → items not array → returns false
+        );
+
+        $userRepository = $this->createStub(UserRepositoryInterface::class);
+        $userRepository->method('findById')->willReturn($this->makeAdminUser());
+
+        $command = new SmokeProdCommand(
+            $queryBus,
+            $userRepository,
+            $this->createStub(LogServiceInterface::class),
+        );
+
+        $tester = new CommandTester($command);
+        $exitCode = $tester->execute([]);
+
+        $this->assertSame(Command::FAILURE, $exitCode);
+    }
+
+    public function testTaskListThrowableCaught(): void
+    {
+        // taskList throws a non-QueryException → \Throwable catch in testTaskList
+        $emptyListResult = (object) ['items' => [], 'total' => 0, 'totalPages' => 0];
+
+        $callCount = 0;
+        $queryBus = $this->createStub(QueryBus::class);
+        $queryBus->method('query')->willReturnCallback(
+            function () use (&$callCount, $emptyListResult) {
+                $callCount++;
+                if ($callCount <= 2) {
+                    return $emptyListResult; // testVideoList, testVideoItemsStructure
+                }
+                throw new \LogicException('storage error in task list'); // testTaskList
+            },
+        );
+
+        $userRepository = $this->createStub(UserRepositoryInterface::class);
+        $userRepository->method('findById')->willReturn($this->makeAdminUser());
+
+        $command = new SmokeProdCommand(
+            $queryBus,
+            $userRepository,
+            $this->createStub(LogServiceInterface::class),
+        );
+
+        $tester = new CommandTester($command);
+        $exitCode = $tester->execute([]);
+
+        $this->assertSame(Command::FAILURE, $exitCode);
+    }
+
+    public function testUserDataReturnsFalseWhenNotAdmin(): void
+    {
+        $emptyListResult = (object) ['items' => [], 'total' => 0, 'totalPages' => 0];
+        $taskListResult = (object) ['items' => [], 'total' => 0];
+
+        $queryBus = $this->createStub(QueryBus::class);
+        $queryBus->method('query')->willReturnOnConsecutiveCalls(
+            $emptyListResult, $emptyListResult, $taskListResult,
+        );
+
+        // User with valid email but without ROLE_ADMIN
+        $nonAdminUser = new User(
+            email: new UserEmail('user@example.com'),
+            roles: new UserRoles(['ROLE_USER']),
+            id: Uuid::fromString(self::ADMIN_UUID),
+        );
+
+        $userRepository = $this->createStub(UserRepositoryInterface::class);
+        $userRepository->method('findById')->willReturn($nonAdminUser);
+
+        $command = new SmokeProdCommand(
+            $queryBus,
+            $userRepository,
+            $this->createStub(LogServiceInterface::class),
+        );
+
+        $tester = new CommandTester($command);
+        $exitCode = $tester->execute([]);
+
+        $this->assertSame(Command::FAILURE, $exitCode);
+        $this->assertStringContainsString('User is not an admin', $tester->getDisplay());
+    }
+
+    public function testUserDataThrowableCaught(): void
+    {
+        // User whose hasRole() throws → caught by \Throwable in testUserData
+        $emptyListResult = (object) ['items' => [], 'total' => 0, 'totalPages' => 0];
+        $taskListResult = (object) ['items' => [], 'total' => 0];
+
+        $queryBus = $this->createStub(QueryBus::class);
+        $queryBus->method('query')->willReturnOnConsecutiveCalls(
+            $emptyListResult, $emptyListResult, $taskListResult,
+        );
+
+        // Mock User: email() returns valid UserEmail, but hasRole() throws
+        $validEmail = new UserEmail('admin@example.com');
+        $userMock = $this->createStub(User::class);
+        $userMock->method('email')->willReturn($validEmail);
+        $userMock->method('hasRole')->willThrowException(new \RuntimeException('Role service error'));
+
+        $userRepository = $this->createStub(UserRepositoryInterface::class);
+        $userRepository->method('findById')->willReturn($userMock);
+
+        $command = new SmokeProdCommand(
+            $queryBus,
+            $userRepository,
+            $this->createStub(LogServiceInterface::class),
+        );
+
+        $tester = new CommandTester($command);
+        $exitCode = $tester->execute([]);
+
+        $this->assertSame(Command::FAILURE, $exitCode);
+    }
 }

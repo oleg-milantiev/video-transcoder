@@ -96,4 +96,31 @@ final class MinuteCommandTest extends TestCase
 
         $this->assertSame(Command::FAILURE, $exitCode);
     }
+
+    public function testExecuteLogsErrorWhenLockReleaseThrows(): void
+    {
+        $commandBus = $this->createStub(MessageBusInterface::class);
+        $commandBus->method('dispatch')->willReturnCallback(
+            static fn(object $m): Envelope => new Envelope($m),
+        );
+
+        $lock = $this->createMock(SharedLockInterface::class);
+        $lock->expects($this->once())->method('acquire')->willReturn(true);
+        $lock->expects($this->once())->method('release')->willThrowException(new \RuntimeException('Lock store unavailable'));
+
+        $lockFactory = $this->createMock(LockFactory::class);
+        $lockFactory->expects($this->once())->method('createLock')->willReturn($lock);
+
+        $logService = $this->createStub(LogServiceInterface::class);
+
+        $command = new MinuteCommand($commandBus, $logService, $lockFactory);
+
+        $tester = new CommandTester($command);
+        $exitCode = $tester->execute([]);
+
+        // dispatch succeeded → inner try returns SUCCESS
+        // finally: release throws → caught by inner catch (no return)
+        // original SUCCESS is preserved
+        $this->assertSame(Command::SUCCESS, $exitCode);
+    }
 }

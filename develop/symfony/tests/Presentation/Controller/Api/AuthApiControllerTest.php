@@ -9,6 +9,9 @@ use App\Domain\Shared\ValueObject\Uuid;
 use App\Infrastructure\Persistence\Doctrine\User\UserEntity;
 use App\Infrastructure\Security\ApiTokenService;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
+use Symfony\Component\Security\Core\Exception\UnsupportedUserException;
+use Symfony\Component\Security\Core\User\UserInterface;
+use Symfony\Component\Security\Core\User\UserProviderInterface;
 use Symfony\Component\Uid\UuidV4 as SymfonyUuid;
 
 final class AuthApiControllerTest extends ApiWebTestCase
@@ -310,6 +313,75 @@ final class AuthApiControllerTest extends ApiWebTestCase
         $tokenService = static::getContainer()->get(ApiTokenService::class);
         $tempId = Uuid::fromString('99999999-9999-4999-8999-999999999999');
         $refreshToken = $tokenService->createRefreshToken($tempId, $user->getUserIdentifier());
+
+        $client->request(
+            'POST',
+            '/api/auth/refresh',
+            server: ['CONTENT_TYPE' => 'application/json'],
+            content: (string) json_encode(['refreshToken' => $refreshToken], JSON_THROW_ON_ERROR)
+        );
+
+        self::assertResponseStatusCodeSame(401);
+        self::assertSame(['error' => 'Invalid credentials.'], $this->decodeJson($client->getResponse()->getContent()));
+    }
+
+    /**
+     * @throws \JsonException
+     */
+    public function testTokenReturnsUnauthorizedWhenUserIsNotUserEntity(): void
+    {
+        $client = static::createClient();
+
+        // UserInterface that is NOT UserEntity / PasswordAuthenticatedUserInterface
+        $nonEntityUser = $this->createStub(UserInterface::class);
+        $nonEntityUser->method('getUserIdentifier')->willReturn('other@example.com');
+        $nonEntityUser->method('getRoles')->willReturn(['ROLE_USER']);
+
+        $provider = new InMemoryTestUserProvider($nonEntityUser);
+        static::getContainer()->set('security.user.provider.concrete.app_user_provider', $provider);
+
+        $client->request(
+            'POST',
+            '/api/auth/token',
+            server: ['CONTENT_TYPE' => 'application/json'],
+            content: (string) json_encode(['email' => 'other@example.com', 'password' => 'any'], JSON_THROW_ON_ERROR)
+        );
+
+        self::assertResponseStatusCodeSame(401);
+        self::assertSame(['error' => 'Invalid credentials.'], $this->decodeJson($client->getResponse()->getContent()));
+    }
+
+    /**
+     * @throws \JsonException
+     */
+    public function testRefreshReturnsUnauthorizedWhenUserLookupThrows(): void
+    {
+        $client = static::createClient();
+
+        /** @var ApiTokenService $tokenService */
+        $tokenService = static::getContainer()->get(ApiTokenService::class);
+        $tempId = Uuid::fromString('88888888-8888-4888-8888-888888888888');
+        $refreshToken = $tokenService->createRefreshToken($tempId, 'gone@example.com');
+
+        // Provider that throws when loadUserByIdentifier is called
+        $throwingProvider = new class implements UserProviderInterface {
+            public function loadUserByIdentifier(string $identifier): UserInterface
+            {
+                throw new \RuntimeException('Database connection lost');
+            }
+
+            public function refreshUser(UserInterface $user): UserInterface
+            {
+                throw new UnsupportedUserException('Unsupported');
+            }
+
+            public function supportsClass(string $class): bool
+            {
+                return false;
+            }
+        };
+
+        static::getContainer()->set('security.user.provider.concrete.app_user_provider', $throwingProvider);
 
         $client->request(
             'POST',

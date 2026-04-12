@@ -516,6 +516,81 @@ final class VideoApiControllerTest extends ApiWebTestCase
         ], $this->decodeJson($client->getResponse()->getContent()));
     }
 
+    // ── /patch additional error branches (InvalidUuid, DomainException) ───────
+
+    public function testPatchReturnsBadRequestForInvalidVideoId(): void
+    {
+        $client = $this->createBearerAuthenticatedClient();
+
+        // Route has no UUID requirement on {id}, so 'not-a-uuid' reaches the controller.
+        // PatchVideoQuery constructor calls Uuid::fromString('not-a-uuid') which throws InvalidUuidException.
+        $client->request('PATCH', '/api/video/not-a-uuid', [], [], ['CONTENT_TYPE' => 'application/json'], json_encode(['title' => 'New']));
+
+        self::assertResponseStatusCodeSame(400);
+        self::assertSame([
+            'error' => ['code' => 'INVALID_VIDEO_ID', 'message' => 'Invalid UUID', 'details' => []],
+        ], $this->decodeJson($client->getResponse()->getContent()));
+    }
+
+    public function testPatchReturnsForbiddenOnDomainException(): void
+    {
+        $client = $this->createBearerAuthenticatedClient();
+        $videoId = Uuid::fromString('11111111-1111-4111-8111-111111111111');
+
+        $queryBus = $this->createMock(QueryBus::class);
+        $queryBus->expects($this->once())
+            ->method('query')
+            ->willThrowException(new \DomainException('Not allowed to patch'));
+        $this->replaceService(QueryBus::class, $queryBus);
+
+        $client->request('PATCH', '/api/video/' . $videoId->toRfc4122(), [], [], ['CONTENT_TYPE' => 'application/json'], json_encode(['title' => 'New']));
+
+        self::assertResponseStatusCodeSame(403);
+        self::assertSame([
+            'error' => ['code' => 'ACCESS_DENIED', 'message' => 'Not allowed to patch', 'details' => []],
+        ], $this->decodeJson($client->getResponse()->getContent()));
+    }
+
+    // ── /delete additional error branches (TranscodeAccessDenied, VideoHasTranscodingTasks) ───
+
+    public function testDeleteReturnsForbiddenOnTranscodeAccessDenied(): void
+    {
+        $client = $this->createBearerAuthenticatedClient();
+        $videoId = Uuid::fromString('11111111-1111-4111-8111-111111111111');
+
+        $queryBus = $this->createMock(QueryBus::class);
+        $queryBus->expects($this->once())
+            ->method('query')
+            ->willThrowException(new TranscodeAccessDeniedException('Transcode access denied'));
+        $this->replaceService(QueryBus::class, $queryBus);
+
+        $client->request('DELETE', '/api/video/' . $videoId->toRfc4122());
+
+        self::assertResponseStatusCodeSame(403);
+        self::assertSame([
+            'error' => ['code' => 'ACCESS_DENIED', 'message' => 'Transcode access denied', 'details' => []],
+        ], $this->decodeJson($client->getResponse()->getContent()));
+    }
+
+    public function testDeleteReturnsConflictOnVideoHasTranscodingTasks(): void
+    {
+        $client = $this->createBearerAuthenticatedClient();
+        $videoId = Uuid::fromString('11111111-1111-4111-8111-111111111111');
+
+        $queryBus = $this->createMock(QueryBus::class);
+        $queryBus->expects($this->once())
+            ->method('query')
+            ->willThrowException(VideoHasTranscodingTasks::forVideo());
+        $this->replaceService(QueryBus::class, $queryBus);
+
+        $client->request('DELETE', '/api/video/' . $videoId->toRfc4122());
+
+        self::assertResponseStatusCodeSame(409);
+        self::assertSame([
+            'error' => ['code' => 'VIDEO_HAS_TRANSCODING_TASKS', 'message' => 'Video has active transcoding tasks and cannot be deleted.', 'details' => []],
+        ], $this->decodeJson($client->getResponse()->getContent()));
+    }
+
     /**
      * @return array<mixed>
      * @throws \JsonException
