@@ -7,8 +7,7 @@ use Doctrine\ORM\Mapping as ORM;
 use Psr\Log\LogLevel;
 use Symfony\Component\Uid\UuidV4 as SymfonyUuid;
 
-// todo move to enums
-// todo optimize indexes by grafana queries
+// temporary develop table. Will be removed soon
 #[ORM\Entity]
 #[ORM\Table(name: 'log')]
 #[ORM\Index(name: 'idx_log_name', columns: ['name'])]
