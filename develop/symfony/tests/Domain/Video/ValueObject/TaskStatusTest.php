@@ -101,5 +101,19 @@ class TaskStatusTest extends TestCase
         $this->assertFalse(TaskStatus::STARTING->isFinished());
         $this->assertFalse(TaskStatus::PROCESSING->isFinished());
     }
+
+    public function testNamesConstantContainsAllCasesWithCorrectValues(): void
+    {
+        $names = TaskStatus::NAMES;
+
+        $this->assertCount(7, $names);
+        $this->assertSame('PENDING', $names[TaskStatus::PENDING->value]);
+        $this->assertSame('STARTING', $names[TaskStatus::STARTING->value]);
+        $this->assertSame('PROCESSING', $names[TaskStatus::PROCESSING->value]);
+        $this->assertSame('COMPLETED', $names[TaskStatus::COMPLETED->value]);
+        $this->assertSame('FAILED', $names[TaskStatus::FAILED->value]);
+        $this->assertSame('CANCELLED', $names[TaskStatus::CANCELLED->value]);
+        $this->assertSame('DELETED', $names[TaskStatus::DELETED->value]);
+    }
 }
 

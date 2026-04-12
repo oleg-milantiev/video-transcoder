@@ -37,4 +37,22 @@ class BitrateTest extends TestCase
         $this->assertTrue($a->equals($b));
         $this->assertFalse($a->equals($c));
     }
+
+    public function testZeroBitrateIsValid(): void
+    {
+        $bitrate = new Bitrate(0.0);
+        $this->assertSame(0.0, $bitrate->value());
+    }
+
+    public function testExactMaximumBitrateIsValid(): void
+    {
+        $bitrate = new Bitrate(200.0);
+        $this->assertSame(200.0, $bitrate->value());
+    }
+
+    public function testJustAboveMaximumThrows(): void
+    {
+        $this->expectException(IncompatibleVideoFormat::class);
+        new Bitrate(200.001);
+    }
 }

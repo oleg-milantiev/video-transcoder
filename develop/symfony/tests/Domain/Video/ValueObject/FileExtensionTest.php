@@ -28,5 +28,18 @@ class FileExtensionTest extends TestCase
         $this->expectException(IncompatibleVideoFormat::class);
         new FileExtension('exe');
     }
+
+    public function testAllAllowedExtensionsAreAccepted(): void
+    {
+        foreach (['mp4', 'mkv', 'avi', 'mov'] as $ext) {
+            $this->assertSame($ext, new FileExtension($ext)->value());
+        }
+    }
+
+    public function testEmptyStringThrows(): void
+    {
+        $this->expectException(IncompatibleVideoFormat::class);
+        new FileExtension('');
+    }
 }
 

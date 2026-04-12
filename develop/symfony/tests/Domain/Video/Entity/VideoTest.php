@@ -217,5 +217,48 @@ final class VideoTest extends TestCase
 
         $this->assertNull($video->duration());
     }
+
+    public function testSizeReturnsValueFromMeta(): void
+    {
+        $video = Video::reconstitute(
+            new VideoTitle('Sized video'),
+            new FileExtension('mp4'),
+            Uuid::fromString('22222222-2222-4222-8222-222222222226'),
+            ['size' => 104857600],
+            VideoDates::create(),
+            Uuid::fromString('22222222-2222-4222-8222-222222222227'),
+        );
+
+        $this->assertSame(104857600, $video->size());
+    }
+
+    public function testSizeReturnsNullWhenNotInMeta(): void
+    {
+        $video = Video::create(
+            new VideoTitle('No size'),
+            new FileExtension('mp4'),
+            Uuid::fromString('22222222-2222-4222-8222-222222222228'),
+        );
+
+        $this->assertNull($video->size());
+    }
+
+    public function testClearSourceKeyOnDeletedVideoDoesNotThrow(): void
+    {
+        // clearSourceKey has no assertNotDeleted guard — should succeed even on deleted video
+        $video = Video::reconstitute(
+            new VideoTitle('Deleted source video'),
+            new FileExtension('mp4'),
+            Uuid::fromString('22222222-2222-4222-8222-222222222229'),
+            ['sourceKey' => 'videos/original.mp4'],
+            VideoDates::create(),
+            Uuid::fromString('33333333-3333-4333-8333-333333333339'),
+            true,
+        );
+
+        $video->clearSourceKey();
+
+        $this->assertNull($video->meta()['sourceKey']);
+    }
 }
 

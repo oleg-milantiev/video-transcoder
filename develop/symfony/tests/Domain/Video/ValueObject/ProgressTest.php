@@ -34,5 +34,19 @@ class ProgressTest extends TestCase
         $this->expectException(InvalidProgress::class);
         new Progress(101);
     }
+
+    public function testZeroIsValidAndNotComplete(): void
+    {
+        $progress = new Progress(0);
+        $this->assertSame(0, $progress->value());
+        $this->assertFalse($progress->isComplete());
+    }
+
+    public function testBoundaryValues(): void
+    {
+        // 0 and 100 are both valid
+        $this->assertSame(0, (new Progress(0))->value());
+        $this->assertSame(100, (new Progress(100))->value());
+    }
 }
 

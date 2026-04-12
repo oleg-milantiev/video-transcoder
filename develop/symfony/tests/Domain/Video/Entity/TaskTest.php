@@ -388,6 +388,34 @@ final class TaskTest extends TestCase
         $this->assertNull($task->meta()['output']);
     }
 
+    public function testClearSizeExpectedRemovesKey(): void
+    {
+        $task = Task::create($this->videoId(), $this->presetId(), $this->userId());
+        $task->updateMeta(['sizeExpected' => 1024000, 'output' => 'file.mp4']);
+
+        $task->clearSizeExpected();
+
+        $this->assertArrayNotHasKey('sizeExpected', $task->meta());
+        $this->assertSame('file.mp4', $task->meta()['output']);
+        $this->assertNotNull($task->updatedAt());
+    }
+
+    public function testCanBeCancelledReturnsTrueForStartingStatus(): void
+    {
+        $task = $this->startingTask(); // status = STARTING
+
+        $this->assertTrue($task->canBeCancelled());
+    }
+
+    public function testCancelStartingTaskSucceeds(): void
+    {
+        $task = $this->startingTask();
+
+        $task->cancel();
+
+        $this->assertSame(TaskStatus::CANCELLED, $task->status());
+    }
+
     private function startingTask(): Task
     {
         return Task::reconstitute(

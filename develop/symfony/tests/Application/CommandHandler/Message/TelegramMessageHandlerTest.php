@@ -196,4 +196,33 @@ final class TelegramMessageHandlerTest extends TestCase
 
         ($this->handler)($command);
     }
+
+    public function testFloodTriggeredWhenDeferredCountAtLimit(): void
+    {
+        $chatId = TelegramMessageHandler::TEST_CHAT_IDS[0];
+        $command = new TelegramMessage($chatId, 'Flood message', false);
+
+        // Set recent last time to force deferral branch
+        $lastTimeKey = "telegram_last_time_" . $chatId;
+        $lastTimeItem = $this->cache->getItem($lastTimeKey);
+        $lastTimeItem->set(microtime(true) - 0.1);
+        $this->cache->save($lastTimeItem);
+
+        // Set deferred count to the rate limit max to trigger flood path
+        $deferredKey = "telegram_deferred_count_" . $chatId;
+        $deferredItem = $this->cache->getItem($deferredKey);
+        $deferredItem->set(10);
+        $this->cache->save($deferredItem);
+
+        // Expect a single warning log about flooding
+        $this->logService->expects($this->once())
+            ->method('log')
+            ->with('telegram', 'message', null, LogLevel::WARNING, "Channel " . $chatId . " flooded after 10 deferred messages");
+
+        ($this->handler)($command);
+
+        $this->assertTrue($this->cache->hasItem("telegram_flooded_" . $chatId));
+        $flooded = $this->cache->getItem("telegram_flooded_" . $chatId)->get();
+        $this->assertTrue((bool) $flooded);
+    }
 }
