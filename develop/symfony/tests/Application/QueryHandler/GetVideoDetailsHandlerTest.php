@@ -6,6 +6,7 @@ use App\Application\Exception\QueryException;
 use App\Application\Query\GetVideoDetailsQuery;
 use App\Application\QueryHandler\GetVideoDetailsHandler;
 use App\Application\Query\Repository\VideoDetailsReadRepositoryInterface;
+use App\Domain\User\Exception\TariffNotFound;
 use App\Domain\Video\Repository\VideoRepositoryInterface;
 use App\Domain\Video\Service\Storage\StorageInterface;
 use App\Infrastructure\Persistence\Doctrine\User\UserEntity;
@@ -160,6 +161,29 @@ class GetVideoDetailsHandlerTest extends TestCase
         $handler = new GetVideoDetailsHandler($repository, $videoDetailsRepository, $this->createStub(StorageInterface::class), $security);
 
         $this->expectException(QueryException::class);
+        $handler(new GetVideoDetailsQuery($video->id()->toRfc4122()));
+    }
+
+    public function testThrowsWhenUserHasNoTariff(): void
+    {
+        $video = VideoFake::create();
+
+        $repository = $this->createStub(VideoRepositoryInterface::class);
+        $repository->method('findById')->willReturn($video);
+
+        $videoDetailsRepository = $this->createStub(VideoDetailsReadRepositoryInterface::class);
+        $videoDetailsRepository->method('getDetailsByVideoId')->willReturn([]);
+
+        $user = new UserEntity();
+        $user->tariff = null;
+
+        $security = $this->createMock(Security::class);
+        $security->expects($this->once())->method('isGranted')->willReturn(true);
+        $security->expects($this->once())->method('getUser')->willReturn($user);
+
+        $handler = new GetVideoDetailsHandler($repository, $videoDetailsRepository, $this->createStub(StorageInterface::class), $security);
+
+        $this->expectException(TariffNotFound::class);
         $handler(new GetVideoDetailsQuery($video->id()->toRfc4122()));
     }
 }

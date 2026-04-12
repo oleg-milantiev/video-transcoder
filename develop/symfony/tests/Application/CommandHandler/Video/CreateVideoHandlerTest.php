@@ -529,4 +529,86 @@ class CreateVideoHandlerTest extends TestCase
 
         unlink($tempFile);
     }
+
+    public function testStorageQuotaExceededDispatchesCreateVideoFail(): void
+    {
+        $userId = Uuid::generate();
+
+        // Create a real temp file (~5 MB)
+        $tempFile = tempnam(sys_get_temp_dir(), 'test_');
+        $handle = fopen($tempFile, 'cb');
+        self::assertIsResource($handle);
+        ftruncate($handle, 5 * 1024 * 1024);
+        fclose($handle);
+
+        $file = $this->createStub(TusFile::class);
+        $file->method('getName')->willReturn('video.mp4');
+        $file->method('getFilePath')->willReturn($tempFile);
+        $file->method('details')->willReturn(['metadata' => ['originalName' => 'video.mp4']]);
+
+        $command = new CreateVideo($file, $userId);
+
+        $commandBus = $this->createStub(MessageBusInterface::class);
+        $commandBus->method('dispatch')->willReturnCallback(static fn (object $msg) => new Envelope($msg));
+
+        $eventBus = new class implements MessageBusInterface {
+            public array $dispatched = [];
+            public function dispatch($message, array $stamps = []): Envelope
+            {
+                $this->dispatched[] = $message;
+                return new Envelope($message);
+            }
+        };
+
+        // Tariff allows up to 1000 MB per file, but only 1 GB storage total
+        $userWithTariff = $this->createStub(User::class);
+        $tariff = $this->createStub(Tariff::class);
+        $tariff->method('videoSize')->willReturn(new TariffVideoSize(1000.0)); // file size OK
+        $tariff->method('storageGb')->willReturn(new TariffStorageGb(1)); // 1 GB = 1024 MB total
+        $userWithTariff->method('id')->willReturn($userId);
+        $userWithTariff->method('tariff')->willReturn($tariff);
+
+        $userRepository = $this->createStub(UserRepositoryInterface::class);
+        $userRepository->method('findById')->willReturn($userWithTariff);
+
+        // Storage already has 1020 MB used (exceeds quota when adding 5 MB)
+        $videoRepository = $this->createStub(VideoRepositoryInterface::class);
+        $videoRepository->method('getStorageSize')->willReturn(1020 * 1024 * 1024);
+
+        $taskRepository = $this->createStub(TaskRepositoryInterface::class);
+        $taskRepository->method('getStorageSize')->willReturn(0);
+
+        $storage = $this->createStub(StorageInterface::class);
+        $notifier = new VideoRealtimeNotifier($commandBus, $storage, $taskRepository);
+        $flashRealtimeNotifier = new FlashRealtimeNotifier($commandBus);
+        $logService = $this->createStub(LogServiceInterface::class);
+
+        $handler = new CreateVideoHandler(
+            $commandBus,
+            $eventBus,
+            $videoRepository,
+            $userRepository,
+            $notifier,
+            $flashRealtimeNotifier,
+            $logService,
+            $storage,
+            new VideoFactory(),
+            new FlashNotificationFactory(),
+            $taskRepository,
+        );
+
+        $handler->__invoke($command);
+
+        $found = false;
+        foreach ($eventBus->dispatched as $evt) {
+            if ($evt instanceof CreateVideoFail && str_contains($evt->error, 'exceeds your tariff limit')) {
+                $found = true;
+            }
+        }
+
+        $this->assertTrue($found, 'CreateVideoFail event with storage quota error was not dispatched');
+
+        // File should be deleted (quota exceeded)
+        $this->assertFileDoesNotExist($tempFile);
+    }
 }

@@ -129,6 +129,7 @@ final readonly class TelegramMessageHandler
             $this->logService->log('telegram', 'message', null, LogLevel::ERROR, $error);
         }
 
-        $this->logService->log('telegram', 'message', null, LogLevel::DEBUG, 'Response', json_decode($response, true));
+        $this->logService->log('telegram', 'message', null, LogLevel::DEBUG, 'Response',
+            is_string($response) ? (json_decode($response, true) ?? []) : []);
     }
 }

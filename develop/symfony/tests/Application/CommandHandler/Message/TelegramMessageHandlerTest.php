@@ -225,4 +225,26 @@ final class TelegramMessageHandlerTest extends TestCase
         $flooded = $this->cache->getItem("telegram_flooded_" . $chatId)->get();
         $this->assertTrue((bool) $flooded);
     }
+
+    public function testSendTelegramMessageWithProxyEnvVar(): void
+    {
+        // Use a non-test chatId to enter the real sendTelegramMessage body (proxy branch)
+        $chatId = 999999999;
+        $command = new TelegramMessage($chatId, 'Test proxy message', false);
+
+        // Set past time so message is sent immediately (no deferral)
+        $lastTimeItem = $this->cache->getItem("telegram_last_time_" . $chatId);
+        $lastTimeItem->set(microtime(true) - 2.0);
+        $this->cache->save($lastTimeItem);
+
+        // Set http_proxy env var to trigger proxy branch in sendTelegramMessage
+        putenv('http_proxy=http://127.0.0.1:9999');
+
+        try {
+            $this->logService->expects($this->atLeastOnce())->method('log');
+            ($this->handler)($command);
+        } finally {
+            putenv('http_proxy');
+        }
+    }
 }

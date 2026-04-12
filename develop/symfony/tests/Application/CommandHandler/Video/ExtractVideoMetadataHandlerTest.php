@@ -601,4 +601,65 @@ class ExtractVideoMetadataHandlerTest extends TestCase
             $this->assertContains(ExtractVideoMetadataFail::class, $events);
         }
     }
+
+    public function testHandleMetadataErrorLogsWhenCleanupFails(): void
+    {
+        $video = $this->createVideoStub();
+        $user = $this->createUserWithTariff();
+
+        $userRepository = $this->createStub(UserRepositoryInterface::class);
+        $userRepository->method('findById')->willReturn($user);
+
+        $videoRepository = $this->createStub(VideoRepositoryInterface::class);
+        $videoRepository->method('save')->willReturnCallback(static fn (Video $v) => $v);
+
+        // Trigger inner catch: taskRepository throws when findByVideoId is called in handleMetadataExtractionError
+        $taskRepository = $this->createStub(TaskRepositoryInterface::class);
+        $taskRepository->method('getStorageSize')->willReturn(0);
+        $taskRepository->method('findByVideoId')->willThrowException(new \RuntimeException('DB connection lost'));
+
+        $logService = $this->createMock(LogServiceInterface::class);
+        // Inner catch logs 'Failed to mark video for deletion', plus outer log for metadata validation fail
+        $logService->expects($this->atLeastOnce())->method('log');
+
+        $eventBus = $this->createStub(MessageBusInterface::class);
+        $events = [];
+        $eventBus->method('dispatch')
+            ->willReturnCallback(static function (object $msg) use (&$events): Envelope {
+                $events[] = $msg::class;
+                return new Envelope($msg);
+            });
+
+        // Extractor throws to trigger error path
+        $extractor = $this->createMetadataExtractorWithError(new \RuntimeException('ffprobe failed'));
+
+        $storage = $this->createStub(StorageInterface::class);
+        $storage->method('sourceKey')->willReturn('source.mp4');
+        $storage->method('localPathForRead')->willReturn('/tmp/source.mp4');
+
+        $commandBus = $this->createStub(MessageBusInterface::class);
+        $commandBus->method('dispatch')->willReturnCallback(static fn (object $msg) => new Envelope($msg));
+
+        $notifierBus = $this->createStub(MessageBusInterface::class);
+        $notifierBus->method('dispatch')->willReturnCallback(static fn (object $msg) => new Envelope($msg));
+
+        $handler = new ExtractVideoMetadataHandler(
+            $videoRepository,
+            $userRepository,
+            $taskRepository,
+            $storage,
+            $commandBus,
+            $eventBus,
+            $extractor,
+            new VideoRealtimeNotifier($notifierBus, $storage, $this->createStub(TaskRepositoryInterface::class)),
+            $logService,
+            new FlashNotificationFactory(),
+            new VideoRealtimeNotifier($notifierBus, $storage, $this->createStub(TaskRepositoryInterface::class)),
+            $this->createStub(StorageRealtimeNotifier::class),
+        );
+
+        $handler(new ExtractVideoMetadata($video));
+
+        $this->assertContains(ExtractVideoMetadataFail::class, $events);
+    }
 }

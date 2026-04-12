@@ -501,6 +501,104 @@ final class DeleteVideoHandlerTest extends TestCase
         $this->assertContains(DeleteVideoSuccess::class, $events);
     }
 
+    public function testThrowsWhenVideoIdIsNull(): void
+    {
+        $videoId = Uuid::fromString('11111111-1111-4111-8111-111111111111');
+        $userId = Uuid::fromString('22222222-2222-4222-8222-222222222222');
+
+        // Mock a Video whose id() returns null — triggers the null-id guard
+        $video = $this->createStub(Video::class);
+        $video->method('id')->willReturn(null);
+
+        $events = [];
+        $eventBus = new class ($events) implements MessageBusInterface {
+            public function __construct(private array &$events) {}
+            public function dispatch($message, array $stamps = []): Envelope
+            {
+                $this->events[] = $message::class;
+                return new Envelope($message);
+            }
+        };
+
+        $videoRepository = $this->createStub(VideoRepositoryInterface::class);
+        $videoRepository->method('findById')->willReturn($video);
+
+        $security = $this->createMock(Security::class);
+        $security->expects($this->once())->method('isGranted')->willReturn(true);
+
+        $handler = new DeleteVideoHandler(
+            $this->createStub(MessageBusInterface::class),
+            $eventBus,
+            $videoRepository,
+            $this->createStub(TaskRepositoryInterface::class),
+            $this->createStub(LogServiceInterface::class),
+            new VideoRealtimeNotifier($this->createStub(MessageBusInterface::class), $this->createStub(StorageInterface::class), $this->createStub(TaskRepositoryInterface::class)),
+            $security,
+            $this->createStub(QueryBus::class),
+            $this->createStub(StorageRealtimeNotifier::class),
+        );
+
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('Video id is required for deletion.');
+        try {
+            $handler(new DeleteVideoQuery($videoId->toRfc4122(), $userId->toRfc4122()));
+        } finally {
+            $this->assertContains(DeleteVideoFail::class, $events);
+        }
+    }
+
+    public function testThrowsWhenTaskHasNullId(): void
+    {
+        $videoId = Uuid::fromString('11111111-1111-4111-8111-111111111111');
+        $userId = Uuid::fromString('22222222-2222-4222-8222-222222222222');
+        $video = $this->createVideo($videoId, $userId);
+
+        // Create a Task stub with null id, not deleted, and COMPLETED (non-transcoding) status
+        $taskWithNullId = $this->createStub(Task::class);
+        $taskWithNullId->method('id')->willReturn(null);
+        $taskWithNullId->method('isDeleted')->willReturn(false);
+        $taskWithNullId->method('status')->willReturn(TaskStatus::COMPLETED);
+
+        $events = [];
+        $eventBus = new class ($events) implements MessageBusInterface {
+            public function __construct(private array &$events) {}
+            public function dispatch($message, array $stamps = []): Envelope
+            {
+                $this->events[] = $message::class;
+                return new Envelope($message);
+            }
+        };
+
+        $videoRepository = $this->createStub(VideoRepositoryInterface::class);
+        $videoRepository->method('findById')->willReturn($video);
+
+        $taskRepository = $this->createStub(TaskRepositoryInterface::class);
+        $taskRepository->method('findByVideoId')->willReturn([$taskWithNullId]);
+
+        $security = $this->createMock(Security::class);
+        $security->expects($this->once())->method('isGranted')->willReturn(true);
+
+        $handler = new DeleteVideoHandler(
+            $this->createStub(MessageBusInterface::class),
+            $eventBus,
+            $videoRepository,
+            $taskRepository,
+            $this->createStub(LogServiceInterface::class),
+            new VideoRealtimeNotifier($this->createStub(MessageBusInterface::class), $this->createStub(StorageInterface::class), $this->createStub(TaskRepositoryInterface::class)),
+            $security,
+            $this->createStub(QueryBus::class),
+            $this->createStub(StorageRealtimeNotifier::class),
+        );
+
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('Task id is required for deletion.');
+        try {
+            $handler(new DeleteVideoQuery($videoId->toRfc4122(), $userId->toRfc4122()));
+        } finally {
+            $this->assertContains(DeleteVideoFail::class, $events);
+        }
+    }
+
     private function createVideo(Uuid $videoId, Uuid $userId): Video
     {
         return Video::reconstitute(

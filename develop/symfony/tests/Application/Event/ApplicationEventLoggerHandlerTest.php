@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\Application\Event;
 
+use App\Application\Event\ApplicationEvent;
 use App\Application\Event\ApplicationEventLoggerHandler;
 use App\Application\Event\CreateVideoFail;
 use App\Application\Event\CreateVideoStart;
@@ -78,5 +79,17 @@ final class ApplicationEventLoggerHandlerTest extends TestCase
 
         $handler = new ApplicationEventLoggerHandler($logger);
         $handler(new PatchVideoFail('title invalid', 'vid-1'));
+    }
+
+    public function testLogsInfoForUnknownEventType(): void
+    {
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger->expects($this->once())->method('info')->with('Application event dispatched', $this->isArray());
+
+        // Create an anonymous event class whose short name does NOT end with Fail, Start, or Success
+        $event = new readonly class extends ApplicationEvent {};
+
+        $handler = new ApplicationEventLoggerHandler($logger);
+        $handler($event);
     }
 }
