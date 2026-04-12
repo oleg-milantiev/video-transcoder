@@ -4,8 +4,8 @@ declare(strict_types=1);
 namespace App\Presentation\Console;
 
 use App\Application\Logging\LogServiceInterface;
-use App\Application\Service\Maintenance\TusCleanupService;
 use App\Domain\Video\Repository\VideoRepositoryInterface;
+use App\Infrastructure\Upload\Maintenance\TusCleanupService;
 use Psr\Log\LogLevel;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;

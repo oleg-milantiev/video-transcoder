@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace App\Tests\Presentation\Console;
 
 use App\Application\Logging\LogServiceInterface;
-use App\Application\Service\Maintenance\TusCleanupService;
 use App\Domain\Video\Repository\VideoRepositoryInterface;
+use App\Infrastructure\Upload\Maintenance\TusCleanupService;
 use App\Presentation\Console\HourCommand;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Console\Command\Command;

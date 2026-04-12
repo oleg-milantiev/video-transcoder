@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\Application\Service\Maintenance;
 
 use App\Application\Logging\LogServiceInterface;
-use App\Application\Service\Maintenance\TusCleanupService;
+use App\Infrastructure\Upload\Maintenance\TusCleanupService;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LogLevel;
 use TusPhp\Tus\Server as TusServer;

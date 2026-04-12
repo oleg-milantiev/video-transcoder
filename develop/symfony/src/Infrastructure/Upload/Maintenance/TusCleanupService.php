@@ -1,8 +1,7 @@
 <?php
 declare(strict_types=1);
 
-// TODO кажется, место ему в инфраструктуре / Tus
-namespace App\Application\Service\Maintenance;
+namespace App\Infrastructure\Upload\Maintenance;
 
 use App\Application\Logging\LogServiceInterface;
 use Psr\Log\LogLevel;

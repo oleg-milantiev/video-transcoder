@@ -100,7 +100,6 @@ final readonly class CreateVideoHandler
                     $command->userId(),
                     $this->flashNotificationFactory->uploadFailed(null, 'File size exceeds '. $maxSizeMb.' MB')
                 );
-                // todo use app exception
                 throw VideoSizeExceedsQuota::fromSize($fileSizeMb, $maxSizeMb);
             }
 
