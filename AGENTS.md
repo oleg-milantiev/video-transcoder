@@ -9,6 +9,12 @@ Run phpunit and composer stan after every backend change.
 - Check and improve code coverage by running phpunit with --coverage-text
 - **stan** - docker exec -i develop-php-1 composer stan
 
+## Coverage:
+
+Check Presentation coverage with:
+docker exec -i -e XDEBUG_MODE=coverage develop-php-1 vendor/bin/phpunit tests/ --coverage-text 2>&1 | grep -E "App\\\\Presentation" -A2
+
+
 ## Architecture Overview
 - **Domain-Driven Design (DDD)**: The backend (Symfony) is organized by domain boundaries: `Domain`, `Application`, `Infrastructure`, `Presentation`.
 - **Core Components**:

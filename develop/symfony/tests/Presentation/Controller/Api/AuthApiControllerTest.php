@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\Presentation\Controller\Api;
 
 use App\Application\Logging\LogServiceInterface;
+use App\Domain\Shared\ValueObject\Uuid;
 use App\Infrastructure\Persistence\Doctrine\User\UserEntity;
 use App\Infrastructure\Security\ApiTokenService;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
@@ -231,7 +232,7 @@ final class AuthApiControllerTest extends ApiWebTestCase
         /** @var ApiTokenService $tokenService */
         $tokenService = static::getContainer()->get(ApiTokenService::class);
 
-        $userId = \App\Domain\Shared\ValueObject\Uuid::fromString($user->id->toRfc4122());
+        $userId = Uuid::fromString($user->id->toRfc4122());
         $refreshToken = $tokenService->createRefreshToken($userId, $user->getUserIdentifier());
 
         $client->request(
@@ -256,6 +257,69 @@ final class AuthApiControllerTest extends ApiWebTestCase
         $refreshClaims = $tokenService->parseRefreshToken($payload['refreshToken']);
         self::assertSame('00000000-0000-4000-8000-000000000010', $refreshClaims['sub']);
         self::assertSame('refresh@example.com', $refreshClaims['identifier']);
+    }
+
+    /**
+     * @throws \JsonException
+     */
+    public function testTokenReturnsUnauthorizedWhenUserHasNullId(): void
+    {
+        $client = static::createClient();
+
+        // UserEntity with id = null – password check passes but id guard fires
+        $user = new UserEntity();
+        $user->id = null;
+        $user->email = 'nullid@example.com';
+        $user->password = 'hash';
+        $user->roles = ['ROLE_USER'];
+
+        $provider = new InMemoryTestUserProvider($user);
+        static::getContainer()->set('security.user.provider.concrete.app_user_provider', $provider);
+
+        $hasher = $this->createMock(UserPasswordHasherInterface::class);
+        $hasher->expects($this->once())->method('isPasswordValid')->willReturn(true);
+        static::getContainer()->set(UserPasswordHasherInterface::class, $hasher);
+
+        $client->request(
+            'POST',
+            '/api/auth/token',
+            server: ['CONTENT_TYPE' => 'application/json'],
+            content: (string) json_encode(['email' => 'nullid@example.com', 'password' => 'any'], JSON_THROW_ON_ERROR)
+        );
+
+        self::assertResponseStatusCodeSame(401);
+        self::assertSame(['error' => 'Invalid credentials.'], $this->decodeJson($client->getResponse()->getContent()));
+    }
+
+    /**
+     * @throws \JsonException
+     */
+    public function testRefreshReturnsUnauthorizedWhenUserHasNullId(): void
+    {
+        $client = static::createClient();
+
+        $user = new UserEntity();
+        $user->id = null;
+        $user->email = 'nullid-refresh@example.com';
+        $user->roles = ['ROLE_USER'];
+
+        $provider = new InMemoryTestUserProvider($user);
+        static::getContainer()->set('security.user.provider.concrete.app_user_provider', $provider);
+
+        /** @var ApiTokenService $tokenService */
+        $tokenService = static::getContainer()->get(ApiTokenService::class);
+        $tempId = Uuid::fromString('99999999-9999-4999-8999-999999999999');
+        $refreshToken = $tokenService->createRefreshToken($tempId, $user->getUserIdentifier());
+
+        $client->request(
+            'POST',
+            '/api/auth/refresh',
+            server: ['CONTENT_TYPE' => 'application/json'],
+            content: (string) json_encode(['refreshToken' => $refreshToken], JSON_THROW_ON_ERROR)
+        );
+
+        self::assertResponseStatusCodeSame(401);
+        self::assertSame(['error' => 'Invalid credentials.'], $this->decodeJson($client->getResponse()->getContent()));
     }
 
     /**

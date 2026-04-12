@@ -240,6 +240,32 @@ final class TaskApiControllerTest extends ApiWebTestCase
         self::assertSame('', $client->getResponse()->getContent());
     }
 
+    public function testCancelReturnsServerErrorOnUnexpectedException(): void
+    {
+        $client = $this->createBearerAuthenticatedClient(userId: SymfonyUuid::fromString('00000000-0000-4000-8000-000000000042'));
+
+        $taskId = Uuid::fromString('50505050-5050-4505-8505-505050505050');
+
+        $taskRepository = $this->createMock(TaskRepositoryInterface::class);
+        $taskRepository->expects($this->once())->method('findById')->with($taskId)->willThrowException(new \RuntimeException('DB boom'));
+        $this->replaceService(TaskRepositoryInterface::class, $taskRepository);
+
+        $logService = $this->createMock(LogServiceInterface::class);
+        $logService->expects($this->once())->method('log');
+        $this->replaceService(LogServiceInterface::class, $logService);
+
+        $client->request('POST', '/api/task/' . $taskId->toRfc4122() . '/cancel');
+
+        self::assertResponseStatusCodeSame(500);
+        self::assertSame([
+            'error' => [
+                'code' => 'INTERNAL_ERROR',
+                'message' => 'Failed to cancel task',
+                'details' => [],
+            ],
+        ], $this->decodeJson($client->getResponse()->getContent()));
+    }
+
     private function createProcessingTask(): Task
     {
         $task = Task::reconstitute(
@@ -263,6 +289,4 @@ final class TaskApiControllerTest extends ApiWebTestCase
         return json_decode($content, true, 512, JSON_THROW_ON_ERROR);
     }
 }
-
-
 

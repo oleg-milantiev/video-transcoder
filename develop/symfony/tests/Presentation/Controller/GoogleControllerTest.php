@@ -67,4 +67,35 @@ final class GoogleControllerTest extends WebTestCase
 
         self::assertResponseRedirects('/');
     }
+
+    public function testConnectRedirectsToLoginWhenGoogleAuthFails(): void
+    {
+        $client = static::createClient();
+
+        $mockAuth = $this->createMock(\App\Infrastructure\Google\GoogleAuthenticator::class);
+        $mockAuth->expects($this->once())->method('getAuthorizationUrl')->willThrowException(new \RuntimeException('Google error'));
+        static::getContainer()->set(\App\Infrastructure\Google\GoogleAuthenticator::class, $mockAuth);
+
+        $client->request('GET', '/connect/google');
+
+        self::assertResponseRedirects('/login');
+
+        $client->followRedirect();
+        self::assertResponseIsSuccessful();
+        self::assertSelectorTextContains('.alert.alert-danger', 'Google connect error');
+    }
+
+    public function testConnectWithTargetPathSavesItInSession(): void
+    {
+        $client = static::createClient();
+
+        $mockAuth = $this->createMock(\App\Infrastructure\Google\GoogleAuthenticator::class);
+        $mockAuth->expects($this->once())->method('getAuthorizationUrl')->willThrowException(new \RuntimeException('Google error'));
+        static::getContainer()->set(\App\Infrastructure\Google\GoogleAuthenticator::class, $mockAuth);
+
+        $client->request('GET', '/connect/google?_target_path=%2Fvideos');
+
+        // Symfony generates the redirect with the path unencoded in the query string
+        self::assertResponseRedirects('/login?_target_path=/videos');
+    }
 }

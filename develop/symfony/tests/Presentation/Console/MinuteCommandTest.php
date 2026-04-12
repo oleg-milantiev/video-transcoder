@@ -48,4 +48,52 @@ final class MinuteCommandTest extends TestCase
         // TODO заблокировано StorageInterface
 //        $this->assertStringContainsString('Cleanup done: video candidates=0, task candidates=0, video files deleted=0, task files deleted=0.', $tester->getDisplay());
     }
+
+    public function testExecuteReturnsSuccessWhenLockNotAcquired(): void
+    {
+        $lock = $this->createMock(SharedLockInterface::class);
+        $lock->expects($this->once())->method('acquire')->willReturn(false);
+        $lock->expects($this->never())->method('release');
+
+        $lockFactory = $this->createMock(LockFactory::class);
+        $lockFactory->expects($this->once())->method('createLock')->willReturn($lock);
+
+        $command = new MinuteCommand(
+            $this->createStub(MessageBusInterface::class),
+            $this->createStub(LogServiceInterface::class),
+            $lockFactory,
+        );
+
+        $tester = new CommandTester($command);
+        $exitCode = $tester->execute([]);
+
+        $this->assertSame(Command::SUCCESS, $exitCode);
+    }
+
+    public function testExecuteReturnsFailureWhenDispatchThrows(): void
+    {
+        $commandBus = $this->createStub(MessageBusInterface::class);
+        $commandBus->method('dispatch')->willThrowException(new \RuntimeException('Bus unavailable'));
+
+        $lock = $this->createMock(SharedLockInterface::class);
+        $lock->expects($this->once())->method('acquire')->willReturn(true);
+        $lock->expects($this->once())->method('release');
+
+        $lockFactory = $this->createMock(LockFactory::class);
+        $lockFactory->expects($this->once())->method('createLock')->willReturn($lock);
+
+        $logService = $this->createMock(LogServiceInterface::class);
+        $logService->expects($this->atLeast(1))->method('log');
+
+        $command = new MinuteCommand(
+            $commandBus,
+            $logService,
+            $lockFactory,
+        );
+
+        $tester = new CommandTester($command);
+        $exitCode = $tester->execute([]);
+
+        $this->assertSame(Command::FAILURE, $exitCode);
+    }
 }
