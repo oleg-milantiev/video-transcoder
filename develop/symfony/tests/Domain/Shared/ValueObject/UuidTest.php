@@ -77,6 +77,58 @@ class UuidTest extends TestCase
         $this->assertEquals($uuidString, $uuid->toString());
     }
 
+    public function testFromStringNullableReturnsInstanceForValidUuid(): void
+    {
+        $uuidString = Uuid::generate()->toString();
+
+        $this->assertInstanceOf(Uuid::class, Uuid::fromStringNullable($uuidString));
+    }
+
+    public function testFromStringNullableReturnsNullForInvalidUuid(): void
+    {
+        $this->assertNull(Uuid::fromStringNullable('not-a-uuid'));
+    }
+
+    public function testEqualsAcceptsStringAndStringable(): void
+    {
+        $uuid = Uuid::generate();
+        $uuidString = $uuid->toString();
+
+        // equals with string
+        $this->assertTrue($uuid->equals($uuidString));
+
+        // equals with Stringable
+        $stringable = new class($uuidString) implements \Stringable {
+            private string $s;
+            public function __construct(string $s)
+            {
+                $this->s = $s;
+            }
+            public function __toString(): string
+            {
+                return $this->s;
+            }
+        };
+
+        $this->assertTrue($uuid->equals($stringable));
+        $this->assertFalse($uuid->equals('some-other-uuid'));
+    }
+
+    public function testToRfc4122ReturnsSameString(): void
+    {
+        $uuidString = Uuid::generate()->toString();
+
+        $this->assertEquals($uuidString, Uuid::fromString($uuidString)->toRfc4122());
+    }
+
+    public function testIsValidIsCaseInsensitiveAndRejectsEmpty(): void
+    {
+        $upper = strtoupper(Uuid::generate()->toString());
+
+        $this->assertTrue(Uuid::isValid($upper));
+        $this->assertFalse(Uuid::isValid(''));
+    }
+
     public function testGeneratedUuidsAreUnique(): void
     {
         $uuids = [];
