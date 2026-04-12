@@ -8,7 +8,6 @@ use Psr\Cache\CacheItemPoolInterface;
 use Psr\Cache\InvalidArgumentException;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
-// TODO подумать, тут ли ему лежать
 readonly class TaskCancellationTrigger
 {
     private const int DEFAULT_TTL_SECONDS = 86400;
