@@ -4,112 +4,112 @@ declare(strict_types=1);
 
 namespace App\Tests\Presentation\Controller;
 
+use App\Domain\Shared\ValueObject\Uuid;
+use App\Infrastructure\Persistence\Doctrine\User\UserEntity;
+use App\Infrastructure\Security\ApiTokenService;
 use App\Presentation\Controller\UploadController;
+use App\Tests\Presentation\Controller\Api\InMemoryTestUserProvider;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\TestCase;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
-use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Uid\UuidV4 as SymfonyUuid;
 use TusPhp\Tus\Server as TusServer;
 
-/**
- * @covers \App\Presentation\Controller\UploadController
- */
+#[CoversClass(UploadController::class)]
 class UploadControllerTest extends WebTestCase
 {
     public function testUploadHandlerReturnsResponseFromTusServer(): void
     {
-        $client = static::createClient();
-        
-        // We need to authenticate first to pass the IsGranted check
-        // Create a test user and log in
         $user = $this->createTestUser();
-        $client->loginUser($user);
-        
-        // Mock the TusServer and EventDispatcher
+        $client = $this->authenticateClient($user);
+
         /** @var TusServer|MockObject $tusServer */
         $tusServer = $this->createMock(TusServer::class);
         $tusServer->expects($this->once())
             ->method('getUploadDir')
-            ->willReturn(sys_get_temp_dir() . '/tus-upload');
-        
+            ->willReturn(sys_get_temp_dir()); // sys_get_temp_dir() always exists → mkdir() won't be called
+
         $tusServer->expects($this->once())
-            ->method('setDispatcher')
-            ->with($this->isInstanceOf(EventDispatcherInterface::class));
-            
+            ->method('setDispatcher');
+
         $tusServer->expects($this->once())
             ->method('serve')
             ->willReturn(new Response('Tus server response', 200));
-        
-        /** @var EventDispatcherInterface|MockObject $eventDispatcher */
-        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
-        
-        // Override the services in the container
+
         static::getContainer()->set(TusServer::class, $tusServer);
-        static::getContainer()->set(EventDispatcherInterface::class, $eventDispatcher);
-        
+
         $client->request('POST', '/api/upload');
-        
+
         self::assertResponseStatusCodeSame(200);
         self::assertSame('Tus server response', $client->getResponse()->getContent());
     }
 
     public function testUploadHandlerCreatesUploadDirectoryIfNotExists(): void
     {
-        $client = static::createClient();
-        
-        // Create a test user and log in
         $user = $this->createTestUser();
-        $client->loginUser($user);
-        
-        // Mock the TusServer
+        $client = $this->authenticateClient($user);
+
         /** @var TusServer|MockObject $tusServer */
         $tusServer = $this->createMock(TusServer::class);
         $uploadDir = sys_get_temp_dir() . '/tus-upload-test';
-        
-        // Ensure directory doesn't exist initially
+
         if (is_dir($uploadDir)) {
             rmdir($uploadDir);
         }
-        
-        $tusServer->expects($this->once())
+
+        $tusServer->expects($this->exactly(2))
             ->method('getUploadDir')
             ->willReturn($uploadDir);
-            
+
         $tusServer->expects($this->once())
-            ->method('setDispatcher')
-            ->with($this->isInstanceOf(EventDispatcherInterface::class));
-            
+            ->method('setDispatcher');
+
         $tusServer->expects($this->once())
             ->method('serve')
             ->willReturn(new Response('Tus server response', 200));
-        
-        /** @var EventDispatcherInterface|MockObject $eventDispatcher */
-        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
-        
-        // Override the services in the container
+
         static::getContainer()->set(TusServer::class, $tusServer);
-        static::getContainer()->set(EventDispatcherInterface::class, $eventDispatcher);
-        
+
         $client->request('POST', '/api/upload');
-        
+
         self::assertResponseStatusCodeSame(200);
         self::assertTrue(is_dir($uploadDir));
-        
-        // Clean up
+
         if (is_dir($uploadDir)) {
             rmdir($uploadDir);
         }
     }
 
-    private function createTestUser(): \App\Domain\User\Entity\UserEntity
+    private function createTestUser(): UserEntity
     {
-        $user = new \App\Domain\User\Entity\UserEntity();
-        $user->id = \Ramsey\Uuid\Uuid::uuid4();
+        $user = new UserEntity();
+        $user->id = SymfonyUuid::fromString('11111111-1111-4111-8111-111111111111');
         $user->email = 'test@example.com';
         $user->roles = ['ROLE_USER'];
         $user->setPassword('hashed-password');
-        
+
         return $user;
+    }
+
+    private function authenticateClient(UserEntity $user): \Symfony\Bundle\FrameworkBundle\KernelBrowser
+    {
+        $client = static::createClient();
+
+        static::getContainer()->set(
+            'security.user.provider.concrete.app_user_provider',
+            new InMemoryTestUserProvider($user),
+        );
+
+        /** @var ApiTokenService $tokenService */
+        $tokenService = static::getContainer()->get(ApiTokenService::class);
+        $token = $tokenService->createToken(
+            Uuid::fromString($user->id->toRfc4122()),
+            $user->getUserIdentifier(),
+        );
+
+        $client->setServerParameter('HTTP_AUTHORIZATION', sprintf('Bearer %s', $token));
+
+        return $client;
     }
 }

@@ -4,11 +4,18 @@ declare(strict_types=1);
 
 namespace App\Tests\Presentation\Controller;
 
+use App\Application\Logging\LogServiceInterface;
 use App\Infrastructure\Google\GoogleAuthenticator;
 use App\Infrastructure\Persistence\Doctrine\User\UserEntity;
 use App\Tests\Presentation\Controller\Api\InMemoryTestUserProvider;
+use Doctrine\ORM\EntityManagerInterface;
+use Doctrine\ORM\EntityRepository;
+use League\OAuth2\Client\Provider\GoogleUser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
+use Symfony\Bundle\SecurityBundle\Security;
+use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Uid\UuidV4 as SymfonyUuid;
+use Symfony\Component\VarExporter\LazyObjectInterface;
 
 final class GoogleControllerTest extends WebTestCase
 {
@@ -126,45 +133,52 @@ final class GoogleControllerTest extends WebTestCase
         $client = static::createClient();
         $client->disableReboot(); // Keep same kernel so session + mock persist between requests
 
-        // Mock GoogleAuthenticator to return a valid Google user
-        $mockGoogleUser = $this->createMock(\Google\Client::class);
+        $mockGoogleUser = $this->createStub(GoogleUser::class);
         $mockGoogleUser->method('getEmail')->willReturn('newuser@example.com');
         $mockGoogleUser->method('getEmailVerified')->willReturn(true);
 
-        $mockAuth = $this->createMock(GoogleAuthenticator::class);
+        $mockAuth = $this->createStub(GoogleAuthenticator::class);
         $mockAuth->method('getUserFromCode')->willReturn($mockGoogleUser);
         static::getContainer()->set(GoogleAuthenticator::class, $mockAuth);
 
-        // Mock EntityManager to return null for findOneBy (user doesn't exist yet)
-        $mockEm = $this->createMock(\Doctrine\ORM\EntityManagerInterface::class);
-        $mockEm->method('getRepository')
-            ->willReturnSelf();
-        $mockEm->method('findOneBy')
-            ->willReturn(null);
-        $mockEm->method('getReference')
-            ->willReturnSelf();
-        $mockEm->method('persist')->willReturn(null);
-        $mockEm->method('flush')->willReturn(null);
-        static::getContainer()->set(\Doctrine\ORM\EntityManagerInterface::class, $mockEm);
+        // Stub EntityManager — also implements LazyObjectInterface so services_resetter
+        // can call resetLazyObject() without trying to reinitialize the Doctrine lazy ghost proxy
+        $mockRepo = $this->createStub(EntityRepository::class);
+        $mockRepo->method('findOneBy')->willReturn(null);
 
-        // Mock PasswordHasher
-        $mockPasswordHasher = $this->createMock(\Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface::class);
+        /** @var EntityManagerInterface&LazyObjectInterface $mockEm */
+        $mockEm = $this->createStubForIntersectionOfInterfaces([
+            EntityManagerInterface::class,
+            LazyObjectInterface::class,
+        ]);
+        $mockEm->method('resetLazyObject')->willReturn(true);
+        $mockEm->method('isLazyObjectInitialized')->willReturn(true);
+        $mockEm->method('getRepository')->willReturn($mockRepo);
+        $mockEm->method('getReference')->willReturnCallback(static function (string $class): object {
+            return new $class();
+        });
+        // Use callback so we can set $user->id after persist (real DB would auto-generate it)
+        $mockEm->method('persist')->willReturnCallback(static function (object $entity): void {
+            if ($entity instanceof UserEntity && $entity->id === null) {
+                $entity->id = SymfonyUuid::fromString('22222222-2222-4222-8222-222222222222');
+            }
+        });
+        $mockEm->method('flush');
+        static::getContainer()->set(EntityManagerInterface::class, $mockEm);
+
+        $mockPasswordHasher = $this->createStub(UserPasswordHasherInterface::class);
         $mockPasswordHasher->method('hashPassword')->willReturn('hashed-password');
-        static::getContainer()->set(\Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface::class, $mockPasswordHasher);
+        static::getContainer()->set(UserPasswordHasherInterface::class, $mockPasswordHasher);
 
-        // Mock Security service
-        $mockSecurity = $this->createMock(\Symfony\Bundle\SecurityBundle\Security::class);
+        $mockSecurity = $this->createStub(Security::class);
         $mockSecurity->method('login')->willReturn(null); // Returns null to trigger redirect
-        static::getContainer()->set(\Symfony\Bundle\SecurityBundle\Security::class, $mockSecurity);
+        static::getContainer()->set(Security::class, $mockSecurity);
 
-        // Mock LogService
-        $mockLogService = $this->createMock(\App\Application\Logging\LogServiceInterface::class);
-        $mockLogService->method('log')->willReturn(null);
-        static::getContainer()->set(\App\Application\Logging\LogServiceInterface::class, $mockLogService);
+        $mockLogService = $this->createStub(LogServiceInterface::class);
+        static::getContainer()->set(LogServiceInterface::class, $mockLogService);
 
         $client->request('GET', '/connect/google/check?state=valid-state&code=valid-code');
 
-        // Should redirect to home page (no target path in session)
         self::assertResponseRedirects('/');
         self::assertResponseStatusCodeSame(302);
     }
@@ -172,49 +186,47 @@ final class GoogleControllerTest extends WebTestCase
     public function testGoogleCallbackWithValidCodeLogsInExistingUser(): void
     {
         $client = static::createClient();
-        $client->disableReboot(); // Keep same kernel so session + mock persist between requests
+        $client->disableReboot();
 
-        // Create a test user entity
-        $existingUser = new \App\Infrastructure\Persistence\Doctrine\User\UserEntity();
+        $existingUser = new UserEntity();
         $existingUser->id = SymfonyUuid::fromString('11111111-1111-4111-8111-111111111111');
         $existingUser->email = 'existing@example.com';
         $existingUser->roles = ['ROLE_USER'];
 
-        // Mock GoogleAuthenticator to return a valid Google user matching existing user
-        $mockGoogleUser = $this->createMock(\Google\Client::class);
+        $mockGoogleUser = $this->createStub(GoogleUser::class);
         $mockGoogleUser->method('getEmail')->willReturn('existing@example.com');
         $mockGoogleUser->method('getEmailVerified')->willReturn(true);
 
-        $mockAuth = $this->createMock(GoogleAuthenticator::class);
+        $mockAuth = $this->createStub(GoogleAuthenticator::class);
         $mockAuth->method('getUserFromCode')->willReturn($mockGoogleUser);
         static::getContainer()->set(GoogleAuthenticator::class, $mockAuth);
 
-        // Mock EntityManager to return the existing user
-        $mockEm = $this->createMock(\Doctrine\ORM\EntityManagerInterface::class);
-        $mockEm->method('getRepository')
-            ->willReturnSelf();
-        $mockEm->method('findOneBy')
-            ->willReturn($existingUser);
-        $mockEm->method('flush')->willReturn(null);
-        static::getContainer()->set(\Doctrine\ORM\EntityManagerInterface::class, $mockEm);
+        $mockRepo = $this->createStub(EntityRepository::class);
+        $mockRepo->method('findOneBy')->willReturn($existingUser);
 
-        // Mock PasswordHasher (won't be called for existing user, but set anyway)
-        $mockPasswordHasher = $this->createMock(\Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface::class);
-        static::getContainer()->set(\Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface::class, $mockPasswordHasher);
+        /** @var EntityManagerInterface&LazyObjectInterface $mockEm */
+        $mockEm = $this->createStubForIntersectionOfInterfaces([
+            EntityManagerInterface::class,
+            LazyObjectInterface::class,
+        ]);
+        $mockEm->method('resetLazyObject')->willReturn(true);
+        $mockEm->method('isLazyObjectInitialized')->willReturn(true);
+        $mockEm->method('getRepository')->willReturn($mockRepo);
+        $mockEm->method('flush');
+        static::getContainer()->set(EntityManagerInterface::class, $mockEm);
 
-        // Mock Security service
-        $mockSecurity = $this->createMock(\Symfony\Bundle\SecurityBundle\Security::class);
+        $mockPasswordHasher = $this->createStub(UserPasswordHasherInterface::class);
+        static::getContainer()->set(UserPasswordHasherInterface::class, $mockPasswordHasher);
+
+        $mockSecurity = $this->createStub(Security::class);
         $mockSecurity->method('login')->willReturn(null); // Returns null to trigger redirect
-        static::getContainer()->set(\Symfony\Bundle\SecurityBundle\Security::class, $mockSecurity);
+        static::getContainer()->set(Security::class, $mockSecurity);
 
-        // Mock LogService
-        $mockLogService = $this->createMock(\App\Application\Logging\LogServiceInterface::class);
-        $mockLogService->method('log')->willReturn(null);
-        static::getContainer()->set(\App\Application\Logging\LogServiceInterface::class, $mockLogService);
+        $mockLogService = $this->createStub(LogServiceInterface::class);
+        static::getContainer()->set(LogServiceInterface::class, $mockLogService);
 
         $client->request('GET', '/connect/google/check?state=valid-state&code=valid-code');
 
-        // Should redirect to home page (no target path in session)
         self::assertResponseRedirects('/');
         self::assertResponseStatusCodeSame(302);
     }

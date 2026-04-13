@@ -13,7 +13,7 @@ use App\Domain\Video\ValueObject\TaskStatus;
 use App\Infrastructure\Persistence\Doctrine\Task\TaskEntity;
 use EasyCorp\Bundle\EasyAdminBundle\Attribute\AdminRoute;
 use EasyCorp\Bundle\EasyAdminBundle\Context\AdminContext;
-use EasyCorp\Bundle\EasyAdminBundle\Router\AdminUrlGenerator;
+use EasyCorp\Bundle\EasyAdminBundle\Router\AdminUrlGeneratorInterface;
 use Symfony\Component\HttpFoundation\Response;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Action;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Actions;
@@ -34,7 +34,7 @@ use EasyCorp\Bundle\EasyAdminBundle\Filter\NumericFilter;
 class TaskCrudController extends AbstractCrudController
 {
     public function __construct(
-        private readonly AdminUrlGenerator $adminUrlGenerator,
+        private readonly AdminUrlGeneratorInterface $adminUrlGenerator,
         private readonly QueryBus $queryBus,
     ) {
     }

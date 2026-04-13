@@ -4,16 +4,14 @@ declare(strict_types=1);
 
 namespace App\Tests\Presentation\Controller;
 
-use App\Presentation\Controller\ProfileController;
 use App\Infrastructure\Persistence\Doctrine\User\UserEntity;
+use App\Presentation\Controller\ProfileController;
 use App\Tests\Presentation\Controller\Api\InMemoryTestUserProvider;
+use PHPUnit\Framework\Attributes\CoversClass;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
-use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Uid\UuidV4 as SymfonyUuid;
 
-/**
- * @covers \App\Presentation\Controller\ProfileController
- */
+#[CoversClass(ProfileController::class)]
 class ProfileControllerTest extends WebTestCase
 {
     public function testProfileRedirectsToLoginForGuest(): void
@@ -41,6 +39,6 @@ class ProfileControllerTest extends WebTestCase
         $client->request('GET', '/profile');
 
         self::assertResponseIsSuccessful();
-        self::assertSelectorExists('#profile'); // Assuming there's a profile section in the template
+        self::assertSelectorExists('#home-spa'); // Profile page mounts the home SPA
     }
 }
