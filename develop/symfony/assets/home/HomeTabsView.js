@@ -21,23 +21,24 @@ export function createHomeTabsView(config) {
             const initialTab = normalizeTab(queryTab);
             const activeTab = ref(initialTab);
             let unbindRealtime = function noop() {};
-            const pageLimit = 10;
+            const pageLimitVideos = 10;
+            const pageLimitTasks = 20;
             const uploadState = createUploadTabState();
             const uploadActions = createUploadTabActions(config, uploadState);
             const tariff = ref(config.tariff || null);
-            const videosState = createVideosTabState(pageLimit);
+            const videosState = createVideosTabState(pageLimitVideos);
             const videosActions = createVideosTabActions({
                 config,
                 router,
                 videosState,
-                pageLimit,
+                pageLimit: pageLimitVideos,
             });
 
-            const tasksState = createTasksTabState(pageLimit);
+            const tasksState = createTasksTabState(pageLimitTasks);
             const tasksActions = createTasksTabActions({
                 config,
                 tasksState,
-                pageLimit,
+                pageLimit: pageLimitTasks,
             });
 
             function ensureTabDataLoaded(tab) {
