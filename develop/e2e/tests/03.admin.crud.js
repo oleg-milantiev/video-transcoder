@@ -83,14 +83,13 @@ test('admin area full smoke with CRUD checks', async ({ page }, testInfo) => {
     storageGb: 100,
     storageHour: 720,
   };
-  await createOrUpdateTariffByTitle(page, 'Free', { ...freeTariff, delay: 60 }, testInfo, '07-tariff-free-initial.png');
-  await createOrUpdateTariffByTitle(page, 'Free', { ...freeTariff, delay: 3600 }, testInfo, '07b-tariff-free-updated-to-hour.png');
-  await createOrUpdateTariffByTitle(page, 'Premium', premiumTariff, testInfo, '07c-tariff-premium-present.png');
-  await shot(page, testInfo, '04-tarifs-created.png');
+  await createOrUpdateTariffByTitle(page, 'Free', { ...freeTariff, delay: 60 }, testInfo, '04a-tarifs-free-initial.png');
+  await createOrUpdateTariffByTitle(page, 'Free', { ...freeTariff, delay: 3600 }, testInfo, '04b-tariff-free-updated-to-hour.png');
+  await createOrUpdateTariffByTitle(page, 'Premium', premiumTariff, testInfo, '04c-tariff-premium-present.png');
 
   // Step 5 — Create a test user with email test@test.com, password 'test', ROLE_USER and Free tariff
   await createUserWithTariff(page, 'test@test.com', 'test', 'Free');
-  await shot(page, testInfo, '05-test-user-created.png');
+  await shot(page, testInfo, '05a-test-user-created.png');
   await assignTariffToUser(page, email, 'Free', testInfo);
   await shot(page, testInfo, '05b-admin-user-free-tariff.png');
 

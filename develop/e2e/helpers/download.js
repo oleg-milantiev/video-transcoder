@@ -47,7 +47,7 @@ async function clickDownloadAndVerifyMp4(page, row) {
 }
 
 async function expectDownloadFilename(page, expectedFilename) {
-  const downloadLink = page.locator('a:has-text("Download")').last();
+  const downloadLink = page.locator('a:has-text("Download").btn').last();
   await downloadLink.waitFor({ state: 'attached', timeout: UI_TIMEOUT });
 
   await expect(downloadLink).toHaveAttribute('download', expectedFilename, {

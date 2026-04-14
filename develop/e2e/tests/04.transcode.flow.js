@@ -68,11 +68,11 @@ test('transcode flow from video details to downloadable mp4', async ({ page }, t
                     const state = await readPresetTaskState(page, presetTitle);
                     return state.status;
                 },
-                { timeout: NAV_TIMEOUT, intervals: [1000, 2000, 5000] }
+                { timeout: NAV_TIMEOUT, intervals: [1000, 2000, 2000] }
             )
             .toMatch(/PENDING|PROCESSING|COMPLETED/);
 
-    // 7) Poll every 5s, validate progress increase, wait until COMPLETED
+    // 7) Poll every 1s, validate progress increase, wait until COMPLETED
         let prevProgress = -1;
         let sawProgressIncrease = false;
         let completed = false;
@@ -92,8 +92,7 @@ test('transcode flow from video details to downloadable mp4', async ({ page }, t
                 break;
             }
 
-            // wait for realtime progress update (ffmpeg worker publishes every ~5s)
-            await page.waitForTimeout(6000);
+            await page.waitForTimeout(1000);
         }
 
         expect(completed).toBe(true);
