@@ -18,7 +18,10 @@ docker exec -i -e XDEBUG_MODE=coverage develop-php-1 vendor/bin/phpunit tests/ -
 ## Architecture Overview
 - **Domain-Driven Design (DDD)**: The backend (Symfony) is organized by domain boundaries: `Domain`, `Application`, `Infrastructure`, `Presentation`.
 - **Core Components**:
-  - **Frontend**: Twig pages mount Vue SPA modules from `develop/symfony/assets/home/`; uploads use Uppy + tus chunking.
+  - **Frontend**: Single Page Application (SPA) built with **Vue 3** and **Symfony AssetMapper** (no bundler).
+    - Modular architecture in `assets/home/` (state, actions, render).
+    - Real-time updates via **Mercure**.
+    - Resumable uploads via **Uppy + tus**.
   - **API**: Symfony app (`develop/symfony/`) exposes REST endpoints and handles business logic.
   - **Workers**: Symfony Messenger consumers (auto-scaled) process transcoding jobs using ffmpeg.
   - **Persistence**: PostgreSQL (see `postgres.yaml`), Doctrine ORM, entities in `Domain`/`Infrastructure`.
@@ -36,6 +39,7 @@ docker exec -i -e XDEBUG_MODE=coverage develop-php-1 vendor/bin/phpunit tests/ -
 ## Developer Workflows
 - **Build Docker Images**: `develop/docker/yc-php/build.sh`, `develop/docker/yc-ffmpeg/build.sh`, `develop/docker/yc-nginx/build.sh` (tagged, pushed to registry).
 - **Local Dev**: Use `develop/docker-compose.yml` to spin up stack (API, DB, Redis, Mercure, Nginx, etc.).
+- **Frontend Tests**: Run via Node.js with ESM loader: `bash develop/symfony/assets/tests.sh`.
 - **Symfony Commands**: Run via `docker exec -it develop-php-1 php bin/console ...` (see `.aiassistant/rules/docker.md`).
 - **Tests**: Run PHPUnit in container: `docker exec -it develop-php-1 php vendor/bin/phpunit tests/Domain/Video/ValueObject`.
 - **Kubernetes**: Apply manifests with `kubectl apply -k k8s/`, monitor with `kubectl get pods -w`, logs with `kubectl logs ...` (see `k8s/txt.txt`).
@@ -64,7 +68,8 @@ docker exec -i -e XDEBUG_MODE=coverage develop-php-1 vendor/bin/phpunit tests/ -
 ## Key Files & Directories
 - `develop/symfony/src/` — Main backend code (DDD structure)
 - `develop/symfony/templates/` — Twig templates (UI)
-- `develop/symfony/assets/home/` — Vue SPA modules for Home/Video Details
+- `develop/symfony/assets/home/` — Vue SPA modules (state, actions, render logic)
+- `develop/symfony/assets/tests/` — Frontend unit tests (Node.js ESM)
 - `develop/symfony/config/packages/messenger.yaml` — Async transport routing/config
 - `develop/docker/yc-php/`, `develop/docker/yc-ffmpeg/`, `develop/docker/yc-nginx/` — Docker build contexts
 - `k8s/`, `tf/` — Infrastructure as code

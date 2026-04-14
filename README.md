@@ -8,7 +8,7 @@
 - **[AGENTS.md](AGENTS.md)** — Architecture overview, DDD patterns, developer workflows, and integration guide for AI coding agents
 - **[TASK_STATE_FLOW.md](TASK_STATE_FLOW.md)** — Task lifecycle and state transitions (DDD)
 - **[EVENTS.md](EVENTS.md)** — Event-driven architecture and message flows
-- **[frontend.md](frontend.md)** — Frontend architecture and Vue SPA modules
+- **[frontend.md](FRONTEND.md)** — Frontend architecture and Vue SPA modules
 - **[develop/e2e/README.md](develop/e2e/README.md)** — End-to-end testing guide with Playwright
 - **[grafana/README.md](grafana/README.md)** — Grafana dashboard configuration for monitoring logs and errors
 
