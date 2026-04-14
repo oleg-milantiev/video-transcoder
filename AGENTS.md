@@ -46,8 +46,9 @@ docker exec -i -e XDEBUG_MODE=coverage develop-php-1 vendor/bin/phpunit tests/ -
 - **Terraform**: Infra as code in `tf/`, main entry is `main.tf`.
 
 ## Project-Specific Patterns & Conventions
-- **DDD Layering**: `Domain` (pure logic), `Application` (commands/queries), `Infrastructure` (adapters, listeners), `Presentation` (controllers/views).
-- **Event-Driven**: Use of Symfony Messenger for async commands/events (see `TusPostFinishListener`, `CreateVideo`).
+- **DDD Layering**: `Domain` (pure logic), `Application` (commands/handlers, DTOs), `Infrastructure` (Persistence/Doctrine mappers, S3/Local storage, Ffmpeg wrappers), `Presentation` (API Controllers, EasyAdmin).
+- **Domain vs Infrastructure Entities**: Clear separation between pure Domain models and Doctrine-mapped Infrastructure entities, using Mappers for conversion.
+- **Event-Driven & Async**: Extensive use of Symfony Messenger for async tasks like transcoding and metadata extraction (see `TusPostFinishListener`, `CreateVideo`).
 - **DTO Mapping**: Data transfer objects (DTOs) in `Application/DTO` map domain entities for API/UI.
 - **Entity Mapping**: Doctrine entities in `Infrastructure/Persistence/Doctrine`, mapped to domain models.
 - **Preset/Task/Video**: Presets define transcoding options; Tasks link Videos and Presets, track status/progress.
@@ -74,7 +75,8 @@ docker exec -i -e XDEBUG_MODE=coverage develop-php-1 vendor/bin/phpunit tests/ -
 - `develop/docker/yc-php/`, `develop/docker/yc-ffmpeg/`, `develop/docker/yc-nginx/` — Docker build contexts
 - `k8s/`, `tf/` — Infrastructure as code
 - `.aiassistant/rules/docker.md` — Container usage conventions
-- `README.md` — High-level project goals and scenarios
+- **[BACKEND.md](BACKEND.md)** — Detailed backend architecture (DDD layers), Application services, Domain logic, and Workflows
+- **[FRONTEND.md](FRONTEND.md)** — Frontend architecture, Vue SPA modules, and AssetMapper integration
 
 ## Examples
 - **Add a new transcoding preset**: Implement in `Domain/Video/Entity/Preset.php`, expose via admin CRUD, persist via Doctrine entity.

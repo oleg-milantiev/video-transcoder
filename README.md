@@ -8,7 +8,8 @@
 - **[AGENTS.md](AGENTS.md)** — Architecture overview, DDD patterns, developer workflows, and integration guide for AI coding agents
 - **[TASK_STATE_FLOW.md](TASK_STATE_FLOW.md)** — Task lifecycle and state transitions (DDD)
 - **[EVENTS.md](EVENTS.md)** — Event-driven architecture and message flows
-- **[frontend.md](FRONTEND.md)** — Frontend architecture and Vue SPA modules
+- **[BACKEND.md](BACKEND.md)** — Backend architecture (DDD layers), Application services, and Domain logic
+- **[FRONTEND.md](FRONTEND.md)** — Frontend architecture and Vue SPA modules
 - **[develop/e2e/README.md](develop/e2e/README.md)** — End-to-end testing guide with Playwright
 - **[grafana/README.md](grafana/README.md)** — Grafana dashboard configuration for monitoring logs and errors
 
@@ -26,8 +27,8 @@
   - grafana, loki, promtail для логов и алертов
   - s3-хранилище для видео
 - kubernetes с его ingress, развёртыванием, поддержанием и масштабированием подов
-- VueJS статик front
-- Symfony API
+- **VueJS SPA**: Статический фронтенд на Vue 3, использующий **Symfony AssetMapper** (без бандлера).
+- **Symfony API**: Построен на базе PHP 8.4+, использует **Symfony 7.4** и следует принципам **DDD** (Domain-Driven Design).
 - autoscale Symfony Messenger Consumer с ffmpeg
 - потом Laravel API
 - потом autoscale Laravel *** Async Consumer с ffmpeg
