@@ -7,8 +7,11 @@
 - phpUnit (+stan)
 - e2e
 
-## Sprint 0.1.2 (Тарифы, Оплата)
+## Sprint 0.1.2 (Дизайн, Тексты, Тарифы, Оплата)
 
+- страница сравнения тарифов, ваш тариф 
+- Choose from predefined transcoding presets or create custom ones. Convert to MP4, WebM, HLS, and more formats.
+- а как с мобилы выглядит?
 - оплата и переход на Premium тариф на время
 - оплата страйпом
 - оплата paypal
