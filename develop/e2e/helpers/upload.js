@@ -13,7 +13,9 @@ function uploadRoot(page) {
 }
 
 function uploadHint(page) {
-  return uploadRoot(page).locator('xpath=following-sibling::p[contains(@class, "text-muted")][1]').first();
+  // TariffHint is now displayed at the bottom of the page in a div with class 'bg-light bg-opacity-10'
+  // Look for text within that container
+  return page.locator('div.bg-opacity-10:has-text("Max file size"), div.alert.alert-warning').first();
 }
 
 async function expectUploadHintText(page, expectedText) {
