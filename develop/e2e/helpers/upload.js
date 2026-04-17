@@ -13,9 +13,9 @@ function uploadRoot(page) {
 }
 
 function uploadHint(page) {
-  // TariffHint is now displayed at the bottom of the page in a div with class 'bg-light bg-opacity-10'
-  // Look for text within that container
-  return page.locator('div.bg-opacity-10:has-text("Max file size"), div.alert.alert-warning').first();
+  // TariffHint is rendered as a div with class 'bg-light bg-opacity-10 rounded-4 p-3 mt-3'
+  // This container holds all the storage, max file size, max resolution, and concurrent tasks info
+  return page.locator('div.bg-light.bg-opacity-10.rounded-4.p-3.mt-3').first();
 }
 
 async function expectUploadHintText(page, expectedText) {

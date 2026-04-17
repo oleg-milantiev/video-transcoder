@@ -9,9 +9,12 @@
 
 ## Sprint 0.1.2 (Дизайн, Тексты, Тарифы, Оплата)
 
+- js tests
 - страница сравнения тарифов, ваш тариф 
 - Choose from predefined transcoding presets or create custom ones. Convert to MP4, WebM, HLS, and more formats.
-- а как с мобилы выглядит?
+- чуть лучше б с мобилы сделать
+- api и дока
+- пресеты расширить. Форматы разные. Внешний вид оптимизировать
 - оплата и переход на Premium тариф на время
 - оплата страйпом
 - оплата paypal
