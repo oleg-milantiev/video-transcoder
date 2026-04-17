@@ -1,6 +1,6 @@
 import { h } from 'vue';
 import { bytesToHuman } from '../shared.js';
-import { PLANS, renderPlanCard } from '../tariff/planCard.js';
+import { PLANS, renderPlanCard, renderFeature } from '../tariff/planCard.js';
 import {
     formatBytes,
     computeStoragePercent,
@@ -46,34 +46,97 @@ function renderUserBlock(user, tariff) {
     ]);
 }
 
+function renderPaymentsBlock() {
+    return h('div', { class: 'card shadow-sm mb-4 h-100' }, [
+        h('div', { class: 'card-header bg-light d-flex align-items-center gap-2 py-3' }, [
+            h('span', { class: 'fs-4 lh-1' }, '💳'),
+            h('h2', { class: 'h5 mb-0' }, 'Subscription'),
+        ]),
+        h('div', { class: 'card-body' }, [
+            infoRow('Valid until', '—'),
+            infoRow('Days remaining', '—'),
+            h('hr', { class: 'my-3' }),
+            h('h6', { class: 'text-muted small mb-3' }, 'Payment History'),
+            h('p', { class: 'text-muted small mb-0' }, 'No payments yet.'),
+        ]),
+    ]);
+}
+
 function renderTariffBlock(tariff) {
     const title = tariff?.title ?? '';
     const currentPlanKey = PLANS.find(
         (p) => p.name.toLowerCase() === title.toLowerCase()
     )?.key ?? 'free';
 
-    // Show current plan + upgrade option (if Free, show Premium too)
-    let plansToShow = PLANS.filter(p => p.key === currentPlanKey);
+    const isFree = currentPlanKey === 'free';
 
-    if (currentPlanKey === 'free') {
-        // Show Free (current) and Premium (upgrade option)
-        plansToShow = PLANS.filter(p => ['free', 'premium'].includes(p.key));
+    if (isFree) {
+        // Show two tariff cards: Free (current) and Premium (upgrade option)
+        const plansWithCurrent = [
+            { ...PLANS[0], isCurrent: true },  // Free
+            { ...PLANS[1], isCurrent: false }, // Premium
+        ];
+
+        return h('div', { class: 'row g-4 mb-4' }, [
+            h('div', { class: 'col-12 col-lg-6' }, [
+                h('div', { class: 'card shadow-sm h-100' }, [
+                    h('div', { class: 'card-header bg-light d-flex align-items-center gap-2 py-3' }, [
+                        h('span', { class: 'fs-4 lh-1' }, '💳'),
+                        h('h2', { class: 'h5 mb-0' }, 'Tariff'),
+                    ]),
+                    h('ul', { class: 'list-group list-group-flush flex-grow-1' },
+                        plansWithCurrent[0].features.map(f => renderFeature(f))
+                    ),
+                    h('div', { class: 'card-footer bg-transparent py-3' }, [
+                        h('button', { class: 'btn btn-outline-secondary w-100', disabled: true }, 'Current plan'),
+                    ]),
+                ]),
+            ]),
+            h('div', { class: 'col-12 col-lg-6' }, [
+                h('div', { class: 'card shadow-sm h-100 border-primary' }, [
+                    h('div', { class: 'card-header bg-primary text-white d-flex align-items-center gap-2 py-3' }, [
+                        h('span', { class: 'fs-4 lh-1' }, '⭐'),
+                        h('h2', { class: 'h5 mb-0' }, 'Premium'),
+                    ]),
+                    h('ul', { class: 'list-group list-group-flush flex-grow-1' },
+                        plansWithCurrent[1].features.map(f => renderFeature(f))
+                    ),
+                    h('div', { class: 'card-footer bg-transparent py-3' }, [
+                        h('button', {
+                            class: 'btn btn-primary w-100',
+                            type: 'button',
+                        }, 'Upgrade to Premium'),
+                    ]),
+                ]),
+            ]),
+        ]);
+    } else {
+        // Not Free: show current tariff (left) + payments block (right)
+        const currentPlan = PLANS.find(p => p.key === currentPlanKey);
+        if (!currentPlan) {
+            return h('div', { class: 'text-muted mb-4' }, 'Tariff information unavailable.');
+        }
+
+        return h('div', { class: 'row g-4 mb-4' }, [
+            h('div', { class: 'col-12 col-lg-6' }, [
+                h('div', { class: 'card shadow-sm h-100' }, [
+                    h('div', { class: 'card-header bg-light d-flex align-items-center gap-2 py-3' }, [
+                        h('span', { class: 'fs-4 lh-1' }, '💳'),
+                        h('h2', { class: 'h5 mb-0' }, 'Your Plan'),
+                    ]),
+                    h('ul', { class: 'list-group list-group-flush flex-grow-1' },
+                        currentPlan.features.map(f => renderFeature(f))
+                    ),
+                    h('div', { class: 'card-footer bg-transparent py-3' }, [
+                        h('button', { class: 'btn btn-outline-secondary w-100', disabled: true }, 'Current plan'),
+                    ]),
+                ]),
+            ]),
+            h('div', { class: 'col-12 col-lg-6' }, [
+                renderPaymentsBlock(),
+            ]),
+        ]);
     }
-
-    const plansWithCurrent = plansToShow.map(p => ({
-        ...p,
-        isCurrent: p.key === currentPlanKey,
-    }));
-
-    // Use justify-content-center to center single card, or display two cards side-by-side
-    const rowClass = plansWithCurrent.length === 1 ? 'row g-3 justify-content-center' : 'row g-3';
-    const cardColClass = plansWithCurrent.length === 1 ? 'col-12 col-lg-6' : 'col-12 col-lg-6';
-
-    return sectionCard('💳', 'Tariff', [
-        h('div', { class: rowClass },
-            plansWithCurrent.map(plan => renderPlanCard(plan, cardColClass))
-        ),
-    ]);
 }
 
 function renderVideosBlock() {
