@@ -100,7 +100,7 @@ export function renderTariffHint(tariff) {
             ]),
             // Right column with upgrade button
             h('div', { class: 'col-auto' }, [
-                h('a', { href: '#', class: 'btn btn-sm btn-outline-primary rounded-pill' }, 'Upgrade'),
+                h('a', { href: '/tariffs', class: 'btn btn-sm btn-outline-primary rounded-pill' }, 'Upgrade'),
             ]),
         ]),
         // Warning when storage is running low

@@ -4,6 +4,7 @@ import { connectMercure } from './connectMercure.js';
 import { createHomeTabsView } from './HomeTabsView.js';
 import { createVideoDetailsView } from './video-details/view.js';
 import { createProfileView } from './profile/view.js';
+import { createTariffView } from './tariff/view.js';
 import { initAuth } from './apiAuth.js';
 
 export function mountHomeSpa() {
@@ -25,6 +26,7 @@ export function mountHomeSpa() {
     const HomeTabsView = createHomeTabsView(config);
     const VideoDetailsView = createVideoDetailsView(config);
     const ProfileView = createProfileView(config);
+    const TariffView = createTariffView(config);
 
     const router = createRouter({
         history: createWebHistory(),
@@ -43,6 +45,11 @@ export function mountHomeSpa() {
                 path: '/profile',
                 name: 'profile',
                 component: ProfileView,
+            },
+            {
+                path: '/tariffs',
+                name: 'tariffs',
+                component: TariffView,
             },
             {
                 path: '/:pathMatch(.*)*',
