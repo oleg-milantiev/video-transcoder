@@ -48,22 +48,27 @@ function renderUserBlock(user, tariff) {
 
 function renderTariffBlock(tariff) {
     const title = tariff?.title ?? '';
-    const matchedPlan = PLANS.find(
+    const currentPlanKey = PLANS.find(
         (p) => p.name.toLowerCase() === title.toLowerCase()
-    ) ?? null;
+    )?.key ?? 'free';
 
-    if (!matchedPlan) {
-        return sectionCard('💳', 'Tariff', [
-            h('p', { class: 'text-muted mb-0' }, 'No tariff information available.'),
-        ]);
+    // Show current plan + upgrade option (if Free, show Premium too)
+    let plansToShow = PLANS.filter(p => p.key === currentPlanKey);
+
+    if (currentPlanKey === 'free') {
+        // Show Free (current) and Premium (upgrade option)
+        plansToShow = PLANS.filter(p => ['free', 'premium'].includes(p.key));
     }
 
-    const planWithCurrent = { ...matchedPlan, isCurrent: true };
+    const plansWithCurrent = plansToShow.map(p => ({
+        ...p,
+        isCurrent: p.key === currentPlanKey,
+    }));
 
     return sectionCard('💳', 'Tariff', [
-        h('div', { class: 'row g-3' }, [
-            renderPlanCard(planWithCurrent, 'col-12 col-lg-8 offset-lg-2'),
-        ]),
+        h('div', { class: 'row g-3' },
+            plansWithCurrent.map(plan => renderPlanCard(plan, 'col-12 col-lg-6'))
+        ),
     ]);
 }
 
@@ -167,7 +172,10 @@ export function renderProfile(vm) {
         ]),
         renderUserBlock(user, tariff),
         renderTariffBlock(tariff),
-        renderVideosBlock(),
-        renderStorageBlock(tariff),
+        // Two-column layout for Videos and Storage
+        h('div', { class: 'row g-4' }, [
+            h('div', { class: 'col-12 col-lg-6' }, [renderVideosBlock()]),
+            h('div', { class: 'col-12 col-lg-6' }, [renderStorageBlock(tariff)]),
+        ]),
     ]);
 }
