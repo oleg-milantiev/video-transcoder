@@ -1,5 +1,4 @@
 import { defineComponent } from 'vue';
-import { useRouter } from 'vue-router';
 import { renderProfile } from './render.js';
 import { createProfileState } from './state.js';
 
@@ -7,13 +6,10 @@ export function createProfileView(config) {
     return defineComponent({
         name: 'ProfileView',
         setup() {
-            const router = useRouter();
             const state = createProfileState();
 
             function goHome() {
-                void router.push({
-                    path: config.route?.home ?? '/',
-                });
+                window.location.href = config.route?.home ?? '/';
             }
 
             return {

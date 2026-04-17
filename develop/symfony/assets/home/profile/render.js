@@ -65,9 +65,13 @@ function renderTariffBlock(tariff) {
         isCurrent: p.key === currentPlanKey,
     }));
 
+    // Use justify-content-center to center single card, or display two cards side-by-side
+    const rowClass = plansWithCurrent.length === 1 ? 'row g-3 justify-content-center' : 'row g-3';
+    const cardColClass = plansWithCurrent.length === 1 ? 'col-12 col-lg-6' : 'col-12 col-lg-6';
+
     return sectionCard('💳', 'Tariff', [
-        h('div', { class: 'row g-3' },
-            plansWithCurrent.map(plan => renderPlanCard(plan, 'col-12 col-lg-6'))
+        h('div', { class: rowClass },
+            plansWithCurrent.map(plan => renderPlanCard(plan, cardColClass))
         ),
     ]);
 }
@@ -143,8 +147,11 @@ export function renderProfile(vm) {
 
     if (vm.loading) {
         return h('div', { class: 'py-4' }, [
-            h('div', { class: 'd-flex justify-content-between align-items-center mb-4' }, [
-                h('h1', { class: 'mb-0' }, 'Profile'),
+            h('div', { class: 'd-flex justify-content-between align-items-start mb-5' }, [
+                h('div', { class: 'text-center flex-grow-1' }, [
+                    h('h1', { class: 'display-5 fw-bold mb-2' }, 'My Profile'),
+                    h('p', { class: 'text-muted fs-5' }, 'Account settings and subscription overview.'),
+                ]),
                 backBtn,
             ]),
             h('p', { class: 'text-muted' }, 'Loading...'),
@@ -153,8 +160,11 @@ export function renderProfile(vm) {
 
     if (vm.error) {
         return h('div', { class: 'py-4' }, [
-            h('div', { class: 'd-flex justify-content-between align-items-center mb-4' }, [
-                h('h1', { class: 'mb-0' }, 'Profile'),
+            h('div', { class: 'd-flex justify-content-between align-items-start mb-5' }, [
+                h('div', { class: 'text-center flex-grow-1' }, [
+                    h('h1', { class: 'display-5 fw-bold mb-2' }, 'My Profile'),
+                    h('p', { class: 'text-muted fs-5' }, 'Account settings and subscription overview.'),
+                ]),
                 backBtn,
             ]),
             h('div', { class: 'alert alert-danger' }, vm.error),
@@ -166,8 +176,11 @@ export function renderProfile(vm) {
     const tariff = cfg.tariff || null;
 
     return h('div', { class: 'py-4' }, [
-        h('div', { class: 'd-flex justify-content-between align-items-center mb-4' }, [
-            h('h1', { class: 'mb-0' }, 'Profile'),
+        h('div', { class: 'd-flex justify-content-between align-items-start mb-5' }, [
+            h('div', { class: 'text-center flex-grow-1' }, [
+                h('h1', { class: 'display-5 fw-bold mb-2' }, 'My Profile'),
+                h('p', { class: 'text-muted fs-5' }, 'Account settings and subscription overview.'),
+            ]),
             backBtn,
         ]),
         renderUserBlock(user, tariff),
