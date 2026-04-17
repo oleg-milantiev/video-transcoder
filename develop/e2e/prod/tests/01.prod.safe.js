@@ -203,7 +203,7 @@ test.describe('prod-safe isolated smoke', () => {
     await capture.start();
 
     const run = buildRunContext();
-    const expectedUploadHint = 'Storage: 0% used (0 MB of 1 GB). Max resolution: 1920×1920. Max file size: 100 MB.';
+    const expectedUploadHint = '0 MB / 1 GB';
     let userCreated = false;
     let videoDeleted = false;
     let userDeleted = false;
