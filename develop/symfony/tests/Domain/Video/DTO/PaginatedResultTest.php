@@ -7,8 +7,12 @@ namespace App\Tests\Domain\Video\DTO;
 use App\Domain\Video\DTO\PaginatedResult;
 use PHPUnit\Framework\TestCase;
 
+/**
+ * Tests PaginatedResult DTO — хранит массив элементов и общее количество для пагинации.
+ */
 final class PaginatedResultTest extends TestCase
 {
+    /** items и total сохраняются и доступны как публичные поля. */
     public function testStoresItemsAndTotal(): void
     {
         $items = ['foo', 'bar'];

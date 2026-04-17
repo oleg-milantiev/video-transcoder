@@ -8,8 +8,13 @@ use App\Domain\Video\Exception\InvalidVideoDates;
 use App\Domain\Video\ValueObject\VideoDates;
 use PHPUnit\Framework\TestCase;
 
+/**
+ * Tests VideoDates — иммутабельный объект дат видео; create, touch, fromPersistence
+ * и валидация хронологического порядка дат.
+ */
 final class VideoDatesTest extends TestCase
 {
+    /** create() устанавливает только createdAt; updatedAt == null. */
     public function testCreateInitializesOnlyCreatedAt(): void
     {
         $createdAt = new \DateTimeImmutable('2026-03-19 10:00:00');
@@ -20,6 +25,7 @@ final class VideoDatesTest extends TestCase
         $this->assertNull($dates->updatedAt());
     }
 
+    /** touch() устанавливает updatedAt. */
     public function testTouchSetsUpdatedAt(): void
     {
         $createdAt = new \DateTimeImmutable('2026-03-19 10:00:00');
@@ -31,6 +37,7 @@ final class VideoDatesTest extends TestCase
         $this->assertSame($updatedAt, $dates->updatedAt());
     }
 
+    /** fromPersistence() бросает InvalidVideoDates, если updatedAt < createdAt. */
     public function testInvalidUpdatedAtBeforeCreatedAtThrows(): void
     {
         $this->expectException(InvalidVideoDates::class);
@@ -41,6 +48,7 @@ final class VideoDatesTest extends TestCase
         );
     }
 
+    /** fromPersistence() с валидными датами сохраняет оба значения. */
     public function testFromPersistenceWithUpdatedAt(): void
     {
         $createdAt = new \DateTimeImmutable('2026-03-19 10:00:00');
@@ -52,4 +60,3 @@ final class VideoDatesTest extends TestCase
         $this->assertSame($updatedAt, $dates->updatedAt());
     }
 }
-

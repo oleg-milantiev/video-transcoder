@@ -2,13 +2,17 @@
 
 declare(strict_types=1);
 
-namespace Tests\Domain\Video\ValueObject;
+namespace App\Tests\Domain\Video\ValueObject;
 
 use App\Domain\Video\ValueObject\TaskStatus;
 use PHPUnit\Framework\TestCase;
 
-class TaskStatusTest extends TestCase
+/**
+ * Tests TaskStatus enum — все кейсы, фабричные методы, предикаты состояния и константа NAMES.
+ */
+final class TaskStatusTest extends TestCase
 {
+    /** Каждый кейс имеет корректное имя. */
     public function testEnumCases(): void
     {
         $this->assertSame('PENDING', TaskStatus::PENDING->name);
@@ -20,11 +24,13 @@ class TaskStatusTest extends TestCase
         $this->assertSame('DELETED', TaskStatus::DELETED->name);
     }
 
+    /** from() корректно разбирает значение обратно в enum. */
     public function testFromValue(): void
     {
         $this->assertSame(TaskStatus::PENDING, TaskStatus::from(TaskStatus::PENDING->value));
     }
 
+    /** Фабричные методы возвращают корректные кейсы. */
     public function testFactoryMethods(): void
     {
         $this->assertSame(TaskStatus::PENDING, TaskStatus::pending());
@@ -36,6 +42,7 @@ class TaskStatusTest extends TestCase
         $this->assertSame(TaskStatus::DELETED, TaskStatus::deleted());
     }
 
+    /** canBeStarted() возвращает true только для STARTING. */
     public function testCanBeStarted(): void
     {
         $this->assertTrue(TaskStatus::STARTING->canBeStarted());
@@ -47,6 +54,7 @@ class TaskStatusTest extends TestCase
         $this->assertFalse(TaskStatus::DELETED->canBeStarted());
     }
 
+    /** canBeDeleted() возвращает true для завершённых и удалённых статусов. */
     public function testCanBeDeleted(): void
     {
         $this->assertFalse(TaskStatus::PENDING->canBeDeleted());
@@ -58,6 +66,7 @@ class TaskStatusTest extends TestCase
         $this->assertTrue(TaskStatus::DELETED->canBeDeleted());
     }
 
+    /** canBeRestarted() возвращает true для CANCELLED и FAILED. */
     public function testCanBeRestarted(): void
     {
         $this->assertTrue(TaskStatus::CANCELLED->canBeRestarted());
@@ -69,6 +78,7 @@ class TaskStatusTest extends TestCase
         $this->assertFalse(TaskStatus::DELETED->canBeRestarted());
     }
 
+    /** isTranscoding() возвращает true для активных статусов транскодирования. */
     public function testIsTranscoding(): void
     {
         $this->assertTrue(TaskStatus::PENDING->isTranscoding());
@@ -80,6 +90,7 @@ class TaskStatusTest extends TestCase
         $this->assertFalse(TaskStatus::DELETED->isTranscoding());
     }
 
+    /** isDeleted() возвращает true только для DELETED. */
     public function testIsDeleted(): void
     {
         $this->assertTrue(TaskStatus::DELETED->isDeleted());
@@ -91,6 +102,7 @@ class TaskStatusTest extends TestCase
         $this->assertFalse(TaskStatus::CANCELLED->isDeleted());
     }
 
+    /** isFinished() возвращает true для всех терминальных статусов. */
     public function testIsFinished(): void
     {
         $this->assertTrue(TaskStatus::COMPLETED->isFinished());
@@ -102,6 +114,7 @@ class TaskStatusTest extends TestCase
         $this->assertFalse(TaskStatus::PROCESSING->isFinished());
     }
 
+    /** Константа NAMES содержит все кейсы с корректными именами. */
     public function testNamesConstantContainsAllCasesWithCorrectValues(): void
     {
         $names = TaskStatus::NAMES;
