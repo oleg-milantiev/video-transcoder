@@ -8,8 +8,12 @@ use App\Domain\User\Exception\TariffNotFound;
 use App\Domain\User\Exception\UserNotFound;
 use PHPUnit\Framework\TestCase;
 
+/**
+ * Tests TariffNotFound и UserNotFound — сообщения фабричных методов и throwable-поведение.
+ */
 final class UserExceptionTest extends TestCase
 {
+    /** TariffNotFound содержит userId в сообщении и является DomainException. */
     public function testTariffNotFoundMessage(): void
     {
         $userId = '550e8400-e29b-41d4-a716-446655440000';
@@ -19,6 +23,7 @@ final class UserExceptionTest extends TestCase
         $this->assertSame("Tariff not found for user: {$userId}", $exception->getMessage());
     }
 
+    /** TariffNotFound может быть пойман как TariffNotFound. */
     public function testTariffNotFoundIsThrowable(): void
     {
         $this->expectException(TariffNotFound::class);
@@ -27,6 +32,7 @@ final class UserExceptionTest extends TestCase
         throw TariffNotFound::forUser('abc123');
     }
 
+    /** UserNotFound содержит userId в сообщении и является DomainException. */
     public function testUserNotFoundMessage(): void
     {
         $userId = '123e4567-e89b-42d3-a456-426614174000';
@@ -36,6 +42,7 @@ final class UserExceptionTest extends TestCase
         $this->assertSame("User not found: {$userId}", $exception->getMessage());
     }
 
+    /** UserNotFound может быть пойман как UserNotFound. */
     public function testUserNotFoundIsThrowable(): void
     {
         $this->expectException(UserNotFound::class);

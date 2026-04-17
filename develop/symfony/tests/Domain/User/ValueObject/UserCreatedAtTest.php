@@ -7,8 +7,12 @@ namespace App\Tests\Domain\User\ValueObject;
 use App\Domain\User\ValueObject\UserCreatedAt;
 use PHPUnit\Framework\TestCase;
 
+/**
+ * Tests UserCreatedAt — обёртка над DateTimeImmutable для даты регистрации; equals() и __toString().
+ */
 final class UserCreatedAtTest extends TestCase
 {
+    /** DateTimeImmutable сохраняется и возвращается через value(). */
     public function testWrapsDateTimeImmutable(): void
     {
         $dt = new \DateTimeImmutable('2024-01-15 10:30:00');
@@ -17,6 +21,7 @@ final class UserCreatedAtTest extends TestCase
         $this->assertSame($dt, $vo->value());
     }
 
+    /** __toString() форматирует дату в формате ATOM. */
     public function testToStringFormatsAsAtom(): void
     {
         $dt = new \DateTimeImmutable('2024-01-15T10:30:00+00:00');
@@ -25,6 +30,7 @@ final class UserCreatedAtTest extends TestCase
         $this->assertSame($dt->format(\DateTimeInterface::ATOM), (string) $vo);
     }
 
+    /** Два объекта с идентичной датой равны. */
     public function testEqualsReturnsTrueForSameDateTime(): void
     {
         $dt = new \DateTimeImmutable('2024-06-01 00:00:00');
@@ -34,6 +40,7 @@ final class UserCreatedAtTest extends TestCase
         $this->assertTrue($a->equals($b));
     }
 
+    /** Два объекта с разными датами не равны. */
     public function testEqualsReturnsFalseForDifferentDateTime(): void
     {
         $a = new UserCreatedAt(new \DateTimeImmutable('2024-06-01 00:00:00'));

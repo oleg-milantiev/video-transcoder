@@ -21,8 +21,13 @@ use App\Domain\Video\Exception\VideoMetadataInvalid;
 use App\Domain\Video\Exception\VideoSizeExceedsQuota;
 use PHPUnit\Framework\TestCase;
 
+/**
+ * Tests всех Video domain exceptions — фабричные методы возвращают DomainException
+ * с корректными сообщениями, содержащими входные данные.
+ */
 final class VideoExceptionTest extends TestCase
 {
+    /** IncompatibleVideoFormat содержит переданное значение в сообщении. */
     public function testIncompatibleVideoFormatMessage(): void
     {
         $exception = IncompatibleVideoFormat::fromValue('4K + 0.5Mbps');
@@ -31,6 +36,7 @@ final class VideoExceptionTest extends TestCase
         $this->assertSame('Incompatible Video Format: 4K + 0.5Mbps', $exception->getMessage());
     }
 
+    /** InvalidPresetName содержит переданное значение в сообщении. */
     public function testInvalidPresetNameMessage(): void
     {
         $exception = InvalidPresetName::fromValue('x');
@@ -39,6 +45,7 @@ final class VideoExceptionTest extends TestCase
         $this->assertSame('Invalid Preset Name: x', $exception->getMessage());
     }
 
+    /** InvalidPresetTitle содержит переданное значение в сообщении. */
     public function testInvalidPresetTitleMessage(): void
     {
         $exception = InvalidPresetTitle::fromValue('x');
@@ -47,6 +54,7 @@ final class VideoExceptionTest extends TestCase
         $this->assertSame('Invalid Preset Title: x', $exception->getMessage());
     }
 
+    /** InvalidProgress::outOfRange() содержит числовое значение в сообщении. */
     public function testInvalidProgressMessage(): void
     {
         $exception = InvalidProgress::outOfRange(101);
@@ -55,6 +63,7 @@ final class VideoExceptionTest extends TestCase
         $this->assertSame('Progress must be between 0 and 100, got 101.', $exception->getMessage());
     }
 
+    /** InvalidTaskDates имеет четыре фабричных метода с правильными сообщениями. */
     public function testInvalidTaskDatesMessages(): void
     {
         $this->assertSame(
@@ -75,6 +84,7 @@ final class VideoExceptionTest extends TestCase
         );
     }
 
+    /** InvalidVideoDates::updatedAtBeforeCreatedAt() имеет правильное сообщение. */
     public function testInvalidVideoDatesMessage(): void
     {
         $exception = InvalidVideoDates::updatedAtBeforeCreatedAt();
@@ -83,6 +93,7 @@ final class VideoExceptionTest extends TestCase
         $this->assertSame('updatedAt cannot be earlier than createdAt.', $exception->getMessage());
     }
 
+    /** InvalidVideoTitle имеет фабрики empty() и tooLong() с правильными сообщениями. */
     public function testInvalidVideoTitleMessages(): void
     {
         $this->assertSame('Video title cannot be empty.', InvalidVideoTitle::empty()->getMessage());
@@ -92,6 +103,7 @@ final class VideoExceptionTest extends TestCase
         );
     }
 
+    /** UnsupportedCodec содержит название кодека в сообщении. */
     public function testUnsupportedCodecMessage(): void
     {
         $exception = UnsupportedCodec::fromValue('mpeg2');
@@ -100,6 +112,7 @@ final class VideoExceptionTest extends TestCase
         $this->assertSame('Unsupported codec: mpeg2', $exception->getMessage());
     }
 
+    /** VideoAlreadyDeleted, TaskAlreadyDeleted и VideoHasTranscodingTasks имеют правильные сообщения. */
     public function testDeleteRelatedMessages(): void
     {
         $this->assertSame('Video is already deleted.', VideoAlreadyDeleted::forVideo()->getMessage());
@@ -110,6 +123,7 @@ final class VideoExceptionTest extends TestCase
         );
     }
 
+    /** VideoFileNotFound содержит путь к файлу в сообщении. */
     public function testVideoFileNotFoundMessage(): void
     {
         $exception = VideoFileNotFound::cannotDetermineSize('/var/tmp/video.mp4');
@@ -118,6 +132,7 @@ final class VideoExceptionTest extends TestCase
         $this->assertSame('Cannot determine file size for: /var/tmp/video.mp4', $exception->getMessage());
     }
 
+    /** VideoMetadataInvalid имеет четыре фабричных метода с правильными сообщениями. */
     public function testVideoMetadataInvalidMessages(): void
     {
         $this->assertInstanceOf(\DomainException::class, VideoMetadataInvalid::missingDuration());
@@ -125,23 +140,21 @@ final class VideoExceptionTest extends TestCase
             'Video metadata is missing duration information.',
             VideoMetadataInvalid::missingDuration()->getMessage(),
         );
-
         $this->assertSame(
             'Video duration 125.0 seconds exceeds your tariff limit of 60 seconds.',
             VideoMetadataInvalid::durationExceedsLimit(125.0, 60)->getMessage(),
         );
-
         $this->assertSame(
             'Video metadata is missing resolution (width/height) information.',
             VideoMetadataInvalid::missingResolution()->getMessage(),
         );
-
         $this->assertSame(
             'Video resolution 3840x2160 exceeds your tariff limit of 1920x1080.',
             VideoMetadataInvalid::resolutionExceedsLimit(3840, 2160, 1920, 1080)->getMessage(),
         );
     }
 
+    /** VideoSizeExceedsQuota содержит фактический и лимитный размер в сообщении. */
     public function testVideoSizeExceedsQuotaMessage(): void
     {
         $exception = VideoSizeExceedsQuota::fromSize(2048.5, 1024.0);
@@ -153,6 +166,7 @@ final class VideoExceptionTest extends TestCase
         );
     }
 
+    /** InvalidRealtimeNotification имеет пять фабричных методов с правильными сообщениями. */
     public function testInvalidRealtimeNotificationMessages(): void
     {
         $this->assertSame(

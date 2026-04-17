@@ -14,8 +14,13 @@ use App\Domain\Video\ValueObject\VideoTitle;
 use PHPUnit\Framework\TestCase;
 use App\Domain\Shared\ValueObject\Uuid;
 
+/**
+ * Tests Video entity — create/reconstitute, updateMeta, changeTitle, markDeleted, clearSourceKey,
+ * size/duration accessors и защита от операций над удалённым видео.
+ */
 final class VideoTest extends TestCase
 {
+    /** reconstitute() сохраняет все поля; duration() читается из meta['duration']. */
     public function testCreateInitializesAllFields(): void
     {
         $id = Uuid::fromString('99999999-9999-4999-8999-999999999999');
@@ -39,6 +44,7 @@ final class VideoTest extends TestCase
         $this->assertNull($video->updatedAt());
     }
 
+    /** create() устанавливает id = null и автоматически заполняет createdAt. */
     public function testCreateInitializesWithoutIdAndWithDates(): void
     {
         $video = Video::create(
@@ -51,6 +57,7 @@ final class VideoTest extends TestCase
         $this->assertNotNull($video->createdAt());
     }
 
+    /** updateMeta() объединяет новые ключи с существующими и обновляет updatedAt. */
     public function testUpdateMetaMergesTopLevelKeysAndSetsUpdatedAt(): void
     {
         $video = Video::reconstitute(
@@ -70,6 +77,7 @@ final class VideoTest extends TestCase
         $this->assertNotNull($video->updatedAt());
     }
 
+    /** updateMeta() перезаписывает существующий ключ новым значением. */
     public function testUpdateMetaOverridesExistingTopLevelKey(): void
     {
         $video = Video::reconstitute(
@@ -86,6 +94,7 @@ final class VideoTest extends TestCase
         $this->assertSame(55.7, $video->duration());
     }
 
+    /** markDeleted() помечает видео удалённым, если нет активных задач транскодирования. */
     public function testMarkDeletedMarksVideoDeletedWhenNoTranscodingTasks(): void
     {
         $video = Video::reconstitute(
@@ -110,6 +119,7 @@ final class VideoTest extends TestCase
         $this->assertTrue(($video->meta()['preview'] ?? false));
     }
 
+    /** markDeleted() на уже удалённом видео бросает VideoAlreadyDeleted. */
     public function testMarkDeletedThrowsWhenVideoAlreadyDeleted(): void
     {
         $video = Video::reconstitute(
@@ -126,6 +136,7 @@ final class VideoTest extends TestCase
         $video->markDeleted([]);
     }
 
+    /** markDeleted() бросает VideoHasTranscodingTasks, если есть задача в статусе isTranscoding(). */
     public function testMarkDeletedThrowsWhenTranscodingTaskExists(): void
     {
         $video = Video::create(
@@ -144,6 +155,7 @@ final class VideoTest extends TestCase
         $video->markDeleted([$task]);
     }
 
+    /** clearSourceKey() обнуляет meta['sourceKey'] и обновляет updatedAt. */
     public function testClearSourceKeySetsSourceKeyToNull(): void
     {
         $video = Video::reconstitute(
@@ -161,6 +173,7 @@ final class VideoTest extends TestCase
         $this->assertNotNull($video->updatedAt());
     }
 
+    /** changeTitle() обновляет заголовок и устанавливает updatedAt. */
     public function testChangeTitleUpdatesTitle(): void
     {
         $video = Video::create(
@@ -175,6 +188,7 @@ final class VideoTest extends TestCase
         $this->assertNotNull($video->updatedAt());
     }
 
+    /** changeTitle() на удалённом видео бросает VideoAlreadyDeleted. */
     public function testChangeTitleOnDeletedVideoThrows(): void
     {
         $video = Video::reconstitute(
@@ -191,6 +205,7 @@ final class VideoTest extends TestCase
         $video->changeTitle(new VideoTitle('New'));
     }
 
+    /** updateMeta() на удалённом видео бросает VideoAlreadyDeleted. */
     public function testUpdateMetaOnDeletedVideoThrows(): void
     {
         $video = Video::reconstitute(
@@ -207,6 +222,7 @@ final class VideoTest extends TestCase
         $video->updateMeta(['key' => 'value']);
     }
 
+    /** duration() возвращает null, если meta['duration'] отсутствует. */
     public function testDurationReturnsNullWhenNotInMeta(): void
     {
         $video = Video::create(
@@ -218,6 +234,7 @@ final class VideoTest extends TestCase
         $this->assertNull($video->duration());
     }
 
+    /** size() возвращает значение из meta['size']. */
     public function testSizeReturnsValueFromMeta(): void
     {
         $video = Video::reconstitute(
@@ -232,6 +249,7 @@ final class VideoTest extends TestCase
         $this->assertSame(104857600, $video->size());
     }
 
+    /** size() возвращает null, если meta['size'] отсутствует. */
     public function testSizeReturnsNullWhenNotInMeta(): void
     {
         $video = Video::create(
@@ -243,9 +261,9 @@ final class VideoTest extends TestCase
         $this->assertNull($video->size());
     }
 
+    /** clearSourceKey() не имеет защиты assertNotDeleted — работает даже на удалённом видео. */
     public function testClearSourceKeyOnDeletedVideoDoesNotThrow(): void
     {
-        // clearSourceKey has no assertNotDeleted guard — should succeed even on deleted video
         $video = Video::reconstitute(
             new VideoTitle('Deleted source video'),
             new FileExtension('mp4'),
@@ -260,5 +278,32 @@ final class VideoTest extends TestCase
 
         $this->assertNull($video->meta()['sourceKey']);
     }
-}
 
+    /** markDeleted() с завершённой (COMPLETED) задачей завершается успешно. */
+    public function testMarkDeletedSucceedsWhenOnlyCompletedTasksExist(): void
+    {
+        $video = Video::reconstitute(
+            new VideoTitle('Completed tasks video'),
+            new FileExtension('mp4'),
+            Uuid::fromString('44444444-4444-4444-8444-444444444441'),
+            [],
+            VideoDates::create(),
+            Uuid::fromString('44444444-4444-4444-8444-444444444442'),
+        );
+
+        // Завершённая задача не блокирует удаление
+        $task = Task::reconstitute(
+            Uuid::fromString('44444444-4444-4444-8444-444444444442'),
+            Uuid::fromString('44444444-4444-4444-8444-444444444443'),
+            Uuid::fromString('44444444-4444-4444-8444-444444444444'),
+            \App\Domain\Video\ValueObject\TaskStatus::COMPLETED,
+            new \App\Domain\Video\ValueObject\Progress(100),
+            \App\Domain\Video\ValueObject\TaskDates::create(),
+            Uuid::fromString('44444444-4444-4444-8444-444444444445'),
+        );
+
+        $video->markDeleted([$task]);
+
+        $this->assertTrue($video->isDeleted());
+    }
+}

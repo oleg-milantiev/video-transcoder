@@ -7,8 +7,12 @@ namespace App\Tests\Domain\User\ValueObject;
 use App\Domain\User\ValueObject\TariffStorageGb;
 use PHPUnit\Framework\TestCase;
 
+/**
+ * Tests TariffStorageGb — квота хранилища в гигабайтах; должна быть > 0.
+ */
 final class TariffStorageGbTest extends TestCase
 {
+    /** Положительное значение принимается и возвращается. */
     public function testCreatesValidStorage(): void
     {
         $vo = new TariffStorageGb(100.0);
@@ -16,6 +20,7 @@ final class TariffStorageGbTest extends TestCase
         $this->assertSame(100.0, $vo->value());
     }
 
+    /** Нуль вызывает DomainException. */
     public function testThrowsOnZero(): void
     {
         $this->expectException(\DomainException::class);
@@ -23,6 +28,7 @@ final class TariffStorageGbTest extends TestCase
         new TariffStorageGb(0.0);
     }
 
+    /** Отрицательное значение вызывает DomainException. */
     public function testThrowsOnNegative(): void
     {
         $this->expectException(\DomainException::class);
@@ -30,6 +36,7 @@ final class TariffStorageGbTest extends TestCase
         new TariffStorageGb(-1.0);
     }
 
+    /** Два объекта с одинаковым значением равны; с разными — нет. */
     public function testEquals(): void
     {
         $a = new TariffStorageGb(50.0);

@@ -7,8 +7,12 @@ namespace App\Tests\Domain\User\ValueObject;
 use App\Domain\User\ValueObject\UserEmail;
 use PHPUnit\Framework\TestCase;
 
+/**
+ * Tests UserEmail — нормализация email (lowercase + trim), валидация формата и длины, equals().
+ */
 final class UserEmailTest extends TestCase
 {
+    /** Email нормализуется (lowercase + trim) и возвращается через value() и __toString(). */
     public function testNormalizesEmail(): void
     {
         $email = new UserEmail('  John.Doe@Example.COM  ');
@@ -17,6 +21,7 @@ final class UserEmailTest extends TestCase
         $this->assertSame('john.doe@example.com', (string) $email);
     }
 
+    /** Некорректный формат вызывает DomainException. */
     public function testThrowsOnInvalidEmail(): void
     {
         $this->expectException(\DomainException::class);
@@ -24,6 +29,7 @@ final class UserEmailTest extends TestCase
         new UserEmail('not-an-email');
     }
 
+    /** Пустая (пробельная) строка вызывает DomainException. */
     public function testThrowsOnEmptyEmail(): void
     {
         $this->expectException(\DomainException::class);
@@ -31,6 +37,7 @@ final class UserEmailTest extends TestCase
         new UserEmail('   ');
     }
 
+    /** Email длиннее максимально допустимой длины вызывает DomainException. */
     public function testThrowsOnTooLongEmail(): void
     {
         $this->expectException(\DomainException::class);
@@ -39,6 +46,7 @@ final class UserEmailTest extends TestCase
         new UserEmail(str_repeat('a', 175) . '@b.com');
     }
 
+    /** Два объекта с одинаковым значением равны; с разными — нет. */
     public function testEquals(): void
     {
         $a = new UserEmail('user@example.com');

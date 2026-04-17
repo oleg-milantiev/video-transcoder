@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Tests\Domain\Video\ValueObject;
+namespace App\Tests\Domain\Video\ValueObject;
 
 use App\Domain\Video\Exception\InvalidRealtimeNotification;
 use App\Domain\Video\ValueObject\RealtimeNotification;
@@ -10,8 +10,13 @@ use App\Domain\Video\ValueObject\RealtimeNotificationLevel;
 use App\Domain\Video\ValueObject\RealtimeNotificationPosition;
 use PHPUnit\Framework\TestCase;
 
+/**
+ * Tests RealtimeNotification — создание уведомления с валидацией title, html, timerMs, imageUrl
+ * и нормализация imageAlt (по умолчанию = title).
+ */
 final class RealtimeNotificationTest extends TestCase
 {
+    /** Все поля сохраняются; imageAlt по умолчанию равен title. */
     public function testCreatesNotificationWithValidData(): void
     {
         $notification = RealtimeNotification::create(
@@ -31,6 +36,7 @@ final class RealtimeNotificationTest extends TestCase
         $this->assertSame('Upload completed', $notification->imageAlt());
     }
 
+    /** Пустой (пробельный) title бросает InvalidRealtimeNotification. */
     public function testThrowsWhenTitleIsEmpty(): void
     {
         $this->expectException(InvalidRealtimeNotification::class);
@@ -42,6 +48,7 @@ final class RealtimeNotificationTest extends TestCase
         );
     }
 
+    /** Пустой (пробельный) html бросает InvalidRealtimeNotification. */
     public function testThrowsWhenHtmlIsEmpty(): void
     {
         $this->expectException(InvalidRealtimeNotification::class);
@@ -53,6 +60,7 @@ final class RealtimeNotificationTest extends TestCase
         );
     }
 
+    /** timerMs > MAX_TIMER_MS бросает InvalidRealtimeNotification. */
     public function testThrowsOnInvalidTimer(): void
     {
         $this->expectException(InvalidRealtimeNotification::class);
@@ -65,6 +73,7 @@ final class RealtimeNotificationTest extends TestCase
         );
     }
 
+    /** imageUrl, не являющийся абсолютным URL или путём, бросает InvalidRealtimeNotification. */
     public function testThrowsOnInvalidImageUrl(): void
     {
         $this->expectException(InvalidRealtimeNotification::class);
@@ -77,6 +86,7 @@ final class RealtimeNotificationTest extends TestCase
         );
     }
 
+    /** title длиннее 140 символов бросает InvalidRealtimeNotification. */
     public function testThrowsWhenTitleTooLong(): void
     {
         $this->expectException(InvalidRealtimeNotification::class);
@@ -88,6 +98,7 @@ final class RealtimeNotificationTest extends TestCase
         );
     }
 
+    /** html() возвращает переданный HTML. */
     public function testHtmlGetterReturnsHtml(): void
     {
         $notification = RealtimeNotification::create(
@@ -99,6 +110,7 @@ final class RealtimeNotificationTest extends TestCase
         $this->assertSame('<b>Content</b>', $notification->html());
     }
 
+    /** null imageUrl даёт null imageUrl и null imageAlt. */
     public function testNullImageUrlProducesNullImageAlt(): void
     {
         $notification = RealtimeNotification::create(
@@ -112,6 +124,7 @@ final class RealtimeNotificationTest extends TestCase
         $this->assertNull($notification->imageAlt());
     }
 
+    /** Явно переданный imageAlt используется вместо title. */
     public function testExplicitImageAltIsUsedWhenProvided(): void
     {
         $notification = RealtimeNotification::create(
@@ -125,6 +138,7 @@ final class RealtimeNotificationTest extends TestCase
         $this->assertSame('Custom alt text', $notification->imageAlt());
     }
 
+    /** Пустая пробельная строка imageUrl нормализуется в null. */
     public function testEmptyStringImageUrlTreatedAsNull(): void
     {
         $notification = RealtimeNotification::create(

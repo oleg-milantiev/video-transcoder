@@ -12,8 +12,13 @@ use App\Domain\Video\ValueObject\Resolution;
 use PHPUnit\Framework\TestCase;
 use App\Domain\Shared\ValueObject\Uuid;
 
+/**
+ * Tests Preset entity — create/constructor, rename, changeOutput и бизнес-правила совместимости
+ * (4K требует bitrate ≥ 8, AV1 требует bitrate ≥ 1).
+ */
 final class PresetTest extends TestCase
 {
+    /** create() создаёт пресет без id; все поля доступны через геттеры. */
     public function testCreateInitializesPresetWithoutId(): void
     {
         $preset = Preset::create(
@@ -31,6 +36,7 @@ final class PresetTest extends TestCase
         $this->assertSame(5.0, $preset->bitrate()->value());
     }
 
+    /** rename() обновляет заголовок, id остаётся неизменным. */
     public function testRenameUpdatesTitle(): void
     {
         $preset = new Preset(
@@ -47,6 +53,7 @@ final class PresetTest extends TestCase
         $this->assertSame('Updated', $preset->title()->value());
     }
 
+    /** changeOutput() обновляет разрешение, кодек и битрейт. */
     public function testChangeOutputUpdatesFormat(): void
     {
         $preset = new Preset(
@@ -68,6 +75,7 @@ final class PresetTest extends TestCase
         $this->assertSame(9.5, $preset->bitrate()->value());
     }
 
+    /** 4K-разрешение с bitrate < 8 бросает DomainException (инвариант совместимости). */
     public function testThrowsWhen4kBitrateIsTooLow(): void
     {
         $this->expectException(\DomainException::class);
@@ -81,6 +89,7 @@ final class PresetTest extends TestCase
         );
     }
 
+    /** AV1-кодек с bitrate < 1 бросает DomainException (инвариант совместимости). */
     public function testThrowsWhenAv1BitrateIsTooLow(): void
     {
         $this->expectException(\DomainException::class);
@@ -94,4 +103,3 @@ final class PresetTest extends TestCase
         );
     }
 }
-

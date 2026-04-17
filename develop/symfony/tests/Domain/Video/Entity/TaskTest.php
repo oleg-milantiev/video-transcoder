@@ -12,8 +12,13 @@ use App\Domain\Video\ValueObject\TaskStatus;
 use PHPUnit\Framework\TestCase;
 use App\Domain\Shared\ValueObject\Uuid;
 
+/**
+ * Tests Task entity — полный жизненный цикл задачи: create/reconstitute, start, updateProgress,
+ * fail, cancel, restart, markDeleted, updateMeta, assignId, clearOutput/clearSizeExpected.
+ */
 final class TaskTest extends TestCase
 {
+    /** create() создаёт задачу в статусе PENDING без id и с пустой meta. */
     public function testCreateInitializesPendingTaskWithDefaults(): void
     {
         $task = Task::create($this->videoId(), $this->presetId(), $this->userId());
@@ -26,6 +31,7 @@ final class TaskTest extends TestCase
         $this->assertNull($task->updatedAt());
     }
 
+    /** canStart() требует статус STARTING и положительную длительность видео. */
     public function testCanStartDependsOnStatusAndDuration(): void
     {
         $task = $this->startingTask();
@@ -40,6 +46,7 @@ final class TaskTest extends TestCase
         $this->assertFalse($task->canStart(12.5));
     }
 
+    /** start() переводит задачу в PROCESSING и заполняет startedAt/updatedAt. */
     public function testStartSwitchesToProcessingAndSetsDates(): void
     {
         $task = $this->startingTask();
@@ -51,6 +58,7 @@ final class TaskTest extends TestCase
         $this->assertNotNull($task->updatedAt());
     }
 
+    /** Повторный вызов start() на уже запущенной задаче бросает DomainException. */
     public function testStartTwiceThrows(): void
     {
         $task = $this->startingTask();
@@ -60,6 +68,7 @@ final class TaskTest extends TestCase
         $task->start(12.5);
     }
 
+    /** updateProgress(100) переводит задачу в COMPLETED и обновляет updatedAt. */
     public function testUpdateProgressToCompleteMarksTaskCompleted(): void
     {
         $task = $this->startingTask();
@@ -72,6 +81,7 @@ final class TaskTest extends TestCase
         $this->assertNotNull($task->updatedAt());
     }
 
+    /** fail() переводит задачу в FAILED. */
     public function testFailMarksTaskFailed(): void
     {
         $task = $this->startingTask();
@@ -82,6 +92,19 @@ final class TaskTest extends TestCase
         $this->assertSame(TaskStatus::FAILED, $task->status());
     }
 
+    /** fail() работает в статусах PENDING и STARTING (не только PROCESSING). */
+    public function testFailOnPendingAndStartingTaskMarksFailed(): void
+    {
+        $pending = Task::create($this->videoId(), $this->presetId(), $this->userId());
+        $pending->fail();
+        $this->assertSame(TaskStatus::FAILED, $pending->status());
+
+        $starting = $this->startingTask();
+        $starting->fail();
+        $this->assertSame(TaskStatus::FAILED, $starting->status());
+    }
+
+    /** cancel() переводит задачу в CANCELLED из статусов PENDING и PROCESSING. */
     public function testCancelMarksTaskCancelledForPendingAndProcessing(): void
     {
         $pendingTask = Task::create($this->videoId(), $this->presetId(), $this->userId());
@@ -94,6 +117,7 @@ final class TaskTest extends TestCase
         $this->assertSame(TaskStatus::CANCELLED, $processingTask->status());
     }
 
+    /** cancel() на завершённой (COMPLETED) задаче бросает DomainException. */
     public function testCancelCompletedTaskThrows(): void
     {
         $task = $this->startingTask();
@@ -104,6 +128,7 @@ final class TaskTest extends TestCase
         $task->cancel();
     }
 
+    /** updateMeta() объединяет новые ключи с существующими и обновляет updatedAt. */
     public function testUpdateMetaAddsNewKeysAndKeepsExistingOnes(): void
     {
         $task = Task::create($this->videoId(), $this->presetId(), $this->userId());
@@ -122,6 +147,7 @@ final class TaskTest extends TestCase
         $this->assertNotNull($task->updatedAt());
     }
 
+    /** updateMeta() перезаписывает существующий ключ. */
     public function testUpdateMetaOverridesSameTopLevelKey(): void
     {
         $task = Task::create($this->videoId(), $this->presetId(), $this->userId());
@@ -132,6 +158,7 @@ final class TaskTest extends TestCase
         $this->assertSame('new.mp4', $task->meta()['output']);
     }
 
+    /** start() с null или нулевой длительностью бросает DomainException. */
     public function testStartWithoutValidDurationThrows(): void
     {
         $task = $this->startingTask();
@@ -140,6 +167,7 @@ final class TaskTest extends TestCase
         $task->start(null);
     }
 
+    /** updateProgress() в статусе, отличном от PROCESSING, бросает DomainException. */
     public function testUpdateProgressBeforeStartThrows(): void
     {
         $task = Task::create($this->videoId(), $this->presetId(), $this->userId());
@@ -148,6 +176,7 @@ final class TaskTest extends TestCase
         $task->updateProgress(new Progress(1));
     }
 
+    /** updateMeta() на завершённой задаче (COMPLETED) бросает DomainException. */
     public function testUpdateMetaOnCompletedTaskThrows(): void
     {
         $task = $this->startingTask();
@@ -158,27 +187,23 @@ final class TaskTest extends TestCase
         $task->updateMeta(['output' => 'completed.mp4']);
     }
 
+    /** canStart() возвращает true только для статуса STARTING. */
     public function testCanStartOnlyForStartingStatus(): void
     {
         $this->assertFalse(Task::create($this->videoId(), $this->presetId(), $this->userId())->canStart(12.5));
-
         $this->assertTrue($this->startingTask()->canStart(12.5));
 
-        $failedTask = Task::reconstitute(
-            $this->videoId(), $this->presetId(), $this->userId(),
-            TaskStatus::FAILED, new Progress(0), TaskDates::create(),
-            Uuid::fromString('dddddddd-dddd-4ddd-8ddd-dddddddddddd'),
-        );
-        $this->assertFalse($failedTask->canStart(12.5));
-
-        $cancelledTask = Task::reconstitute(
-            $this->videoId(), $this->presetId(), $this->userId(),
-            TaskStatus::CANCELLED, new Progress(0), TaskDates::create(),
-            Uuid::fromString('dddddddd-dddd-4ddd-8ddd-dddddddddddd'),
-        );
-        $this->assertFalse($cancelledTask->canStart(12.5));
+        foreach ([TaskStatus::FAILED, TaskStatus::CANCELLED] as $status) {
+            $task = Task::reconstitute(
+                $this->videoId(), $this->presetId(), $this->userId(),
+                $status, new Progress(0), TaskDates::create(),
+                Uuid::fromString('dddddddd-dddd-4ddd-8ddd-dddddddddddd'),
+            );
+            $this->assertFalse($task->canStart(12.5));
+        }
     }
 
+    /** markDeleted() переводит задачу в статус DELETED и isDeleted() == true. */
     public function testMarkDeletedSetsDeletedStatus(): void
     {
         $task = Task::create($this->videoId(), $this->presetId(), $this->userId());
@@ -189,6 +214,7 @@ final class TaskTest extends TestCase
         $this->assertSame(TaskStatus::DELETED, $task->status());
     }
 
+    /** Повторный markDeleted() бросает TaskAlreadyDeleted. */
     public function testMarkDeletedTwiceThrows(): void
     {
         $task = Task::create($this->videoId(), $this->presetId(), $this->userId());
@@ -198,6 +224,7 @@ final class TaskTest extends TestCase
         $task->markDeleted();
     }
 
+    /** Любая мутирующая операция на удалённой задаче бросает TaskAlreadyDeleted. */
     public function testCannotUpdateDeletedTask(): void
     {
         $task = Task::create($this->videoId(), $this->presetId(), $this->userId());
@@ -207,6 +234,7 @@ final class TaskTest extends TestCase
         $task->updateMeta(['x' => 'y']);
     }
 
+    /** reconstitute() восстанавливает все поля из персистентного слоя. */
     public function testReconstituteSetsAllFields(): void
     {
         $id = Uuid::fromString('dddddddd-dddd-4ddd-8ddd-dddddddddddd');
@@ -233,6 +261,7 @@ final class TaskTest extends TestCase
         $this->assertSame($this->userId()->toRfc4122(), $task->userId()->toRfc4122());
     }
 
+    /** reconstitute() с TaskStatus::DELETED устанавливает isDeleted() == true. */
     public function testReconstitutedTaskWithDeletedStatusIsDeleted(): void
     {
         $task = Task::reconstitute(
@@ -250,6 +279,7 @@ final class TaskTest extends TestCase
         $this->assertTrue($task->isDeleted());
     }
 
+    /** canStart() возвращает false для удалённой задачи. */
     public function testCanStartReturnsFalseForDeletedTask(): void
     {
         $task = Task::create($this->videoId(), $this->presetId(), $this->userId());
@@ -258,6 +288,7 @@ final class TaskTest extends TestCase
         $this->assertFalse($task->canStart(12.5));
     }
 
+    /** restart() после cancel() переводит задачу обратно в PENDING с нулевым прогрессом. */
     public function testRestartAfterCancelSetsPendingStatus(): void
     {
         $task = Task::create($this->videoId(), $this->presetId(), $this->userId());
@@ -268,6 +299,7 @@ final class TaskTest extends TestCase
         $this->assertSame(0, $task->progress()->value());
     }
 
+    /** restart() сохраняет startedAt предыдущего запуска (не обнуляет). */
     public function testRestartPreservesStartedAt(): void
     {
         $task = $this->startingTask();
@@ -282,11 +314,11 @@ final class TaskTest extends TestCase
         $this->assertSame($firstStartedAt, $task->startedAt(), 'startedAt must never be erased');
     }
 
+    /** Повторный start() после restart() обновляет startedAt на новое значение. */
     public function testSecondStartAfterRestartUpdatesStartedAt(): void
     {
         $knownStartedAt = new \DateTimeImmutable('2026-03-18 10:05:00');
 
-        // Task already has startedAt from a previous run, now back in STARTING
         $task = Task::reconstitute(
             videoId: $this->videoId(),
             presetId: $this->presetId(),
@@ -305,10 +337,10 @@ final class TaskTest extends TestCase
 
         $this->assertSame(TaskStatus::PROCESSING, $task->status());
         $this->assertNotNull($task->startedAt());
-        // startedAt was overwritten with a brand-new DateTimeImmutable — different reference
         $this->assertNotSame($knownStartedAt, $task->startedAt());
     }
 
+    /** restart() после fail() переводит задачу в PENDING с нулевым прогрессом. */
     public function testRestartAfterFailSetsPendingStatus(): void
     {
         $task = Task::create($this->videoId(), $this->presetId(), $this->userId());
@@ -319,6 +351,7 @@ final class TaskTest extends TestCase
         $this->assertSame(0, $task->progress()->value());
     }
 
+    /** restart() в статусе PENDING бросает DomainException. */
     public function testRestartOnPendingTaskThrows(): void
     {
         $task = Task::create($this->videoId(), $this->presetId(), $this->userId());
@@ -327,6 +360,7 @@ final class TaskTest extends TestCase
         $task->restart();
     }
 
+    /** fail() на завершённой (COMPLETED) задаче бросает DomainException. */
     public function testFailOnFinishedTaskThrows(): void
     {
         $task = $this->startingTask();
@@ -337,6 +371,7 @@ final class TaskTest extends TestCase
         $task->fail();
     }
 
+    /** canBeCancelled() возвращает false для удалённой задачи. */
     public function testCanBeCancelledReturnsFalseForDeletedTask(): void
     {
         $task = Task::create($this->videoId(), $this->presetId(), $this->userId());
@@ -345,6 +380,7 @@ final class TaskTest extends TestCase
         $this->assertFalse($task->canBeCancelled());
     }
 
+    /** assignId() устанавливает id на новую задачу. */
     public function testAssignIdSetsId(): void
     {
         $task = Task::create($this->videoId(), $this->presetId(), $this->userId());
@@ -355,6 +391,7 @@ final class TaskTest extends TestCase
         $this->assertSame($id, $task->id());
     }
 
+    /** Повторный assignId() с тем же id не бросает исключение. */
     public function testAssignSameIdDoesNotThrow(): void
     {
         $task = Task::create($this->videoId(), $this->presetId(), $this->userId());
@@ -366,6 +403,7 @@ final class TaskTest extends TestCase
         $this->assertSame($id, $task->id());
     }
 
+    /** assignId() с другим id бросает DomainException. */
     public function testAssignDifferentIdThrows(): void
     {
         $task = Task::create($this->videoId(), $this->presetId(), $this->userId());
@@ -378,6 +416,7 @@ final class TaskTest extends TestCase
         $task->assignId($id2);
     }
 
+    /** clearOutput() устанавливает meta['output'] в null. */
     public function testClearOutputSetsOutputToNull(): void
     {
         $task = Task::create($this->videoId(), $this->presetId(), $this->userId());
@@ -388,6 +427,7 @@ final class TaskTest extends TestCase
         $this->assertNull($task->meta()['output']);
     }
 
+    /** clearSizeExpected() удаляет ключ sizeExpected из meta, не затрагивая остальные. */
     public function testClearSizeExpectedRemovesKey(): void
     {
         $task = Task::create($this->videoId(), $this->presetId(), $this->userId());
@@ -400,6 +440,7 @@ final class TaskTest extends TestCase
         $this->assertNotNull($task->updatedAt());
     }
 
+    /** canBeCancelled() возвращает true для статуса STARTING. */
     public function testCanBeCancelledReturnsTrueForStartingStatus(): void
     {
         $task = $this->startingTask(); // status = STARTING
@@ -407,6 +448,7 @@ final class TaskTest extends TestCase
         $this->assertTrue($task->canBeCancelled());
     }
 
+    /** cancel() успешно отменяет задачу в статусе STARTING. */
     public function testCancelStartingTaskSucceeds(): void
     {
         $task = $this->startingTask();
@@ -415,6 +457,8 @@ final class TaskTest extends TestCase
 
         $this->assertSame(TaskStatus::CANCELLED, $task->status());
     }
+
+    // ── helpers ──────────────────────────────────────────────────────────────
 
     private function startingTask(): Task
     {

@@ -7,8 +7,12 @@ namespace App\Tests\Domain\User\ValueObject;
 use App\Domain\User\ValueObject\TariffDelay;
 use PHPUnit\Framework\TestCase;
 
+/**
+ * Tests TariffDelay — задержка между задачами в секундах; 0 допустим, отрицательные — нет.
+ */
 final class TariffDelayTest extends TestCase
 {
+    /** Нулевая задержка (без ограничений) допустима. */
     public function testCreatesValidDelay(): void
     {
         $delay = new TariffDelay(0);
@@ -16,6 +20,7 @@ final class TariffDelayTest extends TestCase
         $this->assertSame(0, $delay->value());
     }
 
+    /** Отрицательная задержка вызывает DomainException. */
     public function testThrowsOnNegativeDelay(): void
     {
         $this->expectException(\DomainException::class);
@@ -23,6 +28,7 @@ final class TariffDelayTest extends TestCase
         new TariffDelay(-1);
     }
 
+    /** Два объекта с одинаковым значением равны; с разными — нет. */
     public function testEquals(): void
     {
         $a = new TariffDelay(30);
@@ -33,4 +39,3 @@ final class TariffDelayTest extends TestCase
         $this->assertFalse($a->equals($c));
     }
 }
-

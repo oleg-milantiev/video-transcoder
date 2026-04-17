@@ -2,14 +2,19 @@
 
 declare(strict_types=1);
 
-namespace Tests\Domain\Video\ValueObject;
+namespace App\Tests\Domain\Video\ValueObject;
 
 use App\Domain\Video\Exception\InvalidTaskDates;
 use App\Domain\Video\ValueObject\TaskDates;
 use PHPUnit\Framework\TestCase;
 
-class TaskDatesTest extends TestCase
+/**
+ * Tests TaskDates — иммутабельный объект дат задачи; create, markStarted, touch, fromPersistence
+ * и валидация хронологического порядка дат.
+ */
+final class TaskDatesTest extends TestCase
 {
+    /** create() устанавливает только createdAt; startedAt и updatedAt == null. */
     public function testCreateInitializesOnlyCreatedAt(): void
     {
         $createdAt = new \DateTimeImmutable('2026-03-18 10:00:00');
@@ -21,6 +26,7 @@ class TaskDatesTest extends TestCase
         $this->assertNull($dates->updatedAt());
     }
 
+    /** markStarted() устанавливает startedAt и updatedAt на одно время. */
     public function testMarkStartedSetsStartedAtAndUpdatedAt(): void
     {
         $createdAt = new \DateTimeImmutable('2026-03-18 10:00:00');
@@ -32,6 +38,7 @@ class TaskDatesTest extends TestCase
         $this->assertSame($startedAt, $dates->updatedAt());
     }
 
+    /** touch() обновляет updatedAt, не изменяя startedAt. */
     public function testTouchUpdatesUpdatedAt(): void
     {
         $createdAt = new \DateTimeImmutable('2026-03-18 10:00:00');
@@ -43,6 +50,7 @@ class TaskDatesTest extends TestCase
         $this->assertNull($dates->startedAt());
     }
 
+    /** fromPersistence() бросает InvalidTaskDates, если startedAt < createdAt. */
     public function testInvalidStartedAtBeforeCreatedAtThrows(): void
     {
         $this->expectException(InvalidTaskDates::class);
@@ -54,6 +62,7 @@ class TaskDatesTest extends TestCase
         );
     }
 
+    /** fromPersistence() бросает InvalidTaskDates, если updatedAt < startedAt. */
     public function testInvalidUpdatedAtBeforeStartedAtThrows(): void
     {
         $this->expectException(InvalidTaskDates::class);
@@ -65,11 +74,12 @@ class TaskDatesTest extends TestCase
         );
     }
 
+    /** Повторный markStarted() перезаписывает startedAt на новое значение. */
     public function testMarkStartedTwiceUpdatesStartedAt(): void
     {
-        $createdAt    = new \DateTimeImmutable('2026-03-18 10:00:00');
-        $firstStart   = new \DateTimeImmutable('2026-03-18 10:05:00');
-        $secondStart  = new \DateTimeImmutable('2026-03-18 10:10:00');
+        $createdAt   = new \DateTimeImmutable('2026-03-18 10:00:00');
+        $firstStart  = new \DateTimeImmutable('2026-03-18 10:05:00');
+        $secondStart = new \DateTimeImmutable('2026-03-18 10:10:00');
 
         $dates = TaskDates::create($createdAt)
             ->markStarted($firstStart)
@@ -77,9 +87,10 @@ class TaskDatesTest extends TestCase
 
         $this->assertSame($secondStart, $dates->startedAt());
         $this->assertSame($secondStart, $dates->updatedAt());
-        $this->assertSame($createdAt,   $dates->createdAt());
+        $this->assertSame($createdAt, $dates->createdAt());
     }
 
+    /** touch() после markStarted() сохраняет startedAt без изменений. */
     public function testTouchPreservesStartedAt(): void
     {
         $createdAt = new \DateTimeImmutable('2026-03-18 10:00:00');
@@ -95,6 +106,7 @@ class TaskDatesTest extends TestCase
         $this->assertSame($updatedAt, $dates->updatedAt());
     }
 
+    /** fromPersistence() бросает InvalidTaskDates, если updatedAt < createdAt (без startedAt). */
     public function testInvalidUpdatedAtBeforeCreatedAtWithoutStartedAtThrows(): void
     {
         $this->expectException(InvalidTaskDates::class);

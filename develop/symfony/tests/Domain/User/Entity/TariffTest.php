@@ -17,8 +17,12 @@ use App\Domain\User\ValueObject\TariffVideoDuration;
 use App\Domain\User\ValueObject\TariffVideoSize;
 use PHPUnit\Framework\TestCase;
 
+/**
+ * Tests Tariff entity — конструктор с ID и без, корректность всех геттеров и __toString.
+ */
 final class TariffTest extends TestCase
 {
+    /** Все поля тарифа с явным ID сохраняются и доступны через геттеры. */
     public function testConstructsWithAllFields(): void
     {
         $id = Uuid::fromString('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa');
@@ -48,6 +52,7 @@ final class TariffTest extends TestCase
         $this->assertSame('Pro', (string) $tariff);
     }
 
+    /** Тариф без ID имеет id() === null; все остальные поля доступны. */
     public function testConstructsWithoutId(): void
     {
         $tariff = new Tariff(

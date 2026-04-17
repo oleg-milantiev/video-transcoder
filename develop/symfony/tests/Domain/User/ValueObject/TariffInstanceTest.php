@@ -7,8 +7,12 @@ namespace App\Tests\Domain\User\ValueObject;
 use App\Domain\User\ValueObject\TariffInstance;
 use PHPUnit\Framework\TestCase;
 
+/**
+ * Tests TariffInstance — максимальное число параллельных задач; ≥ 1 допустимо.
+ */
 final class TariffInstanceTest extends TestCase
 {
+    /** Минимально допустимое значение 1 принимается. */
     public function testCreatesValidInstanceCount(): void
     {
         $instance = new TariffInstance(1);
@@ -16,6 +20,7 @@ final class TariffInstanceTest extends TestCase
         $this->assertSame(1, $instance->value());
     }
 
+    /** Ноль вызывает DomainException — минимум 1 параллельная задача. */
     public function testThrowsOnZeroOrNegativeInstanceCount(): void
     {
         $this->expectException(\DomainException::class);
@@ -23,6 +28,7 @@ final class TariffInstanceTest extends TestCase
         new TariffInstance(0);
     }
 
+    /** Два объекта с одинаковым значением равны; с разными — нет. */
     public function testEquals(): void
     {
         $a = new TariffInstance(3);
@@ -33,4 +39,3 @@ final class TariffInstanceTest extends TestCase
         $this->assertFalse($a->equals($c));
     }
 }
-

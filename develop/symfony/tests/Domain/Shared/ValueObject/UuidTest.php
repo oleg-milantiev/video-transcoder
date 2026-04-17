@@ -1,14 +1,19 @@
 <?php
+
 declare(strict_types=1);
 
-namespace Tests\Unit\Domain\Shared\ValueObject;
+namespace App\Tests\Domain\Shared\ValueObject;
 
 use App\Domain\Shared\Exception\InvalidUuidException;
 use App\Domain\Shared\ValueObject\Uuid;
 use PHPUnit\Framework\TestCase;
 
-class UuidTest extends TestCase
+/**
+ * Tests Uuid value object — generation, parsing, validation, equality and Stringable behaviour.
+ */
+final class UuidTest extends TestCase
 {
+    /** Uuid::generate() возвращает валидный UUID v4. */
     public function testGenerateReturnsValidUuidV4(): void
     {
         $uuid = Uuid::generate();
@@ -20,6 +25,7 @@ class UuidTest extends TestCase
         );
     }
 
+    /** Uuid::fromString() успешно разбирает валидный UUID v4. */
     public function testFromStringCreatesValidUuid(): void
     {
         $uuidString = '123e4567-e89b-42d3-a456-426614174000';
@@ -28,6 +34,7 @@ class UuidTest extends TestCase
         $this->assertEquals($uuidString, $uuid->toString());
     }
 
+    /** Невалидный формат вызывает InvalidUuidException. */
     public function testFromStringWithInvalidFormatThrowsException(): void
     {
         $this->expectException(InvalidUuidException::class);
@@ -36,28 +43,29 @@ class UuidTest extends TestCase
         Uuid::fromString('not-a-uuid');
     }
 
+    /** UUID v1 отклоняется — принимается только v4. */
     public function testFromStringWithWrongVersionThrowsException(): void
     {
         $this->expectException(InvalidUuidException::class);
 
-        // UUID v1, not v4
         Uuid::fromString('123e4567-e89b-12d3-a456-426614174000');
     }
 
+    /** isValid() возвращает true для сгенерированного UUID v4. */
     public function testIsValidReturnsTrueForValidUuidV4(): void
     {
-        $uuidString = Uuid::generate()->toString();
-
-        $this->assertTrue(Uuid::isValid($uuidString));
+        $this->assertTrue(Uuid::isValid(Uuid::generate()->toString()));
     }
 
+    /** isValid() возвращает false для невалидных строк и UUID не-v4 версии. */
     public function testIsValidReturnsFalseForInvalidUuid(): void
     {
         $this->assertFalse(Uuid::isValid('not-a-uuid'));
         $this->assertFalse(Uuid::isValid('123e4567-e89b-12d3-a456-426614174000')); // v1
-        $this->assertFalse(Uuid::isValid('123e4567-e89b-42d3-a456-42661417400')); // короткий
+        $this->assertFalse(Uuid::isValid('123e4567-e89b-42d3-a456-42661417400'));  // короткий
     }
 
+    /** Два объекта с одинаковой строкой равны; с разными — нет. */
     public function testEquals(): void
     {
         $uuid1 = Uuid::generate();
@@ -68,6 +76,7 @@ class UuidTest extends TestCase
         $this->assertFalse($uuid1->equals($uuid3));
     }
 
+    /** __toString() и toString() возвращают одну и ту же строку. */
     public function testToString(): void
     {
         $uuidString = Uuid::generate()->toString();
@@ -77,43 +86,36 @@ class UuidTest extends TestCase
         $this->assertEquals($uuidString, $uuid->toString());
     }
 
+    /** fromStringNullable() возвращает объект для валидного UUID. */
     public function testFromStringNullableReturnsInstanceForValidUuid(): void
     {
-        $uuidString = Uuid::generate()->toString();
-
-        $this->assertInstanceOf(Uuid::class, Uuid::fromStringNullable($uuidString));
+        $this->assertInstanceOf(Uuid::class, Uuid::fromStringNullable(Uuid::generate()->toString()));
     }
 
+    /** fromStringNullable() возвращает null для невалидной строки вместо выброса исключения. */
     public function testFromStringNullableReturnsNullForInvalidUuid(): void
     {
         $this->assertNull(Uuid::fromStringNullable('not-a-uuid'));
     }
 
+    /** equals() принимает Uuid, строку и Stringable. */
     public function testEqualsAcceptsStringAndStringable(): void
     {
         $uuid = Uuid::generate();
         $uuidString = $uuid->toString();
 
-        // equals with string
         $this->assertTrue($uuid->equals($uuidString));
 
-        // equals with Stringable
         $stringable = new class($uuidString) implements \Stringable {
-            private string $s;
-            public function __construct(string $s)
-            {
-                $this->s = $s;
-            }
-            public function __toString(): string
-            {
-                return $this->s;
-            }
+            public function __construct(private readonly string $s) {}
+            public function __toString(): string { return $this->s; }
         };
 
         $this->assertTrue($uuid->equals($stringable));
         $this->assertFalse($uuid->equals('some-other-uuid'));
     }
 
+    /** toRfc4122() возвращает ту же строку, что и toString(). */
     public function testToRfc4122ReturnsSameString(): void
     {
         $uuidString = Uuid::generate()->toString();
@@ -121,6 +123,7 @@ class UuidTest extends TestCase
         $this->assertEquals($uuidString, Uuid::fromString($uuidString)->toRfc4122());
     }
 
+    /** isValid() регистронезависим и отклоняет пустую строку. */
     public function testIsValidIsCaseInsensitiveAndRejectsEmpty(): void
     {
         $upper = strtoupper(Uuid::generate()->toString());
@@ -129,6 +132,7 @@ class UuidTest extends TestCase
         $this->assertFalse(Uuid::isValid(''));
     }
 
+    /** 10 000 последовательных Uuid::generate() не дают коллизий. */
     public function testGeneratedUuidsAreUnique(): void
     {
         $uuids = [];

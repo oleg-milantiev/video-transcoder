@@ -17,14 +17,18 @@ use App\Domain\User\ValueObject\TariffStorageHour;
 use App\Domain\User\ValueObject\TariffTitle;
 use App\Domain\User\ValueObject\TariffVideoDuration;
 use App\Domain\User\ValueObject\TariffVideoSize;
-use App\Domain\User\ValueObject\UserEmail;
-use App\Domain\User\ValueObject\UserRoles;
 use App\Domain\User\ValueObject\UserCreatedAt;
+use App\Domain\User\ValueObject\UserEmail;
 use App\Domain\User\ValueObject\UserLoginedAt;
+use App\Domain\User\ValueObject\UserRoles;
 use PHPUnit\Framework\TestCase;
 
+/**
+ * Tests User entity — конструктор, геттеры, мутации email/roles/tariff/password/loginedAt.
+ */
 final class UserTest extends TestCase
 {
+    /** Пользователь создаётся с email, ролями и паролем; hasRole() работает корректно. */
     public function testConstructsWithValueObjects(): void
     {
         $user = new User(
@@ -39,6 +43,7 @@ final class UserTest extends TestCase
         $this->assertTrue($user->hasRole('ROLE_ADMIN'));
     }
 
+    /** setPassword() с строкой оборачивает её в PasswordHash; null сбрасывает пароль. */
     public function testCanUpdatePasswordFromInfrastructureString(): void
     {
         $user = new User(
@@ -53,11 +58,12 @@ final class UserTest extends TestCase
         $this->assertNull($user->password());
     }
 
+    /** id(), passwordHash() и tariff() возвращают переданные значения. */
     public function testIdAndPasswordHashAndTariffAccessors(): void
     {
         $id = Uuid::fromString('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa');
         $hash = new PasswordHash('bcrypt-hash');
-        $tariff = new Tariff(new TariffTitle('Pro'), new TariffDelay(60), new TariffInstance(2), new TariffVideoDuration(3600), new TariffVideoSize(500.0), new TariffMaxWidth(1920), new TariffMaxHeight(1080), new TariffStorageGb(100.0), new TariffStorageHour(24));
+        $tariff = $this->makeTariff('Pro');
 
         $user = new User(
             email: new UserEmail('user@example.com'),
@@ -72,6 +78,7 @@ final class UserTest extends TestCase
         $this->assertSame($tariff, $user->tariff());
     }
 
+    /** updateTariff() заменяет текущий тариф; null разрешается. */
     public function testUpdateTariffReplacesCurrentTariff(): void
     {
         $user = new User(
@@ -81,15 +88,15 @@ final class UserTest extends TestCase
 
         $this->assertNull($user->tariff());
 
-        $tariff = new Tariff(new TariffTitle('Pro'), new TariffDelay(30), new TariffInstance(5), new TariffVideoDuration(1800), new TariffVideoSize(250.0), new TariffMaxWidth(1280), new TariffMaxHeight(720), new TariffStorageGb(50.0), new TariffStorageHour(12));
+        $tariff = $this->makeTariff('Pro');
         $user->updateTariff($tariff);
-
         $this->assertSame($tariff, $user->tariff());
 
         $user->updateTariff(null);
         $this->assertNull($user->tariff());
     }
 
+    /** changeEmail() обновляет email пользователя. */
     public function testChangeEmailUpdatesEmail(): void
     {
         $user = new User(
@@ -102,6 +109,7 @@ final class UserTest extends TestCase
         $this->assertSame('new@example.com', $user->email()->value());
     }
 
+    /** replaceRoles() полностью заменяет набор ролей. */
     public function testReplaceRolesUpdatesRoles(): void
     {
         $user = new User(
@@ -114,6 +122,7 @@ final class UserTest extends TestCase
         $this->assertSame(['ROLE_ADMIN'], $user->roles()->values());
     }
 
+    /** __toString() возвращает email пользователя. */
     public function testToStringReturnsEmail(): void
     {
         $user = new User(
@@ -124,6 +133,7 @@ final class UserTest extends TestCase
         $this->assertSame('display@example.com', (string) $user);
     }
 
+    /** createdAt автоматически устанавливается в момент конструирования. */
     public function testCreatedAtIsAutoSetOnConstruction(): void
     {
         $before = new \DateTimeImmutable();
@@ -137,6 +147,7 @@ final class UserTest extends TestCase
         $this->assertLessThanOrEqual($after, $user->createdAt()->value());
     }
 
+    /** Явно переданный createdAt сохраняется без изменений. */
     public function testCreatedAtCanBeProvidedExplicitly(): void
     {
         $dt = new \DateTimeImmutable('2024-01-01 00:00:00');
@@ -149,6 +160,7 @@ final class UserTest extends TestCase
         $this->assertSame($dt, $user->createdAt()->value());
     }
 
+    /** loginedAt() по умолчанию равен null. */
     public function testLoginedAtIsNullByDefault(): void
     {
         $user = new User(
@@ -159,6 +171,7 @@ final class UserTest extends TestCase
         $this->assertNull($user->loginedAt());
     }
 
+    /** updateLoginedAt() сохраняет дату последнего входа. */
     public function testUpdateLoginedAt(): void
     {
         $user = new User(
@@ -173,6 +186,7 @@ final class UserTest extends TestCase
         $this->assertSame($dt, $user->loginedAt()->value());
     }
 
+    /** loginedAt, переданный в конструктор, сохраняется без изменений. */
     public function testLoginedAtCanBeProvidedInConstructor(): void
     {
         $dt = new \DateTimeImmutable('2025-06-15 12:00:00');
@@ -184,5 +198,22 @@ final class UserTest extends TestCase
 
         $this->assertNotNull($user->loginedAt());
         $this->assertSame($dt, $user->loginedAt()->value());
+    }
+
+    // ── helpers ──────────────────────────────────────────────────────────────
+
+    private function makeTariff(string $title): Tariff
+    {
+        return new Tariff(
+            new TariffTitle($title),
+            new TariffDelay(30),
+            new TariffInstance(2),
+            new TariffVideoDuration(1800),
+            new TariffVideoSize(250.0),
+            new TariffMaxWidth(1280),
+            new TariffMaxHeight(720),
+            new TariffStorageGb(50.0),
+            new TariffStorageHour(12),
+        );
     }
 }
