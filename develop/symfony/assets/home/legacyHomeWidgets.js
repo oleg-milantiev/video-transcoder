@@ -33,7 +33,7 @@ export function initHomeLegacyWidgets(config) {
     const uppyConfig = {
         autoProceed: true,
         restrictions: {
-            allowedFileTypes: ['.mp4', '.mkv', '.avi', '.mov'],
+            allowedFileTypes: ['.mp4', '.mkv', '.avi', '.mov', '.3gp'],
         },
     };
 

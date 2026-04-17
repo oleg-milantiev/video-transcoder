@@ -7,7 +7,7 @@ use App\Domain\Video\Exception\IncompatibleVideoFormat;
 
 final readonly class FileExtension
 {
-    private const array ALLOWED = ['mp4', 'mkv', 'avi', 'mov'];
+    private const array ALLOWED = ['mp4', 'mkv', 'avi', 'mov', '3gp'];
     private string $value;
 
     public function __construct(string $value)

@@ -31,7 +31,7 @@ class FileExtensionTest extends TestCase
 
     public function testAllAllowedExtensionsAreAccepted(): void
     {
-        foreach (['mp4', 'mkv', 'avi', 'mov'] as $ext) {
+        foreach (['mp4', 'mkv', 'avi', 'mov', '3gp'] as $ext) {
             $this->assertSame($ext, new FileExtension($ext)->value());
         }
     }
