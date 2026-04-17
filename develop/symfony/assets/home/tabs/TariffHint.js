@@ -3,7 +3,7 @@ import { h } from 'vue';
 const GB = 1024 * 1024 * 1024;
 const MB = 1024 * 1024;
 
-function formatBytes(bytes) {
+export function formatBytes(bytes) {
     if (bytes >= GB) {
         const val = bytes / GB;
         return (Number.isInteger(val) ? val.toString() : val.toFixed(1)) + ' GB';
@@ -11,19 +11,19 @@ function formatBytes(bytes) {
     return Math.round(bytes / MB) + ' MB';
 }
 
-function computeStoragePercent(tariff) {
+export function computeStoragePercent(tariff) {
     if (!tariff || !tariff.storage) return 0;
     const max = tariff.storage.max;
     return max > 0 ? Math.round((tariff.storage.now / max) * 100) : 0;
 }
 
-function computeStorageFreeBytes(tariff) {
+export function computeStorageFreeBytes(tariff) {
     if (!tariff || !tariff.storage) return 0;
     return Math.max(0, tariff.storage.max - tariff.storage.now);
 }
 
-function computeEffectiveVideoSize(tariff) {
-    if (!tariff) return 0;
+export function computeEffectiveVideoSize(tariff) {
+    if (!tariff || !tariff.videoSize) return 0;
     const remainingBytes = computeStorageFreeBytes(tariff);
     const remainingMB = remainingBytes / MB;
     const videoSizeMB = tariff.videoSize;
@@ -34,7 +34,7 @@ function computeEffectiveVideoSize(tariff) {
     return videoSizeMB;
 }
 
-function isStorageLow(tariff) {
+export function isStorageLow(tariff) {
     if (!tariff) return false;
     const remainingBytes = computeStorageFreeBytes(tariff);
     const remainingMB = remainingBytes / MB;
