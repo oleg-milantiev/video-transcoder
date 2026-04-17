@@ -25,7 +25,6 @@ docker exec -i -e XDEBUG_MODE=coverage develop-php-1 vendor/bin/phpunit tests/ -
   - **API**: Symfony app (`develop/symfony/`) exposes REST endpoints and handles business logic.
   - **Workers**: Symfony Messenger consumers (auto-scaled) process transcoding jobs using ffmpeg.
   - **Persistence**: PostgreSQL (see `postgres.yaml`), Doctrine ORM, entities in `Domain`/`Infrastructure`.
-  - **Persistence**: PostgreSQL (see `postgres.yaml`), Doctrine ORM, entities in `Domain`/`Infrastructure`.
   - **Messaging**: Symfony Messenger transports are Redis-based in current app config (`develop/symfony/.env`, `config/packages/messenger.yaml`); Deprecated RabbitMQ manifests are still present in `k8s/rabbitmq.yaml`.
   - **Cloud/Infra**: Terraform (`tf/`), Kubernetes manifests (`k8s/`), Docker image build contexts (`develop/docker/`).
 
@@ -35,6 +34,7 @@ docker exec -i -e XDEBUG_MODE=coverage develop-php-1 vendor/bin/phpunit tests/ -
 - **Realtime Updates**: Backend publishes Mercure updates per user/topic; frontend consumes them via `assets/home/connectMercure.js` and updates Videos/Tasks views.
 - **Role Model**: Guest (browse), User (manage own videos, submit tasks), Admin (CRUD, monitor, manage presets/tasks/users).
 - **Quotas**: S3 storage and parallel task limits per user/tariff, enforced in business logic.
+- **Google OAuth**: Login/register via Google — `GoogleController` (`/connect/google`, `/connect/google/check`) + `Infrastructure/Google/GoogleAuthenticator`. New users auto-assigned Free tariff (`TariffEntity` reference).
 
 ## Developer Workflows
 - **Build Docker Images**: `develop/docker/yc-php/build.sh`, `develop/docker/yc-ffmpeg/build.sh`, `develop/docker/yc-nginx/build.sh` (tagged, pushed to registry).
@@ -55,6 +55,9 @@ docker exec -i -e XDEBUG_MODE=coverage develop-php-1 vendor/bin/phpunit tests/ -
 - **Chunked Uploads**: Uppy + tus protocol for large file uploads, handled by `TusPhp` server.
 - **Realtime UI Sync**: `Application/Command/Mercure` + `Infrastructure/Mercure/HttpMercurePublisher` publish task/video updates; frontend listens and patches tab/detail state.
 - **Admin UI**: EasyAdmin for CRUD (see `DashboardController`, `TaskCrudController`).
+- **Tariff Page**: `TariffController` renders `/tariffs` via `tariff/index.html.twig`; frontend tariff view in `assets/home/tariff/` (render.js, view.js).
+- **Frontend Tabs**: `assets/home/tabs/` contains sub-modules for `videos/`, `upload/`, `tasks/` (each with state/actions/render), plus `TariffHint.js` and reusable `shared.js`.
+- **Application Sub-layers**: Beyond Command/Handler/DTO, the Application layer also includes `Event/`, `EventListener/`, `Factory/`, `Helper/`, `Logging/`, `Query/`, `QueryHandler/`, `Response/`, and `Service/` directories.
 
 ## Integrations & External Dependencies
 - **TusPhp**: Handles resumable uploads.
@@ -67,7 +70,7 @@ docker exec -i -e XDEBUG_MODE=coverage develop-php-1 vendor/bin/phpunit tests/ -
 - **Terraform/Kubernetes**: For cloud provisioning and orchestration.
 
 ## Key Files & Directories
-- `develop/symfony/src/` — Main backend code (DDD structure)
+- `develop/symfony/src/` — Main backend code (DDD structure); API controllers in `Presentation/Controller/Api/` (`VideoApiController`, `TaskApiController`, `AuthApiController`)
 - `develop/symfony/templates/` — Twig templates (UI)
 - `develop/symfony/assets/home/` — Vue SPA modules (state, actions, render logic)
 - `develop/symfony/assets/tests/` — Frontend unit tests (Node.js ESM)
