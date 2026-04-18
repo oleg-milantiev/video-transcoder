@@ -12,7 +12,7 @@ use App\Domain\Video\Repository\VideoRepositoryInterface;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Messenger\MessageBusInterface;
 
-final readonly class TaskRealtimeNotifier
+readonly class TaskRealtimeNotifier
 {
     public function __construct(
         #[Autowire(service: 'messenger.bus.command')]

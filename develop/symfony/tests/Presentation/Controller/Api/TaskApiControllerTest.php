@@ -8,6 +8,8 @@ use App\Application\Exception\QueryException;
 use App\Application\Logging\LogServiceInterface;
 use App\Application\Query\GetTaskListQuery;
 use App\Application\QueryHandler\QueryBus;
+use App\Application\Service\Storage\StorageRealtimeNotifier;
+use App\Application\Service\Task\TaskRealtimeNotifier;
 use App\Domain\Shared\ValueObject\Uuid;
 use App\Domain\Video\Entity\Task;
 use App\Domain\Video\Repository\TaskRepositoryInterface;
@@ -16,6 +18,7 @@ use App\Domain\Video\ValueObject\Progress;
 use App\Domain\Video\ValueObject\TaskDates;
 use App\Domain\Video\ValueObject\TaskStatus;
 use App\Infrastructure\Security\Voter\VideoAccessVoter;
+use App\Infrastructure\Task\TaskCancellationTrigger;
 use App\Tests\Domain\Entity\TaskFake;
 use App\Tests\Domain\Entity\VideoFake;
 use Symfony\Bundle\SecurityBundle\Security;
@@ -189,7 +192,7 @@ final class TaskApiControllerTest extends ApiWebTestCase
         $this->replaceService(LogServiceInterface::class, $logService);
 
         $videoRepository = $this->createMock(VideoRepositoryInterface::class);
-        $videoRepository->expects($this->exactly(2))->method('findById')->with($task->videoId())->willReturn($video);
+        $videoRepository->expects($this->once())->method('findById')->with($task->videoId())->willReturn($video);
         $this->replaceService(VideoRepositoryInterface::class, $videoRepository);
 
         $security = $this->createMock(Security::class);
@@ -198,6 +201,18 @@ final class TaskApiControllerTest extends ApiWebTestCase
             ->with(VideoAccessVoter::CAN_CANCEL_TRANSCODE, $video)
             ->willReturn(true);
         $this->replaceService(Security::class, $security);
+
+        $taskRealtimeNotifier = $this->createMock(TaskRealtimeNotifier::class);
+        $taskRealtimeNotifier->expects($this->once())->method('notifyTaskUpdated');
+        $this->replaceService(TaskRealtimeNotifier::class, $taskRealtimeNotifier);
+
+        $cancellationTrigger = $this->createMock(TaskCancellationTrigger::class);
+        $cancellationTrigger->expects($this->once())->method('request');
+        $this->replaceService(TaskCancellationTrigger::class, $cancellationTrigger);
+
+        $storageNotifier = $this->createMock(StorageRealtimeNotifier::class);
+        $storageNotifier->expects($this->once())->method('notifyStorageUpdated');
+        $this->replaceService(StorageRealtimeNotifier::class, $storageNotifier);
 
         $client->request('POST', '/api/task/' . $taskId->toRfc4122() . '/cancel');
 
@@ -224,7 +239,7 @@ final class TaskApiControllerTest extends ApiWebTestCase
         $this->replaceService(LogServiceInterface::class, $logService);
 
         $videoRepository = $this->createMock(VideoRepositoryInterface::class);
-        $videoRepository->expects($this->exactly(2))->method('findById')->with($task->videoId())->willReturn($video);
+        $videoRepository->expects($this->once())->method('findById')->with($task->videoId())->willReturn($video);
         $this->replaceService(VideoRepositoryInterface::class, $videoRepository);
 
         $security = $this->createMock(Security::class);
@@ -233,6 +248,18 @@ final class TaskApiControllerTest extends ApiWebTestCase
             ->with(VideoAccessVoter::CAN_CANCEL_TRANSCODE, $video)
             ->willReturn(true);
         $this->replaceService(Security::class, $security);
+
+        $taskRealtimeNotifier = $this->createMock(TaskRealtimeNotifier::class);
+        $taskRealtimeNotifier->expects($this->once())->method('notifyTaskUpdated');
+        $this->replaceService(TaskRealtimeNotifier::class, $taskRealtimeNotifier);
+
+        $cancellationTrigger = $this->createMock(TaskCancellationTrigger::class);
+        $cancellationTrigger->expects($this->once())->method('request');
+        $this->replaceService(TaskCancellationTrigger::class, $cancellationTrigger);
+
+        $storageNotifier = $this->createMock(StorageRealtimeNotifier::class);
+        $storageNotifier->expects($this->never())->method('notifyStorageUpdated');
+        $this->replaceService(StorageRealtimeNotifier::class, $storageNotifier);
 
         $client->request('POST', '/api/task/' . $taskId->toRfc4122() . '/cancel');
 

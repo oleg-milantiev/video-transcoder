@@ -14,9 +14,6 @@
 - int cpuCores: ограничение по кол-ву ядер ffmpeg
 
 поля в пресет:
-- new string format: формат (mp4, webm)
-- modify codec -> videoCodec
-- new audioCodec (aac, opus)
 - new tariff: default пресеты тарифа. Они же разрешённый набор форматов, видео и аудиокодеков 
 
 разрешение убрать из пресета. Иначе придётся 100500 записей делать
