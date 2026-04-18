@@ -1,4 +1,5 @@
 import { h } from 'vue';
+import { openContactUsModal } from '../contactUs.js';
 
 export const PLANS = [
     {
@@ -74,8 +75,9 @@ export function renderFeature(feature) {
 /**
  * @param {object} plan  - one entry from PLANS, optionally with isCurrent: true
  * @param {string} [colClass] - Bootstrap column class, default 'col-12 col-md-4'
+ * @param {object} [config] - SPA config (needed for Enterprise contact button)
  */
-export function renderPlanCard(plan, colClass = 'col-12 col-md-4') {
+export function renderPlanCard(plan, colClass = 'col-12 col-md-4', config = null) {
     const isEnterprise = plan.key === 'enterprise';
 
     const headerChildren = [
@@ -91,10 +93,18 @@ export function renderPlanCard(plan, colClass = 'col-12 col-md-4') {
         );
     }
 
+    const enterpriseBtnAttrs = {
+        class: `btn w-100 btn-outline-primary`,
+        type: 'button',
+    };
+    if (isEnterprise && config) {
+        enterpriseBtnAttrs.onClick = () => void openContactUsModal(config);
+    }
+
     const footerBtn = plan.isCurrent
         ? h('button', { class: 'btn btn-outline-secondary w-100', disabled: true }, 'Current plan')
-        : h('button', {
-            class: `btn w-100 ${isEnterprise ? 'btn-outline-primary' : 'btn-primary'}`,
+        : h('button', isEnterprise ? enterpriseBtnAttrs : {
+            class: `btn w-100 btn-primary`,
             type: 'button',
         }, isEnterprise ? 'Contact us' : 'Upgrade to ' + plan.name);
 

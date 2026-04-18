@@ -51,6 +51,14 @@ TWIG,
                 ],
             ]
         ],
+        'contact' => [
+            'submit' => [
+                'any' => [
+                    'template' => "✉️ Contact Us\nFrom: {{ email }}\n\n{{ message }}",
+                    'userIds' => [self::ADMIN_USER_ID],
+                ],
+            ],
+        ],
         'smoke' => [
             'result' => [
                 LogLevel::INFO => [

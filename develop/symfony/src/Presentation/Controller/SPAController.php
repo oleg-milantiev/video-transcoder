@@ -68,6 +68,7 @@ class SPAController extends AbstractController
                     'cancel' => str_replace($dummyTaskId, '__TASK_ID__', $this->generateUrl('api_task_cancel', ['id' => $dummyTaskId])),
                     'download' => str_replace($dummyTaskId, '__TASK_ID__', $this->generateUrl('task_download', ['id' => $dummyTaskId])),
                 ],
+                'contact' => $this->generateUrl('api_contact'),
             ],
             'tariff' => [
                 'title' => $user->tariff?->title,

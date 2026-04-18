@@ -6,6 +6,7 @@ import { createVideoDetailsView } from './video-details/view.js';
 import { createProfileView } from './profile/view.js';
 import { createTariffView } from './tariff/view.js';
 import { initAuth } from './apiAuth.js';
+import { initContactUs } from './contactUs.js';
 
 export function mountHomeSpa() {
     const rootElement = document.getElementById('home-spa') || document.getElementById('video-details-spa');
@@ -23,6 +24,7 @@ export function mountHomeSpa() {
         refreshUrl: config.route.refreshToken || '',
     });
     connectMercure(config, rootElement);
+    initContactUs(config);
     const HomeTabsView = createHomeTabsView(config);
     const VideoDetailsView = createVideoDetailsView(config);
     const ProfileView = createProfileView(config);

@@ -1,6 +1,5 @@
 import { h } from 'vue';
 import { PLANS, renderPlanCard } from './planCard.js';
-import { useRouter } from 'vue-router';
 
 export function renderTariffs(vm) {
     const backBtn = h('button', {
@@ -18,7 +17,7 @@ export function renderTariffs(vm) {
             backBtn,
         ]),
         h('div', { class: 'row g-4 justify-content-center' },
-            PLANS.map((plan) => renderPlanCard(plan))
+            PLANS.map((plan) => renderPlanCard(plan, 'col-12 col-md-4', vm.config))
         ),
     ]);
 }
