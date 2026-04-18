@@ -12,7 +12,7 @@ readonly class Transcode
     public static function buildCommand(TranscodeStartContextDTO $context): array
     {
         $meta = $context->task->meta();
-        if (!isset($meta['width'], $meta['height'], $meta['bitrateValue'])) {
+        if (!isset($meta['width'], $meta['height'], $meta['bitrate'])) {
             throw new \InvalidArgumentException('Missing meta data');
         }
 

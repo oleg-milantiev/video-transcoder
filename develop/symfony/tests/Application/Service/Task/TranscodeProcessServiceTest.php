@@ -34,6 +34,7 @@ final class TranscodeProcessServiceTest extends TestCase
         $preset = new PresetFake();
 
         $task->start($video->duration());
+        $task->updateMeta(['width' => 1280, 'height' => 720, 'bitrate' => 5.0]);
         $context = new TranscodeStartContextDTO(
             task: $task,
             video: $video,
@@ -112,6 +113,7 @@ final class TranscodeProcessServiceTest extends TestCase
         $preset = new PresetFake();
 
         $task->start($video->duration());
+        $task->updateMeta(['width' => 1280, 'height' => 720, 'bitrate' => 5.0]);
         $context = new TranscodeStartContextDTO(
             task: $task,
             video: $video,
@@ -170,6 +172,7 @@ final class TranscodeProcessServiceTest extends TestCase
         $preset = new PresetFake();
 
         $task->start($video->duration());
+        $task->updateMeta(['width' => 1280, 'height' => 720, 'bitrate' => 5.0]);
         $context = new TranscodeStartContextDTO(
             task: $task,
             video: $video,
@@ -213,6 +216,7 @@ final class TranscodeProcessServiceTest extends TestCase
         $video->updateMeta(['duration' => 10.0]);
         $preset = new PresetFake();
         $task->start($video->duration());
+        $task->updateMeta(['width' => 1280, 'height' => 720, 'bitrate' => 5.0]);
 
         $context = new TranscodeStartContextDTO(
             task: $task, video: $video, preset: $preset,
@@ -258,6 +262,7 @@ final class TranscodeProcessServiceTest extends TestCase
         $video->updateMeta(['duration' => 10.0]);
         $preset = new PresetFake();
         $task->start($video->duration());
+        $task->updateMeta(['width' => 1280, 'height' => 720, 'bitrate' => 5.0]);
 
         $context = new TranscodeStartContextDTO(
             task: $task, video: $video, preset: $preset,
@@ -307,6 +312,7 @@ final class TranscodeProcessServiceTest extends TestCase
         $video->updateMeta(['duration' => 10.0]);
         $preset = new PresetFake();
         $task->start($video->duration());
+        $task->updateMeta(['width' => 1280, 'height' => 720, 'bitrate' => 5.0]);
 
         $context = new TranscodeStartContextDTO(
             task: $task, video: $video, preset: $preset,
@@ -352,6 +358,7 @@ final class TranscodeProcessServiceTest extends TestCase
         $video->updateMeta(['duration' => 10.0]);
         $preset = new PresetFake();
         $task->start($video->duration());
+        $task->updateMeta(['width' => 1280, 'height' => 720, 'bitrate' => 5.0]);
 
         $context = new TranscodeStartContextDTO(
             task: $task, video: $video, preset: $preset,
@@ -399,6 +406,7 @@ final class TranscodeProcessServiceTest extends TestCase
         $video->updateMeta(['duration' => 10.0]);
         $preset = new PresetFake();
         $task->start($video->duration());
+        $task->updateMeta(['width' => 1280, 'height' => 720, 'bitrate' => 5.0]);
 
         $context = new TranscodeStartContextDTO(
             task: $task, video: $video, preset: $preset,
@@ -448,6 +456,7 @@ final class TranscodeProcessServiceTest extends TestCase
         $video->updateMeta(['duration' => 10.0]);
         $preset = new PresetFake();
         $task->start($video->duration());
+        $task->updateMeta(['width' => 1280, 'height' => 720, 'bitrate' => 5.0]);
 
         $context = new TranscodeStartContextDTO(
             task: $task, video: $video, preset: $preset,
