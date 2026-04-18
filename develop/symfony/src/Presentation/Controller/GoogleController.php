@@ -96,7 +96,7 @@ class GoogleController extends AbstractController
 
                 $this->logService->log('user', 'create', Uuid::fromString($user->id->toRfc4122()), LogLevel::INFO, 'Created User via Google', [
                     'email' => $email,
-                    'tariff' => 'Free',
+                    'tariffId' => self::TARIFF_FREE_ID,
                 ]);
             }
 

@@ -38,9 +38,9 @@ final class TelegramLogServiceTest extends TestCase
     {
         $objectId = Uuid::generate();
         $text = 'New user registered';
-        $context = ['email' => 'test@example.com', 'tariff' => 'Premium'];
+        $context = ['email' => 'test@example.com', 'tariffId' => 'some-tariff-id'];
 
-        $expectedTemplate = "📹 {{ text }}\nE-mail: {{ email }}\nTariff: {{ tariff }}";
+        $expectedTemplate = "📹 {{ text }}\nE-mail: {{ email }}\nTariff: {% if tariffAdminUrl is defined %}<a href=\"{{ tariffAdminUrl }}\">{{ tariffTitle ?? tariffId }}</a>{% elseif tariffId is defined %}{{ tariffId }}{% else %}{{ tariff ?? '' }}{% endif %}";
 
         // Mock twig to throw exception - this tests error handling
         $twigError = new SyntaxError('Template error');

@@ -22,7 +22,7 @@ final readonly class TelegramLogService implements LogServiceInterface
         'user' => [ // name
             'create' => [ // action
                 'any' => [ // level
-                    'template' => "📹 {{ text }}\nE-mail: {{ email }}\nTariff: {{ tariff }}",
+                    'template' => "📹 {{ text }}\nE-mail: {{ email }}\nTariff: {% if tariffAdminUrl is defined %}<a href=\"{{ tariffAdminUrl }}\">{{ tariffTitle ?? tariffId }}</a>{% elseif tariffId is defined %}{{ tariffId }}{% else %}{{ tariff ?? '' }}{% endif %}",
                     'userIds' => [self::ADMIN_USER_ID],
                 ],
             ],
@@ -32,9 +32,9 @@ final readonly class TelegramLogService implements LogServiceInterface
                 LogLevel::INFO => [
                     'template' => <<< TWIG
 {{ text }} ({{ uuid }})
-video: {{ videoId }}
-preset: {{ presetId }}
-user: {{ userId }}
+video: {% if videoAdminUrl is defined %}<a href="{{ videoAdminUrl }}">{{ videoTitle ?? videoId }}</a>{% else %}{{ videoId }}{% endif %}
+preset: {% if presetAdminUrl is defined %}<a href="{{ presetAdminUrl }}">{{ presetTitle ?? presetId }}</a>{% else %}{{ presetId }}{% endif %}
+user: {% if userAdminUrl is defined %}<a href="{{ userAdminUrl }}">{{ userEmail ?? userId }}</a>{% else %}{{ userId }}{% endif %}
 TWIG,
                     'userIds' => [self::ADMIN_USER_ID],
                 ],

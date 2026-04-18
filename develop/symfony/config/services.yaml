@@ -80,6 +80,12 @@ services:
     App\Infrastructure\Logging\DoctrineLogService:
         tags: ['app.logger']
 
+    # todo а это зачем?
     App\Infrastructure\Logging\TelegramLogService:
+        autowire: true
+
+    App\Infrastructure\Logging\EnrichContextLogDecorator:
+        arguments:
+            $inner: '@App\Infrastructure\Logging\TelegramLogService'
         tags: ['app.logger']
 
