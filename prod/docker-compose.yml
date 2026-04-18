@@ -113,9 +113,30 @@ services:
         environment:
             - POSTGRES_USER=yc
             - POSTGRES_PASSWORD=yc
+# todo попробовать потом
+# postgres-exporter
+#        command: postgres -c shared_preload_libraries=pg_stat_statements -c pg_stat_statements.track=all
         volumes:
             - ./postgresql:/host
             - db-data:/var/lib/postgresql/data
+
+#    postgres-exporter:
+#        image: quay.io/prometheuscommunity/postgres-exporter:latest # todo fix version
+#        environment:
+#            - DATA_SOURCE_NAME=postgresql://yc:yc@postgres:5432/postgres?sslmode=disable
+#        expose:
+#            - 9187
+#        command: --collector.stat-statements
+#        depends_on:
+#            - postgres
+#
+# prometheus config
+#scrape_configs:
+#  - job_name: 'postgres'
+#    static_configs:
+#      - targets: ['postgres-exporter:9187']
+#
+# Grafana: ID: 9628, 24298
 
     playwright:
         image: mcr.microsoft.com/playwright:v1.53.0-jammy
