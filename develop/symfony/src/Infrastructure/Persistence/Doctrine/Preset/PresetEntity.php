@@ -32,7 +32,13 @@ class PresetEntity
     public int $height;
 
     #[ORM\Column(length: 50)]
-    public string $codec;
+    public string $videoCodec;
+
+    #[ORM\Column(length: 50)]
+    public string $audioCodec;
+
+    #[ORM\Column(length: 10)]
+    public string $format;
 
     #[ORM\Column(type: 'float')]
     public float $bitrate;

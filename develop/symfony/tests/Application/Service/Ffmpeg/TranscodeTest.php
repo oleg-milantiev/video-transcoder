@@ -6,7 +6,9 @@ namespace App\Tests\Application\Service\Ffmpeg;
 
 use App\Domain\Video\Entity\Preset;
 use App\Domain\Video\ValueObject\Bitrate;
-use App\Domain\Video\ValueObject\Codec;
+use App\Domain\Video\ValueObject\VideoCodec;
+use App\Domain\Video\ValueObject\AudioCodec;
+use App\Domain\Video\ValueObject\Format;
 use App\Domain\Video\ValueObject\PresetTitle;
 use App\Domain\Video\ValueObject\Resolution;
 use App\Infrastructure\Ffmpeg\Transcode;
@@ -79,8 +81,10 @@ class TranscodeTest extends TestCase
         return new Preset(
             new PresetTitle($title),
             new Resolution($width, $height),
-            new Codec($codec),
+            new VideoCodec($codec),
             new Bitrate($bitrate),
+            new AudioCodec('aac'),
+            new Format('mp4'),
             id: Uuid::fromString('11111111-1111-4111-8111-111111111111'),
         );
     }

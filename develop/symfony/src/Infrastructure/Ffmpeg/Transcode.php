@@ -5,14 +5,14 @@ namespace App\Infrastructure\Ffmpeg;
 
 use App\Domain\Video\Entity\Preset;
 use App\Domain\Video\ValueObject\Bitrate;
-use App\Domain\Video\ValueObject\Codec;
+use App\Domain\Video\ValueObject\VideoCodec;
 
 readonly class Transcode
 {
     public static function buildCommand(string $inputPath, string $outputPath, Preset $preset): array
     {
         $resolution = $preset->resolution();
-        $codec = $preset->codec();
+        $codec = $preset->videoCodec();
         $bitrate = $preset->bitrate();
 
         return [
@@ -32,7 +32,7 @@ readonly class Transcode
         ];
     }
 
-    private static function mapCodec(Codec $codec): string
+    private static function mapCodec(VideoCodec $codec): string
     {
         return match ($codec->value()) {
             'h265' => 'libx265',

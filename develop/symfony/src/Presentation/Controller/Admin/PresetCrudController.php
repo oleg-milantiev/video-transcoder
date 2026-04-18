@@ -43,7 +43,9 @@ class PresetCrudController extends AbstractCrudController
             ->add(TextFilter::new('title'))
             ->add(NumericFilter::new('width'))
             ->add(NumericFilter::new('height'))
-            ->add(TextFilter::new('codec'))
+            ->add(TextFilter::new('videoCodec'))
+            ->add(TextFilter::new('audioCodec'))
+            ->add(TextFilter::new('format'))
             ->add(NumericFilter::new('bitrate'));
     }
 
@@ -58,7 +60,9 @@ class PresetCrudController extends AbstractCrudController
                 ->setHelp('At least 3 characters.'),
             IntegerField::new('width'),
             IntegerField::new('height'),
-            TextField::new('codec'),
+            TextField::new('videoCodec'),
+            TextField::new('audioCodec'),
+            TextField::new('format'),
             NumberField::new('bitrate', 'Bitrate (Mbps)'),
         ];
     }
