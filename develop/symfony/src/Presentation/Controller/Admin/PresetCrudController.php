@@ -9,6 +9,7 @@ use EasyCorp\Bundle\EasyAdminBundle\Config\Actions;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Crud;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Filters;
 use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractCrudController;
+use EasyCorp\Bundle\EasyAdminBundle\Field\AssociationField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\TextField;
 use EasyCorp\Bundle\EasyAdminBundle\Filter\TextFilter;
 
@@ -51,6 +52,10 @@ class PresetCrudController extends AbstractCrudController
             TextField::new('format'),
             TextField::new('videoCodec'),
             TextField::new('audioCodec'),
+            AssociationField::new('tariffs')
+                ->setLabel('Tariffs')
+                ->hideOnIndex()
+                ->setFormTypeOptions(['by_reference' => false]),
         ];
     }
 }

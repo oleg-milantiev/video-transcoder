@@ -14,12 +14,18 @@ use App\Domain\User\ValueObject\TariffStorageHour;
 use App\Domain\User\ValueObject\TariffTitle;
 use App\Domain\User\ValueObject\TariffVideoDuration;
 use App\Domain\User\ValueObject\TariffVideoSize;
+use App\Infrastructure\Persistence\Doctrine\Preset\PresetMapper;
 use Symfony\Component\Uid\UuidV4 as SymfonyUuid;
 
 class TariffMapper
 {
     public static function toDomain(TariffEntity $entity): Tariff
     {
+        $presets = [];
+        foreach ($entity->presets as $presetEntity) {
+            $presets[] = PresetMapper::toDomain($presetEntity);
+        }
+
         return new Tariff(
             title: new TariffTitle($entity->title),
             delay: new TariffDelay($entity->delay),
@@ -31,6 +37,7 @@ class TariffMapper
             storageGb: new TariffStorageGb($entity->storageGb),
             storageHour: new TariffStorageHour($entity->storageHour),
             id: $entity->id ? Uuid::fromString($entity->id->toRfc4122()) : null,
+            presets: $presets,
         );
     }
 

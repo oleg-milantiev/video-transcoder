@@ -9,6 +9,7 @@ use EasyCorp\Bundle\EasyAdminBundle\Config\Actions;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Crud;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Filters;
 use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractCrudController;
+use EasyCorp\Bundle\EasyAdminBundle\Field\AssociationField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\IntegerField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\NumberField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\TextField;
@@ -76,6 +77,10 @@ class TariffCrudController extends AbstractCrudController
                 ->setNumDecimals(2),
             IntegerField::new('storageHour', 'Storage retention (hours)')
                 ->setHelp('How many hours uploaded files are kept. At least 1.'),
+            AssociationField::new('presets')
+                ->setLabel('Presets')
+                ->hideOnIndex()
+                ->setFormTypeOptions(['by_reference' => false]),
         ];
     }
 }

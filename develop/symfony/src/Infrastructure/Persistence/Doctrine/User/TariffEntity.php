@@ -3,6 +3,9 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\Persistence\Doctrine\User;
 
+use App\Infrastructure\Persistence\Doctrine\Preset\PresetEntity;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Uid\UuidV4 as SymfonyUuid;
 use Symfony\Component\Validator\Constraints as Assert;
@@ -53,6 +56,15 @@ class TariffEntity
     #[ORM\Column]
     #[Assert\GreaterThanOrEqual(1, message: 'Storage hour must be at least 1 hour.')]
     public int $storageHour;
+
+    #[ORM\ManyToMany(targetEntity: PresetEntity::class, inversedBy: 'tariffs')]
+    #[ORM\JoinTable(name: 'tariff_preset')]
+    public Collection $presets;
+
+    public function __construct()
+    {
+        $this->presets = new ArrayCollection();
+    }
 
     public function __toString(): string
     {

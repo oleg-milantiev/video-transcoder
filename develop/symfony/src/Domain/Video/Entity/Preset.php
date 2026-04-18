@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace App\Domain\Video\Entity;
 
 use App\Domain\Shared\ValueObject\Uuid;
+use App\Domain\User\Entity\Tariff;
 use App\Domain\Video\ValueObject\AudioCodec;
 use App\Domain\Video\ValueObject\Format;
 use App\Domain\Video\ValueObject\VideoCodec;
@@ -14,14 +15,18 @@ class Preset
     private VideoCodec $videoCodec;
     private AudioCodec $audioCodec;
     private Format $format;
+    /** @var Tariff[] */
+    private array $tariffs;
 
     public function __construct(
         VideoCodec $videoCodec,
         AudioCodec $audioCodec,
         Format $format,
         ?Uuid $id = null,
+        array $tariffs = [],
     ) {
         $this->id = $id;
+        $this->tariffs = $tariffs;
         $this->changeOutput($videoCodec, $audioCodec, $format);
     }
 
@@ -48,6 +53,11 @@ class Preset
     public function format(): Format
     {
         return $this->format;
+    }
+
+    public function tariffs(): array
+    {
+        return $this->tariffs;
     }
 
     public static function create(

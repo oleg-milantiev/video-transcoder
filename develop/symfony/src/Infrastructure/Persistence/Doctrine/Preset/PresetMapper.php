@@ -8,17 +8,24 @@ use App\Domain\Video\Entity\Preset;
 use App\Domain\Video\ValueObject\AudioCodec;
 use App\Domain\Video\ValueObject\Format;
 use App\Domain\Video\ValueObject\VideoCodec;
+use App\Infrastructure\Persistence\Doctrine\User\TariffMapper;
 use Symfony\Component\Uid\UuidV4 as SymfonyUuid;
 
 class PresetMapper
 {
     public static function toDomain(PresetEntity $entity): Preset
     {
+        $tariffs = [];
+        foreach ($entity->tariffs as $tariffEntity) {
+            $tariffs[] = TariffMapper::toDomain($tariffEntity);
+        }
+
         return new Preset(
             videoCodec: new VideoCodec($entity->videoCodec),
             audioCodec: new AudioCodec($entity->audioCodec),
             format: new Format($entity->format),
             id: Uuid::fromString($entity->id->toRfc4122()),
+            tariffs: $tariffs,
         );
     }
 

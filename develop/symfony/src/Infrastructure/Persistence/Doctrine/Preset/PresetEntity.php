@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace App\Infrastructure\Persistence\Doctrine\Preset;
 
 use App\Infrastructure\Persistence\Doctrine\Task\TaskEntity;
+use App\Infrastructure\Persistence\Doctrine\User\TariffEntity;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
@@ -35,9 +36,14 @@ class PresetEntity
     #[ORM\OneToMany(targetEntity: TaskEntity::class, mappedBy: 'preset', cascade: ['remove'])]
     public Collection $tasks;
 
+    /** @var Collection<int, TariffEntity> */
+    #[ORM\ManyToMany(targetEntity: TariffEntity::class, mappedBy: 'presets')]
+    public Collection $tariffs;
+
     public function __construct()
     {
         $this->tasks = new ArrayCollection();
+        $this->tariffs = new ArrayCollection();
     }
 
     public function __toString(): string
