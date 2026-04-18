@@ -32,7 +32,7 @@ class PresetEntity
     public ?array $log = null;
 
     /** @var Collection<int, TaskEntity> */
-    #[ORM\OneToMany(targetEntity: TaskEntity::class, mappedBy: 'preset')]
+    #[ORM\OneToMany(targetEntity: TaskEntity::class, mappedBy: 'preset', cascade: ['remove'])]
     public Collection $tasks;
 
     public function __construct()
