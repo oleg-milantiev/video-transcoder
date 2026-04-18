@@ -18,7 +18,9 @@ use App\Domain\Video\Repository\TaskRepositoryInterface;
 use App\Domain\Video\Repository\VideoRepositoryInterface;
 use App\Domain\Video\Service\Storage\StorageInterface;
 use App\Domain\Video\ValueObject\Bitrate;
-use App\Domain\Video\ValueObject\Codec;
+use App\Domain\Video\ValueObject\VideoCodec;
+use App\Domain\Video\ValueObject\AudioCodec;
+use App\Domain\Video\ValueObject\Format;
 use App\Domain\Video\ValueObject\FileExtension;
 use App\Domain\Video\ValueObject\PresetTitle;
 use App\Domain\Video\ValueObject\Progress;
@@ -139,8 +141,10 @@ class TranscodeTaskPreparationServiceTest extends TestCase
         return new Preset(
             title: new PresetTitle('HD 720'),
             resolution: new Resolution(1280, 720),
-            codec: new Codec('h264'),
+            videoCodec: new VideoCodec('h264'),
             bitrate: new Bitrate(3.0),
+            audioCodec: new AudioCodec('aac'),
+            format: new Format('mp4'),
             id: $id,
         );
     }

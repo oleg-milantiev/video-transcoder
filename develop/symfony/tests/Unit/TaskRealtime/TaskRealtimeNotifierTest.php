@@ -12,7 +12,9 @@ use App\Domain\Video\Entity\Preset;
 use App\Domain\Video\Entity\Task;
 use App\Domain\Video\Entity\Video;
 use App\Domain\Video\ValueObject\Bitrate;
-use App\Domain\Video\ValueObject\Codec;
+use App\Domain\Video\ValueObject\VideoCodec;
+use App\Domain\Video\ValueObject\AudioCodec;
+use App\Domain\Video\ValueObject\Format;
 use App\Domain\Video\ValueObject\FileExtension;
 use App\Domain\Video\ValueObject\PresetTitle;
 use App\Domain\Video\ValueObject\Progress;
@@ -54,8 +56,10 @@ final class TaskRealtimeNotifierTest extends TestCase
         $preset = Preset::create(
             new PresetTitle('HD1'),
             new Resolution(1920, 1080),
-            new Codec('h264'),
+            new VideoCodec('h264'),
             new Bitrate(4.0),
+            new AudioCodec('aac'),
+            new Format('mp4'),
         );
 
         $video = Video::create(
@@ -122,8 +126,10 @@ final class TaskRealtimeNotifierTest extends TestCase
         $preset = Preset::create(
             new PresetTitle('SD1'),
             new Resolution(720, 576),
-            new Codec('h264'),
+            new VideoCodec('h264'),
             new Bitrate(2.0),
+            new AudioCodec('aac'),
+            new Format('mp4'),
         );
 
         $video = Video::create(
