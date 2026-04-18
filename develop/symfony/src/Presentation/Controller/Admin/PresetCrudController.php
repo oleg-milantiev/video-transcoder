@@ -4,6 +4,8 @@ declare(strict_types=1);
 namespace App\Presentation\Controller\Admin;
 
 use App\Infrastructure\Persistence\Doctrine\Preset\PresetEntity;
+use App\Infrastructure\Persistence\Doctrine\User\TariffEntity;
+use Doctrine\ORM\EntityManagerInterface;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Action;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Actions;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Crud;
@@ -13,7 +15,6 @@ use EasyCorp\Bundle\EasyAdminBundle\Field\AssociationField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\TextField;
 use EasyCorp\Bundle\EasyAdminBundle\Filter\TextFilter;
 use EasyCorp\Bundle\EasyAdminBundle\Router\AdminUrlGenerator;
-use Doctrine\ORM\EntityManagerInterface;
 
 class PresetCrudController extends AbstractCrudController
 {
@@ -105,23 +106,48 @@ class PresetCrudController extends AbstractCrudController
 
     public function updateEntity(EntityManagerInterface $entityManager, $entityInstance): void
     {
-        foreach ($entityInstance->tariffs as $tariff) {
-            if (!$tariff->presets->contains($entityInstance)) {
-                $tariff->presets->add($entityInstance);
-            }
-        }
-
+        $this->syncTariffsInverseSide($entityManager, $entityInstance);
         parent::updateEntity($entityManager, $entityInstance);
     }
 
     public function persistEntity(EntityManagerInterface $entityManager, $entityInstance): void
     {
-        foreach ($entityInstance->tariffs as $tariff) {
-            if (!$tariff->presets->contains($entityInstance)) {
-                $tariff->presets->add($entityInstance);
+        $this->syncTariffsInverseSide($entityManager, $entityInstance);
+        parent::persistEntity($entityManager, $entityInstance);
+    }
+
+    private function syncTariffsInverseSide(EntityManagerInterface $em, mixed $entity): void
+    {
+        if (!$entity instanceof PresetEntity) {
+            return;
+        }
+
+        $desiredTariffIds = [];
+        foreach ($entity->tariffs as $tariff) {
+            if ($tariff->id !== null) {
+                $desiredTariffIds[$tariff->id->toRfc4122()] = true;
             }
         }
 
-        parent::persistEntity($entityManager, $entityInstance);
+        if ($entity->id !== null) {
+            $tariffsWithThisPreset = $em->createQuery(
+                'SELECT t FROM ' . TariffEntity::class . ' t JOIN t.presets p WHERE p.id = :presetId'
+            )
+                ->setParameter('presetId', $entity->id)
+                ->getResult();
+
+            foreach ($tariffsWithThisPreset as $tariff) {
+                $id = $tariff->id->toRfc4122();
+                if (!isset($desiredTariffIds[$id])) {
+                    $tariff->presets->removeElement($entity);
+                }
+            }
+        }
+
+        foreach ($entity->tariffs as $tariff) {
+            if (!$tariff->presets->contains($entity)) {
+                $tariff->presets->add($entity);
+            }
+        }
     }
 }
