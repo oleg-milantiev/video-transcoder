@@ -9,12 +9,30 @@ use App\Presentation\Controller\Admin\PresetCrudController;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Actions;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Crud;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Filters;
+use EasyCorp\Bundle\EasyAdminBundle\Contracts\Provider\AdminContextProviderInterface;
+use EasyCorp\Bundle\EasyAdminBundle\Contracts\Registry\AdminControllerRegistryInterface;
+use EasyCorp\Bundle\EasyAdminBundle\Contracts\Router\AdminRouteGeneratorInterface;
+use EasyCorp\Bundle\EasyAdminBundle\Router\AdminUrlGenerator;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
+use Psr\Cache\CacheItemPoolInterface;
+use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 
 #[CoversClass(PresetCrudController::class)]
 class PresetCrudControllerTest extends TestCase
 {
+    private function createController(): PresetCrudController
+    {
+        $adminUrlGenerator = new AdminUrlGenerator(
+            $this->createStub(AdminContextProviderInterface::class),
+            $this->createStub(UrlGeneratorInterface::class),
+            $this->createStub(AdminControllerRegistryInterface::class),
+            $this->createStub(AdminRouteGeneratorInterface::class),
+            $this->createStub(CacheItemPoolInterface::class),
+        );
+        return new PresetCrudController($adminUrlGenerator);
+    }
+
     public function testGetEntityFqcnReturnsPresetEntity(): void
     {
         self::assertSame(
@@ -25,7 +43,7 @@ class PresetCrudControllerTest extends TestCase
 
     public function testConfigureCrudReturnsCrudWithExpectedConfiguration(): void
     {
-        $controller = new PresetCrudController();
+        $controller = $this->createController();
         $crud = $controller->configureCrud(Crud::new());
 
         self::assertInstanceOf(Crud::class, $crud);
@@ -33,7 +51,7 @@ class PresetCrudControllerTest extends TestCase
 
     public function testConfigureActionsReturnsActionsWithExpectedConfiguration(): void
     {
-        $controller = new PresetCrudController();
+        $controller = $this->createController();
         $actions = $controller->configureActions(Actions::new());
 
         self::assertInstanceOf(Actions::class, $actions);
@@ -41,7 +59,7 @@ class PresetCrudControllerTest extends TestCase
 
     public function testConfigureFiltersReturnsFiltersWithExpectedConfiguration(): void
     {
-        $controller = new PresetCrudController();
+        $controller = $this->createController();
         $filters = $controller->configureFilters(Filters::new());
 
         self::assertInstanceOf(Filters::class, $filters);
@@ -49,13 +67,13 @@ class PresetCrudControllerTest extends TestCase
 
     public function testConfigureFieldsReturnsIterableWithExpectedFields(): void
     {
-        $controller = new PresetCrudController();
+        $controller = $this->createController();
         $fields = $controller->configureFields('index');
 
         self::assertIsIterable($fields);
 
         $fields = iterator_to_array($fields);
-        self::assertCount(4, $fields); // id, format, videoCodec, audioCodec
+        self::assertCount(6, $fields); // id, format, videoCodec, audioCodec, tariffs (form), tariffs (index)
 
         $fieldNames = [];
         foreach ($fields as $field) {
@@ -64,7 +82,7 @@ class PresetCrudControllerTest extends TestCase
             }
         }
 
-        $expectedFields = ['id', 'format', 'videoCodec', 'audioCodec'];
+        $expectedFields = ['id', 'format', 'videoCodec', 'audioCodec', 'tariffs'];
         foreach ($expectedFields as $expectedField) {
             self::assertContains($expectedField, $fieldNames);
         }

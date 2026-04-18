@@ -1,0 +1,18 @@
+{% set data = field.formattedValue ?? field.value ?? {} %}
+{% set tariffs = data.tariffs ?? [] %}
+
+{% if tariffs is empty %}
+    <span class="text-muted">No tariffs</span>
+{% else %}
+    <ul class="mb-0 ps-3">
+        {% for tariff in tariffs %}
+            <li>
+                {% if tariff.url is defined and tariff.url %}
+                    <a href="{{ tariff.url }}">{{ tariff.title }}</a>
+                {% else %}
+                    {{ tariff.title }}
+                {% endif %}
+            </li>
+        {% endfor %}
+    </ul>
+{% endif %}

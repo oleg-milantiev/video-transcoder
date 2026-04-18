@@ -9,12 +9,30 @@ use App\Presentation\Controller\Admin\TariffCrudController;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Actions;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Crud;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Filters;
+use EasyCorp\Bundle\EasyAdminBundle\Contracts\Provider\AdminContextProviderInterface;
+use EasyCorp\Bundle\EasyAdminBundle\Contracts\Registry\AdminControllerRegistryInterface;
+use EasyCorp\Bundle\EasyAdminBundle\Contracts\Router\AdminRouteGeneratorInterface;
+use EasyCorp\Bundle\EasyAdminBundle\Router\AdminUrlGenerator;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
+use Psr\Cache\CacheItemPoolInterface;
+use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 
 #[CoversClass(TariffCrudController::class)]
 class TariffCrudControllerTest extends TestCase
 {
+    private function createController(): TariffCrudController
+    {
+        $adminUrlGenerator = new AdminUrlGenerator(
+            $this->createStub(AdminContextProviderInterface::class),
+            $this->createStub(UrlGeneratorInterface::class),
+            $this->createStub(AdminControllerRegistryInterface::class),
+            $this->createStub(AdminRouteGeneratorInterface::class),
+            $this->createStub(CacheItemPoolInterface::class),
+        );
+        return new TariffCrudController($adminUrlGenerator);
+    }
+
     public function testGetEntityFqcnReturnsTariffEntity(): void
     {
         self::assertSame(
@@ -25,7 +43,7 @@ class TariffCrudControllerTest extends TestCase
 
     public function testConfigureCrudReturnsCrudWithExpectedConfiguration(): void
     {
-        $controller = new TariffCrudController();
+        $controller = $this->createController();
         $crud = $controller->configureCrud(Crud::new());
 
         self::assertInstanceOf(Crud::class, $crud);
@@ -33,7 +51,7 @@ class TariffCrudControllerTest extends TestCase
 
     public function testConfigureActionsReturnsActionsWithExpectedConfiguration(): void
     {
-        $controller = new TariffCrudController();
+        $controller = $this->createController();
         $actions = $controller->configureActions(Actions::new());
 
         self::assertInstanceOf(Actions::class, $actions);
@@ -41,7 +59,7 @@ class TariffCrudControllerTest extends TestCase
 
     public function testConfigureFiltersReturnsFiltersWithExpectedConfiguration(): void
     {
-        $controller = new TariffCrudController();
+        $controller = $this->createController();
         $filters = $controller->configureFilters(Filters::new());
 
         self::assertInstanceOf(Filters::class, $filters);
@@ -49,13 +67,13 @@ class TariffCrudControllerTest extends TestCase
 
     public function testConfigureFieldsReturnsIterableWithExpectedFields(): void
     {
-        $controller = new TariffCrudController();
+        $controller = $this->createController();
         $fields = $controller->configureFields('index');
 
         self::assertIsIterable($fields);
 
         $fields = iterator_to_array($fields);
-        self::assertCount(10, $fields); // id, title, delay, instance, videoDuration, videoSize, maxWidth, maxHeight, storageGb, storageHour
+        self::assertCount(12, $fields); // id, title, delay, instance, videoDuration, videoSize, maxWidth, maxHeight, storageGb, storageHour, presets (form), presets (index)
 
         $fieldNames = [];
         foreach ($fields as $field) {
@@ -66,7 +84,7 @@ class TariffCrudControllerTest extends TestCase
 
         $expectedFields = [
             'id', 'title', 'delay', 'instance', 'videoDuration', 'videoSize',
-            'maxWidth', 'maxHeight', 'storageGb', 'storageHour',
+            'maxWidth', 'maxHeight', 'storageGb', 'storageHour', 'presets',
         ];
         foreach ($expectedFields as $expectedField) {
             self::assertContains($expectedField, $fieldNames);

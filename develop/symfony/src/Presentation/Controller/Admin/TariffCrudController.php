@@ -15,9 +15,15 @@ use EasyCorp\Bundle\EasyAdminBundle\Field\NumberField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\TextField;
 use EasyCorp\Bundle\EasyAdminBundle\Filter\NumericFilter;
 use EasyCorp\Bundle\EasyAdminBundle\Filter\TextFilter;
+use EasyCorp\Bundle\EasyAdminBundle\Router\AdminUrlGenerator;
 
 class TariffCrudController extends AbstractCrudController
 {
+    public function __construct(
+        private readonly AdminUrlGenerator $adminUrlGenerator,
+    ) {
+    }
+
     public static function getEntityFqcn(): string
     {
         return TariffEntity::class;
@@ -79,8 +85,45 @@ class TariffCrudController extends AbstractCrudController
                 ->setHelp('How many hours uploaded files are kept. At least 1.'),
             AssociationField::new('presets')
                 ->setLabel('Presets')
-                ->hideOnIndex()
+                ->onlyOnForms()
                 ->setFormTypeOptions(['by_reference' => false]),
+            AssociationField::new('presets')
+                ->setLabel('Presets')
+                ->setTemplatePath('admin/field/tariff_presets_summary.html.twig')
+                ->formatValue(fn ($value, ?TariffEntity $entity) => [
+                    'presets' => $this->collectPresetLinks($entity),
+                ])
+                ->onlyOnIndex(),
         ];
+    }
+
+    private function collectPresetLinks(?TariffEntity $tariff): array
+    {
+        if (null === $tariff) {
+            return [];
+        }
+
+        $presets = [];
+        foreach ($tariff->presets as $preset) {
+            if (null !== $preset?->id) {
+                $id = $preset->id->toRfc4122();
+                $presets[$id] = [
+                    'title' => (string) $preset,
+                    'url' => $this->buildPresetUrl($preset->id->toRfc4122()),
+                ];
+            }
+        }
+
+        return array_values($presets);
+    }
+
+    private function buildPresetUrl(string $presetId): ?string
+    {
+        return $this->adminUrlGenerator
+            ->unsetAll()
+            ->setController(PresetCrudController::class)
+            ->setAction(Crud::PAGE_DETAIL)
+            ->setEntityId($presetId)
+            ->generateUrl();
     }
 }

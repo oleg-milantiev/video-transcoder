@@ -12,9 +12,15 @@ use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractCrudController;
 use EasyCorp\Bundle\EasyAdminBundle\Field\AssociationField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\TextField;
 use EasyCorp\Bundle\EasyAdminBundle\Filter\TextFilter;
+use EasyCorp\Bundle\EasyAdminBundle\Router\AdminUrlGenerator;
 
 class PresetCrudController extends AbstractCrudController
 {
+    public function __construct(
+        private readonly AdminUrlGenerator $adminUrlGenerator,
+    ) {
+    }
+
     public static function getEntityFqcn(): string
     {
         return PresetEntity::class;
@@ -54,8 +60,45 @@ class PresetCrudController extends AbstractCrudController
             TextField::new('audioCodec'),
             AssociationField::new('tariffs')
                 ->setLabel('Tariffs')
-                ->hideOnIndex()
+                ->onlyOnForms()
                 ->setFormTypeOptions(['by_reference' => false]),
+            AssociationField::new('tariffs')
+                ->setLabel('Tariffs')
+                ->setTemplatePath('admin/field/preset_tariffs_summary.html.twig')
+                ->formatValue(fn ($value, ?PresetEntity $entity) => [
+                    'tariffs' => $this->collectTariffLinks($entity),
+                ])
+                ->onlyOnIndex(),
         ];
+    }
+
+    private function collectTariffLinks(?PresetEntity $preset): array
+    {
+        if (null === $preset) {
+            return [];
+        }
+
+        $tariffs = [];
+        foreach ($preset->tariffs as $tariff) {
+            if (null !== $tariff?->id) {
+                $id = $tariff->id->toRfc4122();
+                $tariffs[$id] = [
+                    'title' => (string) $tariff,
+                    'url' => $this->buildTariffUrl($tariff->id->toRfc4122()),
+                ];
+            }
+        }
+
+        return array_values($tariffs);
+    }
+
+    private function buildTariffUrl(string $tariffId): ?string
+    {
+        return $this->adminUrlGenerator
+            ->unsetAll()
+            ->setController(TariffCrudController::class)
+            ->setAction(Crud::PAGE_DETAIL)
+            ->setEntityId($tariffId)
+            ->generateUrl();
     }
 }
