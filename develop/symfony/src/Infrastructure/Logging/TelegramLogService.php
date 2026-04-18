@@ -33,7 +33,9 @@ final readonly class TelegramLogService implements LogServiceInterface
                     'template' => <<< TWIG
 {{ text }} ({{ uuid }})
 video: {% if videoAdminUrl is defined %}<a href="{{ videoAdminUrl }}">{{ videoTitle ?? videoId }}</a>{% else %}{{ videoId }}{% endif %}
+
 preset: {% if presetAdminUrl is defined %}<a href="{{ presetAdminUrl }}">{{ presetTitle ?? presetId }}</a>{% else %}{{ presetId }}{% endif %}
+
 user: {% if userAdminUrl is defined %}<a href="{{ userAdminUrl }}">{{ userEmail ?? userId }}</a>{% else %}{{ userId }}{% endif %}
 TWIG,
                     'userIds' => [self::ADMIN_USER_ID],
@@ -45,6 +47,7 @@ TWIG,
                 'any' => [
                     'template' => <<< TWIG
 ✅ Video created: <a href="{{ url('video_details', {uuid: video.uuid}) }}">{{ video.title }}</a>
+
 By {{ user.email }}
 TWIG,
                     'userIds' => [self::ADMIN_USER_ID],
