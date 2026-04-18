@@ -209,8 +209,8 @@ export function renderProfile(vm) {
     }, 'Back');
 
     if (vm.loading) {
-        return h('div', { class: 'py-4' }, [
-            h('div', { class: 'd-flex justify-content-between align-items-start mb-5' }, [
+        return h('div', { class: 'py-2' }, [
+            h('div', { class: 'd-flex justify-content-between align-items-start mb-3' }, [
                 h('div', { class: 'text-center flex-grow-1' }, [
                     h('h1', { class: 'display-5 fw-bold mb-2' }, 'My Profile'),
                     h('p', { class: 'text-muted fs-5' }, 'Account settings and subscription overview.'),
@@ -222,8 +222,8 @@ export function renderProfile(vm) {
     }
 
     if (vm.error) {
-        return h('div', { class: 'py-4' }, [
-            h('div', { class: 'd-flex justify-content-between align-items-start mb-5' }, [
+        return h('div', { class: 'py-2' }, [
+            h('div', { class: 'd-flex justify-content-between align-items-start mb-3' }, [
                 h('div', { class: 'text-center flex-grow-1' }, [
                     h('h1', { class: 'display-5 fw-bold mb-2' }, 'My Profile'),
                     h('p', { class: 'text-muted fs-5' }, 'Account settings and subscription overview.'),
@@ -238,8 +238,8 @@ export function renderProfile(vm) {
     const user = cfg.user || null;
     const tariff = cfg.tariff || null;
 
-    return h('div', { class: 'py-4' }, [
-        h('div', { class: 'd-flex justify-content-between align-items-start mb-5' }, [
+    return h('div', { class: 'py-2' }, [
+        h('div', { class: 'd-flex justify-content-between align-items-start mb-3' }, [
             h('div', { class: 'text-center flex-grow-1' }, [
                 h('h1', { class: 'display-5 fw-bold mb-2' }, 'My Profile'),
                 h('p', { class: 'text-muted fs-5' }, 'Account settings and subscription overview.'),

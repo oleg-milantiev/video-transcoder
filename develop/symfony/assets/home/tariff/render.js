@@ -9,8 +9,8 @@ export function renderTariffs(vm) {
         onClick: vm.goHome,
     }, 'Back');
 
-    return h('div', { class: 'py-4' }, [
-        h('div', { class: 'd-flex justify-content-between align-items-start mb-5' }, [
+    return h('div', { class: 'py-2' }, [
+        h('div', { class: 'd-flex justify-content-between align-items-start mb-3' }, [
             h('div', { class: 'text-center flex-grow-1' }, [
                 h('h1', { class: 'display-5 fw-bold mb-2' }, 'Choose Your Plan'),
                 h('p', { class: 'text-muted fs-5' }, 'Flexible plans for every need. Upgrade or downgrade at any time.'),
