@@ -13,6 +13,7 @@ use EasyCorp\Bundle\EasyAdminBundle\Field\AssociationField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\TextField;
 use EasyCorp\Bundle\EasyAdminBundle\Filter\TextFilter;
 use EasyCorp\Bundle\EasyAdminBundle\Router\AdminUrlGenerator;
+use Doctrine\ORM\EntityManagerInterface;
 
 class PresetCrudController extends AbstractCrudController
 {
@@ -100,5 +101,27 @@ class PresetCrudController extends AbstractCrudController
             ->setAction(Crud::PAGE_DETAIL)
             ->setEntityId($tariffId)
             ->generateUrl();
+    }
+
+    public function updateEntity(EntityManagerInterface $entityManager, $entityInstance): void
+    {
+        foreach ($entityInstance->tariffs as $tariff) {
+            if (!$tariff->presets->contains($entityInstance)) {
+                $tariff->presets->add($entityInstance);
+            }
+        }
+
+        parent::updateEntity($entityManager, $entityInstance);
+    }
+
+    public function persistEntity(EntityManagerInterface $entityManager, $entityInstance): void
+    {
+        foreach ($entityInstance->tariffs as $tariff) {
+            if (!$tariff->presets->contains($entityInstance)) {
+                $tariff->presets->add($entityInstance);
+            }
+        }
+
+        parent::persistEntity($entityManager, $entityInstance);
     }
 }
