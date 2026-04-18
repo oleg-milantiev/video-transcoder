@@ -25,12 +25,6 @@ class PresetEntity
     #[Assert\Length(min: 3, max: 255)]
     public string $title;
 
-    #[ORM\Column]
-    public int $width;
-
-    #[ORM\Column]
-    public int $height;
-
     #[ORM\Column(length: 50)]
     public string $videoCodec;
 
@@ -39,9 +33,6 @@ class PresetEntity
 
     #[ORM\Column(length: 10)]
     public string $format;
-
-    #[ORM\Column(type: 'float')]
-    public float $bitrate;
 
     #[ORM\Column(type: 'json', nullable: true, options: ['jsonb' => true])]
     public ?array $log = null;

@@ -3,34 +3,33 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\Ffmpeg;
 
-use App\Domain\Video\Entity\Preset;
+use App\Application\DTO\TranscodeStartContextDTO;
 use App\Domain\Video\ValueObject\AudioCodec;
-use App\Domain\Video\ValueObject\Bitrate;
 use App\Domain\Video\ValueObject\VideoCodec;
 
 readonly class Transcode
 {
-    public static function buildCommand(string $inputPath, string $outputPath, Preset $preset): array
+    public static function buildCommand(TranscodeStartContextDTO $context): array
     {
-        $resolution = $preset->resolution();
-        $videoCodec = $preset->videoCodec();
-        $audioCodec = $preset->audioCodec();
-        $bitrate = $preset->bitrate();
+        $meta = $context->task->meta();
+        if (!isset($meta['width'], $meta['height'], $meta['bitrateValue'])) {
+            throw new \InvalidArgumentException('Missing meta data');
+        }
 
         return [
             'ffmpeg',
             '-y',
-            '-i', $inputPath,
-            '-vf', sprintf('scale=%d:%d', $resolution->width(), $resolution->height()),
-            '-c:v', self::mapVideoCodec($videoCodec),
-            '-b:v', self::formatBitrate($bitrate),
+            '-i', $context->inputPath,
+            '-vf', sprintf('scale=%d:%d', (int) $meta['width'], (int) $meta['height']),
+            '-c:v', self::mapVideoCodec($context->preset->videoCodec()),
+            '-b:v', self::formatBitrate((float) $meta['bitrate']),
             '-preset', 'medium',
             '-movflags', '+faststart',
-            '-c:a', self::mapAudioCodec($audioCodec),
+            '-c:a', self::mapAudioCodec($context->preset->audioCodec()),
             '-b:a', '128k',
             '-progress', 'pipe:2',
             '-nostats',
-            $outputPath,
+            $context->absoluteOutputPath,
         ];
     }
 
@@ -52,9 +51,9 @@ readonly class Transcode
         };
     }
 
-    private static function formatBitrate(Bitrate $bitrate): string
+    private static function formatBitrate(float $bitrateValue): string
     {
-        $kbps = max(100, (int) round($bitrate->value() * 1000));
+        $kbps = max(100, (int) round($bitrateValue * 1000));
         return $kbps . 'k';
     }
 }

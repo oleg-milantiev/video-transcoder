@@ -4,14 +4,15 @@ declare(strict_types=1);
 
 namespace App\Tests\Application\Service\Ffmpeg;
 
+use App\Application\DTO\TranscodeStartContextDTO;
 use App\Domain\Video\Entity\Preset;
-use App\Domain\Video\ValueObject\Bitrate;
 use App\Domain\Video\ValueObject\VideoCodec;
 use App\Domain\Video\ValueObject\AudioCodec;
 use App\Domain\Video\ValueObject\Format;
 use App\Domain\Video\ValueObject\PresetTitle;
-use App\Domain\Video\ValueObject\Resolution;
 use App\Infrastructure\Ffmpeg\Transcode;
+use App\Tests\Domain\Entity\TaskFake;
+use App\Tests\Domain\Entity\VideoFake;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use App\Domain\Shared\ValueObject\Uuid;
@@ -20,9 +21,18 @@ class TranscodeTest extends TestCase
 {
     public function testBuildCommandProducesExpectedArguments(): void
     {
-        $preset = $this->createPreset('HD 1080p', 'h264', 5.0, 1920, 1080);
+        $preset = $this->createPreset('HD 1080p', 'h264');
+        $task = TaskFake::create();
+        $task->updateMeta(['width' => 1920, 'height' => 1080, 'bitrate' => 5.0]);
 
-        $command = Transcode::buildCommand('/tmp/input.mp4', '/tmp/output.mp4', $preset);
+        $command = Transcode::buildCommand(new TranscodeStartContextDTO(
+            task: $task,
+            video: VideoFake::create(),
+            preset: $preset,
+            relativeOutputPath: 'output.mp4',
+            absoluteOutputPath: '/tmp/output.mp4',
+            inputPath: '/tmp/input.mp4',
+            timeStart: 0.0));
 
         $expected = [
             'ffmpeg',
@@ -46,9 +56,18 @@ class TranscodeTest extends TestCase
     #[DataProvider('codecProvider')]
     public function testBuildCommandMapsCodecVariants(string $codec, string $ffmpegCodec): void
     {
-        $preset = $this->createPreset('Preset '.$codec, $codec, 5.0, 1280, 720);
+        $preset = $this->createPreset('Preset ' . $codec, $codec);
+        $task = TaskFake::create();
+        $task->updateMeta(['width' => 1280, 'height' => 720, 'bitrate' => 5.0]);
 
-        $command = Transcode::buildCommand('in', 'out', $preset);
+        $command = Transcode::buildCommand(new TranscodeStartContextDTO(
+            task: $task,
+            video: VideoFake::create(),
+            preset: $preset,
+            relativeOutputPath: 'output.mp4',
+            absoluteOutputPath: 'out',
+            inputPath: 'in',
+            timeStart: 0.0));
 
         $index = array_search('-c:v', $command, true);
         $this->assertNotFalse($index);
@@ -58,9 +77,18 @@ class TranscodeTest extends TestCase
     #[DataProvider('audioCodecProvider')]
     public function testBuildCommandMapsAudioCodecVariants(string $audioCodec, string $ffmpegAudioCodec): void
     {
-        $preset = $this->createPresetWithAudio('Preset with ' . $audioCodec, 'h264', 5.0, 1280, 720, $audioCodec);
+        $preset = $this->createPresetWithAudio('Preset with ' . $audioCodec, 'h264', $audioCodec);
+        $task = TaskFake::create();
+        $task->updateMeta(['width' => 1280, 'height' => 720, 'bitrate' => 5.0]);
 
-        $command = Transcode::buildCommand('in', 'out', $preset);
+        $command = Transcode::buildCommand(new TranscodeStartContextDTO(
+            task: $task,
+            video: VideoFake::create(),
+            preset: $preset,
+            relativeOutputPath: 'output.mp4',
+            absoluteOutputPath: 'out',
+            inputPath: 'in',
+            timeStart: 0.0));
 
         $index = array_search('-c:a', $command, true);
         $this->assertNotFalse($index);
@@ -87,35 +115,40 @@ class TranscodeTest extends TestCase
 
     public function testBuildCommandAppliesBitrateFloor(): void
     {
-        $preset = $this->createPreset('Low bitrate', 'h264', 0.05, 640, 360);
+        $preset = $this->createPreset('Low bitrate', 'h264');
+        $task = TaskFake::create();
+        $task->updateMeta(['width' => 640, 'height' => 360, 'bitrate' => 0.05]);
 
-        $command = Transcode::buildCommand('in', 'out', $preset);
+        $command = Transcode::buildCommand(new TranscodeStartContextDTO(
+            task: $task,
+            video: VideoFake::create(),
+            preset: $preset,
+            relativeOutputPath: 'output.mp4',
+            absoluteOutputPath: 'out',
+            inputPath: 'in',
+            timeStart: 0.0));
 
         $index = array_search('-b:v', $command, true);
         $this->assertNotFalse($index);
         $this->assertSame('100k', $command[$index + 1]);
     }
 
-    private function createPreset(string $title, string $codec, float $bitrate, int $width, int $height): Preset
+    private function createPreset(string $title, string $codec): Preset
     {
         return new Preset(
             new PresetTitle($title),
-            new Resolution($width, $height),
             new VideoCodec($codec),
-            new Bitrate($bitrate),
             new AudioCodec('aac'),
             new Format('mp4'),
             id: Uuid::fromString('11111111-1111-4111-8111-111111111111'),
         );
     }
 
-    private function createPresetWithAudio(string $title, string $codec, float $bitrate, int $width, int $height, string $audioCodec): Preset
+    private function createPresetWithAudio(string $title, string $codec, string $audioCodec): Preset
     {
         return new Preset(
             new PresetTitle($title),
-            new Resolution($width, $height),
             new VideoCodec($codec),
-            new Bitrate($bitrate),
             new AudioCodec($audioCodec),
             new Format('mp4'),
             id: Uuid::fromString('11111111-1111-4111-8111-111111111111'),

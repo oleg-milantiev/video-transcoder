@@ -9,14 +9,12 @@ use App\Domain\Shared\ValueObject\Uuid;
 use App\Domain\Video\Entity\Preset;
 use App\Domain\Video\Entity\Task;
 use App\Domain\Video\Entity\Video;
-use App\Domain\Video\ValueObject\Bitrate;
 use App\Domain\Video\ValueObject\VideoCodec;
 use App\Domain\Video\ValueObject\AudioCodec;
 use App\Domain\Video\ValueObject\Format;
 use App\Domain\Video\ValueObject\FileExtension;
 use App\Domain\Video\ValueObject\PresetTitle;
 use App\Domain\Video\ValueObject\Progress;
-use App\Domain\Video\ValueObject\Resolution;
 use App\Domain\Video\ValueObject\TaskDates;
 use App\Domain\Video\ValueObject\TaskStatus;
 use App\Domain\Video\ValueObject\VideoTitle;
@@ -78,9 +76,7 @@ final class TaskRealtimePayloadDTOTest extends TestCase
 
         $preset = Preset::create(
             new PresetTitle('HD1'),
-            new Resolution(1920, 1080),
             new VideoCodec('h264'),
-            new Bitrate(4.0),
             new AudioCodec('aac'),
             new Format('mp4'),
         );

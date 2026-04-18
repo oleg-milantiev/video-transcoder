@@ -8,13 +8,11 @@ use App\Application\DTO\TaskItemDTO;
 use App\Domain\Video\Entity\Preset;
 use App\Domain\Video\Entity\Task;
 use App\Domain\Video\Entity\Video;
-use App\Domain\Video\ValueObject\Bitrate;
 use App\Domain\Video\ValueObject\VideoCodec;
 use App\Domain\Video\ValueObject\AudioCodec;
 use App\Domain\Video\ValueObject\Format;
 use App\Domain\Video\ValueObject\PresetTitle;
 use App\Domain\Video\ValueObject\Progress;
-use App\Domain\Video\ValueObject\Resolution;
 use App\Domain\Video\ValueObject\TaskStatus;
 use App\Domain\Video\ValueObject\TaskDates;
 use App\Domain\Video\ValueObject\VideoDates;
@@ -40,9 +38,7 @@ class TaskItemDTOTest extends TestCase
 
         $preset = new Preset(
             new PresetTitle('HD 1080p'),
-            new Resolution(1920, 1080),
             new VideoCodec('h264'),
-            new Bitrate(50.0),
             new AudioCodec('aac'),
             new Format('mp4'),
             Uuid::fromString('77777777-7777-4777-8777-777777777777'),
@@ -81,9 +77,7 @@ class TaskItemDTOTest extends TestCase
 
         $preset = new Preset(
             new PresetTitle('HD 1080p'),
-            new Resolution(1920, 1080),
             new VideoCodec('h264'),
-            new Bitrate(50.0),
             new AudioCodec('aac'),
             new Format('mp4'),
             Uuid::fromString('77777777-7777-4777-8777-777777777777'),
@@ -115,9 +109,7 @@ class TaskItemDTOTest extends TestCase
 
         $preset = new Preset(
             new PresetTitle('HD 720p'),
-            new Resolution(1280, 720),
             new VideoCodec('h265'),
-            new Bitrate(100.0),
             new AudioCodec('aac'),
             new Format('mp4'),
             Uuid::fromString('77777777-7777-4777-8777-777777777777'),

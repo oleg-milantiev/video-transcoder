@@ -139,7 +139,7 @@ class VideoRepository extends ServiceEntityRepository implements VideoRepository
             SELECT
                 p.id,
                 p.title,
-                ((p.bitrate/8*1000*1000+128/8*1000) * COALESCE((v.meta->>'duration')::float, 0.0))::int expected_file_size,
+                ((COALESCE((t.meta->>'bitrate')::float, 0.0)/8*1000*1000+128/8*1000) * COALESCE((v.meta->>'duration')::float, 0.0))::int expected_file_size,
                 t.id AS task_id,
                 t.status,
                 pt.waiting_tariff_instance,

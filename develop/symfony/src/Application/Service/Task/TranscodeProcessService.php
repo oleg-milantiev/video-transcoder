@@ -37,7 +37,7 @@ readonly class TranscodeProcessService
     {
         $task = $context->task;
         $duration = $context->video->duration();
-        $command = Transcode::buildCommand($context->inputPath, $context->absoluteOutputPath, $context->preset);
+        $command = Transcode::buildCommand($context);
 
         $buffer = '';
         $ffmpegStats = [];

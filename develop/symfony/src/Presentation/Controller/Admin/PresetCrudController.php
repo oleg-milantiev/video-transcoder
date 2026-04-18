@@ -9,10 +9,7 @@ use EasyCorp\Bundle\EasyAdminBundle\Config\Actions;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Crud;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Filters;
 use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractCrudController;
-use EasyCorp\Bundle\EasyAdminBundle\Field\IntegerField;
-use EasyCorp\Bundle\EasyAdminBundle\Field\NumberField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\TextField;
-use EasyCorp\Bundle\EasyAdminBundle\Filter\NumericFilter;
 use EasyCorp\Bundle\EasyAdminBundle\Filter\TextFilter;
 
 class PresetCrudController extends AbstractCrudController
@@ -41,12 +38,9 @@ class PresetCrudController extends AbstractCrudController
     {
         return $filters
             ->add(TextFilter::new('title'))
-            ->add(NumericFilter::new('width'))
-            ->add(NumericFilter::new('height'))
-            ->add(TextFilter::new('videoCodec'))
-            ->add(TextFilter::new('audioCodec'))
             ->add(TextFilter::new('format'))
-            ->add(NumericFilter::new('bitrate'));
+            ->add(TextFilter::new('videoCodec'))
+            ->add(TextFilter::new('audioCodec'));
     }
 
     public function configureFields(string $pageName): iterable
@@ -58,12 +52,9 @@ class PresetCrudController extends AbstractCrudController
             TextField::new('title')
                 ->setFormTypeOption('attr.minlength', 3)
                 ->setHelp('At least 3 characters.'),
-            IntegerField::new('width'),
-            IntegerField::new('height'),
+            TextField::new('format'),
             TextField::new('videoCodec'),
             TextField::new('audioCodec'),
-            TextField::new('format'),
-            NumberField::new('bitrate', 'Bitrate (Mbps)'),
         ];
     }
 }
