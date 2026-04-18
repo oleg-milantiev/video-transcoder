@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace App\Infrastructure\Ffmpeg;
 
 use App\Domain\Video\Entity\Preset;
+use App\Domain\Video\ValueObject\AudioCodec;
 use App\Domain\Video\ValueObject\Bitrate;
 use App\Domain\Video\ValueObject\VideoCodec;
 
@@ -12,7 +13,8 @@ readonly class Transcode
     public static function buildCommand(string $inputPath, string $outputPath, Preset $preset): array
     {
         $resolution = $preset->resolution();
-        $codec = $preset->videoCodec();
+        $videoCodec = $preset->videoCodec();
+        $audioCodec = $preset->audioCodec();
         $bitrate = $preset->bitrate();
 
         return [
@@ -20,11 +22,11 @@ readonly class Transcode
             '-y',
             '-i', $inputPath,
             '-vf', sprintf('scale=%d:%d', $resolution->width(), $resolution->height()),
-            '-c:v', self::mapCodec($codec),
+            '-c:v', self::mapVideoCodec($videoCodec),
             '-b:v', self::formatBitrate($bitrate),
             '-preset', 'medium',
             '-movflags', '+faststart',
-            '-c:a', 'aac',
+            '-c:a', self::mapAudioCodec($audioCodec),
             '-b:a', '128k',
             '-progress', 'pipe:2',
             '-nostats',
@@ -32,13 +34,21 @@ readonly class Transcode
         ];
     }
 
-    private static function mapCodec(VideoCodec $codec): string
+    private static function mapVideoCodec(VideoCodec $codec): string
     {
         return match ($codec->value()) {
             'h265' => 'libx265',
             'vp9' => 'libvpx-vp9',
             'av1' => 'libaom-av1',
             default => 'libx264',
+        };
+    }
+
+    private static function mapAudioCodec(AudioCodec $codec): string
+    {
+        return match ($codec->value()) {
+            'opus' => 'libopus',
+            default => 'aac',
         };
     }
 

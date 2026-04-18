@@ -55,6 +55,18 @@ class TranscodeTest extends TestCase
         $this->assertSame($ffmpegCodec, $command[$index + 1]);
     }
 
+    #[DataProvider('audioCodecProvider')]
+    public function testBuildCommandMapsAudioCodecVariants(string $audioCodec, string $ffmpegAudioCodec): void
+    {
+        $preset = $this->createPresetWithAudio('Preset with ' . $audioCodec, 'h264', 5.0, 1280, 720, $audioCodec);
+
+        $command = Transcode::buildCommand('in', 'out', $preset);
+
+        $index = array_search('-c:a', $command, true);
+        $this->assertNotFalse($index);
+        $this->assertSame($ffmpegAudioCodec, $command[$index + 1]);
+    }
+
     public static function codecProvider(): array
     {
         return [
@@ -62,6 +74,14 @@ class TranscodeTest extends TestCase
             ['h265', 'libx265'],
             ['vp9', 'libvpx-vp9'],
             ['av1', 'libaom-av1'],
+        ];
+    }
+
+    public static function audioCodecProvider(): array
+    {
+        return [
+            ['aac', 'aac'],
+            ['opus', 'libopus'],
         ];
     }
 
@@ -84,6 +104,19 @@ class TranscodeTest extends TestCase
             new VideoCodec($codec),
             new Bitrate($bitrate),
             new AudioCodec('aac'),
+            new Format('mp4'),
+            id: Uuid::fromString('11111111-1111-4111-8111-111111111111'),
+        );
+    }
+
+    private function createPresetWithAudio(string $title, string $codec, float $bitrate, int $width, int $height, string $audioCodec): Preset
+    {
+        return new Preset(
+            new PresetTitle($title),
+            new Resolution($width, $height),
+            new VideoCodec($codec),
+            new Bitrate($bitrate),
+            new AudioCodec($audioCodec),
             new Format('mp4'),
             id: Uuid::fromString('11111111-1111-4111-8111-111111111111'),
         );
