@@ -118,10 +118,10 @@ class VideoCrudController extends AbstractCrudController
         $presets = [];
         foreach ($video->tasks as $task) {
             $preset = $task->preset;
-            if (null !== $preset?->id && '' !== trim($preset->title)) {
+            if (null !== $preset?->id) {
                 $id = $preset->id->toRfc4122();
                 $presets[$id] = [
-                    'title' => $preset->title,
+                    'title' => (string) $preset,
                     'url' => $this->buildTasksUrl($video, $id),
                 ];
             }

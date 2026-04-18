@@ -21,7 +21,6 @@ use App\Domain\Video\ValueObject\VideoCodec;
 use App\Domain\Video\ValueObject\AudioCodec;
 use App\Domain\Video\ValueObject\Format;
 use App\Domain\Video\ValueObject\FileExtension;
-use App\Domain\Video\ValueObject\PresetTitle;
 use App\Domain\Video\ValueObject\Progress;
 use App\Domain\Video\ValueObject\TaskDates;
 use App\Domain\Video\ValueObject\TaskStatus;
@@ -137,7 +136,6 @@ class TranscodeTaskPreparationServiceTest extends TestCase
     private function createPreset(Uuid $id): Preset
     {
         return new Preset(
-            title: new PresetTitle('HD 720'),
             videoCodec: new VideoCodec('h264'),
             audioCodec: new AudioCodec('aac'),
             format: new Format('mp4'),

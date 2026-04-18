@@ -9,7 +9,7 @@
 
 ## Sprint 0.1.2 (Дизайн, Тексты, Тарифы, Оплата)
 
-новые поля тарифа:
+новые поля тарифа (не в базе, статикой?):
 - bool allowConstructor: конструктор пресетов
 - int cpuCores: ограничение по кол-ву ядер ffmpeg
 
@@ -17,29 +17,31 @@
 - new tariff: default пресеты тарифа. Они же разрешённый набор форматов, видео и аудиокодеков
 - remove title
 
-перенести из пресета в task.meta:
+как запускать? frontend? перенести из пресета в task.meta:
 - width
 - height
 - bitrate
 
 сделать ли отдельно набор разрешений? Нет, наверное сделаю фикс набор в константах.
 Ориентация-то понятно.
-А что с пропорциями? 16:9, 4:3, 3:2, 1:1
-
-free:
-- mp4, h264, aac
-
-premium
-- mp4, h264 (normal video quality), aac
-- mp4, h265 (high video quality, hevc), aac
-- mp4, h265 (high video quality, hevc), opus (High Efficiency Audio)
-- mp4, av1 (ultra video quality, очень медленный, gpu только на 40 картах), opus (High Efficiency Audio)
-- webm, vp9, opus
-- webm, av1 (очень медленный, gpu только на 40 картах), opus
+А что с пропорциями? 16:9, 4:3, 3:2, 1:1 автопересчёт из src.width / src.height?
 
 
+- пресеты и тарифы в migration, оставив их админку
+  free:
+  - mp4, h264, aac
+  premium
+  - mp4, h264 (normal video quality), aac
+  - mp4, h265 (high video quality, hevc), aac
+  - mp4, h265 (high video quality, hevc), opus (High Efficiency Audio)
+  - mp4, av1 (ultra video quality, очень медленный, gpu только на 40 картах), opus (High Efficiency Audio)
+  - webm, vp9, opus
+  - webm, av1 (очень медленный, gpu только на 40 картах), opus
 
-- мноооого пресетов сгенерить автоматом, оставив их админку. По всем-всем вариантам форматов и разрешений
+e2e
+документация ВСЯ
+downloadFilename надо иначе строить
+
   (вертикальные не делать, этот разворот программно сделать, на frontend radio-button horizontal / vertical)
   (все протестировать новым автотестом: создаёт тест тариф, набирает туда все пресеты, загружает видео, кодирует во все пресеты, проверяет скачивание)
 - в аду тарифа добавить выбор пресетов. 

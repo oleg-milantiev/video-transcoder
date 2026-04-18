@@ -29,7 +29,6 @@ use App\Domain\Video\Repository\VideoRepositoryInterface;
 use App\Domain\Video\ValueObject\VideoCodec;
 use App\Domain\Video\ValueObject\AudioCodec;
 use App\Domain\Video\ValueObject\Format;
-use App\Domain\Video\ValueObject\PresetTitle;
 use App\Domain\Video\ValueObject\VideoDates;
 use App\Domain\Video\ValueObject\VideoTitle;
 use App\Domain\Video\ValueObject\FileExtension;
@@ -60,7 +59,6 @@ class StartTranscodeHandlerTest extends TestCase
         );
 
         $preset = new Preset(
-            new PresetTitle('HD 720p'),
             new VideoCodec('h264'),
             new AudioCodec('aac'),
             new Format('mp4'),
@@ -130,7 +128,7 @@ class StartTranscodeHandlerTest extends TestCase
 
         $this->assertInstanceOf(TaskItemDTO::class, $dto);
         $this->assertSame('Source Clip', $dto->videoTitle);
-        $this->assertSame('HD 720p', $dto->presetTitle);
+        $this->assertSame('h264/aac/mp4', $dto->presetTitle);
         $this->assertSame('PENDING', $dto->status);
         $this->assertSame([
             StartTranscodeStart::class,
@@ -154,7 +152,6 @@ class StartTranscodeHandlerTest extends TestCase
         );
 
         $preset = new Preset(
-            new PresetTitle('HD 720p'),
             new VideoCodec('h264'),
             new AudioCodec('aac'),
             new Format('mp4'),
@@ -420,7 +417,6 @@ class StartTranscodeHandlerTest extends TestCase
         );
 
         $preset = new Preset(
-            new PresetTitle('HD 720p'),
             new VideoCodec('h264'),
             new AudioCodec('aac'),
             new Format('mp4'),

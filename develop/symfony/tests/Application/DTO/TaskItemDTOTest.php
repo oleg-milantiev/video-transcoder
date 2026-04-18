@@ -11,7 +11,6 @@ use App\Domain\Video\Entity\Video;
 use App\Domain\Video\ValueObject\VideoCodec;
 use App\Domain\Video\ValueObject\AudioCodec;
 use App\Domain\Video\ValueObject\Format;
-use App\Domain\Video\ValueObject\PresetTitle;
 use App\Domain\Video\ValueObject\Progress;
 use App\Domain\Video\ValueObject\TaskStatus;
 use App\Domain\Video\ValueObject\TaskDates;
@@ -37,7 +36,6 @@ class TaskItemDTOTest extends TestCase
         );
 
         $preset = new Preset(
-            new PresetTitle('HD 1080p'),
             new VideoCodec('h264'),
             new AudioCodec('aac'),
             new Format('mp4'),
@@ -58,7 +56,7 @@ class TaskItemDTOTest extends TestCase
 
         $this->assertSame('55555555-5555-4555-8555-555555555555', $dto->id);
         $this->assertSame('Task Source Video', $dto->videoTitle);
-        $this->assertSame('HD 1080p', $dto->presetTitle);
+        $this->assertSame('h264/aac/mp4', $dto->presetTitle);
         $this->assertSame('PROCESSING', $dto->status);
         $this->assertSame(75, $dto->progress);
         $this->assertSame($taskCreatedAt->format(\DateTimeInterface::ATOM), $dto->createdAt);
@@ -76,7 +74,6 @@ class TaskItemDTOTest extends TestCase
         );
 
         $preset = new Preset(
-            new PresetTitle('HD 1080p'),
             new VideoCodec('h264'),
             new AudioCodec('aac'),
             new Format('mp4'),
@@ -108,7 +105,6 @@ class TaskItemDTOTest extends TestCase
         );
 
         $preset = new Preset(
-            new PresetTitle('HD 720p'),
             new VideoCodec('h265'),
             new AudioCodec('aac'),
             new Format('mp4'),

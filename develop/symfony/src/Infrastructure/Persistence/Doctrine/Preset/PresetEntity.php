@@ -8,7 +8,6 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Uid\UuidV4 as SymfonyUuid;
-use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: PresetRepository::class)]
 #[ORM\Table(name: 'preset')]
@@ -19,11 +18,6 @@ class PresetEntity
     #[ORM\GeneratedValue(strategy: 'CUSTOM')]
     #[ORM\CustomIdGenerator(class: 'doctrine.uuid_generator')]
     public ?SymfonyUuid $id = null;
-
-    #[ORM\Column(length: 255)]
-    #[Assert\NotBlank]
-    #[Assert\Length(min: 3, max: 255)]
-    public string $title;
 
     #[ORM\Column(length: 50)]
     public string $videoCodec;
@@ -48,6 +42,6 @@ class PresetEntity
 
     public function __toString(): string
     {
-        return $this->title;
+        return sprintf('%s/%s/%s', $this->videoCodec, $this->audioCodec, $this->format);
     }
 }

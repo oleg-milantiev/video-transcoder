@@ -104,7 +104,7 @@ class VideoRepository extends ServiceEntityRepository implements VideoRepository
     {
         $conn = $this->getEntityManager()->getConnection();
 
-        // SQL query to fetch all presets with their tasks for this video, sorted by preset title
+        // SQL query to fetch all presets with their tasks for this video, sorted by preset label
         $sql = <<<SQL
             WITH
             user_metrics AS (
@@ -138,7 +138,7 @@ class VideoRepository extends ServiceEntityRepository implements VideoRepository
             )
             SELECT
                 p.id,
-                p.title,
+                CONCAT(p.video_codec, '/', p.audio_codec, '/', p.format) AS title,
                 ((COALESCE((t.meta->>'bitrate')::float, 0.0)/8*1000*1000+128/8*1000) * COALESCE((v.meta->>'duration')::float, 0.0))::int expected_file_size,
                 t.id AS task_id,
                 t.status,
@@ -146,13 +146,13 @@ class VideoRepository extends ServiceEntityRepository implements VideoRepository
                 pt.waiting_tariff_delay,
                 pt.will_start_at,
                 t.progress,
-                CONCAT(v.title, ' - ', p.title) as download_filename,
+                CONCAT(v.title, ' - ', p.video_codec, '/', p.audio_codec, '/', p.format) as download_filename,
                 t.created_at
             FROM preset p
                      LEFT JOIN task t ON p.id = t.preset_id AND t.video_id = :video_id
                      LEFT JOIN video v ON v.id = :video_id
                      LEFT JOIN pending_tasks pt on t.id = pt.id
-            ORDER BY p.title
+            ORDER BY p.video_codec, p.audio_codec, p.format
         SQL;
 
         $result = $conn->executeQuery($sql, ['video_id' => $videoId->toRfc4122()]);

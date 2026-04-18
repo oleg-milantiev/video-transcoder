@@ -13,7 +13,6 @@ use App\Domain\Video\ValueObject\VideoCodec;
 use App\Domain\Video\ValueObject\AudioCodec;
 use App\Domain\Video\ValueObject\Format;
 use App\Domain\Video\ValueObject\FileExtension;
-use App\Domain\Video\ValueObject\PresetTitle;
 use App\Domain\Video\ValueObject\Progress;
 use App\Domain\Video\ValueObject\TaskDates;
 use App\Domain\Video\ValueObject\TaskStatus;
@@ -75,7 +74,6 @@ final class TaskRealtimePayloadDTOTest extends TestCase
         );
 
         $preset = Preset::create(
-            new PresetTitle('HD1'),
             new VideoCodec('h264'),
             new AudioCodec('aac'),
             new Format('mp4'),
@@ -86,6 +84,6 @@ final class TaskRealtimePayloadDTOTest extends TestCase
         $arr = $dto->toArray();
 
         $this->assertSame('My video', $arr['videoTitle']);
-        $this->assertSame('HD1', $arr['presetTitle']);
+        $this->assertSame('h264/aac/mp4', $arr['presetTitle']);
     }
 }

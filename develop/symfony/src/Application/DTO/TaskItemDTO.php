@@ -29,11 +29,11 @@ readonly class TaskItemDTO
         return new self(
             id: $task->id()->toRfc4122(),
             videoTitle: $video->title()->value(),
-            presetTitle: $preset->title()->value(),
+            presetTitle: $preset->label(),
             status: $task->status()->name,
             progress: $task->progress()->value(),
             createdAt: $task->createdAt()->format(\DateTimeInterface::ATOM),
-            downloadFilename: $video->title()->value() . ' - ' . $preset->title()->value(),
+            downloadFilename: $video->title()->value() . ' - ' . $preset->label(),
             deleted: $task->isDeleted(),
         );
     }

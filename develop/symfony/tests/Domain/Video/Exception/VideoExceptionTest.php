@@ -6,7 +6,6 @@ namespace App\Tests\Domain\Video\Exception;
 
 use App\Domain\Video\Exception\IncompatibleVideoFormat;
 use App\Domain\Video\Exception\InvalidPresetName;
-use App\Domain\Video\Exception\InvalidPresetTitle;
 use App\Domain\Video\Exception\InvalidProgress;
 use App\Domain\Video\Exception\InvalidRealtimeNotification;
 use App\Domain\Video\Exception\InvalidTaskDates;
@@ -44,16 +43,6 @@ final class VideoExceptionTest extends TestCase
         $this->assertInstanceOf(\DomainException::class, $exception);
         $this->assertSame('Invalid Preset Name: x', $exception->getMessage());
     }
-
-    /** InvalidPresetTitle содержит переданное значение в сообщении. */
-    public function testInvalidPresetTitleMessage(): void
-    {
-        $exception = InvalidPresetTitle::fromValue('x');
-
-        $this->assertInstanceOf(\DomainException::class, $exception);
-        $this->assertSame('Invalid Preset Title: x', $exception->getMessage());
-    }
-
     /** InvalidProgress::outOfRange() содержит числовое значение в сообщении. */
     public function testInvalidProgressMessage(): void
     {

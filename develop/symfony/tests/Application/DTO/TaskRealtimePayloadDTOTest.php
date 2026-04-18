@@ -13,7 +13,6 @@ use App\Domain\Video\ValueObject\VideoCodec;
 use App\Domain\Video\ValueObject\AudioCodec;
 use App\Domain\Video\ValueObject\Format;
 use App\Domain\Video\ValueObject\FileExtension;
-use App\Domain\Video\ValueObject\PresetTitle;
 use App\Domain\Video\ValueObject\Progress;
 use App\Domain\Video\ValueObject\TaskDates;
 use App\Domain\Video\ValueObject\TaskStatus;
@@ -79,7 +78,6 @@ final class TaskRealtimePayloadDTOTest extends TestCase
         );
 
         $preset = new Preset(
-            new PresetTitle('HD 720p'),
             new VideoCodec('h264'),
             new AudioCodec('aac'),
             new Format('mp4'),
@@ -93,7 +91,7 @@ final class TaskRealtimePayloadDTOTest extends TestCase
         $dto->addVideoPresetFields($video, $preset);
 
         $this->assertSame('Test Video', $dto->videoTitle);
-        $this->assertSame('HD 720p', $dto->presetTitle);
+        $this->assertSame('h264/aac/mp4', $dto->presetTitle);
     }
 
     public function testToArrayIncludesAllFields(): void
@@ -124,7 +122,6 @@ final class TaskRealtimePayloadDTOTest extends TestCase
         );
 
         $preset = new Preset(
-            new PresetTitle('Full HD'),
             new VideoCodec('h265'),
             new AudioCodec('aac'),
             new Format('mp4'),
@@ -144,7 +141,7 @@ final class TaskRealtimePayloadDTOTest extends TestCase
         $this->assertSame(50, $array['progress']);
         $this->assertFalse($array['deleted']);
         $this->assertSame('My Video', $array['videoTitle']);
-        $this->assertSame('Full HD', $array['presetTitle']);
+        $this->assertSame('h265/aac/mp4', $array['presetTitle']);
         $this->assertSame($createdAt->format(\DateTimeInterface::ATOM), $array['createdAt']);
         $this->assertArrayHasKey('updatedAt', $array);
     }

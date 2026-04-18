@@ -25,7 +25,7 @@ class PresetCrudController extends AbstractCrudController
             ->showEntityActionsInlined()
             ->setEntityLabelInSingular('Preset')
             ->setEntityLabelInPlural('Presets')
-            ->setDefaultSort(['title' => 'ASC']);
+            ->setDefaultSort(['videoCodec' => 'ASC']);
     }
 
     public function configureActions(Actions $actions): Actions
@@ -37,7 +37,6 @@ class PresetCrudController extends AbstractCrudController
     public function configureFilters(Filters $filters): Filters
     {
         return $filters
-            ->add(TextFilter::new('title'))
             ->add(TextFilter::new('format'))
             ->add(TextFilter::new('videoCodec'))
             ->add(TextFilter::new('audioCodec'));
@@ -49,9 +48,6 @@ class PresetCrudController extends AbstractCrudController
             TextField::new('id')
                 ->hideOnForm()
                 ->formatValue(static fn ($value) => is_object($value) && method_exists($value, 'toRfc4122') ? $value->toRfc4122() : (string) $value),
-            TextField::new('title')
-                ->setFormTypeOption('attr.minlength', 3)
-                ->setHelp('At least 3 characters.'),
             TextField::new('format'),
             TextField::new('videoCodec'),
             TextField::new('audioCodec'),

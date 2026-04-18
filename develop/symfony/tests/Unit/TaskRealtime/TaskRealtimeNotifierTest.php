@@ -15,7 +15,6 @@ use App\Domain\Video\ValueObject\VideoCodec;
 use App\Domain\Video\ValueObject\AudioCodec;
 use App\Domain\Video\ValueObject\Format;
 use App\Domain\Video\ValueObject\FileExtension;
-use App\Domain\Video\ValueObject\PresetTitle;
 use App\Domain\Video\ValueObject\Progress;
 use App\Domain\Video\ValueObject\TaskDates;
 use App\Domain\Video\ValueObject\TaskStatus;
@@ -52,7 +51,6 @@ final class TaskRealtimeNotifierTest extends TestCase
         );
 
         $preset = Preset::create(
-            new PresetTitle('HD1'),
             new VideoCodec('h264'),
             new AudioCodec('aac'),
             new Format('mp4'),
@@ -86,7 +84,7 @@ final class TaskRealtimeNotifierTest extends TestCase
             TestCase::assertTrue($message->userId->equals($task->userId()));
             TestCase::assertIsArray($message->payload);
             TestCase::assertSame('My video', $message->payload['videoTitle']);
-            TestCase::assertSame('HD1', $message->payload['presetTitle']);
+            TestCase::assertSame('h264/aac/mp4', $message->payload['presetTitle']);
 
             return new Envelope($command);
         });
@@ -120,7 +118,6 @@ final class TaskRealtimeNotifierTest extends TestCase
         );
 
         $preset = Preset::create(
-            new PresetTitle('SD1'),
             new VideoCodec('h264'),
             new AudioCodec('aac'),
             new Format('mp4'),
@@ -151,7 +148,7 @@ final class TaskRealtimeNotifierTest extends TestCase
             TestCase::assertTrue($message->id->equals($task->id()));
             TestCase::assertIsArray($message->payload);
             TestCase::assertSame('Another video', $message->payload['videoTitle']);
-            TestCase::assertSame('SD1', $message->payload['presetTitle']);
+            TestCase::assertSame('h264/aac/mp4', $message->payload['presetTitle']);
 
             return new Envelope($command);
         });

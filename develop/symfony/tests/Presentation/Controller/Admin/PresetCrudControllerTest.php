@@ -55,7 +55,7 @@ class PresetCrudControllerTest extends TestCase
         self::assertIsIterable($fields);
 
         $fields = iterator_to_array($fields);
-        self::assertCount(5, $fields); // id, title, videoCodec, audioCodec, format
+        self::assertCount(4, $fields); // id, format, videoCodec, audioCodec
 
         $fieldNames = [];
         foreach ($fields as $field) {
@@ -64,7 +64,7 @@ class PresetCrudControllerTest extends TestCase
             }
         }
 
-        $expectedFields = ['id', 'title', 'videoCodec', 'audioCodec', 'format'];
+        $expectedFields = ['id', 'format', 'videoCodec', 'audioCodec'];
         foreach ($expectedFields as $expectedField) {
             self::assertContains($expectedField, $fieldNames);
         }

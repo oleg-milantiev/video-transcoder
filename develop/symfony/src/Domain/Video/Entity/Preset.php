@@ -6,26 +6,22 @@ namespace App\Domain\Video\Entity;
 use App\Domain\Shared\ValueObject\Uuid;
 use App\Domain\Video\ValueObject\AudioCodec;
 use App\Domain\Video\ValueObject\Format;
-use App\Domain\Video\ValueObject\PresetTitle;
 use App\Domain\Video\ValueObject\VideoCodec;
 
 class Preset
 {
     private ?Uuid $id;
-    private PresetTitle $title;
     private VideoCodec $videoCodec;
     private AudioCodec $audioCodec;
     private Format $format;
 
     public function __construct(
-        PresetTitle $title,
         VideoCodec $videoCodec,
         AudioCodec $audioCodec,
         Format $format,
         ?Uuid $id = null,
     ) {
         $this->id = $id;
-        $this->rename($title);
         $this->changeOutput($videoCodec, $audioCodec, $format);
     }
 
@@ -34,9 +30,9 @@ class Preset
         return $this->id;
     }
 
-    public function title(): PresetTitle
+    public function label(): string
     {
-        return $this->title;
+        return sprintf('%s/%s/%s', $this->videoCodec->value(), $this->audioCodec->value(), $this->format->value());
     }
 
     public function videoCodec(): VideoCodec
@@ -55,17 +51,11 @@ class Preset
     }
 
     public static function create(
-        PresetTitle $title,
         VideoCodec $videoCodec,
         AudioCodec $audioCodec,
         Format $format,
     ): self {
-        return new self($title, $videoCodec, $audioCodec, $format);
-    }
-
-    public function rename(PresetTitle $title): void
-    {
-        $this->title = $title;
+        return new self($videoCodec, $audioCodec, $format);
     }
 
     public function changeOutput(

@@ -15,7 +15,6 @@ use App\Domain\Video\ValueObject\VideoCodec;
 use App\Domain\Video\ValueObject\AudioCodec;
 use App\Domain\Video\ValueObject\Format;
 use App\Domain\Video\ValueObject\FileExtension;
-use App\Domain\Video\ValueObject\PresetTitle;
 use App\Domain\Video\ValueObject\Progress;
 use App\Domain\Video\ValueObject\TaskDates;
 use App\Domain\Video\ValueObject\TaskStatus;
@@ -54,7 +53,6 @@ final class TaskRealtimeNotifierTest extends TestCase
         );
 
         $preset = new Preset(
-            new PresetTitle('HD 720p'),
             new VideoCodec('h264'),
             new AudioCodec('aac'),
             new Format('mp4'),
