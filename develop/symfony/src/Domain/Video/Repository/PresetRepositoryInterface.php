@@ -10,7 +10,6 @@ use App\Domain\Video\Entity\Preset;
 interface PresetRepositoryInterface
 {
     public function findById(Uuid $id): ?Preset;
-    public function log(Uuid $id, string $level, string $text): void;
 
     /**
      * @return Preset[]

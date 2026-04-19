@@ -40,24 +40,4 @@ class PresetRepository extends ServiceEntityRepository implements PresetReposito
 
         return $entity ? PresetMapper::toDomain($entity) : null;
     }
-
-    // You should NOT log into Persistence in prod. Just for debug now
-    public function log(Uuid $id, string $level, string $text): void
-    {
-        $em = $this->getEntityManager();
-        /** @var PresetEntity|null $preset */
-        $preset = $this->find(SymfonyUuid::fromString($id->toRfc4122()));
-        if (!$preset) {
-            throw new \RuntimeException("Preset with id $id not found");
-        }
-        $log = $preset->log ?? [];
-        $log[] = [
-            'level' => $level,
-            'text' => $text,
-            'timestamp' => new \DateTimeImmutable()->format(\DateTimeInterface::ATOM),
-        ];
-        $preset->log = $log;
-        $em->persist($preset);
-        $em->flush();
-    }
 }

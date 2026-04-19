@@ -29,9 +29,6 @@ class PresetEntity
     #[ORM\Column(length: 10)]
     public string $format;
 
-    #[ORM\Column(type: 'json', nullable: true, options: ['jsonb' => true])]
-    public ?array $log = null;
-
     /** @var Collection<int, TaskEntity> */
     #[ORM\OneToMany(targetEntity: TaskEntity::class, mappedBy: 'preset', cascade: ['remove'])]
     public Collection $tasks;
