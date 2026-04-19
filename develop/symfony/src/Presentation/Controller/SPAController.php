@@ -60,7 +60,7 @@ class SPAController extends AbstractController
                 'video' => [
                     'list' => $this->generateUrl('api_video_list'),
                     'details' => str_replace($dummyUuid, '__UUID__', $this->generateUrl('api_video_details', ['id' => $dummyUuid])),
-                    'transcode' => str_replace([$dummyUuid, $dummyPresetId, $dummyHeight], ['__UUID__', '__PRESET_ID__', '__HEIGHT__'], $this->generateUrl('api_video_transcode', ['id' => $dummyUuid, 'presetId' => $dummyPresetId, $dummyHeight])),
+                    'transcode' => str_replace([$dummyUuid, $dummyPresetId, (string) $dummyHeight], ['__UUID__', '__PRESET_ID__', '__HEIGHT__'], $this->generateUrl('api_video_transcode', ['id' => $dummyUuid, 'presetId' => $dummyPresetId, 'height' => $dummyHeight])),
                     'delete' => str_replace($dummyUuid, '__UUID__', $this->generateUrl('api_video_delete', ['id' => $dummyUuid])),
                     'patch' => str_replace($dummyUuid, '__UUID__', $this->generateUrl('api_video_patch', ['id' => $dummyUuid])),
                 ],

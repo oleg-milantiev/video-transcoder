@@ -16,7 +16,7 @@ const mockConfig = {
         video: {
             details:   '/api/videos/__UUID__',
             patch:     '/api/videos/__UUID__',
-            transcode: '/api/videos/__UUID__/transcode/__PRESET_ID__',
+            transcode: '/api/videos/__UUID__/transcode/__PRESET_ID__/__HEIGHT__',
         },
         task: {
             cancel:   '/api/tasks/__TASK_ID__/cancel',

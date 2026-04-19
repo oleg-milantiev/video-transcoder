@@ -105,7 +105,7 @@ final class VideoControllerTest extends WebTestCase
         // video routes
         self::assertSame('/api/video/', $config['route']['video']['list'] ?? '');
         self::assertSame('/api/video/__UUID__', $config['route']['video']['details'] ?? '');
-        self::assertSame('/api/video/__UUID__/transcode/__PRESET_ID__', $config['route']['video']['transcode'] ?? '');
+        self::assertSame('/api/video/__UUID__/transcode/__PRESET_ID__/__HEIGHT__', $config['route']['video']['transcode'] ?? '');
         self::assertSame('/api/video/__UUID__', $config['route']['video']['delete'] ?? '');
         self::assertSame('/api/video/__UUID__', $config['route']['video']['patch'] ?? '');
 

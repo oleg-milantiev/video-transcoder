@@ -53,7 +53,7 @@ class StartTranscodeHandlerTest extends TestCase
             new VideoTitle('Source Clip'),
             new FileExtension('mp4'),
             userId: Uuid::fromString('123e4567-e89b-42d3-a456-426614174077'),
-            meta: [],
+            meta: ['width' => 1280, 'height' => 720, 'duration' => 60.0],
             dates: VideoDates::create(new \DateTimeImmutable('2026-03-18 12:00:00')),
             id: $videoId,
         );
@@ -146,7 +146,7 @@ class StartTranscodeHandlerTest extends TestCase
             new VideoTitle('Source Clip'),
             new FileExtension('mp4'),
             userId: Uuid::fromString('123e4567-e89b-42d3-a456-426614174077'),
-            meta: [],
+            meta: ['width' => 1920, 'height' => 1080, 'duration' => 120.0],
             dates: VideoDates::create(new \DateTimeImmutable('2026-03-18 12:00:00')),
             id: $videoId,
         );
@@ -163,8 +163,6 @@ class StartTranscodeHandlerTest extends TestCase
             new UserRoles(['ROLE_USER']),
             id: $video->userId(),
         );
-
-        // Existing FAILED task — restart() must be called on it
         $existingTask = Task::reconstitute(
             videoId: $videoId,
             presetId: $preset->id(),
@@ -285,7 +283,7 @@ class StartTranscodeHandlerTest extends TestCase
             });
 
         $videoRepo = $this->createMock(VideoRepositoryInterface::class);
-        $videoRepo->expects($this->once())->method('findById')->willReturn(Video::reconstitute(new VideoTitle('S'), new FileExtension('mp4'), Uuid::fromString('123e4567-e89b-42d3-a456-426614174077'), [], VideoDates::create(), Uuid::fromString('123e4567-e89b-42d3-a456-426614174100')));
+        $videoRepo->expects($this->once())->method('findById')->willReturn(Video::reconstitute(new VideoTitle('S'), new FileExtension('mp4'), Uuid::fromString('123e4567-e89b-42d3-a456-426614174077'), ['width' => 1280, 'height' => 720, 'duration' => 30.0], VideoDates::create(), Uuid::fromString('123e4567-e89b-42d3-a456-426614174100')));
 
         $handler = new StartTranscodeHandler(
             $commandBus,
@@ -323,7 +321,7 @@ class StartTranscodeHandlerTest extends TestCase
             });
 
         $videoId = Uuid::fromString('123e4567-e89b-42d3-a456-426614174100');
-        $video = Video::reconstitute(new VideoTitle('S'), new FileExtension('mp4'), Uuid::fromString('123e4567-e89b-42d3-a456-426614174077'), [], VideoDates::create(), $videoId);
+        $video = Video::reconstitute(new VideoTitle('S'), new FileExtension('mp4'), Uuid::fromString('123e4567-e89b-42d3-a456-426614174077'), ['width' => 1280, 'height' => 720, 'duration' => 30.0], VideoDates::create(), $videoId);
 
         $videoRepo = $this->createStub(VideoRepositoryInterface::class);
         $videoRepo->method('findById')->willReturn($video);
@@ -371,7 +369,7 @@ class StartTranscodeHandlerTest extends TestCase
             });
 
         $videoId = Uuid::fromString('123e4567-e89b-42d3-a456-426614174100');
-        $video = Video::reconstitute(new VideoTitle('S'), new FileExtension('mp4'), Uuid::fromString('123e4567-e89b-42d3-a456-426614174077'), [], VideoDates::create(), $videoId);
+        $video = Video::reconstitute(new VideoTitle('S'), new FileExtension('mp4'), Uuid::fromString('123e4567-e89b-42d3-a456-426614174077'), ['width' => 1280, 'height' => 720, 'duration' => 30.0], VideoDates::create(), $videoId);
 
         $videoRepo = $this->createStub(VideoRepositoryInterface::class);
         $videoRepo->method('findById')->willReturn($video);
@@ -411,7 +409,7 @@ class StartTranscodeHandlerTest extends TestCase
             new VideoTitle('Source Clip'),
             new FileExtension('mp4'),
             userId: Uuid::fromString('123e4567-e89b-42d3-a456-426614174077'),
-            meta: [],
+            meta: ['width' => 1280, 'height' => 720, 'duration' => 60.0],
             dates: VideoDates::create(new \DateTimeImmutable('2026-03-18 12:00:00')),
             id: $videoId,
         );
@@ -430,6 +428,8 @@ class StartTranscodeHandlerTest extends TestCase
         );
 
         $commandBus = $this->createStub(MessageBusInterface::class);
+
+        // Existing FAILED task — restart() must be called on it
         $eventBus = $this->createMock(MessageBusInterface::class);
         $dispatchedEventClasses = [];
         $eventBus->expects($this->exactly(2))

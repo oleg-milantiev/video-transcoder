@@ -161,13 +161,14 @@ final class VideoApiControllerTest extends ApiWebTestCase
                 return $query instanceof StartTranscodeQuery
                     && $query->uuid->toRfc4122() === '11111111-1111-4111-8111-111111111111'
                     && $query->presetId->toRfc4122() === '77777777-7777-4777-8777-777777777777'
-                    && $query->userId->toRfc4122() === '00000000-0000-4000-8000-000000000042';
+                    && $query->userId->toRfc4122() === '00000000-0000-4000-8000-000000000042'
+                    && $query->height === 720;
             }))
             ->willReturn(['taskId' => '15151515-1515-4515-8515-151515151515', 'status' => 'PENDING']);
 
         $this->replaceService(QueryBus::class, $queryBus);
 
-        $client->request('POST', '/api/video/11111111-1111-4111-8111-111111111111/transcode/77777777-7777-4777-8777-777777777777');
+        $client->request('POST', '/api/video/11111111-1111-4111-8111-111111111111/transcode/77777777-7777-4777-8777-777777777777/720');
 
         self::assertResponseStatusCodeSame(200);
         self::assertSame([
@@ -187,16 +188,10 @@ final class VideoApiControllerTest extends ApiWebTestCase
         $queryBus->expects($this->never())->method('query');
         $this->replaceService(QueryBus::class, $queryBus);
 
-        $client->request('POST', '/api/video/not-a-uuid/transcode/77777777-7777-4777-8777-777777777777');
+        // Route requires UUID format for {id}, so not-a-uuid won't match → 404
+        $client->request('POST', '/api/video/not-a-uuid/transcode/77777777-7777-4777-8777-777777777777/720');
 
-        self::assertResponseStatusCodeSame(400);
-        self::assertSame([
-            'error' => [
-                'code' => 'INVALID_UUID',
-                'message' => 'Invalid UUID',
-                'details' => [],
-            ],
-        ], $this->decodeJson($client->getResponse()->getContent()));
+        self::assertResponseStatusCodeSame(404);
     }
 
     /**
@@ -212,7 +207,7 @@ final class VideoApiControllerTest extends ApiWebTestCase
             ->willThrowException(new VideoAccessDeniedException('Access denied'));
         $this->replaceService(QueryBus::class, $queryBus);
 
-        $client->request('POST', '/api/video/11111111-1111-4111-8111-111111111111/transcode/77777777-7777-4777-8777-777777777777');
+        $client->request('POST', '/api/video/11111111-1111-4111-8111-111111111111/transcode/77777777-7777-4777-8777-777777777777/720');
 
         self::assertResponseStatusCodeSame(403);
         self::assertSame([
@@ -237,7 +232,7 @@ final class VideoApiControllerTest extends ApiWebTestCase
             ->willThrowException(new \RuntimeException('boom'));
         $this->replaceService(QueryBus::class, $queryBus);
 
-        $client->request('POST', '/api/video/11111111-1111-4111-8111-111111111111/transcode/77777777-7777-4777-8777-777777777777');
+        $client->request('POST', '/api/video/11111111-1111-4111-8111-111111111111/transcode/77777777-7777-4777-8777-777777777777/720');
 
         self::assertResponseStatusCodeSame(500);
         self::assertSame([
@@ -414,7 +409,7 @@ final class VideoApiControllerTest extends ApiWebTestCase
             ->willThrowException(new VideoNotFoundException('Video not found'));
         $this->replaceService(QueryBus::class, $queryBus);
 
-        $client->request('POST', '/api/video/11111111-1111-4111-8111-111111111111/transcode/77777777-7777-4777-8777-777777777777');
+        $client->request('POST', '/api/video/11111111-1111-4111-8111-111111111111/transcode/77777777-7777-4777-8777-777777777777/720');
 
         self::assertResponseStatusCodeSame(404);
         self::assertSame([
@@ -432,7 +427,7 @@ final class VideoApiControllerTest extends ApiWebTestCase
             ->willThrowException(new \App\Application\Exception\PresetNotFoundException('Preset not found'));
         $this->replaceService(QueryBus::class, $queryBus);
 
-        $client->request('POST', '/api/video/11111111-1111-4111-8111-111111111111/transcode/77777777-7777-4777-8777-777777777777');
+        $client->request('POST', '/api/video/11111111-1111-4111-8111-111111111111/transcode/77777777-7777-4777-8777-777777777777/720');
 
         self::assertResponseStatusCodeSame(404);
         self::assertSame([
@@ -450,7 +445,7 @@ final class VideoApiControllerTest extends ApiWebTestCase
             ->willThrowException(new \App\Application\Exception\UserNotFoundException('User not found'));
         $this->replaceService(QueryBus::class, $queryBus);
 
-        $client->request('POST', '/api/video/11111111-1111-4111-8111-111111111111/transcode/77777777-7777-4777-8777-777777777777');
+        $client->request('POST', '/api/video/11111111-1111-4111-8111-111111111111/transcode/77777777-7777-4777-8777-777777777777/720');
 
         self::assertResponseStatusCodeSame(404);
         self::assertSame([
@@ -468,7 +463,7 @@ final class VideoApiControllerTest extends ApiWebTestCase
             ->willThrowException(new \App\Application\Exception\TaskCreationFailedException('Task creation failed'));
         $this->replaceService(QueryBus::class, $queryBus);
 
-        $client->request('POST', '/api/video/11111111-1111-4111-8111-111111111111/transcode/77777777-7777-4777-8777-777777777777');
+        $client->request('POST', '/api/video/11111111-1111-4111-8111-111111111111/transcode/77777777-7777-4777-8777-777777777777/720');
 
         self::assertResponseStatusCodeSame(500);
         self::assertSame([

@@ -102,7 +102,7 @@ final class HomeControllerTest extends WebTestCase
         self::assertSame('/api/video/', $config['route']['video']['list'] ?? '');
         self::assertSame('/api/task/', $config['route']['task']['list'] ?? '');
         self::assertSame('/api/video/__UUID__', $config['route']['video']['details'] ?? '');
-        self::assertSame('/api/video/__UUID__/transcode/__PRESET_ID__', $config['route']['video']['transcode'] ?? '');
+        self::assertSame('/api/video/__UUID__/transcode/__PRESET_ID__/__HEIGHT__', $config['route']['video']['transcode'] ?? '');
         self::assertSame('/api/task/__TASK_ID__/cancel', $config['route']['task']['cancel'] ?? '');
         self::assertSame('/api/upload', $config['route']['upload'] ?? '');
         self::assertSame('/video/__UUID__', $config['route']['videoDetails'] ?? '');
