@@ -13,6 +13,7 @@ readonly class PresetItemDTO
         public string $videoCodec,
         public string $audioCodec,
         public string $format,
+        public array $bitrate,
     ) {}
 
     public static function fromDomain(Preset $preset): self
@@ -23,6 +24,7 @@ readonly class PresetItemDTO
             videoCodec: $preset->videoCodec()->value(),
             audioCodec: $preset->audioCodec()->value(),
             format: $preset->format()->value(),
+            bitrate: $preset->bitrate()->value(),
         );
     }
 }

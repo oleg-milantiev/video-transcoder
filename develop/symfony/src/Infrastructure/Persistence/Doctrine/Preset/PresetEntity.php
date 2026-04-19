@@ -29,6 +29,9 @@ class PresetEntity
     #[ORM\Column(length: 10)]
     public string $format;
 
+    #[ORM\Column(type: 'json', nullable: true, options: ['jsonb' => true])]
+    public ?array $bitrate = null;
+
     /** @var Collection<int, TaskEntity> */
     #[ORM\OneToMany(targetEntity: TaskEntity::class, mappedBy: 'preset', cascade: ['remove'])]
     public Collection $tasks;
@@ -46,5 +49,19 @@ class PresetEntity
     public function __toString(): string
     {
         return sprintf('%s/%s/%s', $this->videoCodec, $this->audioCodec, $this->format);
+    }
+
+    /**
+     * Get bitrate as pretty-printed JSON for EasyAdmin display.
+     * Method is accessed reflectively by EasyAdmin templates/forms, mark as used to avoid IDE warnings.
+     *
+     * @noinspection PhpUnused
+     */
+    public function getBitrateJson(): ?string
+    {
+        if ($this->bitrate === null) {
+            return null;
+        }
+        return json_encode($this->bitrate, JSON_PRETTY_PRINT);
     }
 }

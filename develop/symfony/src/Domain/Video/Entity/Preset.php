@@ -6,6 +6,7 @@ namespace App\Domain\Video\Entity;
 use App\Domain\Shared\ValueObject\Uuid;
 use App\Domain\Video\ValueObject\AudioCodec;
 use App\Domain\Video\ValueObject\Format;
+use App\Domain\Video\ValueObject\PresetBitrate;
 use App\Domain\Video\ValueObject\VideoCodec;
 
 class Preset
@@ -14,13 +15,17 @@ class Preset
     private VideoCodec $videoCodec;
     private AudioCodec $audioCodec;
     private Format $format;
+    private PresetBitrate $bitrate;
+
     public function __construct(
         VideoCodec $videoCodec,
         AudioCodec $audioCodec,
         Format $format,
         ?Uuid $id = null,
+        ?PresetBitrate $bitrate = null,
     ) {
         $this->id = $id;
+        $this->bitrate = $bitrate ?? PresetBitrate::default();
         $this->changeOutput($videoCodec, $audioCodec, $format);
     }
 
@@ -49,12 +54,18 @@ class Preset
         return $this->format;
     }
 
+    public function bitrate(): PresetBitrate
+    {
+        return $this->bitrate;
+    }
+
     public static function create(
         VideoCodec $videoCodec,
         AudioCodec $audioCodec,
         Format $format,
+        ?PresetBitrate $bitrate = null,
     ): self {
-        return new self($videoCodec, $audioCodec, $format);
+        return new self($videoCodec, $audioCodec, $format, null, $bitrate);
     }
 
     public function changeOutput(
@@ -65,5 +76,10 @@ class Preset
         $this->videoCodec = $videoCodec;
         $this->audioCodec = $audioCodec;
         $this->format = $format;
+    }
+
+    public function changeBitrate(PresetBitrate $bitrate): void
+    {
+        $this->bitrate = $bitrate;
     }
 }
