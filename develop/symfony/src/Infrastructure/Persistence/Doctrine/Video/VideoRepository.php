@@ -3,7 +3,6 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\Persistence\Doctrine\Video;
 
-use App\Application\Query\Repository\VideoDetailsReadRepositoryInterface;
 use App\Domain\Shared\ValueObject\Uuid;
 use App\Domain\Video\Entity\Video;
 use App\Domain\Video\Repository\VideoRepositoryInterface;
@@ -122,7 +121,7 @@ class VideoRepository extends ServiceEntityRepository implements VideoRepository
                  SELECT
                      m.*, -- user_id,active_count,last_start_time
                      tt.instance,
-                     tt.delay,
+                     tt.delay
                  FROM user_metrics m
                           JOIN "user" u ON u.id = m.user_id
                           JOIN tariff tt ON tt.id = u.tariff_id
