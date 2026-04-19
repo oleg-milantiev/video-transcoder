@@ -13,3 +13,4 @@
 - [Новая страница тарифов](symfony/new-tariffs-page.md)
 - [Дизайн страницы профиля](symfony/design-profile-page.md)
 - [Новая колонка в карточке видео](symfony/new-resolution-column.md)
+- [Редизайн карточки видео](symfony/redesign-video-page.md)

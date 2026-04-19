@@ -71,7 +71,8 @@ export function createVideoDetailsActions(params) {
             return;
         }
 
-        const currentTitle = state.dto.value.title || '';
+        const video = state.dto.value.video || {};
+        const currentTitle = video.title || '';
 
         const { value: newTitle } = await Swal.fire({
             title: 'Rename video',
@@ -132,16 +133,23 @@ export function createVideoDetailsActions(params) {
         }
     }
 
-    async function runPostAction(url, actionKey, fallbackError) {
+    async function runPostAction(url, actionKey, fallbackError, body = null) {
         state.activeActionKey.value = actionKey;
         state.actionError.value = '';
 
         try {
-            const response = await authFetch(url, {
+            const fetchOptions = {
                 method: 'POST',
                 headers: { 'X-Requested-With': 'XMLHttpRequest' },
                 credentials: 'same-origin',
-            });
+            };
+
+            if (body !== null) {
+                fetchOptions.headers['Content-Type'] = 'application/json';
+                fetchOptions.body = JSON.stringify(body);
+            }
+
+            const response = await authFetch(url, fetchOptions);
             const payload = await parseJsonResponse(response);
 
             if (!response.ok) {
@@ -157,14 +165,17 @@ export function createVideoDetailsActions(params) {
         }
     }
 
-    function startTranscode(presetId) {
+    function startTranscode(presetId, height) {
         const url = replaceTemplateValue(
             replaceTemplateValue(config.route.video.transcode, '__UUID__', uuid.value),
             '__PRESET_ID__',
             presetId
         );
 
-        void runPostAction(url, 'transcode-' + String(presetId), 'Failed to start transcode');
+        const body = height !== undefined ? { height: height } : null;
+        const actionKey = 'transcode-' + String(presetId) + (height ? '-' + String(height) : '');
+
+        void runPostAction(url, actionKey, 'Failed to start transcode', body);
     }
 
     function cancelTask(taskId) {
@@ -196,60 +207,68 @@ export function createVideoDetailsActions(params) {
             return;
         }
 
-        if (typeof update.videoId === 'string' && update.videoId !== state.dto.value.id) {
+        const video = state.dto.value.video || {};
+        if (typeof update.videoId === 'string' && update.videoId !== video.uuid) {
             return;
         }
 
         const taskId = typeof update.taskId === 'string' ? update.taskId : '';
-        const presetId = typeof update.presetId === 'string' ? update.presetId : '';
 
         if (!taskId) {
             return;
         }
 
-        const nextPresets = (state.dto.value.presetsWithTasks || []).map((preset) => {
-            const task = preset.task;
-            const sameTask = taskId && task && String(task.id) === taskId;
-            const samePreset = presetId && String(preset.id) === presetId;
+        const tasks = state.dto.value.tasks || [];
+        const taskIndex = tasks.findIndex(t => t.id === taskId);
 
-            if (!sameTask && !samePreset) {
-                return preset;
-            }
+        let nextTasks;
+        if (taskIndex >= 0) {
+            // Update existing task
+            nextTasks = tasks.map((task, index) => {
+                if (index !== taskIndex) {
+                    return task;
+                }
 
-            const currentTask = task || {
-                id: taskId || null,
-                status: 'PENDING',
-                progress: 0,
-                createdAt: typeof update.createdAt === 'string' ? update.createdAt : '-',
-                downloadFilename: typeof update.downloadFilename === 'string' ? update.downloadFilename : '',
-                waitingTariffInstance: null,
-                waitingTariffDelay: null,
-                willStartAt: null,
-            };
-
-            return {
-                ...preset,
-                task: {
-                    ...currentTask,
-                    id: taskId || currentTask.id || null,
-                    status: typeof update.status === 'string' ? update.status : currentTask.status,
-                    progress: typeof update.progress === 'number' ? update.progress : currentTask.progress,
-                    createdAt: typeof update.createdAt === 'string' ? update.createdAt : currentTask.createdAt,
-                    updatedAt: typeof update.updatedAt === 'string' ? update.updatedAt : currentTask.updatedAt,
-                    expiredAt: typeof update.expiredAt === 'string' ? update.expiredAt : currentTask.expiredAt,
-                    waitingTariffInstance: typeof update.waitingTariffInstance === 'boolean' ? update.waitingTariffInstance : (currentTask.waitingTariffInstance ?? null),
-                    waitingTariffDelay: typeof update.waitingTariffDelay === 'boolean' ? update.waitingTariffDelay : (currentTask.waitingTariffDelay ?? null),
-                    willStartAt: typeof update.willStartAt === 'string' ? update.willStartAt : (update.willStartAt === null ? null : (currentTask.willStartAt ?? null)),
+                return {
+                    ...task,
+                    status: typeof update.status === 'string' ? update.status : task.status,
+                    progress: typeof update.progress === 'number' ? update.progress : task.progress,
+                    createdAt: typeof update.createdAt === 'string' ? update.createdAt : task.createdAt,
+                    updatedAt: typeof update.updatedAt === 'string' ? update.updatedAt : task.updatedAt,
+                    expiredAt: typeof update.expiredAt === 'string' ? update.expiredAt : task.expiredAt,
+                    waitingTariffInstance: typeof update.waitingTariffInstance === 'boolean' ? update.waitingTariffInstance : (task.waitingTariffInstance ?? null),
+                    waitingTariffDelay: typeof update.waitingTariffDelay === 'boolean' ? update.waitingTariffDelay : (task.waitingTariffDelay ?? null),
+                    willStartAt: typeof update.willStartAt === 'string' ? update.willStartAt : (update.willStartAt === null ? null : (task.willStartAt ?? null)),
                     downloadFilename: (typeof update.videoTitle === 'string' && typeof update.presetTitle === 'string')
                         ? (update.videoTitle + ' - ' + update.presetTitle)
-                        : (currentTask.videoTitle + ' - ' + currentTask.presetTitle),
+                        : task.downloadFilename,
+                };
+            });
+        } else {
+            // Add new task
+            nextTasks = [
+                ...tasks,
+                {
+                    id: taskId,
+                    status: typeof update.status === 'string' ? update.status : 'PENDING',
+                    progress: typeof update.progress === 'number' ? update.progress : 0,
+                    createdAt: typeof update.createdAt === 'string' ? update.createdAt : '-',
+                    updatedAt: typeof update.updatedAt === 'string' ? update.updatedAt : undefined,
+                    expiredAt: typeof update.expiredAt === 'string' ? update.expiredAt : undefined,
+                    presetTitle: typeof update.presetTitle === 'string' ? update.presetTitle : '-',
+                    downloadFilename: (typeof update.videoTitle === 'string' && typeof update.presetTitle === 'string')
+                        ? (update.videoTitle + ' - ' + update.presetTitle)
+                        : '',
+                    waitingTariffInstance: typeof update.waitingTariffInstance === 'boolean' ? update.waitingTariffInstance : null,
+                    waitingTariffDelay: typeof update.waitingTariffDelay === 'boolean' ? update.waitingTariffDelay : null,
+                    willStartAt: typeof update.willStartAt === 'string' ? update.willStartAt : null,
                 },
-            };
-        });
+            ];
+        }
 
         state.dto.value = {
             ...state.dto.value,
-            presetsWithTasks: nextPresets,
+            tasks: nextTasks,
         };
     }
 
@@ -258,17 +277,29 @@ export function createVideoDetailsActions(params) {
             return;
         }
 
-        if (typeof payload.videoId === 'string' && payload.videoId !== state.dto.value.id) {
+        const video = state.dto.value.video || {};
+
+        // Require videoId to be present and matching
+        if (typeof payload.videoId !== 'string' || !payload.videoId) {
             return;
         }
 
+        if (payload.videoId !== video.uuid) {
+            return;
+        }
+
+        const updatedVideo = {
+            ...video,
+            poster: typeof payload.poster === 'string' ? payload.poster : video.poster,
+            title: typeof payload.title === 'string' ? payload.title : video.title,
+            meta: payload.meta || video.meta,
+            updatedAt: payload.updatedAt || video.updatedAt,
+            expiredAt: payload.expiredAt || video.expiredAt,
+        };
+
         state.dto.value = {
             ...state.dto.value,
-            poster: typeof payload.poster === 'string' ? payload.poster : state.dto.value.poster,
-            title: typeof payload.title === 'string' ? payload.title : state.dto.value.title,
-            meta: payload.meta || state.dto.value.meta,
-            updatedAt: payload.updatedAt || state.dto.value.updatedAt,
-            expiredAt: payload.expiredAt || state.dto.value.expiredAt,
+            video: updatedVideo,
         };
     }
 
