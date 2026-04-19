@@ -93,20 +93,33 @@ class TaskRepository extends ServiceEntityRepository implements TaskRepositoryIn
         return self::mapToDomain($entity);
     }
 
-    public function findForTranscode(Uuid $videoId, Uuid $presetId, Uuid $userId): ?Task
+    public function findForTranscode(Uuid $videoId, Uuid $presetId, Uuid $userId, int $height): ?Task
     {
-        $qb = $this->createQueryBuilder('task')
-            ->andWhere('IDENTITY(task.video) = :videoId')
-            ->andWhere('IDENTITY(task.preset) = :presetId')
-            ->andWhere('IDENTITY(task.user) = :userId')
-            ->setParameter('videoId', $videoId->toRfc4122())
-            ->setParameter('presetId', $presetId->toRfc4122())
-            ->setParameter('userId', $userId->toRfc4122())
-            ->setMaxResults(1);
+        $conn = $this->getEntityManager()->getConnection();
 
-        /** @var TaskEntity|null $entity */
-        $entity = $qb->getQuery()->getOneOrNullResult();
+        // todo а не вынести ли высоту в отдельное поле?
+        $sql = <<<'SQL'
+            SELECT id
+            FROM task
+            WHERE video_id = :videoId
+              AND preset_id = :presetId
+              AND user_id = :userId
+              AND (meta->>'height')::int = :height
+            LIMIT 1
+        SQL;
 
+        $row = $conn->executeQuery($sql, [
+            'videoId' => $videoId->toRfc4122(),
+            'presetId' => $presetId->toRfc4122(),
+            'userId' => $userId->toRfc4122(),
+            'height' => $height,
+        ])->fetchAssociative();
+
+        if (!$row) {
+            return null;
+        }
+
+        $entity = $this->find(SymfonyUuid::fromString($row['id']));
         return $entity ? self::mapToDomain($entity) : null;
     }
 

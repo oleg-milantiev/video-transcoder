@@ -113,7 +113,7 @@ final readonly class StartTranscodeHandler
         $outputWidth = $rawWidth % 2 === 0 ? $rawWidth : $rawWidth + 1;
 
         try {
-            $task = $this->taskRepository->findForTranscode($video->id(), $preset->id(), $user->id());
+            $task = $this->taskRepository->findForTranscode($video->id(), $preset->id(), $user->id(), $query->height);
 
             if ($task instanceof Task) {
                 $isRestart = true;

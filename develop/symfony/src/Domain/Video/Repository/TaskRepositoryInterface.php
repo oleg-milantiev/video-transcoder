@@ -11,7 +11,7 @@ interface TaskRepositoryInterface extends PaginatedRepositoryInterface
     public function save(Task $task): void;
     public function findById(Uuid $id): ?Task;
     public function findByIdFresh(Uuid $id): ?Task;
-    public function findForTranscode(Uuid $videoId, Uuid $presetId, Uuid $userId): ?Task;
+    public function findForTranscode(Uuid $videoId, Uuid $presetId, Uuid $userId, int $height): ?Task;
 
     public function getStorageSize(Uuid $userId): int;
 

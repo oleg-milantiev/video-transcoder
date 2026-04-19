@@ -59,6 +59,9 @@ function renderHelpIcon(tooltipText, className = 'text-secondary border-secondar
         '?'
     );
 }
+
+const TASKS_SECTION_ID = 'transcoding-tasks-section';
+
 function renderResolutionButton(vm, preset, height, isOrigin) {
     const video = vm.dto?.video || {};
     const meta = video.meta || {};
@@ -68,30 +71,39 @@ function renderResolutionButton(vm, preset, height, isOrigin) {
     const width = originHeight > 0 && originWidth > 0 && !isOrigin
         ? Math.round(originWidth * height / originHeight)
         : originWidth;
-    const label = isOrigin
-        ? `Transcode (same as origin: ${originWidth}×${originHeight})`
-        : `Transcode to ${width}×${height}`;
+    const label = `${width}×${height}`;
     const expectedSize = isOrigin
         ? calculateExpectedFileSize(preset.bitrate, originHeight, duration)
         : calculateExpectedFileSize(preset.bitrate, height, duration);
     const actionKey = 'transcode-' + String(preset.id) + '-' + String(height);
     const isActive = vm.activeActionKey === actionKey;
-    return h('div', { class: 'mb-2' }, [
+
+    const scrollToTasks = () => {
+        const el = document.getElementById(TASKS_SECTION_ID);
+        if (el) { el.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+    };
+
+    return h('div', { class: 'text-center', style: 'min-width: 90px; max-width: 110px;' }, [
         h(
             'button',
             {
                 type: 'button',
-                class: 'btn btn-outline-primary btn-sm w-100',
+                class: 'btn btn-outline-primary btn-sm w-100' + (isOrigin ? ' fw-semibold' : ''),
                 disabled: isActive || video.deleted,
-                onClick: () => vm.startTranscode(preset.id, isOrigin ? originHeight : height),
+                onClick: () => {
+                    vm.startTranscode(preset.id, isOrigin ? originHeight : height);
+                    scrollToTasks();
+                },
+                title: isOrigin ? `Transcode (same as origin: ${originWidth}×${originHeight})` : undefined,
             },
-            isActive ? 'Processing...' : label
+            isActive ? '...' : label
         ),
         expectedSize !== null
-            ? h('div', { class: 'small text-muted mt-1' }, `Expected size: ${bytesToHuman(expectedSize)}`)
+            ? h('div', { class: 'small text-muted mt-1', style: 'font-size: 0.7rem;' }, `~${bytesToHuman(expectedSize)}`)
             : null,
     ]);
 }
+
 function renderPresetResolutions(vm, preset) {
     const video = vm.dto?.video || {};
     const meta = video.meta || {};
@@ -104,55 +116,51 @@ function renderPresetResolutions(vm, preset) {
         .map(k => parseInt(k, 10))
         .filter(h => !isNaN(h) && h > 0)
         .filter(h => tariffHeight === 0 || h <= tariffHeight)
-        .sort((a, b) => b - a); // descending
+        .sort((a, b) => b - a);
     if (heights.length === 0) {
         return h('p', { class: 'text-muted' }, 'No resolutions available for your tariff');
     }
     const buttons = [];
-    // Add "same as origin" button if origin height is known and in the list
     if (originHeight > 0 && heights.includes(originHeight)) {
         buttons.push(renderResolutionButton(vm, preset, originHeight, true));
     }
-    // Add other resolution buttons
     for (const height of heights) {
         if (height !== originHeight) {
             buttons.push(renderResolutionButton(vm, preset, height, false));
         }
     }
-    return h('div', {}, buttons);
+    return h('div', { class: 'd-flex flex-wrap gap-2' }, buttons);
 }
+
 function renderPresetBlock(vm, preset, index, total) {
     const elements = [
-        h('h6', { class: 'mb-3' }, preset.title || `Preset ${preset.id}`),
+        h('h6', { class: 'mb-2' }, `Transcode Video to ${preset.title || `Preset ${preset.id}`}`),
         renderPresetResolutions(vm, preset),
     ];
-    // Add separator after each preset except the last
     if (index < total - 1) {
-        elements.push(h('hr', { class: 'my-4' }));
+        elements.push(h('hr', { class: 'my-3' }));
     }
     return h('div', { key: preset.id, class: 'mb-3' }, elements);
 }
+
 function renderPresetsSection(vm) {
-     const presets = vm.dto?.presets || [];
-     if (presets.length === 0) {
-         return null;
-     }
+    const presets = vm.dto?.presets || [];
+    if (presets.length === 0) {
+        return null;
+    }
+    const video = vm.dto?.video || {};
+    const meta = video.meta || {};
+    const hasWidth = typeof meta.width !== 'undefined' && meta.width !== null;
+    const hasHeight = typeof meta.height !== 'undefined' && meta.height !== null;
+    if (!hasWidth || !hasHeight) {
+        return null;
+    }
+    return h('div', { class: 'mb-4' }, [
+        h('h5', { class: 'mb-3' }, 'Start new Video Transcoding Task'),
+        ...presets.map((preset, index) => renderPresetBlock(vm, preset, index, presets.length)),
+    ]);
+}
 
-     // Hide transcode section if video metadata doesn't have width or height
-     const video = vm.dto?.video || {};
-     const meta = video.meta || {};
-     const hasWidth = typeof meta.width !== 'undefined' && meta.width !== null;
-     const hasHeight = typeof meta.height !== 'undefined' && meta.height !== null;
-
-     if (!hasWidth || !hasHeight) {
-         return null;
-     }
-
-     return h('div', { class: 'mb-4' }, [
-         h('h5', { class: 'mb-3' }, 'Start new Video Transcoding Task'),
-         ...presets.map((preset, index) => renderPresetBlock(vm, preset, index, presets.length)),
-     ]);
- }
 function renderTaskStatus(vm, task) {
     if (!task) {
         return h('em', 'No task');
@@ -203,18 +211,20 @@ function renderTasksTable(vm) {
     const rows = tasks.map((task) => {
         return h('tr', { key: task.id }, [
             h('td', task.presetTitle || '-'),
+            h('td', task.height ? String(task.height) + 'p' : '-'),
             h('td', renderTaskStatus(vm, task)),
             h('td', task.progress ? String(task.progress) + '%' : '-'),
             h('td', task.createdAt ? humanReadableDateTime(task.createdAt) : '-'),
             h('td', [renderTaskAction(vm, task)]),
         ]);
     });
-    return h('div', { class: 'mb-4' }, [
+    return h('div', { class: 'mb-4', id: TASKS_SECTION_ID }, [
         h('h5', { class: 'mb-3' }, 'Transcoding Tasks'),
         h('table', { class: 'table table-bordered align-middle' }, [
             h('thead', [
                 h('tr', [
                     h('th', 'Preset'),
+                    h('th', 'Resolution'),
                     h('th', 'Status'),
                     h('th', 'Progress'),
                     h('th', 'Created'),
@@ -225,6 +235,7 @@ function renderTasksTable(vm) {
         ]),
     ]);
 }
+
 export function renderVideoDetails(vm) {
     if (vm.loading) {
         return h('div', { class: 'py-4' }, [
@@ -256,6 +267,18 @@ export function renderVideoDetails(vm) {
     const updatedAt = humanReadableDateTime(video.updatedAt);
     const expiredAt = humanReadableDateTime(video.expiredAt);
     const expiredAtLabel = expiredAt === '-' ? '-' : `${expiredAt} (${video.expiredInterval || ''})`;
+
+    const metaSection = h('div', {}, [
+        h('h5', { class: 'mb-2' }, 'Meta'),
+        h(
+            'ul',
+            { class: 'mb-0 ps-3' },
+            metaEntries.length > 0
+                ? metaEntries.map(([key, value]) => h('li', [h('strong', key + ': '), vm.formatMetaValue(value)]))
+                : [h('li', [h('em', 'No meta data')])]
+        ),
+    ]);
+
     return h('div', { class: 'py-4' }, [
         h('div', { class: 'd-flex justify-content-between align-items-center mb-3' }, [
             h('h1', { class: 'mb-0' }, 'Video Details'),
@@ -272,63 +295,60 @@ export function renderVideoDetails(vm) {
         vm.actionError ? h('div', { class: 'alert alert-danger' }, vm.actionError) : null,
         h('div', { class: 'card mb-4' }, [
             h('div', { class: 'card-body' }, [
-                video.poster
-                    ? h('div', {}, [
-                          video.deleted === true
-                              ? h('div', { class: 'mb-2' }, [
-                                    h('span', { class: 'badge bg-warning text-dark me-2' }, 'Deleted'),
-                                    h('span', { class: 'text-muted' }, 'This video has been deleted'),
-                                ])
-                              : null,
-                          h('img', {
-                              src: video.poster,
-                              class: 'img-fluid mb-3 rounded' + (video.deleted === true ? ' video-poster--deleted' : ''),
-                              alt: video.title,
-                              style: 'max-width: 520px;',
-                          }),
-                      ])
-                    : null,
-                h('dl', { class: 'row mb-0' }, [
-                    h('dt', { class: 'col-sm-3' }, 'Title'),
-                    h(
-                        'dd',
-                        { class: 'col-sm-9' + (video.deleted === true ? ' video-title-deleted' : '') },
-                        [
-                            h('span', {}, video.title),
-                            video.deleted
-                                ? null
-                                : h(
-                                      'button',
-                                      {
-                                          type: 'button',
-                                          class: 'btn btn-link p-0 ms-2',
-                                          title: 'Rename video',
-                                          onClick: vm.openRenameModal,
-                                      },
-                                      '✏️'
-                                  ),
-                        ]
-                    ),
-                    h('dt', { class: 'col-sm-3' }, 'Extension'),
-                    h('dd', { class: 'col-sm-9' }, video.extension),
-                    h('dt', { class: 'col-sm-3' }, 'Created At'),
-                    h('dd', { class: 'col-sm-9' }, createdAt),
-                    h('dt', { class: 'col-sm-3' }, 'Updated At'),
-                    h('dd', { class: 'col-sm-9' }, updatedAt),
-                    h('dt', { class: 'col-sm-3' }, 'Expired At'),
-                    h('dd', { class: 'col-sm-9' }, expiredAtLabel),
+                h('div', { class: 'row' }, [
+                    h('div', { class: 'col-md-8' }, [
+                        video.poster
+                            ? h('div', {}, [
+                                  video.deleted === true
+                                      ? h('div', { class: 'mb-2' }, [
+                                            h('span', { class: 'badge bg-warning text-dark me-2' }, 'Deleted'),
+                                            h('span', { class: 'text-muted' }, 'This video has been deleted'),
+                                        ])
+                                      : null,
+                                  h('img', {
+                                      src: video.poster,
+                                      class: 'img-fluid mb-3 rounded' + (video.deleted === true ? ' video-poster--deleted' : ''),
+                                      alt: video.title,
+                                      style: 'max-width: 520px;',
+                                  }),
+                              ])
+                            : null,
+                        h('dl', { class: 'row mb-0' }, [
+                            h('dt', { class: 'col-sm-3' }, 'Title'),
+                            h(
+                                'dd',
+                                { class: 'col-sm-9' + (video.deleted === true ? ' video-title-deleted' : '') },
+                                [
+                                    h('span', {}, video.title),
+                                    video.deleted
+                                        ? null
+                                        : h(
+                                              'button',
+                                              {
+                                                  type: 'button',
+                                                  class: 'btn btn-link p-0 ms-2',
+                                                  title: 'Rename video',
+                                                  onClick: vm.openRenameModal,
+                                              },
+                                              '✏️'
+                                          ),
+                                ]
+                            ),
+                            h('dt', { class: 'col-sm-3' }, 'Extension'),
+                            h('dd', { class: 'col-sm-9' }, video.extension),
+                            h('dt', { class: 'col-sm-3' }, 'Created At'),
+                            h('dd', { class: 'col-sm-9' }, createdAt),
+                            h('dt', { class: 'col-sm-3' }, 'Updated At'),
+                            h('dd', { class: 'col-sm-9' }, updatedAt),
+                            h('dt', { class: 'col-sm-3' }, 'Expired At'),
+                            h('dd', { class: 'col-sm-9' }, expiredAtLabel),
+                        ]),
+                    ]),
+                    h('div', { class: 'col-md-4 border-start' }, [metaSection]),
                 ]),
             ]),
         ]),
         renderPresetsSection(vm),
         renderTasksTable(vm),
-        h('h5', { class: 'mb-2' }, 'Meta'),
-        h(
-            'ul',
-            { class: 'mb-0' },
-            metaEntries.length > 0
-                ? metaEntries.map(([key, value]) => h('li', [h('strong', key + ': '), vm.formatMetaValue(value)]))
-                : [h('li', [h('em', 'No meta data')])]
-        ),
     ]);
 }
