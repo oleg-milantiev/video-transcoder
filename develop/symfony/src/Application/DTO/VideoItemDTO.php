@@ -60,12 +60,14 @@ readonly class VideoItemDTO
         unset($meta['preview']);
         unset($meta['sourceKey']);
 
-        // todo на frontend убрать width и height, не тут
-//        if (isset($meta['width'], $meta['height'])) {
-//            $meta['resolution'] = sprintf('%dx%d', $meta['width'], $meta['height']);
-//            unset($meta['width'], $meta['height']);
-//        }
+        if (isset($meta['width'], $meta['height'])) {
+            $meta['_width'] = $meta['width'];
+            $meta['_height'] = $meta['height'];
+            $meta['resolution'] = sprintf('%dx%d', $meta['width'], $meta['height']);
+            unset($meta['width'], $meta['height']);
+        }
         if (isset($meta['duration'])) {
+            $meta['_duration'] = $meta['duration'];
             $meta['duration'] = HumanReadableHelper::formatDuration($meta['duration']);
         }
         if (isset($meta['size'])) {

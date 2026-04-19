@@ -58,16 +58,7 @@ final readonly class GetVideoDetailsHandler
             $this->presetRepository->findByTariff($tariff),
         );
 
-        // todo optimize preset load
-        $tasks = $this->taskRepository->findByVideoId($video->id());
-        $taskDtos = [];
-        foreach ($tasks as $task) {
-            $preset = $this->presetRepository->findById($task->presetId());
-            if ($preset === null) {
-                continue;
-            }
-            $taskDtos[] = TaskItemDTO::fromDomain($task, $video, $preset);
-        }
+        $taskDtos = $this->taskRepository->getDetailsByVideoId($video->id());
 
         return VideoDetailsDTO::create($videoItemDto, $presetDtos, $taskDtos);
     }

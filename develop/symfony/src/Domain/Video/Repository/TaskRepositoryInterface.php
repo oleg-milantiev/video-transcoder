@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Video\Repository;
 
+use App\Application\DTO\TaskItemDTO;
 use App\Domain\Shared\ValueObject\Uuid;
 use App\Domain\Video\Entity\Task;
 
@@ -19,6 +20,11 @@ interface TaskRepositoryInterface extends PaginatedRepositoryInterface
      * @return array<int, Task>
      */
     public function findByVideoId(Uuid $videoId): array;
+
+    /**
+     * @return array<int, TaskItemDTO>
+     */
+    public function getDetailsByVideoId(Uuid $videoId): array;
 
     /**
      * @return array<int, Task>

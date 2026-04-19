@@ -9,7 +9,7 @@ use App\Domain\Video\Entity\Video;
 
 readonly class TaskItemDTO
 {
-    private function __construct(
+    public function __construct(
         public string $id,
         public string $videoTitle,
         public string $presetTitle,
@@ -18,6 +18,9 @@ readonly class TaskItemDTO
         public int $progress,
         public string $createdAt,
         public bool $deleted = false,
+        public ?bool $waitingTariffInstance = null,
+        public ?bool $waitingTariffDelay = null,
+        public ?string $willStartAt = null,
     ) {}
 
     public static function fromDomain(Task $task, Video $video, Preset $preset): self

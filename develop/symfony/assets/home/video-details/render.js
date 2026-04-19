@@ -65,16 +65,14 @@ const TASKS_SECTION_ID = 'transcoding-tasks-section';
 function renderResolutionButton(vm, preset, height, isOrigin) {
     const video = vm.dto?.video || {};
     const meta = video.meta || {};
-    const originWidth = Number(meta.width) || 0;
-    const originHeight = Number(meta.height) || 0;
-    const duration = Number(meta.duration) || 0;
+    const originWidth = Number(meta._width) || 0;
+    const originHeight = Number(meta._height) || 0;
+    const duration = Number(meta._duration) || 0;
     const width = originHeight > 0 && originWidth > 0 && !isOrigin
         ? Math.round(originWidth * height / originHeight)
         : originWidth;
     const label = `${width}×${height}`;
-    const expectedSize = isOrigin
-        ? calculateExpectedFileSize(preset.bitrate, originHeight, duration)
-        : calculateExpectedFileSize(preset.bitrate, height, duration);
+    const expectedSize = calculateExpectedFileSize(preset.bitrate, height, duration);
     const actionKey = 'transcode-' + String(preset.id) + '-' + String(height);
     const isActive = vm.activeActionKey === actionKey;
 
@@ -107,7 +105,7 @@ function renderResolutionButton(vm, preset, height, isOrigin) {
 function renderPresetResolutions(vm, preset) {
     const video = vm.dto?.video || {};
     const meta = video.meta || {};
-    const originHeight = Number(meta.height) || 0;
+    const originHeight = Number(meta._height) || 0;
     const tariffHeight = Number(vm.config?.tariff?.height) || 0;
     if (!preset.bitrate || typeof preset.bitrate !== 'object') {
         return h('p', { class: 'text-muted' }, 'No bitrate configuration available');
@@ -150,13 +148,12 @@ function renderPresetsSection(vm) {
     }
     const video = vm.dto?.video || {};
     const meta = video.meta || {};
-    const hasWidth = typeof meta.width !== 'undefined' && meta.width !== null;
-    const hasHeight = typeof meta.height !== 'undefined' && meta.height !== null;
+    const hasWidth = typeof meta._width !== 'undefined' && meta._width !== null;
+    const hasHeight = typeof meta._height !== 'undefined' && meta._height !== null;
     if (!hasWidth || !hasHeight) {
         return null;
     }
     return h('div', { class: 'mb-4' }, [
-        h('h5', { class: 'mb-3' }, 'Start new Video Transcoding Task'),
         ...presets.map((preset, index) => renderPresetBlock(vm, preset, index, presets.length)),
     ]);
 }
@@ -274,7 +271,9 @@ export function renderVideoDetails(vm) {
             'ul',
             { class: 'mb-0 ps-3' },
             metaEntries.length > 0
-                ? metaEntries.map(([key, value]) => h('li', [h('strong', key + ': '), vm.formatMetaValue(value)]))
+                ? metaEntries
+                    .filter(([key]) => !key.startsWith('_'))
+                    .map(([key, value]) => h('li', [h('strong', key + ': '), vm.formatMetaValue(value)]))
                 : [h('li', [h('em', 'No meta data')])]
         ),
     ]);
@@ -334,8 +333,6 @@ export function renderVideoDetails(vm) {
                                           ),
                                 ]
                             ),
-                            h('dt', { class: 'col-sm-3' }, 'Extension'),
-                            h('dd', { class: 'col-sm-9' }, video.extension),
                             h('dt', { class: 'col-sm-3' }, 'Created At'),
                             h('dd', { class: 'col-sm-9' }, createdAt),
                             h('dt', { class: 'col-sm-3' }, 'Updated At'),

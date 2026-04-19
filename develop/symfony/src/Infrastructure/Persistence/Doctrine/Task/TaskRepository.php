@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace App\Infrastructure\Persistence\Doctrine\Task;
 
 use App\Application\DTO\ScheduledTaskDTO;
+use App\Application\DTO\TaskItemDTO;
 use App\Application\Query\Repository\ScheduledTaskReadRepositoryInterface;
 use App\Domain\Shared\ValueObject\Uuid;
 use App\Domain\User\Repository\UserRepositoryInterface;
@@ -11,12 +12,12 @@ use App\Domain\Video\Entity\Task;
 use App\Domain\Video\Repository\PresetRepositoryInterface;
 use App\Domain\Video\Repository\TaskRepositoryInterface;
 use App\Domain\Video\Repository\VideoRepositoryInterface;
+use App\Domain\Video\ValueObject\TaskStatus;
 use App\Infrastructure\Persistence\Doctrine\Preset\PresetEntity;
 use App\Infrastructure\Persistence\Doctrine\Shared\Repository\PaginatedRepositoryTrait;
 use App\Infrastructure\Persistence\Doctrine\User\UserEntity;
 use App\Infrastructure\Persistence\Doctrine\Video\VideoEntity;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
-use Doctrine\DBAL\Exception;
 use Doctrine\ORM\Exception\ORMException;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Component\Uid\UuidV4 as SymfonyUuid;
@@ -130,6 +131,83 @@ class TaskRepository extends ServiceEntityRepository implements TaskRepositoryIn
         ]);
 
         return array_map(static fn (TaskEntity $entity): Task => self::mapToDomain($entity), $entities);
+    }
+
+    public function getDetailsByVideoId(Uuid $videoId): array
+    {
+        $conn = $this->getEntityManager()->getConnection();
+
+        // todo DRY с шедулером в view
+        $sql = <<<SQL
+            WITH
+            user_metrics AS (
+                 -- from scheduler for one user.id
+                 SELECT
+                     t.user_id,
+                     COUNT(CASE WHEN t.status IN (2, 3) THEN 1 END) AS active_count, -- щас выполняется N
+                     MAX(t.started_at) AS last_start_time                            -- последний запуск в хх:хх:хх
+                 FROM task t
+                 WHERE t.user_id = (SELECT v.user_id FROM video v WHERE v.id = :video_id)
+                 GROUP BY t.user_id
+             ),
+             user_metrics_tariff AS (
+                 SELECT
+                     m.*, -- user_id,active_count,last_start_time
+                     tt.instance,
+                     tt.delay
+                 FROM user_metrics m
+                          JOIN "user" u ON u.id = m.user_id
+                          JOIN tariff tt ON tt.id = u.tariff_id
+            ),
+            pending_starting_tasks AS (
+                SELECT
+                    t.id,
+                    active_count >= instance AS waiting_tariff_instance,
+                    last_start_time + (m.delay || ' seconds')::interval > now() AS waiting_tariff_delay,
+                    last_start_time + (m.delay || ' seconds')::interval AS will_start_at
+                FROM task t
+                JOIN user_metrics_tariff m ON t.user_id = m.user_id
+                WHERE t.video_id = :video_id -- todo CREATE INDEX idx_task_video_id ON task (video_id)
+                    AND t.status IN (1, 2) AND t.deleted = false
+            )
+            SELECT
+                t.id,
+                v.title AS video_title,
+                CONCAT(p.video_codec, '/', p.audio_codec, '/', p.format) AS preset_title,
+                (t.meta->>'height')::int AS meta_height,
+                t.status,
+                t.progress,
+                t.created_at,
+                t.deleted,
+                pst.waiting_tariff_instance,
+                pst.waiting_tariff_delay,
+                pst.will_start_at
+            FROM task t
+                     JOIN preset p ON p.id = t.preset_id
+                     JOIN video v ON v.id = t.video_id
+                     LEFT JOIN pending_starting_tasks pst on t.id = pst.id
+            WHERE t.video_id = :video_id
+            ORDER BY p.video_codec, p.audio_codec, p.format, (t.meta->>'height')::int DESC
+        SQL;
+
+        $stmt = $conn->executeQuery($sql, ['video_id' => $videoId->toRfc4122()]);
+
+        return array_map(
+            static fn (array $row): TaskItemDTO => new TaskItemDTO( // todo via TaskItemDTO::some-static
+                id: $row['id'],
+                videoTitle: $row['video_title'],
+                presetTitle: $row['preset_title'],
+                height: (int)$row['meta_height'],
+                status: TaskStatus::tryFrom((int)$row['status'])?->name,
+                progress: $row['progress'],
+                createdAt: $row['created_at'],
+                deleted: (bool)$row['deleted'],
+                waitingTariffInstance: (bool)$row['waiting_tariff_instance'],
+                waitingTariffDelay: (bool)['waiting_tariff_delay'],
+                willStartAt: $row['will_start_at'], // todo toATOM and localTime on frontend
+            ),
+            $stmt->fetchAllAssociative(),
+        );
     }
 
     public function findDeletedTaskForCleanup(): array
