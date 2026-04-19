@@ -1,6 +1,38 @@
 import { h } from 'vue';
 import { bytesToHuman, humanReadableDateTime } from '../shared.js';
 
+const RESOLUTION_HEIGHTS = [144, 240, 360, 480, 720, 1080, 1440, 2160, 4320];
+
+function buildResolutionOptions(vm) {
+    const meta = vm.dto?.meta || {};
+    const originWidth = Number(meta.width) || 0;
+    const originHeight = Number(meta.height) || 0;
+    const tariffHeight = Number(vm.config?.tariff?.height) || 0;
+
+    const allowed = RESOLUTION_HEIGHTS.filter(
+        (h) => tariffHeight === 0 || h <= tariffHeight
+    ).reverse();
+
+    return allowed.map((resHeight) => {
+        const isOrigin = originHeight > 0 && resHeight === originHeight;
+        const width = originHeight > 0 && originWidth > 0
+            ? Math.round(originWidth * resHeight / originHeight)
+            : 0;
+        const label = isOrigin
+            ? 'same as origin'
+            : (width > 0 ? `${width}×${resHeight}` : `${resHeight}p`);
+        return h('option', { value: String(resHeight), selected: isOrigin }, label);
+    });
+}
+
+function renderResolutionSelect(vm) {
+    const options = buildResolutionOptions(vm);
+    if (options.length === 0) {
+        return h('span', { class: 'text-muted' }, '—');
+    }
+    return h('select', { class: 'form-select form-select-sm', style: 'min-width: 140px;' }, options);
+}
+
 function formatDelayClock(seconds) {
     const normalized = Number(seconds);
 
@@ -162,8 +194,11 @@ function renderPresetRows(vm) {
         const task = preset.task;
         const actionNode = createTaskAction(vm, preset);
 
+        const resolutionCell = task ? h('td', '—') : h('td', [renderResolutionSelect(vm)]);
+
         return h('tr', [
             h('td', preset.title),
+            resolutionCell,
             h('td', renderTaskStatus(vm, task)),
             h('td', task ? String(task.progress) + '%' : '-'),
             h('td', task ? humanReadableDateTime(task.createdAt) : '-'),
@@ -276,8 +311,8 @@ export function renderVideoDetails(vm) {
             ? h('div', {}, [
                 h('h5', { class: 'mb-2' }, 'Presets'),
                 h('table', { class: 'table table-bordered align-middle mb-4' }, [
-                    h('thead', [h('tr', [h('th', 'Preset'), h('th', 'Status'), h('th', 'Progress'), h('th', 'Created'), h('th', 'Actions')])]),
-                    h('tbody', rows.length > 0 ? rows : [h('tr', [h('td', { colspan: '5', class: 'text-muted text-center' }, 'No presets')])]),
+                    h('thead', [h('tr', [h('th', 'Preset'), h('th', 'Resolution'), h('th', 'Status'), h('th', 'Progress'), h('th', 'Created'), h('th', 'Actions')])]),
+                    h('tbody', rows.length > 0 ? rows : [h('tr', [h('td', { colspan: '6', class: 'text-muted text-center' }, 'No presets')])]),
                 ]),
             ])
             : h('div', { class: 'mb-4 text-muted' }, 'Presets will be available when poster and metadata are ready.'),

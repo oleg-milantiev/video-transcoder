@@ -12,3 +12,4 @@
 - [В карточку видео добавь иконку ? рядом с Pending задачами](symfony/add-pending-tasks-info.md)
 - [Новая страница тарифов](symfony/new-tariffs-page.md)
 - [Дизайн страницы профиля](symfony/design-profile-page.md)
+- [Новая колонка в карточке видео](symfony/new-resolution-column.md)
