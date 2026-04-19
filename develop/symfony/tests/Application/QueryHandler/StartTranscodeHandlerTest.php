@@ -17,9 +17,19 @@ use App\Application\Query\StartTranscodeQuery;
 use App\Application\QueryHandler\StartTranscodeHandler;
 use App\Application\DTO\TaskItemDTO;
 use App\Domain\User\Entity\User;
+use App\Domain\User\Entity\Tariff;
 use App\Domain\User\Repository\UserRepositoryInterface;
 use App\Domain\User\ValueObject\UserEmail;
 use App\Domain\User\ValueObject\UserRoles;
+use App\Domain\User\ValueObject\TariffDelay;
+use App\Domain\User\ValueObject\TariffInstance;
+use App\Domain\User\ValueObject\TariffMaxHeight;
+use App\Domain\User\ValueObject\TariffMaxWidth;
+use App\Domain\User\ValueObject\TariffStorageGb;
+use App\Domain\User\ValueObject\TariffStorageHour;
+use App\Domain\User\ValueObject\TariffTitle;
+use App\Domain\User\ValueObject\TariffVideoDuration;
+use App\Domain\User\ValueObject\TariffVideoSize;
 use App\Domain\Video\Entity\Preset;
 use App\Domain\Video\Entity\Task;
 use App\Domain\Video\Entity\Video;
@@ -43,6 +53,21 @@ use App\Domain\Shared\ValueObject\Uuid;
 
 class StartTranscodeHandlerTest extends TestCase
 {
+    private function makeTariff(int $maxHeight = 1080): Tariff
+    {
+        return new Tariff(
+            new TariffTitle('Pro'),
+            new TariffDelay(60),
+            new TariffInstance(2),
+            new TariffVideoDuration(3600),
+            new TariffVideoSize(500.0),
+            new TariffMaxWidth(1920),
+            new TariffMaxHeight($maxHeight),
+            new TariffStorageGb(10.0),
+            new TariffStorageHour(24),
+        );
+    }
+
     /**
      * @throws ExceptionInterface
      */
@@ -70,6 +95,7 @@ class StartTranscodeHandlerTest extends TestCase
             new UserRoles(['ROLE_USER']),
             id: $video->userId(),
         );
+        $user->updateTariff($this->makeTariff());
 
         $commandBus = $this->createMock(MessageBusInterface::class);
         $commandBus->expects($this->once())
@@ -123,7 +149,7 @@ class StartTranscodeHandlerTest extends TestCase
         $logService->expects($this->exactly(2))->method('log');
 
         $handler = new StartTranscodeHandler($commandBus, $eventBus, $videoRepo, $presetRepo, $taskRepo, $userRepo, $logService, $security);
-        $query = new StartTranscodeQuery($videoId->toRfc4122(), $preset->id()->toRfc4122(), $user->id()->toRfc4122());
+        $query = new StartTranscodeQuery($videoId->toRfc4122(), $preset->id()->toRfc4122(), $user->id()->toRfc4122(), 720);
         $dto = $handler($query);
 
         $this->assertInstanceOf(TaskItemDTO::class, $dto);
@@ -163,6 +189,8 @@ class StartTranscodeHandlerTest extends TestCase
             new UserRoles(['ROLE_USER']),
             id: $video->userId(),
         );
+        $user->updateTariff($this->makeTariff());
+
         $existingTask = Task::reconstitute(
             videoId: $videoId,
             presetId: $preset->id(),
@@ -215,7 +243,7 @@ class StartTranscodeHandlerTest extends TestCase
         $logService->expects($this->exactly(2))->method('log');
 
         $handler = new StartTranscodeHandler($commandBus, $eventBus, $videoRepo, $presetRepo, $taskRepo, $userRepo, $logService, $security);
-        $query = new StartTranscodeQuery($videoId->toRfc4122(), $preset->id()->toRfc4122(), $user->id()->toRfc4122());
+        $query = new StartTranscodeQuery($videoId->toRfc4122(), $preset->id()->toRfc4122(), $user->id()->toRfc4122(), 720);
         $dto = $handler($query);
 
         $this->assertInstanceOf(TaskItemDTO::class, $dto);
@@ -256,7 +284,8 @@ class StartTranscodeHandlerTest extends TestCase
             $handler(new StartTranscodeQuery(
                 '123e4567-e89b-42d3-a456-426614174101',
                 '123e4567-e89b-42d3-a456-426614174001',
-                '123e4567-e89b-42d3-a456-426614174001'
+                '123e4567-e89b-42d3-a456-426614174001',
+                720
             ));
         } finally {
             $this->assertSame([
@@ -298,7 +327,7 @@ class StartTranscodeHandlerTest extends TestCase
 
         $this->expectException(UserNotFoundException::class);
         try {
-            $handler(new StartTranscodeQuery('123e4567-e89b-42d3-a456-426614174100', '123e4567-e89b-42d3-a456-426614174005', '123e4567-e89b-42d3-a456-426614174999'));
+            $handler(new StartTranscodeQuery('123e4567-e89b-42d3-a456-426614174100', '123e4567-e89b-42d3-a456-426614174005', '123e4567-e89b-42d3-a456-426614174999', 720));
         } finally {
             $this->assertSame([StartTranscodeStart::class, StartTranscodeFail::class], $dispatchedEventClasses);
         }
@@ -327,6 +356,7 @@ class StartTranscodeHandlerTest extends TestCase
         $videoRepo->method('findById')->willReturn($video);
 
         $user = new User(new UserEmail('user@example.com'), new UserRoles(['ROLE_USER']), id: $video->userId());
+        $user->updateTariff($this->makeTariff());
         $userRepo = $this->createMock(UserRepositoryInterface::class);
         $userRepo->expects($this->once())->method('findById')->willReturn($user);
 
@@ -346,7 +376,7 @@ class StartTranscodeHandlerTest extends TestCase
 
         $this->expectException(TranscodeAccessDeniedException::class);
         try {
-            $handler(new StartTranscodeQuery($videoId->toRfc4122(), '123e4567-e89b-42d3-a456-426614174005', '123e4567-e89b-42d3-a456-426614174001'));
+            $handler(new StartTranscodeQuery($videoId->toRfc4122(), '123e4567-e89b-42d3-a456-426614174005', '123e4567-e89b-42d3-a456-426614174001', 720));
         } finally {
             $this->assertSame([StartTranscodeStart::class, StartTranscodeFail::class], $dispatchedEventClasses);
         }
@@ -393,7 +423,7 @@ class StartTranscodeHandlerTest extends TestCase
 
         $this->expectException(PresetNotFoundException::class);
         try {
-            $handler(new StartTranscodeQuery($videoId->toRfc4122(), '123e4567-e89b-42d3-a456-426614174999', $video->userId()->toRfc4122()));
+            $handler(new StartTranscodeQuery($videoId->toRfc4122(), '123e4567-e89b-42d3-a456-426614174999', $video->userId()->toRfc4122(), 720));
         } finally {
             $this->assertSame([StartTranscodeStart::class, StartTranscodeFail::class], $dispatchedEventClasses);
         }
@@ -426,6 +456,7 @@ class StartTranscodeHandlerTest extends TestCase
             new UserRoles(['ROLE_USER']),
             id: $video->userId(),
         );
+        $user->updateTariff($this->makeTariff());
 
         $commandBus = $this->createStub(MessageBusInterface::class);
 
@@ -471,7 +502,7 @@ class StartTranscodeHandlerTest extends TestCase
         $logService = $this->createStub(LogServiceInterface::class);
 
         $handler = new StartTranscodeHandler($commandBus, $eventBus, $videoRepo, $presetRepo, $taskRepo, $userRepo, $logService, $security);
-        $query = new StartTranscodeQuery($videoId->toRfc4122(), $preset->id()->toRfc4122(), $user->id()->toRfc4122());
+        $query = new StartTranscodeQuery($videoId->toRfc4122(), $preset->id()->toRfc4122(), $user->id()->toRfc4122(), 720);
 
         $this->expectException(\App\Application\Exception\TaskCreationFailedException::class);
         try {

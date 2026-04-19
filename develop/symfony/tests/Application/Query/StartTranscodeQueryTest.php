@@ -15,7 +15,7 @@ class StartTranscodeQueryTest extends TestCase
         $uuid = '123e4567-e89b-42d3-a456-426614174001';
         $presetId = '123e4567-e89b-42d3-a456-426614174005';
         $userId = '123e4567-e89b-42d3-a456-426614174009';
-        $query = new StartTranscodeQuery($uuid, presetId: $presetId, userId: $userId);
+        $query = new StartTranscodeQuery($uuid, presetId: $presetId, userId: $userId, height: 720);
 
         $this->assertSame($uuid, $query->uuid->toRfc4122());
         $this->assertSame($presetId, $query->presetId->toRfc4122());
@@ -25,7 +25,7 @@ class StartTranscodeQueryTest extends TestCase
     public function testInvalidUuidRaisesInvalidUuidException(): void
     {
         $this->expectException(InvalidUuidException::class);
-        new StartTranscodeQuery('invalid', '123e4567-e89b-42d3-a456-426614174005', '123e4567-e89b-42d3-a456-426614174009');
+        new StartTranscodeQuery('invalid', '123e4567-e89b-42d3-a456-426614174005', '123e4567-e89b-42d3-a456-426614174009', 720);
     }
 }
 

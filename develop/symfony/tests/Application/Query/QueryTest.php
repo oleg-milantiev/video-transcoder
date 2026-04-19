@@ -42,7 +42,7 @@ final class QueryTest extends TestCase
         $presetId = '33333333-3333-4333-8333-333333333333';
         $userId = '44444444-4444-4444-8444-444444444444';
 
-        $query = new StartTranscodeQuery($videoId, $presetId, $userId);
+        $query = new StartTranscodeQuery($videoId, $presetId, $userId, 720);
 
         $this->assertSame($videoId, $query->uuid->toRfc4122());
         $this->assertSame($presetId, $query->presetId->toRfc4122());
@@ -52,19 +52,19 @@ final class QueryTest extends TestCase
     public function testStartTranscodeQueryThrowsWhenInvalidVideoId(): void
     {
         $this->expectException(InvalidUuidException::class);
-        new StartTranscodeQuery('invalid', '33333333-3333-4333-8333-333333333333', '44444444-4444-4444-8444-444444444444');
+        new StartTranscodeQuery('invalid', '33333333-3333-4333-8333-333333333333', '44444444-4444-4444-8444-444444444444', 720);
     }
 
     public function testStartTranscodeQueryThrowsWhenInvalidPresetId(): void
     {
         $this->expectException(InvalidUuidException::class);
-        new StartTranscodeQuery('11111111-1111-4111-8111-111111111111', 'invalid', '44444444-4444-4444-8444-444444444444');
+        new StartTranscodeQuery('11111111-1111-4111-8111-111111111111', 'invalid', '44444444-4444-4444-8444-444444444444', 720);
     }
 
     public function testStartTranscodeQueryThrowsWhenInvalidUserId(): void
     {
         $this->expectException(InvalidUuidException::class);
-        new StartTranscodeQuery('11111111-1111-4111-8111-111111111111', '33333333-3333-4333-8333-333333333333', 'invalid');
+        new StartTranscodeQuery('11111111-1111-4111-8111-111111111111', '33333333-3333-4333-8333-333333333333', 'invalid', 720);
     }
 
     public function testPatchVideoQueryCreatesInstanceWithValidData(): void
