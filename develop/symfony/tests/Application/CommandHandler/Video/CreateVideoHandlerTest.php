@@ -16,6 +16,7 @@ use App\Domain\User\Entity\Tariff;
 use App\Domain\User\Entity\User;
 use App\Domain\User\ValueObject\TariffStorageGb;
 use App\Domain\User\ValueObject\TariffVideoSize;
+use App\Domain\User\ValueObject\TariffStorageHour;
 use App\Domain\Video\Entity\Video;
 use App\Domain\Video\ValueObject\FileExtension;
 use App\Domain\Video\ValueObject\VideoTitle;
@@ -88,7 +89,11 @@ class CreateVideoHandlerTest extends TestCase
             ->willReturnCallback(static function (Video $video) use ($savedVideo, &$saveCall): Video {
                 $saveCall++;
 
-                return $saveCall === 1 ? $savedVideo : $video;
+                if ($saveCall === 1) {
+                    return $savedVideo;
+                }
+                // On second call, return the video with sourceKey
+                return $video;
             });
         $videoRepository->method('getStorageSize')->willReturn(1000);
 
@@ -110,6 +115,7 @@ class CreateVideoHandlerTest extends TestCase
         $tariff = $this->createStub(Tariff::class);
         $tariff->method('videoSize')->willReturn(new TariffVideoSize(1000.0)); // 1000 MB limit
         $tariff->method('storageGb')->willReturn(new TariffStorageGb(5));
+        $tariff->method('storageHour')->willReturn(new TariffStorageHour(24));
         $userWithTariff->method('id')->willReturn($userId);
         $userWithTariff->method('tariff')->willReturn($tariff);
 

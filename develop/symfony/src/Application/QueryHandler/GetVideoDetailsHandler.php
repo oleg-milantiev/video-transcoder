@@ -45,16 +45,13 @@ final readonly class GetVideoDetailsHandler
         /** @var UserEntity $userEntity */
         $userEntity = $this->security->getUser();
         $user = UserMapper::toDomain($userEntity);
-        if (!$user) {
-            throw new \RuntimeException('User not found');
-        }
 
         $tariff = $user->tariff();
         if (!$tariff) {
             throw new \RuntimeException('User without tariff');
         }
 
-        $videoItemDto = VideoItemDTO::fromDomain($video, $this->storage, $this->taskRepository);
+        $videoItemDto = VideoItemDTO::fromDomain($video, $this->storage, $this->taskRepository, $tariff);
 
         $presetDtos = array_map(
             static fn($preset) => PresetItemDTO::fromDomain($preset),

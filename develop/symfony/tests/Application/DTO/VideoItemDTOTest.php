@@ -17,6 +17,8 @@ use App\Domain\Video\ValueObject\Progress;
 use App\Domain\Video\ValueObject\TaskDates;
 use App\Domain\Video\ValueObject\TaskStatus;
 use App\Domain\Shared\ValueObject\Uuid;
+use App\Tests\Infrastructure\Persistence\Doctrine\Entity\TariffFake;
+use App\Infrastructure\Persistence\Doctrine\User\TariffMapper;
 
 class VideoItemDTOTest extends TestCase
 {
@@ -37,13 +39,15 @@ class VideoItemDTOTest extends TestCase
         $storage->method('previewKey')->willReturn($uuid->toRfc4122() . '.jpg');
         $storage->method('publicUrl')->willReturn('/uploads/' . $uuid->toRfc4122() . '.jpg');
 
-        $dto = VideoItemDTO::fromDomain($video, $storage, $this->createStub(TaskRepositoryInterface::class));
+        $dto = VideoItemDTO::fromDomain($video, $storage, $this->createStub(TaskRepositoryInterface::class), TariffMapper::toDomain(TariffFake::create()));
 
         $this->assertSame($uuid->toRfc4122(), $dto->uuid);
         $this->assertSame('Demo Video', $dto->title);
         $this->assertSame($createdAt->format(\DateTimeInterface::ATOM), $dto->createdAt);
         $this->assertFalse($dto->deleted);
         $this->assertSame('/uploads/' . $uuid->toRfc4122() . '.jpg', $dto->poster);
+        $this->assertIsString($dto->expiredAt);
+        $this->assertIsString($dto->expiredInterval);
     }
 
     public function testFromDomainMapsDeletedVideo(): void
@@ -63,7 +67,10 @@ class VideoItemDTOTest extends TestCase
         $storage->method('previewKey')->willReturn($uuid->toRfc4122() . '.jpg');
         $storage->method('publicUrl')->willReturn('/uploads/' . $uuid->toRfc4122() . '.jpg');
 
-        $dto = VideoItemDTO::fromDomain($video, $storage, $this->createStub(TaskRepositoryInterface::class));
+        $tariffEntity = TariffFake::create();
+        $tariff = TariffMapper::toDomain($tariffEntity);
+
+        $dto = VideoItemDTO::fromDomain($video, $storage, $this->createStub(TaskRepositoryInterface::class), $tariff);
 
         $this->assertTrue($dto->deleted);
         $this->assertSame('/uploads/' . $uuid->toRfc4122() . '.jpg', $dto->poster);
@@ -81,7 +88,7 @@ class VideoItemDTOTest extends TestCase
             $uuid,
         );
 
-        $dto = VideoItemDTO::fromDomain($video, $this->createStub(StorageInterface::class), $this->createStub(TaskRepositoryInterface::class));
+        $dto = VideoItemDTO::fromDomain($video, $this->createStub(StorageInterface::class), $this->createStub(TaskRepositoryInterface::class), TariffMapper::toDomain(TariffFake::create()));
 
         $this->assertNull($dto->poster);
     }
@@ -102,7 +109,7 @@ class VideoItemDTOTest extends TestCase
             videoId: $uuid,
             presetId: Uuid::fromString('55555555-5555-4555-8555-555555555555'),
             userId: Uuid::fromString('42424242-4242-4242-8242-424242424242'),
-            status: TaskStatus::PENDING,
+            status: TaskStatus::pending(),
             progress: new Progress(0),
             dates: TaskDates::create(),
             id: Uuid::fromString('66666666-6666-4666-8666-666666666666'),
@@ -111,7 +118,7 @@ class VideoItemDTOTest extends TestCase
         $taskRepository = $this->createStub(TaskRepositoryInterface::class);
         $taskRepository->method('findByVideoId')->willReturn([$activeTask]);
 
-        $dto = VideoItemDTO::fromDomain($video, $this->createStub(StorageInterface::class), $taskRepository);
+        $dto = VideoItemDTO::fromDomain($video, $this->createStub(StorageInterface::class), $taskRepository, TariffMapper::toDomain(TariffFake::create()));
 
         $this->assertFalse($dto->canBeDeleted);
     }
@@ -132,7 +139,7 @@ class VideoItemDTOTest extends TestCase
             videoId: $uuid,
             presetId: Uuid::fromString('55555555-5555-4555-8555-555555555555'),
             userId: Uuid::fromString('42424242-4242-4242-8242-424242424242'),
-            status: TaskStatus::DELETED,
+            status: TaskStatus::deleted(),
             progress: new Progress(0),
             dates: TaskDates::create(),
             id: Uuid::fromString('66666666-6666-4666-8666-666666666661'),
@@ -143,7 +150,7 @@ class VideoItemDTOTest extends TestCase
             videoId: $uuid,
             presetId: Uuid::fromString('55555555-5555-4555-8555-555555555556'),
             userId: Uuid::fromString('42424242-4242-4242-8242-424242424242'),
-            status: TaskStatus::DELETED,
+            status: TaskStatus::deleted(),
             progress: new Progress(0),
             dates: TaskDates::create(),
             id: Uuid::fromString('66666666-6666-4666-8666-666666666662'),
@@ -153,7 +160,7 @@ class VideoItemDTOTest extends TestCase
         $taskRepository = $this->createStub(TaskRepositoryInterface::class);
         $taskRepository->method('findByVideoId')->willReturn([$deletedTask1, $deletedTask2]);
 
-        $dto = VideoItemDTO::fromDomain($video, $this->createStub(StorageInterface::class), $taskRepository);
+        $dto = VideoItemDTO::fromDomain($video, $this->createStub(StorageInterface::class), $taskRepository, TariffMapper::toDomain(TariffFake::create()));
 
         $this->assertTrue($dto->canBeDeleted);
     }

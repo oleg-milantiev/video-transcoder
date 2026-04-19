@@ -23,9 +23,14 @@ class PresetRepository extends ServiceEntityRepository implements PresetReposito
 
     public function findByTariff(Tariff $tariff): array
     {
+        $qb = $this->createQueryBuilder('p');
+        $qb->join('p.tariffs', 't')
+            ->where('t.id = :tariffId')
+            ->setParameter('tariffId', SymfonyUuid::fromString($tariff->id()->toRfc4122()));
+
         return array_map(
             static fn(PresetEntity $entity) => PresetMapper::toDomain($entity),
-            parent::findBy(['tariff' => $tariff->id()->toRfc4122()]),
+            $qb->getQuery()->getResult(),
         );
     }
 
