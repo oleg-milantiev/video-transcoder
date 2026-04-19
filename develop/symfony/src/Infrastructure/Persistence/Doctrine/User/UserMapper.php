@@ -10,6 +10,7 @@ use App\Domain\User\ValueObject\UserCreatedAt;
 use App\Domain\User\ValueObject\UserEmail;
 use App\Domain\User\ValueObject\UserLoginedAt;
 use App\Domain\User\ValueObject\UserRoles;
+use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Uid\UuidV4 as SymfonyUuid;
 
 class UserMapper
@@ -27,7 +28,7 @@ class UserMapper
         );
     }
 
-    public static function toDoctrine(User $user): UserEntity
+    public static function toDoctrine(User $user, EntityManagerInterface $em): UserEntity
     {
         $entity = new UserEntity();
         if ($user->id() !== null) {
@@ -36,7 +37,7 @@ class UserMapper
         $entity->email = $user->email()->value();
         $entity->roles = $user->roles()->values();
         $entity->password = $user->password();
-        $entity->tariff = $user->tariff() ? TariffMapper::toDoctrine($user->tariff()) : null;
+        $entity->tariff = $user->tariff()?->id() ? $em->getReference(TariffEntity::class, $user->tariff()->id()) : null;
         $entity->createdAt = $user->createdAt()->value();
         $entity->loginedAt = $user->loginedAt()?->value();
 

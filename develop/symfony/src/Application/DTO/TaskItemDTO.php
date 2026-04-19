@@ -16,7 +16,6 @@ readonly class TaskItemDTO
         public string $status,
         public int $progress,
         public string $createdAt,
-        public string $downloadFilename,
         public bool $deleted = false,
     ) {}
 
@@ -33,7 +32,6 @@ readonly class TaskItemDTO
             status: $task->status()->name,
             progress: $task->progress()->value(),
             createdAt: $task->createdAt()->format(\DateTimeInterface::ATOM),
-            downloadFilename: $video->title()->value() . ' - ' . $preset->label(),
             deleted: $task->isDeleted(),
         );
     }

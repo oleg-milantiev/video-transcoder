@@ -39,8 +39,9 @@ class UserRepository extends ServiceEntityRepository implements PasswordUpgrader
 
     public function save(User $user): void
     {
-        $this->getEntityManager()->persist(UserMapper::toDoctrine($user));
-        $this->getEntityManager()->flush();
+        $em = $this->getEntityManager();
+        $em->persist(UserMapper::toDoctrine($user, $em));
+        $em->flush();
     }
 
     public function findById(Uuid $id): ?User

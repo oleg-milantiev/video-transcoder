@@ -4,7 +4,6 @@ declare(strict_types=1);
 namespace App\Domain\Video\Entity;
 
 use App\Domain\Shared\ValueObject\Uuid;
-use App\Domain\User\Entity\Tariff;
 use App\Domain\Video\ValueObject\AudioCodec;
 use App\Domain\Video\ValueObject\Format;
 use App\Domain\Video\ValueObject\VideoCodec;
@@ -20,7 +19,6 @@ class Preset
         AudioCodec $audioCodec,
         Format $format,
         ?Uuid $id = null,
-        array $tariffs = [],
     ) {
         $this->id = $id;
         $this->changeOutput($videoCodec, $audioCodec, $format);

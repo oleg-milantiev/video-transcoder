@@ -18,7 +18,7 @@ use Symfony\Component\Uid\UuidV4 as SymfonyUuid;
 /**
  * @extends ServiceEntityRepository<VideoEntity>
  */
-class VideoRepository extends ServiceEntityRepository implements VideoRepositoryInterface, VideoDetailsReadRepositoryInterface
+class VideoRepository extends ServiceEntityRepository implements VideoRepositoryInterface
 {
     use PaginatedRepositoryTrait;
 
@@ -100,6 +100,7 @@ class VideoRepository extends ServiceEntityRepository implements VideoRepository
     /**
      * @throws Exception
      */
+    // todo убрать переделать
     public function getDetailsByVideoId(Uuid $videoId): array
     {
         $conn = $this->getEntityManager()->getConnection();
@@ -121,7 +122,7 @@ class VideoRepository extends ServiceEntityRepository implements VideoRepository
                  SELECT
                      m.*, -- user_id,active_count,last_start_time
                      tt.instance,
-                     tt.delay
+                     tt.delay,
                  FROM user_metrics m
                           JOIN "user" u ON u.id = m.user_id
                           JOIN tariff tt ON tt.id = u.tariff_id
@@ -146,7 +147,6 @@ class VideoRepository extends ServiceEntityRepository implements VideoRepository
                 pt.waiting_tariff_delay,
                 pt.will_start_at,
                 t.progress,
-                CONCAT(v.title, ' - ', p.video_codec, '/', p.audio_codec, '/', p.format) as download_filename,
                 t.created_at
             FROM preset p
                      LEFT JOIN task t ON p.id = t.preset_id AND t.video_id = :video_id
@@ -172,7 +172,6 @@ class VideoRepository extends ServiceEntityRepository implements VideoRepository
                     'waitingTariffInstance' => $row['waiting_tariff_instance'],
                     'waitingTariffDelay' => $row['waiting_tariff_delay'],
                     'willStartAt' => self::formatDateTimeAtom($row['will_start_at']),
-                    'downloadFilename' => $row['download_filename'],
                 ] : null,
             ];
         }

@@ -3,52 +3,22 @@ declare(strict_types=1);
 
 namespace App\Application\DTO;
 
-use App\Application\Helper\HumanReadableHelper;
-use App\Domain\User\Entity\Tariff;
-use App\Domain\Video\Entity\Video;
-use App\Domain\Video\Service\Storage\StorageInterface;
-
 readonly class VideoDetailsDTO
 {
-    public function __construct(
-        public string $id,
-        public string $title,
-        public string $extension,
-        public string $createdAt,
-        public ?string $updatedAt,
-        public string $expiredAt,
-        public string $expiredInterval,
-        public array $meta,
-        public ?string $poster,
-        public bool $deleted = false,
-        /** @var PresetWithTaskDTO[] */
-        public array $presetsWithTasks = [],
+    private function __construct(
+        public VideoItemDTO $video,
+        /** @var PresetItemDTO[] */
+        public array $presets,
+        /** @var TaskItemDTO[] */
+        public array $tasks,
     ) {}
 
-    public static function fromDomain(Video $video, array $presetsWithTasks, StorageInterface $storage, Tariff $tariff): self
+    /**
+     * @param PresetItemDTO[] $presets
+     * @param TaskItemDTO[] $tasks
+     */
+    public static function create(VideoItemDTO $video, array $presets, array $tasks): self
     {
-        $hasPreview = ($video->meta()['preview'] ?? false) === true;
-        $expiredAt = $video->createdAt()->add(new \DateInterval('PT' . $tariff->storageHour()->value() . 'H'));
-
-        return new self(
-            id: $video->id()->toRfc4122(),
-            title: $video->title()->value(),
-            extension: $video->extension()->value(),
-            createdAt: $video->createdAt()->format(\DateTimeInterface::ATOM),
-            updatedAt: $video->updatedAt()?->format(\DateTimeInterface::ATOM),
-            expiredAt: $expiredAt->format(\DateTimeInterface::ATOM),
-            expiredInterval: HumanReadableHelper::formatDateExpired($expiredAt),
-            meta: self::sanitizeMeta($video->meta()),
-            poster: $hasPreview ? $storage->publicUrl($storage->previewKey($video)) : null,
-            deleted: $video->isDeleted(),
-            presetsWithTasks: $presetsWithTasks,
-        );
-    }
-
-    protected static function sanitizeMeta(array $meta): array
-    {
-        unset($meta['preview']);
-
-        return $meta;
+        return new self($video, $presets, $tasks);
     }
 }

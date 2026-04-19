@@ -3,19 +3,19 @@ declare(strict_types=1);
 
 namespace App\Application\QueryHandler;
 
-use App\Application\DTO\PresetWithTaskDTO;
-use App\Application\DTO\TaskInfoDTO;
+use App\Application\DTO\PresetItemDTO;
+use App\Application\DTO\TaskItemDTO;
 use App\Application\DTO\VideoDetailsDTO;
+use App\Application\DTO\VideoItemDTO;
 use App\Application\Exception\VideoAccessDeniedException;
 use App\Application\Exception\VideoNotFoundException;
 use App\Application\Query\GetVideoDetailsQuery;
-use App\Application\Query\Repository\VideoDetailsReadRepositoryInterface;
-use App\Domain\User\Exception\TariffNotFound;
+use App\Domain\Video\Repository\PresetRepositoryInterface;
+use App\Domain\Video\Repository\TaskRepositoryInterface;
 use App\Domain\Video\Repository\VideoRepositoryInterface;
 use App\Domain\Video\Service\Storage\StorageInterface;
-use App\Domain\Video\ValueObject\TaskStatus;
-use App\Infrastructure\Persistence\Doctrine\User\TariffMapper;
 use App\Infrastructure\Persistence\Doctrine\User\UserEntity;
+use App\Infrastructure\Persistence\Doctrine\User\UserMapper;
 use App\Infrastructure\Security\Voter\VideoAccessVoter;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
@@ -25,7 +25,8 @@ final readonly class GetVideoDetailsHandler
 {
     public function __construct(
         private VideoRepositoryInterface $videoRepository,
-        private VideoDetailsReadRepositoryInterface $videoDetailsReadRepository,
+        private PresetRepositoryInterface $presetRepository,
+        private TaskRepositoryInterface $taskRepository,
         private StorageInterface $storage,
         private Security $security,
     ) {}
@@ -41,35 +42,36 @@ final readonly class GetVideoDetailsHandler
             throw new VideoAccessDeniedException('Access denied');
         }
 
-        $presetsWithTasks = [];
-        foreach ($this->videoDetailsReadRepository->getDetailsByVideoId($video->id()) as $presetData) {
-            $taskDto = null;
-            if ($presetData['task']) {
-                $taskDto = new TaskInfoDTO(
-                    status: TaskStatus::tryFrom((int)$presetData['task']['status'])?->name ?? 'UNKNOWN',
-                    progress: $presetData['task']['progress'],
-                    createdAt: $presetData['task']['createdAt'],
-                    waitingTariffInstance: $presetData['task']['waitingTariffInstance'],
-                    waitingTariffDelay: $presetData['task']['waitingTariffDelay'],
-                    willStartAt: $presetData['task']['willStartAt'],
-                    id: $presetData['task']['id'],
-                );
+        /** @var UserEntity $userEntity */
+        $userEntity = $this->security->getUser();
+        $user = UserMapper::toDomain($userEntity);
+        if (!$user) {
+            throw new \RuntimeException('User not found');
+        }
+
+        $tariff = $user->tariff();
+        if (!$tariff) {
+            throw new \RuntimeException('User without tariff');
+        }
+
+        $videoItemDto = VideoItemDTO::fromDomain($video, $this->storage, $this->taskRepository);
+
+        $presetDtos = array_map(
+            static fn($preset) => PresetItemDTO::fromDomain($preset),
+            $this->presetRepository->findByTariff($tariff),
+        );
+
+        // todo optimize preset load
+        $tasks = $this->taskRepository->findByVideoId($video->id());
+        $taskDtos = [];
+        foreach ($tasks as $task) {
+            $preset = $this->presetRepository->findById($task->presetId());
+            if ($preset === null) {
+                continue;
             }
-            $presetsWithTasks[] = new PresetWithTaskDTO(
-                id: $presetData['id'],
-                title: $presetData['title'],
-                expectedFileSize: $presetData['expectedFileSize'],
-                task: $taskDto,
-            );
+            $taskDtos[] = TaskItemDTO::fromDomain($task, $video, $preset);
         }
 
-        /** @var UserEntity $user */
-        $user = $this->security->getUser();
-        if (!$user->tariff) {
-            throw new TariffNotFound('Tariff not found');
-        }
-        $tariff = TariffMapper::toDomain($user->tariff);
-
-        return VideoDetailsDTO::fromDomain($video, $presetsWithTasks, $this->storage, $tariff);
+        return VideoDetailsDTO::create($videoItemDto, $presetDtos, $taskDtos);
     }
 }
