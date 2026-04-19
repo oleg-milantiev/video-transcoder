@@ -20,12 +20,6 @@ class PresetRepository extends ServiceEntityRepository implements PresetReposito
         parent::__construct($registry, PresetEntity::class);
     }
 
-    public function save(Preset $preset): void
-    {
-        $this->getEntityManager()->persist(PresetMapper::toDoctrine($preset));
-        $this->getEntityManager()->flush();
-    }
-
     public function findById(Uuid $id): ?Preset
     {
         $entity = $this->find(SymfonyUuid::fromString($id->toRfc4122()));

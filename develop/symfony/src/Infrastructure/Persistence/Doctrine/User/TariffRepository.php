@@ -20,13 +20,6 @@ class TariffRepository extends ServiceEntityRepository implements TariffReposito
         parent::__construct($registry, TariffEntity::class);
     }
 
-    public function save(Tariff $tariff): void
-    {
-        $entity = TariffMapper::toDoctrine($tariff);
-        $this->getEntityManager()->persist($entity);
-        $this->getEntityManager()->flush();
-    }
-
     public function findById(Uuid $id): ?Tariff
     {
         $entity = $this->find(SymfonyUuid::fromString($id->toRfc4122()));

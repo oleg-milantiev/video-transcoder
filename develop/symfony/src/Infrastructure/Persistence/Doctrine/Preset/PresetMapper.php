@@ -15,30 +15,11 @@ class PresetMapper
 {
     public static function toDomain(PresetEntity $entity): Preset
     {
-        $tariffs = [];
-        foreach ($entity->tariffs as $tariffEntity) {
-            $tariffs[] = TariffMapper::toDomain($tariffEntity);
-        }
-
         return new Preset(
             videoCodec: new VideoCodec($entity->videoCodec),
             audioCodec: new AudioCodec($entity->audioCodec),
             format: new Format($entity->format),
             id: Uuid::fromString($entity->id->toRfc4122()),
-            tariffs: $tariffs,
         );
-    }
-
-    public static function toDoctrine(Preset $preset): PresetEntity
-    {
-        $entity = new PresetEntity();
-        if ($preset->id() !== null) {
-            $entity->id = SymfonyUuid::fromString($preset->id()->toRfc4122());
-        }
-        $entity->videoCodec = $preset->videoCodec()->value();
-        $entity->audioCodec = $preset->audioCodec()->value();
-        $entity->format = $preset->format()->value();
-
-        return $entity;
     }
 }

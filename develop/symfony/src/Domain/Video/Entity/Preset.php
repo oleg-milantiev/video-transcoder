@@ -15,9 +15,6 @@ class Preset
     private VideoCodec $videoCodec;
     private AudioCodec $audioCodec;
     private Format $format;
-    /** @var Tariff[] */
-    private array $tariffs;
-
     public function __construct(
         VideoCodec $videoCodec,
         AudioCodec $audioCodec,
@@ -26,7 +23,6 @@ class Preset
         array $tariffs = [],
     ) {
         $this->id = $id;
-        $this->tariffs = $tariffs;
         $this->changeOutput($videoCodec, $audioCodec, $format);
     }
 
@@ -53,11 +49,6 @@ class Preset
     public function format(): Format
     {
         return $this->format;
-    }
-
-    public function tariffs(): array
-    {
-        return $this->tariffs;
     }
 
     public static function create(

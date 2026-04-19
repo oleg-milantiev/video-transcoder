@@ -21,11 +21,6 @@ class TariffMapper
 {
     public static function toDomain(TariffEntity $entity): Tariff
     {
-        $presets = [];
-        foreach ($entity->presets as $presetEntity) {
-            $presets[] = PresetMapper::toDomain($presetEntity);
-        }
-
         return new Tariff(
             title: new TariffTitle($entity->title),
             delay: new TariffDelay($entity->delay),
@@ -37,26 +32,6 @@ class TariffMapper
             storageGb: new TariffStorageGb($entity->storageGb),
             storageHour: new TariffStorageHour($entity->storageHour),
             id: $entity->id ? Uuid::fromString($entity->id->toRfc4122()) : null,
-            presets: $presets,
         );
-    }
-
-    public static function toDoctrine(Tariff $tariff): TariffEntity
-    {
-        $entity = new TariffEntity();
-        if ($tariff->id() !== null) {
-            $entity->id = SymfonyUuid::fromString($tariff->id()->toRfc4122());
-        }
-        $entity->title = $tariff->title()->value();
-        $entity->delay = $tariff->delay()->value();
-        $entity->instance = $tariff->instance()->value();
-        $entity->videoDuration = $tariff->videoDuration()->value();
-        $entity->videoSize = $tariff->videoSize()->value();
-        $entity->maxWidth = $tariff->maxWidth()->value();
-        $entity->maxHeight = $tariff->maxHeight()->value();
-        $entity->storageGb = $tariff->storageGb()->value();
-        $entity->storageHour = $tariff->storageHour()->value();
-
-        return $entity;
     }
 }

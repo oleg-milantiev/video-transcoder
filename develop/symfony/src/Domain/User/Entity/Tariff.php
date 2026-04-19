@@ -27,8 +27,6 @@ class Tariff
     private TariffMaxHeight $maxHeight;
     private TariffStorageGb $storageGb;
     private TariffStorageHour $storageHour;
-    /** @var Preset[] */
-    private array $presets;
 
     public function __construct(
         TariffTitle $title,
@@ -41,7 +39,6 @@ class Tariff
         TariffStorageGb $storageGb,
         TariffStorageHour $storageHour,
         ?Uuid $id = null,
-        array $presets = [],
     ) {
         $this->title = $title;
         $this->delay = $delay;
@@ -53,7 +50,6 @@ class Tariff
         $this->storageGb = $storageGb;
         $this->storageHour = $storageHour;
         $this->id = $id;
-        $this->presets = $presets;
     }
 
     public function id(): ?Uuid
@@ -104,11 +100,6 @@ class Tariff
     public function storageHour(): TariffStorageHour
     {
         return $this->storageHour;
-    }
-
-    public function presets(): array
-    {
-        return $this->presets;
     }
 
     public function __toString(): string
