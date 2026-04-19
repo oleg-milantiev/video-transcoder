@@ -58,7 +58,13 @@ readonly class VideoItemDTO
     private static function decorateMeta(array $meta): array
     {
         unset($meta['preview']);
+        unset($meta['sourceKey']);
 
+        // todo на frontend убрать width и height, не тут
+//        if (isset($meta['width'], $meta['height'])) {
+//            $meta['resolution'] = sprintf('%dx%d', $meta['width'], $meta['height']);
+//            unset($meta['width'], $meta['height']);
+//        }
         if (isset($meta['duration'])) {
             $meta['duration'] = HumanReadableHelper::formatDuration($meta['duration']);
         }

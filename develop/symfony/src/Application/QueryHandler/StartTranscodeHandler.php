@@ -8,6 +8,8 @@ use App\Application\DTO\TaskItemDTO;
 use App\Application\Event\StartTranscodeFail;
 use App\Application\Event\StartTranscodeStart;
 use App\Application\Event\StartTranscodeSuccess;
+use App\Application\Exception\HeightExceedsTariffException;
+use App\Application\Exception\PresetHeightNotAvailableException;
 use App\Application\Exception\PresetNotFoundException;
 use App\Application\Exception\TaskCreationFailedException;
 use App\Application\Exception\TranscodeAccessDeniedException;
@@ -15,6 +17,7 @@ use App\Application\Exception\UserNotFoundException;
 use App\Application\Exception\VideoNotFoundException;
 use App\Application\Logging\LogServiceInterface;
 use App\Application\Query\StartTranscodeQuery;
+use App\Domain\User\Exception\TariffNotFound;
 use App\Domain\User\Repository\UserRepositoryInterface;
 use App\Domain\Video\Entity\Task;
 use App\Domain\Video\Repository\PresetRepositoryInterface;
@@ -60,6 +63,16 @@ final readonly class StartTranscodeHandler
             $this->eventBus->dispatch(new StartTranscodeFail('Video not found', $query->uuid->toRfc4122(), $query->presetId->toRfc4122(), $query->userId->toRfc4122()));
             throw new VideoNotFoundException('Video not found');
         }
+        if (!isset($video->meta()['width'], $video->meta()['height'])) {
+            $this->eventBus->dispatch(new StartTranscodeFail('Video meta (width & height) is empty', $query->uuid->toRfc4122(), $query->presetId->toRfc4122(), $query->userId->toRfc4122()));
+            throw new VideoNotFoundException('Video meta not found');
+        }
+        $videoWidth = (int)$video->meta()['width'];
+        $videoHeight = (int)$video->meta()['height'];
+        if ($videoWidth <= 0 || $videoHeight <= 0) {
+            $this->eventBus->dispatch(new StartTranscodeFail('Video meta (width & height) is invalid', $query->uuid->toRfc4122(), $query->presetId->toRfc4122(), $query->userId->toRfc4122()));
+            throw new VideoNotFoundException('Video meta is invalid');
+        }
 
         $user = $this->userRepository->findById($query->userId);
         if (!$user) {
@@ -78,6 +91,27 @@ final readonly class StartTranscodeHandler
             throw new PresetNotFoundException('Preset not found');
         }
 
+        $bitrate = $preset->bitrate()->bitrateForHeight($query->height);
+        if ($bitrate === null) {
+            $this->eventBus->dispatch(new StartTranscodeFail('Height not available in preset', $query->uuid->toRfc4122(), $query->presetId->toRfc4122(), $query->userId->toRfc4122()));
+            throw new PresetHeightNotAvailableException(sprintf('Height %d is not available in the preset', $query->height));
+        }
+
+        $tariff = $user->tariff();
+        if (!$tariff) {
+            $this->eventBus->dispatch(new StartTranscodeFail('User without tariff', $query->uuid->toRfc4122(), $query->presetId->toRfc4122(), $query->userId->toRfc4122()));
+            throw new TariffNotFound('Tariff not found');
+        }
+
+        if ($query->height > $tariff->maxHeight()->value()) {
+            $this->eventBus->dispatch(new StartTranscodeFail('Height exceeds tariff', $query->uuid->toRfc4122(), $query->presetId->toRfc4122(), $query->userId->toRfc4122()));
+            throw new HeightExceedsTariffException(sprintf('Height %d exceeds tariff maximum %d', $query->height, $tariff->maxHeight()->value()));
+        }
+
+        $ratio = $videoWidth / $videoHeight;
+        $rawWidth = (int) round($ratio * $query->height);
+        $outputWidth = $rawWidth % 2 === 0 ? $rawWidth : $rawWidth + 1;
+
         try {
             $task = $this->taskRepository->findForTranscode($video->id(), $preset->id(), $user->id());
 
@@ -87,8 +121,10 @@ final readonly class StartTranscodeHandler
             } else {
                 $isRestart = false;
                 $task = Task::create($video->id(), $preset->id(), $user->id());
-                $bitrateFromMeta = (float) ($task->meta()['bitrate'] ?? 0.0);
-                $task->updateMeta(['sizeExpected' => (int)($video->duration() * $bitrateFromMeta / 8 * 1024 * 1024)]);
+                $task->updateMeta(['height' => $query->height]);
+                $task->updateMeta(['width' => $outputWidth]);
+                $task->updateMeta(['bitrate' => $bitrate]);
+                $task->updateMeta(['sizeExpected' => (int)($video->duration() * $bitrate / 8 * 1024 * 1024)]);
             }
 
             $this->taskRepository->save($task);
@@ -118,4 +154,3 @@ final readonly class StartTranscodeHandler
         return TaskItemDTO::fromDomain($task, $video, $preset);
     }
 }
-

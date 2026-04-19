@@ -166,16 +166,9 @@ export function createVideoDetailsActions(params) {
     }
 
     function startTranscode(presetId, height) {
-        const url = replaceTemplateValue(
-            replaceTemplateValue(config.route.video.transcode, '__UUID__', uuid.value),
-            '__PRESET_ID__',
-            presetId
-        );
-
-        const body = height !== undefined ? { height: height } : null;
-        const actionKey = 'transcode-' + String(presetId) + (height ? '-' + String(height) : '');
-
-        void runPostAction(url, actionKey, 'Failed to start transcode', body);
+        const url = replaceTemplateValue(replaceTemplateValue(replaceTemplateValue(config.route.video.transcode, '__HEIGHT__', height), '__UUID__', uuid.value), '__PRESET_ID__', presetId);
+        const actionKey = 'transcode-' + String(presetId) + '-' + String(height);
+        void runPostAction(url, actionKey, 'Failed to start transcode');
     }
 
     function cancelTask(taskId) {

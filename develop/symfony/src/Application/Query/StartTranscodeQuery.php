@@ -11,8 +11,9 @@ final readonly class StartTranscodeQuery
     public Uuid $uuid;
     public Uuid $presetId;
     public Uuid $userId;
+    public int $height;
 
-    public function __construct(string $uuid, string $presetId, string $userId)
+    public function __construct(string $uuid, string $presetId, string $userId, int $height)
     {
         try {
             $this->uuid = Uuid::fromString($uuid);
@@ -21,6 +22,7 @@ final readonly class StartTranscodeQuery
         } catch (\Throwable $e) {
             throw new InvalidUuidException('Invalid UUID', previous: $e);
         }
+        $this->height = $height;
     }
 }
 

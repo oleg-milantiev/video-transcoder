@@ -36,6 +36,7 @@ class SPAController extends AbstractController
         $dummyUuid = '11111111-1111-4111-8111-111111111111';
         $dummyPresetId = '22222222-2222-4222-8222-222222222222';
         $dummyTaskId = '33333333-3333-4333-8333-333333333333';
+        $dummyHeight = 44444444;
 
         return [
             'user' => [
@@ -59,7 +60,7 @@ class SPAController extends AbstractController
                 'video' => [
                     'list' => $this->generateUrl('api_video_list'),
                     'details' => str_replace($dummyUuid, '__UUID__', $this->generateUrl('api_video_details', ['id' => $dummyUuid])),
-                    'transcode' => str_replace([$dummyUuid, $dummyPresetId], ['__UUID__', '__PRESET_ID__'], $this->generateUrl('api_video_transcode', ['id' => $dummyUuid, 'presetId' => $dummyPresetId])),
+                    'transcode' => str_replace([$dummyUuid, $dummyPresetId, $dummyHeight], ['__UUID__', '__PRESET_ID__', '__HEIGHT__'], $this->generateUrl('api_video_transcode', ['id' => $dummyUuid, 'presetId' => $dummyPresetId, $dummyHeight])),
                     'delete' => str_replace($dummyUuid, '__UUID__', $this->generateUrl('api_video_delete', ['id' => $dummyUuid])),
                     'patch' => str_replace($dummyUuid, '__UUID__', $this->generateUrl('api_video_patch', ['id' => $dummyUuid])),
                 ],

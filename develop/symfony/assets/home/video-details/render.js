@@ -71,7 +71,7 @@ function renderResolutionButton(vm, preset, height, isOrigin) {
     const label = isOrigin
         ? `Transcode (same as origin: ${originWidth}×${originHeight})`
         : `Transcode to ${width}×${height}`;
-    const expectedSize = isOrigin 
+    const expectedSize = isOrigin
         ? calculateExpectedFileSize(preset.bitrate, originHeight, duration)
         : calculateExpectedFileSize(preset.bitrate, height, duration);
     const actionKey = 'transcode-' + String(preset.id) + '-' + String(height);
@@ -87,7 +87,7 @@ function renderResolutionButton(vm, preset, height, isOrigin) {
             },
             isActive ? 'Processing...' : label
         ),
-        expectedSize !== null 
+        expectedSize !== null
             ? h('div', { class: 'small text-muted mt-1' }, `Expected size: ${bytesToHuman(expectedSize)}`)
             : null,
     ]);
@@ -133,15 +133,26 @@ function renderPresetBlock(vm, preset, index, total) {
     return h('div', { key: preset.id, class: 'mb-3' }, elements);
 }
 function renderPresetsSection(vm) {
-    const presets = vm.dto?.presets || [];
-    if (presets.length === 0) {
-        return null;
-    }
-    return h('div', { class: 'mb-4' }, [
-        h('h5', { class: 'mb-3' }, 'Start new Video Transcoding Task'),
-        ...presets.map((preset, index) => renderPresetBlock(vm, preset, index, presets.length)),
-    ]);
-}
+     const presets = vm.dto?.presets || [];
+     if (presets.length === 0) {
+         return null;
+     }
+
+     // Hide transcode section if video metadata doesn't have width or height
+     const video = vm.dto?.video || {};
+     const meta = video.meta || {};
+     const hasWidth = typeof meta.width !== 'undefined' && meta.width !== null;
+     const hasHeight = typeof meta.height !== 'undefined' && meta.height !== null;
+
+     if (!hasWidth || !hasHeight) {
+         return null;
+     }
+
+     return h('div', { class: 'mb-4' }, [
+         h('h5', { class: 'mb-3' }, 'Start new Video Transcoding Task'),
+         ...presets.map((preset, index) => renderPresetBlock(vm, preset, index, presets.length)),
+     ]);
+ }
 function renderTaskStatus(vm, task) {
     if (!task) {
         return h('em', 'No task');

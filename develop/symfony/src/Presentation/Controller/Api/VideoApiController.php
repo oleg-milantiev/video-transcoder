@@ -3,7 +3,9 @@ declare(strict_types=1);
 
 namespace App\Presentation\Controller\Api;
 
+use App\Application\Exception\HeightExceedsTariffException;
 use App\Application\Exception\InvalidUuidException;
+use App\Application\Exception\PresetHeightNotAvailableException;
 use App\Application\Exception\PresetNotFoundException;
 use App\Application\Exception\TaskCreationFailedException;
 use App\Application\Exception\TranscodeAccessDeniedException;
@@ -83,13 +85,17 @@ class VideoApiController extends AbstractController
         }
     }
 
-    #[Route('/{id}/transcode/{presetId}', name: 'api_video_transcode', methods: ['POST'])]
-    public function transcode(string $id, string $presetId): Response
+    #[Route('/{id}/transcode/{presetId}/{height}', name: 'api_video_transcode', requirements: [
+        'id' => '[0-9a-fA-F-]{36}',
+        'presetId' => '[0-9a-fA-F-]{36}',
+        'height' => '\d+',
+    ], methods: ['POST'])]
+    public function transcode(string $id, string $presetId, int $height): Response
     {
         try {
             return $this->apiSuccess((array)
                 $this->queryBus->query(
-                     new StartTranscodeQuery($id, $presetId, $this->getUser()->id->toRfc4122())
+                     new StartTranscodeQuery($id, $presetId, $this->getUser()->id->toRfc4122(), $height)
                 )
             );
         } catch (InvalidUuidException $e) {
@@ -102,6 +108,10 @@ class VideoApiController extends AbstractController
             return $this->apiError('USER_NOT_FOUND', $e->getMessage(), 404);
         } catch (VideoAccessDeniedException $e) {
             return $this->apiError('ACCESS_DENIED', $e->getMessage(), 403);
+        } catch (HeightExceedsTariffException $e) {
+            return $this->apiError('HEIGHT_EXCEEDS_TARIFF', $e->getMessage(), 403);
+        } catch (PresetHeightNotAvailableException $e) {
+            return $this->apiError('HEIGHT_NOT_IN_PRESET', $e->getMessage(), 422);
         } catch (TaskCreationFailedException $e) {
             return $this->apiError('TASK_CREATION_FAILED', $e->getMessage(), 500);
         } catch (\Throwable $e) {
