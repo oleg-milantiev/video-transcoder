@@ -62,7 +62,7 @@ function renderHelpIcon(tooltipText, className = 'text-secondary border-secondar
 
 const TASKS_SECTION_ID = 'transcoding-tasks-section';
 
-function renderResolutionButton(vm, preset, height, isOrigin) {
+function renderResolutionButton(vm, preset, height, isOrigin, taskExists) {
     const video = vm.dto?.video || {};
     const meta = video.meta || {};
     const originWidth = Number(meta._width) || 0;
@@ -80,14 +80,15 @@ function renderResolutionButton(vm, preset, height, isOrigin) {
         const el = document.getElementById(TASKS_SECTION_ID);
         if (el) { el.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
     };
+    const heightExists = taskExists[preset.id]?.[height] === true;
 
     return h('div', { class: 'text-center', style: 'min-width: 90px; max-width: 110px;' }, [
         h(
             'button',
             {
                 type: 'button',
-                class: 'btn btn-outline-primary btn-sm w-100' + (isOrigin ? ' fw-semibold' : ''),
-                disabled: isActive || video.deleted,
+                class: 'btn btn-outline-primary btn-sm w-100' + (isOrigin ? ' fw-semibold' : '') + (heightExists ? ' text-decoration-line-through' : ''),
+                disabled: isActive || video.deleted || heightExists,
                 onClick: () => {
                     vm.startTranscode(preset.id, isOrigin ? originHeight : height);
                     scrollToTasks();
@@ -102,7 +103,7 @@ function renderResolutionButton(vm, preset, height, isOrigin) {
     ]);
 }
 
-function renderPresetResolutions(vm, preset) {
+function renderPresetResolutions(vm, preset, taskExists) {
     const video = vm.dto?.video || {};
     const meta = video.meta || {};
     const originHeight = Number(meta._height) || 0;
@@ -119,21 +120,16 @@ function renderPresetResolutions(vm, preset) {
         return h('p', { class: 'text-muted' }, 'No resolutions available for your tariff');
     }
     const buttons = [];
-    if (originHeight > 0 && heights.includes(originHeight)) {
-        buttons.push(renderResolutionButton(vm, preset, originHeight, true));
-    }
     for (const height of heights) {
-        if (height !== originHeight) {
-            buttons.push(renderResolutionButton(vm, preset, height, false));
-        }
+        buttons.push(renderResolutionButton(vm, preset, height, height === originHeight, taskExists));
     }
     return h('div', { class: 'd-flex flex-wrap gap-2' }, buttons);
 }
 
-function renderPresetBlock(vm, preset, index, total) {
+function renderPresetBlock(vm, preset, index, total, taskExists) {
     const elements = [
         h('h6', { class: 'mb-2' }, `Transcode Video to ${preset.title || `Preset ${preset.id}`}`),
-        renderPresetResolutions(vm, preset),
+        renderPresetResolutions(vm, preset, taskExists),
     ];
     if (index < total - 1) {
         elements.push(h('hr', { class: 'my-3' }));
@@ -141,7 +137,7 @@ function renderPresetBlock(vm, preset, index, total) {
     return h('div', { key: preset.id, class: 'mb-3' }, elements);
 }
 
-function renderPresetsSection(vm) {
+function renderPresetsSection(vm, taskExists) {
     const presets = vm.dto?.presets || [];
     if (presets.length === 0) {
         return null;
@@ -154,7 +150,7 @@ function renderPresetsSection(vm) {
         return null;
     }
     return h('div', { class: 'mb-4' }, [
-        ...presets.map((preset, index) => renderPresetBlock(vm, preset, index, presets.length)),
+        ...presets.map((preset, index) => renderPresetBlock(vm, preset, index, presets.length, taskExists)),
     ]);
 }
 
@@ -258,6 +254,16 @@ export function renderVideoDetails(vm) {
     if (!vm.dto) {
         return h('div', { class: 'py-4' }, [h('h1', { class: 'mb-3' }, 'Video Details')]);
     }
+    const tasks = vm.dto.tasks || {};
+    const taskExists = {};
+
+    tasks.forEach(task => {
+        if (!taskExists[task.presetId]) {
+            taskExists[task.presetId] = {};
+        }
+        taskExists[task.presetId][task.height] = true;
+    });
+
     const video = vm.dto.video || {};
     const metaEntries = Object.entries(video.meta || {});
     const createdAt = humanReadableDateTime(video.createdAt);
@@ -345,7 +351,7 @@ export function renderVideoDetails(vm) {
                 ]),
             ]),
         ]),
-        renderPresetsSection(vm),
+        renderPresetsSection(vm, taskExists),
         renderTasksTable(vm),
     ]);
 }

@@ -173,6 +173,7 @@ class TaskRepository extends ServiceEntityRepository implements TaskRepositoryIn
             SELECT
                 t.id,
                 v.title AS video_title,
+                p.id AS preset_id,
                 CONCAT(p.video_codec, '/', p.audio_codec, '/', p.format) AS preset_title,
                 (t.meta->>'height')::int AS meta_height,
                 t.status,
@@ -181,7 +182,7 @@ class TaskRepository extends ServiceEntityRepository implements TaskRepositoryIn
                 t.deleted,
                 pst.waiting_tariff_instance,
                 pst.waiting_tariff_delay,
-                pst.will_start_at
+                to_char(pst.will_start_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"+00:00"') AS will_start_at
             FROM task t
                      JOIN preset p ON p.id = t.preset_id
                      JOIN video v ON v.id = t.video_id
@@ -196,6 +197,7 @@ class TaskRepository extends ServiceEntityRepository implements TaskRepositoryIn
             static fn (array $row): TaskItemDTO => new TaskItemDTO( // todo via TaskItemDTO::some-static
                 id: $row['id'],
                 videoTitle: $row['video_title'],
+                presetId: $row['preset_id'],
                 presetTitle: $row['preset_title'],
                 height: (int)$row['meta_height'],
                 status: TaskStatus::tryFrom((int)$row['status'])?->name,
@@ -203,8 +205,8 @@ class TaskRepository extends ServiceEntityRepository implements TaskRepositoryIn
                 createdAt: $row['created_at'],
                 deleted: (bool)$row['deleted'],
                 waitingTariffInstance: (bool)$row['waiting_tariff_instance'],
-                waitingTariffDelay: (bool)['waiting_tariff_delay'],
-                willStartAt: $row['will_start_at'], // todo toATOM and localTime on frontend
+                waitingTariffDelay: (bool)$row['waiting_tariff_delay'],
+                willStartAt: $row['will_start_at'],
             ),
             $stmt->fetchAllAssociative(),
         );
