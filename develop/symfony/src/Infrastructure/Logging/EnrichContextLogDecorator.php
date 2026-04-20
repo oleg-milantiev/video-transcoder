@@ -101,9 +101,7 @@ final readonly class EnrichContextLogDecorator implements LogServiceInterface
         try {
             $entity = $this->presetRepository->find($context['presetId']);
             if ($entity !== null) {
-                $context['presetTitle'] = isset($entity->videoCodec, $entity->audioCodec, $entity->format)
-                    ? sprintf('%s/%s/%s', $entity->videoCodec, $entity->audioCodec, $entity->format)
-                    : (string) $context['presetId'];
+                $context['presetTitle'] = $entity->title ?? (string) $context['presetId'];
                 $context['presetAdminUrl'] = $this->buildDetailUrl(PresetCrudController::class, $context['presetId']);
             }
         } catch (\Throwable) {

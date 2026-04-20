@@ -8,6 +8,7 @@ use App\Domain\Video\Entity\Preset;
 use App\Domain\Video\ValueObject\AudioCodec;
 use App\Domain\Video\ValueObject\Format;
 use App\Domain\Video\ValueObject\PresetBitrate;
+use App\Domain\Video\ValueObject\PresetTitle;
 use App\Domain\Video\ValueObject\VideoCodec;
 
 class PresetMapper
@@ -19,6 +20,7 @@ class PresetMapper
             : PresetBitrate::default();
 
         return new Preset(
+            title: new PresetTitle($entity->title),
             videoCodec: new VideoCodec($entity->videoCodec),
             audioCodec: new AudioCodec($entity->audioCodec),
             format: new Format($entity->format),

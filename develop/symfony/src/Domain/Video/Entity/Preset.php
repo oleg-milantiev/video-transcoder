@@ -7,17 +7,20 @@ use App\Domain\Shared\ValueObject\Uuid;
 use App\Domain\Video\ValueObject\AudioCodec;
 use App\Domain\Video\ValueObject\Format;
 use App\Domain\Video\ValueObject\PresetBitrate;
+use App\Domain\Video\ValueObject\PresetTitle;
 use App\Domain\Video\ValueObject\VideoCodec;
 
 class Preset
 {
     private ?Uuid $id;
+    private PresetTitle $title;
     private VideoCodec $videoCodec;
     private AudioCodec $audioCodec;
     private Format $format;
     private PresetBitrate $bitrate;
 
     public function __construct(
+        PresetTitle $title,
         VideoCodec $videoCodec,
         AudioCodec $audioCodec,
         Format $format,
@@ -25,6 +28,7 @@ class Preset
         ?PresetBitrate $bitrate = null,
     ) {
         $this->id = $id;
+        $this->rename($title);
         $this->bitrate = $bitrate ?? PresetBitrate::default();
         $this->changeOutput($videoCodec, $audioCodec, $format);
     }
@@ -32,6 +36,11 @@ class Preset
     public function id(): ?Uuid
     {
         return $this->id;
+    }
+
+    public function title(): PresetTitle
+    {
+        return $this->title;
     }
 
     public function label(): string
@@ -60,12 +69,18 @@ class Preset
     }
 
     public static function create(
+        PresetTitle $title,
         VideoCodec $videoCodec,
         AudioCodec $audioCodec,
         Format $format,
         ?PresetBitrate $bitrate = null,
     ): self {
-        return new self($videoCodec, $audioCodec, $format, null, $bitrate);
+        return new self($title, $videoCodec, $audioCodec, $format, null, $bitrate);
+    }
+
+    public function rename(PresetTitle $title): void
+    {
+        $this->title = $title;
     }
 
     public function changeOutput(

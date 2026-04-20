@@ -175,7 +175,7 @@ class TaskRepository extends ServiceEntityRepository implements TaskRepositoryIn
                 t.video_id,
                 v.title AS video_title,
                 p.id AS preset_id,
-                CONCAT(p.video_codec, '/', p.audio_codec, '/', p.format) AS preset_title,
+                p.title AS preset_title,
                 (t.meta->>'height')::int AS meta_height,
                 t.status,
                 t.progress,
