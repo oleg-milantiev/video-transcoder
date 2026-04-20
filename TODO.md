@@ -33,6 +33,7 @@
   - realtime
 - чуть(!) улучшить вид с мобилы
 - api и дока (ссылки внизу). Мол, можете юзать как сервис в своих приложениях
+- webm не запишется, наверное? Проверить
 
 ## Sprint 0.1.3 (Тарифы, Оплата)
 
@@ -42,6 +43,7 @@
 
 ## Sprint 0.1.4 (развитие)
 
+- карточка видео. Эта туча пресетов в кучу не выглядит хорошо. Надо над ними ввести фильтры, как теги: webm | mp4, h264 | h265 | vp9 | av1, aac | opus
 - HLS. Это туча файлов, другой download (zip?)
     - ffmpeg -i input.mp4 -codec: copy -start_number 0 -hls_time 10 -hls_list_size 0 -f hls index.m3u8
     - ffmpeg -i input.mp4 -c:v libx264 -c:a aac -g 100 -hls_time 4 -hls_list_size 0 -f hls index.m3u8
