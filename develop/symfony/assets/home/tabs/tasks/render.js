@@ -1,34 +1,6 @@
 import { h } from 'vue';
 import { humanReadableDateTime } from '../../shared.js';
-
-function renderTaskAction(vm, task) {
-    if (task.status === 'COMPLETED' && task.id && !task.deleted) {
-        return h(
-            'a',
-            {
-                href: vm.getTaskDownloadUrl(task.id),
-                class: 'btn btn-outline-primary btn-sm',
-                download: task.downloadFilename,
-            },
-            'Download'
-        );
-    }
-
-    if (vm.isTaskActive(task.status) && task.id) {
-        return h(
-            'button',
-            {
-                type: 'button',
-                class: 'btn btn-outline-primary btn-sm',
-                disabled: vm.taskActionKey === 'cancel-' + String(task.id),
-                onClick: () => vm.cancelTask(task.id),
-            },
-            vm.taskActionKey === 'cancel-' + String(task.id) ? 'Cancelling...' : 'Cancel'
-        );
-    }
-
-    return h('span', { class: 'text-muted' }, '-');
-}
+import { renderTaskAction } from '../../task/render.js';
 
 export function renderTasksPane(vm, paneClass) {
     return h('div', { class: paneClass }, [
@@ -49,7 +21,7 @@ export function renderTasksPane(vm, paneClass) {
                               h('td', task.status || '-'),
                               h('td', typeof task.progress === 'number' ? String(task.progress) + '%' : '-'),
                               h('td', humanReadableDateTime(task.createdAt)),
-                              h('td', [renderTaskAction(vm, task)]),
+                              h('td', [renderTaskAction(task, vm.taskActions)]),
                           ])
                       )
                     : [h('tr', [h('td', { colspan: '6', class: 'text-muted text-center' }, 'No tasks')])]

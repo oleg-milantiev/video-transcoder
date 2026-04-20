@@ -11,6 +11,7 @@ readonly class TaskItemDTO
 {
     public function __construct(
         public string $id,
+        public string $videoId,
         public string $videoTitle,
         public string $presetId,
         public string $presetTitle,
@@ -32,6 +33,7 @@ readonly class TaskItemDTO
 
         return new self(
             id: $task->id()->toRfc4122(),
+            videoId: $video->id()->toRfc4122(),
             videoTitle: $video->title()->value(),
             presetId: $preset->id()->toRfc4122(),
             presetTitle: $preset->label(),

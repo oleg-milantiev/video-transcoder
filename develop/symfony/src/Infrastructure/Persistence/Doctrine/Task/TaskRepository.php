@@ -172,6 +172,7 @@ class TaskRepository extends ServiceEntityRepository implements TaskRepositoryIn
             )
             SELECT
                 t.id,
+                t.video_id,
                 v.title AS video_title,
                 p.id AS preset_id,
                 CONCAT(p.video_codec, '/', p.audio_codec, '/', p.format) AS preset_title,
@@ -196,6 +197,7 @@ class TaskRepository extends ServiceEntityRepository implements TaskRepositoryIn
         return array_map(
             static fn (array $row): TaskItemDTO => new TaskItemDTO( // todo via TaskItemDTO::some-static
                 id: $row['id'],
+                videoId: $row['video_id'],
                 videoTitle: $row['video_title'],
                 presetId: $row['preset_id'],
                 presetTitle: $row['preset_title'],

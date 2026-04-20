@@ -1,5 +1,6 @@
 import { parseJsonResponse, extractApiErrorMessage } from '../../shared.js';
 import { authFetch } from '../../apiAuth.js';
+import { createTaskActions } from '../../task/actions.js';
 
 export function isTaskActive(status) {
     return status === 'PENDING' || status === 'PROCESSING';
@@ -7,6 +8,15 @@ export function isTaskActive(status) {
 
 export function createTasksTabActions(params) {
     const { config, tasksState, pageLimit } = params;
+
+    const taskActions = createTaskActions({
+        config,
+        onSuccess: () => {
+            const targetPage = tasksState.tasksMeta.value.page;
+            void loadTasks(targetPage);
+        },
+        onError: (msg) => { tasksState.tasksError.value = msg; },
+    });
 
     function normalizeListResponse(payload, page, limit) {
         if (!payload || typeof payload !== 'object') {
@@ -91,34 +101,6 @@ export function createTasksTabActions(params) {
         void loadTasks(targetPage);
     }
 
-    async function cancelTask(taskId) {
-        if (!taskId) {
-            return;
-        }
-
-        tasksState.taskActionKey.value = 'cancel-' + String(taskId);
-
-        try {
-            const url = config.route.task.cancel.replace('__TASK_ID__', String(taskId));
-            const response = await authFetch(url, {
-                method: 'POST',
-            });
-
-            const payload = await parseJsonResponse(response);
-            if (!response.ok) {
-                tasksState.tasksError.value = extractApiErrorMessage(payload, 'Failed to cancel task');
-            }
-        } catch (e) {
-            tasksState.tasksError.value = 'Failed to cancel task';
-        } finally {
-            tasksState.taskActionKey.value = '';
-        }
-    }
-
-    function getTaskDownloadUrl(taskId) {
-        return config.route.task.download.replace('__TASK_ID__', String(taskId));
-    }
-
     function applyTaskRealtimeUpdate(update) {
         const taskId = typeof update.taskId === 'string' ? update.taskId : '';
         if (!taskId) {
@@ -147,8 +129,7 @@ export function createTasksTabActions(params) {
     return {
         loadTasks,
         ensureTasksLoaded,
-        cancelTask,
-        getTaskDownloadUrl,
+        taskActions,
         applyTaskRealtimeUpdate,
     };
 }

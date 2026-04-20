@@ -6,6 +6,7 @@ import {
     replaceTemplateValue,
 } from '../shared.js';
 import { authFetch } from '../apiAuth.js';
+import { createTaskActions } from '../task/actions.js';
 import Swal from '../../vendor/sweetalert2/sweetalert2.index.js';
 
 function formatMetaValue(value) {
@@ -29,6 +30,12 @@ export function createVideoDetailsActions(params) {
         }
 
         return config.videoUuid || '';
+    });
+
+    const taskActions = createTaskActions({
+        config,
+        onSuccess: () => loadDetails(),
+        onError: (msg) => { state.actionError.value = msg; },
     });
 
     async function loadDetails() {
@@ -165,19 +172,17 @@ export function createVideoDetailsActions(params) {
         }
     }
 
+    // todo - унифицировать. startTranscode for preset buttons (current video UUID comes from route)
     function startTranscode(presetId, height) {
-        const url = replaceTemplateValue(replaceTemplateValue(replaceTemplateValue(config.route.video.transcode, '__HEIGHT__', height), '__UUID__', uuid.value), '__PRESET_ID__', presetId);
-        const actionKey = 'transcode-' + String(presetId) + '-' + String(height);
-        void runPostAction(url, actionKey, 'Failed to start transcode');
+        void taskActions.startTranscode(uuid.value, presetId, height);
     }
 
     function cancelTask(taskId) {
-        const url = replaceTemplateValue(config.route.task.cancel, '__TASK_ID__', taskId);
-        void runPostAction(url, 'cancel-' + String(taskId), 'Failed to cancel task');
+        void taskActions.cancelTask(taskId);
     }
 
     function taskDownloadUrl(taskId) {
-        return replaceTemplateValue(config.route.task.download, '__TASK_ID__', taskId);
+        return taskActions.getDownloadUrl(taskId);
     }
 
     function goHome() {
@@ -301,6 +306,7 @@ export function createVideoDetailsActions(params) {
         startTranscode,
         cancelTask,
         taskDownloadUrl,
+        taskActions,
         goHome,
         formatMetaValue,
         openRenameModal,

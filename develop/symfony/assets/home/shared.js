@@ -1,4 +1,3 @@
-
 export function replaceTemplateValue(template, placeholder, value) {
     return template.replace(placeholder, String(value));
 }
@@ -90,4 +89,3 @@ export function humanReadableDateTime(value, fallback = '-') {
 
     return `${lookup.day} ${lookup.month} ${lookup.year} ${lookup.hour}:${lookup.minute}`;
 }
-

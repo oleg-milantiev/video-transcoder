@@ -45,11 +45,11 @@ const config = {
 
 {
     const state = makeState();
-    const { getTaskDownloadUrl } = createTasksTabActions({ config, tasksState: state, pageLimit: 10 });
+    const { taskActions } = createTasksTabActions({ config, tasksState: state, pageLimit: 10 });
 
-    assert.equal(getTaskDownloadUrl(42),      '/api/tasks/42/download',   'numeric id');
-    assert.equal(getTaskDownloadUrl('99'),     '/api/tasks/99/download',   'string id');
-    assert.equal(getTaskDownloadUrl('abc-id'), '/api/tasks/abc-id/download', 'string UUID');
+    assert.equal(taskActions.getDownloadUrl(42),      '/api/tasks/42/download',   'numeric id');
+    assert.equal(taskActions.getDownloadUrl('99'),     '/api/tasks/99/download',   'string id');
+    assert.equal(taskActions.getDownloadUrl('abc-id'), '/api/tasks/abc-id/download', 'string UUID');
     console.log('✓ getTaskDownloadUrl');
 }
 

@@ -1,5 +1,6 @@
 import { h } from 'vue';
 import { bytesToHuman, humanReadableDateTime } from '../shared.js';
+import { renderTaskAction } from '../task/render.js';
 function formatDelayClock(seconds) {
     const normalized = Number(seconds);
     if (!Number.isFinite(normalized) || normalized < 0) {
@@ -167,60 +168,7 @@ function renderTaskStatus(vm, task) {
         renderHelpIcon(tooltipText),
     ]);
 }
-function renderTaskAction(vm, task) {
-    if (!task || !task.id) {
-        return '';
-    }
-    if (task.status === 'COMPLETED') {
-        const preset = task.presetTitle.split('/');
-        const ext = preset.pop();
-        const codecs = preset.join('-');
 
-        return h(
-            'a',
-            {
-                href: vm.taskDownloadUrl(task.id),
-                class: 'btn btn-outline-primary btn-sm',
-                download: `${task.videoTitle}-${codecs}-${task.height}p.${ext}`,
-            },
-            'Download'
-        );
-    }
-    if (task.status === 'PENDING' || task.status === 'STARTING' || task.status === 'PROCESSING') {
-        return h(
-            'button',
-            {
-                type: 'button',
-                class: 'btn btn-outline-primary btn-sm',
-                disabled: vm.activeActionKey === 'cancel-' + String(task.id),
-                onClick: () => vm.cancelTask(task.id),
-            },
-            vm.activeActionKey === 'cancel-' + String(task.id) ? 'Cancelling...' : 'Cancel'
-        );
-    }
-    if (task.status === 'CANCELLED') {
-        const scrollToTasks = () => {
-            const el = document.getElementById(TASKS_SECTION_ID);
-            if (el) { el.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
-        };
-        const actionKey = 'transcode-' + String(task.presetId) + '-' + String(task.height);
-        const isActive = vm.activeActionKey === actionKey;
-        return h(
-            'button',
-            {
-                type: 'button',
-                class: 'btn btn-outline-primary btn-sm',
-                disabled: isActive,
-                onClick: () => {
-                    vm.startTranscode(task.presetId, task.height);
-                    scrollToTasks();
-                },
-            },
-            isActive ? 'Processing...' : 'Transcode'
-        );
-    }
-    return '';
-}
 function renderTasksTable(vm) {
     const tasks = vm.dto?.tasks || [];
     if (tasks.length === 0) {
@@ -233,7 +181,7 @@ function renderTasksTable(vm) {
             h('td', renderTaskStatus(vm, task)),
             h('td', task.progress ? String(task.progress) + '%' : '-'),
             h('td', task.createdAt ? humanReadableDateTime(task.createdAt) : '-'),
-            h('td', [renderTaskAction(vm, task)]),
+            h('td', [renderTaskAction(task, vm.taskActions)]),
         ]);
     });
     return h('div', { class: 'mb-4', id: TASKS_SECTION_ID }, [

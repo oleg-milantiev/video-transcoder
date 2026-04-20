@@ -140,10 +140,7 @@ export function createHomeTabsView(config) {
                 openVideoDetails: videosActions.openVideoDetails,
                 deleteVideo: videosActions.deleteVideo,
                 videoDeletePending: videosState.videoDeletePending,
-                getTaskDownloadUrl: tasksActions.getTaskDownloadUrl,
-                cancelTask: tasksActions.cancelTask,
-                taskActionKey: tasksState.taskActionKey,
-                isTaskActive,
+                taskActions: tasksActions.taskActions,
             };
         },
         render() {
