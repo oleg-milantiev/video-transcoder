@@ -140,38 +140,6 @@ export function createVideoDetailsActions(params) {
         }
     }
 
-    async function runPostAction(url, actionKey, fallbackError, body = null) {
-        state.activeActionKey.value = actionKey;
-        state.actionError.value = '';
-
-        try {
-            const fetchOptions = {
-                method: 'POST',
-                headers: { 'X-Requested-With': 'XMLHttpRequest' },
-                credentials: 'same-origin',
-            };
-
-            if (body !== null) {
-                fetchOptions.headers['Content-Type'] = 'application/json';
-                fetchOptions.body = JSON.stringify(body);
-            }
-
-            const response = await authFetch(url, fetchOptions);
-            const payload = await parseJsonResponse(response);
-
-            if (!response.ok) {
-                state.actionError.value = extractApiErrorMessage(payload, fallbackError);
-                return;
-            }
-
-            await loadDetails();
-        } catch (e) {
-            state.actionError.value = normalizeErrorMessage(e, fallbackError);
-        } finally {
-            state.activeActionKey.value = '';
-        }
-    }
-
     // todo - унифицировать. startTranscode for preset buttons (current video UUID comes from route)
     function startTranscode(presetId, height) {
         void taskActions.startTranscode(uuid.value, presetId, height);

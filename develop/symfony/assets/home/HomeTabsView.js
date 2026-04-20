@@ -6,7 +6,7 @@ import { createUploadTabActions } from './tabs/upload/actions.js';
 import { createVideosTabState } from './tabs/videos/state.js';
 import { createVideosTabActions } from './tabs/videos/actions.js';
 import { createTasksTabState } from './tabs/tasks/state.js';
-import { createTasksTabActions, isTaskActive } from './tabs/tasks/actions.js';
+import { createTasksTabActions } from './tabs/tasks/actions.js';
 import { bindHomeRealtime } from './realtime/bindHomeRealtime.js';
 
 export function createHomeTabsView(config) {
