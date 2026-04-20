@@ -35,7 +35,7 @@ readonly class TaskItemDTO
             videoTitle: $video->title()->value(),
             presetId: $preset->id()->toRfc4122(),
             presetTitle: $preset->label(),
-            height: $task->meta()['height'] ?? 'unknown',
+            height: $task->heightNullable() ?? 0,
             status: $task->status()->name,
             progress: $task->progress()->value(),
             createdAt: $task->createdAt()->format(\DateTimeInterface::ATOM),

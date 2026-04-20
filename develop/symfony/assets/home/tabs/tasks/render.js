@@ -36,7 +36,7 @@ export function renderTasksPane(vm, paneClass) {
         vm.tasksLoading && vm.tasks.length === 0 ? h('p', { class: 'mb-2 text-muted' }, 'Loading tasks...') : null,
         h('table', { id: 'tasksTable', class: 'table table-striped w-100 align-middle' }, [
             h('thead', [
-                h('tr', [h('th', 'Video'), h('th', 'Preset'), h('th', 'Status'), h('th', 'Progress'), h('th', 'Created'), h('th', 'Actions')]),
+                h('tr', [h('th', 'Video'), h('th', 'Preset'), h('th', 'Resolution'), h('th', 'Status'), h('th', 'Progress'), h('th', 'Created'), h('th', 'Actions')]),
             ]),
             h(
                 'tbody',
@@ -45,6 +45,7 @@ export function renderTasksPane(vm, paneClass) {
                           h('tr', [
                               h('td', { class: task.deleted === true ? 'video-title-deleted' : '' }, task.videoTitle || '-'),
                               h('td', task.presetTitle || '-'),
+                              h('td', task.height || '-'),
                               h('td', task.status || '-'),
                               h('td', typeof task.progress === 'number' ? String(task.progress) + '%' : '-'),
                               h('td', humanReadableDateTime(task.createdAt)),

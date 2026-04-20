@@ -270,4 +270,9 @@ class Task
             throw TaskAlreadyDeleted::forTask();
         }
     }
+
+    public function heightNullable(): ?int
+    {
+        return isset($this->meta['height']) ? (int)$this->meta['height'] : null;
+    }
 }
