@@ -172,12 +172,16 @@ function renderTaskAction(vm, task) {
         return '';
     }
     if (task.status === 'COMPLETED') {
+        const preset = task.presetTitle.split('/');
+        const ext = preset.pop();
+        const codecs = preset.join('-');
+
         return h(
             'a',
             {
                 href: vm.taskDownloadUrl(task.id),
                 class: 'btn btn-outline-primary btn-sm',
-                download: task.downloadFilename,
+                download: `${task.videoTitle}-${codecs}-${task.height}p.${ext}`,
             },
             'Download'
         );
@@ -192,6 +196,27 @@ function renderTaskAction(vm, task) {
                 onClick: () => vm.cancelTask(task.id),
             },
             vm.activeActionKey === 'cancel-' + String(task.id) ? 'Cancelling...' : 'Cancel'
+        );
+    }
+    if (task.status === 'CANCELLED') {
+        const scrollToTasks = () => {
+            const el = document.getElementById(TASKS_SECTION_ID);
+            if (el) { el.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+        };
+        const actionKey = 'transcode-' + String(task.presetId) + '-' + String(task.height);
+        const isActive = vm.activeActionKey === actionKey;
+        return h(
+            'button',
+            {
+                type: 'button',
+                class: 'btn btn-outline-primary btn-sm',
+                disabled: isActive,
+                onClick: () => {
+                    vm.startTranscode(task.presetId, task.height);
+                    scrollToTasks();
+                },
+            },
+            isActive ? 'Processing...' : 'Transcode'
         );
     }
     return '';
