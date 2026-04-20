@@ -129,12 +129,9 @@ function renderPresetResolutions(vm, preset, taskExists) {
 
 function renderPresetBlock(vm, preset, index, total, taskExists) {
     const elements = [
-        h('h6', { class: 'mb-2' }, `Transcode Video to ${preset.title || `Preset ${preset.id}`}`),
+        h('h6', { class: 'mb-2' }, preset.title +' ('+ preset.videoCodec +'/'+ preset.audioCodec +'/'+ preset.format +')'),
         renderPresetResolutions(vm, preset, taskExists),
     ];
-    if (index < total - 1) {
-        elements.push(h('hr', { class: 'my-3' }));
-    }
     return h('div', { key: preset.id, class: 'mb-3' }, elements);
 }
 

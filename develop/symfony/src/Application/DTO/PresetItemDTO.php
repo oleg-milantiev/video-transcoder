@@ -20,7 +20,7 @@ readonly class PresetItemDTO
     {
         return new self(
             id: $preset->id()->toRfc4122(),
-            title: $preset->label(),
+            title: $preset->title()->value(),
             videoCodec: $preset->videoCodec()->value(),
             audioCodec: $preset->audioCodec()->value(),
             format: $preset->format()->value(),
