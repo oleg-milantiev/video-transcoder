@@ -68,7 +68,7 @@ class TaskCrudController extends AbstractCrudController
     {
         $markDeleted = Action::new('markDeleted', 'Mark deleted', 'fas fa-trash')
             ->displayIf(static function (TaskEntity $entity) {
-                return !in_array($entity->status, [TaskStatus::PROCESSING->value, TaskStatus::DELETED->value], true);
+                return !$entity->deleted || !in_array($entity->status, [TaskStatus::PROCESSING->value, TaskStatus::DELETED->value], true);
             })
             ->askConfirmation()
             ->linkToCrudAction('markDeleted');
