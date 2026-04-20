@@ -7,7 +7,7 @@ import { h } from 'vue';
  * @param {Object} taskActions - Result of createTaskActions(): { activeKey, cancelTask, startTranscode, getDownloadUrl }
  */
 export function renderTaskAction(task, taskActions) {
-    if (!task || !task.id) {
+    if (!task || !task.id || task.deleted) {
         return h('span', { class: 'text-muted' }, '-');
     }
 
