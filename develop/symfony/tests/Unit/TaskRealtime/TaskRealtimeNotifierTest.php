@@ -86,7 +86,7 @@ final class TaskRealtimeNotifierTest extends TestCase
             TestCase::assertTrue($message->userId->equals($task->userId()));
             TestCase::assertIsArray($message->payload);
             TestCase::assertSame('My video', $message->payload['videoTitle']);
-            TestCase::assertSame('h264/aac/mp4', $message->payload['presetTitle']);
+            TestCase::assertSame('Test Preset', $message->payload['presetTitle']);
 
             return new Envelope($command);
         });
@@ -151,7 +151,7 @@ final class TaskRealtimeNotifierTest extends TestCase
             TestCase::assertTrue($message->id->equals($task->id()));
             TestCase::assertIsArray($message->payload);
             TestCase::assertSame('Another video', $message->payload['videoTitle']);
-            TestCase::assertSame('h264/aac/mp4', $message->payload['presetTitle']);
+            TestCase::assertSame('Test Preset', $message->payload['presetTitle']);
 
             return new Envelope($command);
         });

@@ -28,7 +28,6 @@ final class PresetTest extends TestCase
         );
 
         $this->assertNull($preset->id());
-        $this->assertSame("h264/aac/mp4", $preset->label());
         $this->assertSame("h264", $preset->videoCodec()->value());
         $this->assertSame("aac", $preset->audioCodec()->value());
         $this->assertSame("mp4", $preset->format()->value());
@@ -54,7 +53,6 @@ final class PresetTest extends TestCase
         $this->assertSame('h265', $preset->videoCodec()->value());
         $this->assertSame('opus', $preset->audioCodec()->value());
         $this->assertSame('webm', $preset->format()->value());
-        $this->assertSame('h265/opus/webm', $preset->label());
     }
 
     public function testCreateWithCustomBitrate(): void

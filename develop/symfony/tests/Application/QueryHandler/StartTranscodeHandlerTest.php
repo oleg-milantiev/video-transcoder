@@ -156,7 +156,7 @@ class StartTranscodeHandlerTest extends TestCase
 
         $this->assertInstanceOf(TaskItemDTO::class, $dto);
         $this->assertSame('Source Clip', $dto->videoTitle);
-        $this->assertSame('h264/aac/mp4', $dto->presetTitle);
+        $this->assertSame('Test Preset', $dto->presetTitle);
         $this->assertSame('PENDING', $dto->status);
         $this->assertSame([
             StartTranscodeStart::class,

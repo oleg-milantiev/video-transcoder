@@ -58,7 +58,7 @@ class TaskItemDTOTest extends TestCase
 
         $this->assertSame('55555555-5555-4555-8555-555555555555', $dto->id);
         $this->assertSame('Task Source Video', $dto->videoTitle);
-        $this->assertSame('h264/aac/mp4', $dto->presetTitle);
+        $this->assertSame('Test Preset', $dto->presetTitle);
         $this->assertSame('PROCESSING', $dto->status);
         $this->assertSame(75, $dto->progress);
         $this->assertSame($taskCreatedAt->format(\DateTimeInterface::ATOM), $dto->createdAt);

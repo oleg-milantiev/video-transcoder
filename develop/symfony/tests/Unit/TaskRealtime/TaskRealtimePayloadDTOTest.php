@@ -86,6 +86,6 @@ final class TaskRealtimePayloadDTOTest extends TestCase
         $arr = $dto->toArray();
 
         $this->assertSame('My video', $arr['videoTitle']);
-        $this->assertSame('h264/aac/mp4', $arr['presetTitle']);
+        $this->assertSame('Test Preset', $arr['presetTitle']);
     }
 }

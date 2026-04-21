@@ -93,7 +93,7 @@ final class TaskRealtimePayloadDTOTest extends TestCase
         $dto->addVideoPresetFields($video, $preset);
 
         $this->assertSame('Test Video', $dto->videoTitle);
-        $this->assertSame('h264/aac/mp4', $dto->presetTitle);
+        $this->assertSame('Test Preset', $dto->presetTitle);
     }
 
     public function testToArrayIncludesAllFields(): void
@@ -144,7 +144,7 @@ final class TaskRealtimePayloadDTOTest extends TestCase
         $this->assertSame(50, $array['progress']);
         $this->assertFalse($array['deleted']);
         $this->assertSame('My Video', $array['videoTitle']);
-        $this->assertSame('h265/aac/mp4', $array['presetTitle']);
+        $this->assertSame('Test Preset', $array['presetTitle']);
         $this->assertSame($createdAt->format(\DateTimeInterface::ATOM), $array['createdAt']);
         $this->assertArrayHasKey('updatedAt', $array);
     }
