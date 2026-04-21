@@ -239,28 +239,23 @@ export function createVideoDetailsActions(params) {
     }
 
     function applyVideoRealtimeUpdate(payload) {
+        if (typeof payload.uuid !== 'string' || !payload.uuid) {
+            return;
+        }
+
         if (!state.dto.value) {
             return;
         }
 
         const video = state.dto.value.video || {};
 
-        // Require videoId to be present and matching
-        if (typeof payload.videoId !== 'string' || !payload.videoId) {
-            return;
-        }
-
-        if (payload.videoId !== video.uuid) {
+        if (payload.uuid !== video.uuid) {
             return;
         }
 
         const updatedVideo = {
             ...video,
-            poster: typeof payload.poster === 'string' ? payload.poster : video.poster,
-            title: typeof payload.title === 'string' ? payload.title : video.title,
-            meta: payload.meta || video.meta,
-            updatedAt: payload.updatedAt || video.updatedAt,
-            expiredAt: payload.expiredAt || video.expiredAt,
+            ...payload,
         };
 
         state.dto.value = {

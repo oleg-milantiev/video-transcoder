@@ -79,4 +79,23 @@ readonly class VideoItemDTO
 
         return $meta;
     }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function toArray(): array
+    {
+        return [
+            'uuid'            => $this->uuid,
+            'title'           => $this->title,
+            'createdAt'       => $this->createdAt,
+            'updatedAt'       => $this->updatedAt,
+            'expiredAt'       => $this->expiredAt,
+            'expiredInterval' => $this->expiredInterval,
+            'deleted'         => $this->deleted,
+            'canBeDeleted'    => $this->canBeDeleted,
+            'meta'            => $this->meta,
+            'poster'          => $this->poster,
+        ];
+    }
 }

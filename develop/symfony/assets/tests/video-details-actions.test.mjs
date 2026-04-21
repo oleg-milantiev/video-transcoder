@@ -215,7 +215,7 @@ function makeState(dto = null) {
         state,
     });
 
-    applyVideoRealtimeUpdate({ videoId: 'video-1', title: 'New Title', poster: '/poster.jpg', updatedAt: '2024-06-01T00:00:00Z' });
+    applyVideoRealtimeUpdate({ uuid: 'video-1', title: 'New Title', poster: '/poster.jpg', updatedAt: '2024-06-01T00:00:00Z' });
 
     assert.equal(state.dto.value.video.title,     'New Title',            'title updated');
     assert.equal(state.dto.value.video.poster,    '/poster.jpg',          'poster updated');
@@ -244,7 +244,7 @@ function makeState(dto = null) {
         state,
     });
 
-    applyVideoRealtimeUpdate({ videoId: 'video-1', poster: '/new-poster.jpg' });
+    applyVideoRealtimeUpdate({ uuid: 'video-1', poster: '/new-poster.jpg' });
 
     assert.equal(state.dto.value.video.poster, '/new-poster.jpg', 'poster updated');
     console.log('✓ applyVideoRealtimeUpdate: poster updated');
@@ -296,9 +296,9 @@ function makeState(dto = null) {
         state,
     });
 
-    applyVideoRealtimeUpdate({ videoId: 'other-video', title: 'Should Not Apply' });
+    applyVideoRealtimeUpdate({ uuid: 'other-video', title: 'Should Not Apply' });
 
-    assert.equal(state.dto.value.video.title, 'Original', 'wrong videoId: title unchanged');
+    assert.equal(state.dto.value.video.title, 'Original', 'wrong uuid: title unchanged');
     console.log('✓ applyVideoRealtimeUpdate: ignores unknown videoId');
 }
 
@@ -321,8 +321,8 @@ function makeState(dto = null) {
         state,
     });
 
-    applyVideoRealtimeUpdate({ title: 'Should Not Apply' }); // no videoId
+    applyVideoRealtimeUpdate({ title: 'Should Not Apply' }); // no uuid
 
-    assert.equal(state.dto.value.video.title, 'Original', 'missing videoId: title unchanged');
+    assert.equal(state.dto.value.video.title, 'Original', 'missing uuid: title unchanged');
     console.log('✓ applyVideoRealtimeUpdate: ignores empty/missing videoId');
 }

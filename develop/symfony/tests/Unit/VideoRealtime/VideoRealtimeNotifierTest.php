@@ -56,7 +56,7 @@ final class VideoRealtimeNotifierTest extends TestCase
 
                 TestCase::assertSame('updated', $message->action);
                 TestCase::assertSame('video', $message->entity);
-                TestCase::assertArrayHasKey('videoId', $message->payload);
+                TestCase::assertArrayHasKey('uuid', $message->payload);
                 TestCase::assertArrayHasKey('deleted', $message->payload);
                 TestCase::assertSame('/uploads/preview.jpg', $message->payload['poster']);
                 TestCase::assertSame('Overridden title', $message->payload['title']);

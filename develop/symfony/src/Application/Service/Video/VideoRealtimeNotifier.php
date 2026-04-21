@@ -5,7 +5,7 @@ namespace App\Application\Service\Video;
 
 use App\Application\Command\Mercure\PublishMercureMessage;
 use App\Application\DTO\MercureMessageDTO;
-use App\Application\DTO\VideoRealtimePayloadDTO;
+use App\Application\DTO\VideoItemDTO;
 use App\Domain\Video\Entity\Video;
 use App\Domain\Video\Repository\TaskRepositoryInterface;
 use App\Domain\Video\Service\Storage\StorageInterface;
@@ -31,11 +31,7 @@ final readonly class VideoRealtimeNotifier
             return;
         }
 
-        $hasPreview = ($video->meta()['preview'] ?? false) === true;
-        $poster = $hasPreview ? $this->storage->publicUrl($this->storage->previewKey($video)) : null;
-        $tasks = $this->taskRepository->findByVideoId($video->id());
-
-        $dto = VideoRealtimePayloadDTO::fromVideo($video, $poster, $tasks);
+        $dto = VideoItemDTO::fromDomain($video, $this->storage, $this->taskRepository);
 
         $this->commandBus->dispatch(new PublishMercureMessage(new MercureMessageDTO(
             action: $action,
