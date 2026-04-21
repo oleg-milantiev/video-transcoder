@@ -68,7 +68,7 @@ final class Version20260420201249 extends AbstractMigration
          // Admin user: oleg@milantiev.com / admin
          $this->addSql('INSERT INTO "user" (id, email, roles, password, created_at, tariff_id) VALUES (\'123e4567-e89b-42d3-a456-426614174000\', \'oleg@milantiev.com\', \'["ROLE_ADMIN", "ROLE_USER"]\', \'$2y$13$aMbt0.agYrHEOjmVLRu0tOa94hWeIErYcW6JPUo0EOFX2PoCzus5m\', NOW(), \'21ce3067-53c0-4400-8921-8d3b22c9bd30\')');
          // Test user: test@test.com / test
-         $this->addSql('INSERT INTO "user" (id, email, roles, password, created_at, tariff_id) VALUES (\'0c4178c4-d8ea-4915-a1ee-757b06482318\', \'test@test.com\', \'["ROLE_USER"]\', \'$2y$13$EixZaYVK1fsbw1ZfbX3OzeIaZS54gB6Ow7Iow5YOBST8.B52be3aK\', NOW(), \'905048e3-fd0f-408d-bffd-a596e896a92c\')');
+         $this->addSql('INSERT INTO "user" (id, email, roles, password, created_at, tariff_id) VALUES (\'0c4178c4-d8ea-4915-a1ee-757b06482318\', \'test@test.com\', \'["ROLE_USER"]\', \'$2y$13$5MPQQimDKdiKH4heuhvXF.riOmhsm.eyPcmbzcKb8L72i0K.SKrCW\', NOW(), \'905048e3-fd0f-408d-bffd-a596e896a92c\')');
 
          $this->addSql('CREATE EXTENSION IF NOT EXISTS pg_stat_statements');
     }
