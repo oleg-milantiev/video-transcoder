@@ -8,6 +8,7 @@ use App\Domain\Video\Entity\Preset;
 use App\Domain\Video\ValueObject\AudioCodec;
 use App\Domain\Video\ValueObject\Format;
 use App\Domain\Video\ValueObject\PresetBitrate;
+use App\Domain\Video\ValueObject\PresetTitle;
 use App\Domain\Video\ValueObject\VideoCodec;
 use PHPUnit\Framework\TestCase;
 
@@ -20,16 +21,17 @@ final class PresetTest extends TestCase
     public function testCreateInitializesPresetWithoutId(): void
     {
         $preset = Preset::create(
-            new VideoCodec('h264'),
-            new AudioCodec('aac'),
-            new Format('mp4'),
+            new PresetTitle("Test Preset"),
+            new VideoCodec("h264"),
+            new AudioCodec("aac"),
+            new Format("mp4"),
         );
 
         $this->assertNull($preset->id());
-        $this->assertSame('h264/aac/mp4', $preset->label());
-        $this->assertSame('h264', $preset->videoCodec()->value());
-        $this->assertSame('aac', $preset->audioCodec()->value());
-        $this->assertSame('mp4', $preset->format()->value());
+        $this->assertSame("h264/aac/mp4", $preset->label());
+        $this->assertSame("h264", $preset->videoCodec()->value());
+        $this->assertSame("aac", $preset->audioCodec()->value());
+        $this->assertSame("mp4", $preset->format()->value());
         $this->assertInstanceOf(PresetBitrate::class, $preset->bitrate());
     }
 
@@ -37,15 +39,16 @@ final class PresetTest extends TestCase
     public function testChangeOutputUpdatesFormat(): void
     {
         $preset = new Preset(
-            new VideoCodec('h264'),
-            new AudioCodec('aac'),
-            new Format('mp4'),
+            new PresetTitle("Test Preset"),
+            new VideoCodec("h264"),
+            new AudioCodec("aac"),
+            new Format("mp4"),
         );
 
         $preset->changeOutput(
-            new VideoCodec('h265'),
-            new AudioCodec('opus'),
-            new Format('webm'),
+            new VideoCodec("h265"),
+            new AudioCodec("opus"),
+            new Format("webm"),
         );
 
         $this->assertSame('h265', $preset->videoCodec()->value());
@@ -58,9 +61,10 @@ final class PresetTest extends TestCase
     {
         $bitrate = new PresetBitrate([720 => 5.0, 1080 => 8.0]);
         $preset = Preset::create(
-            new VideoCodec('h264'),
-            new AudioCodec('aac'),
-            new Format('mp4'),
+            new PresetTitle("Test Preset"),
+            new VideoCodec("h264"),
+            new AudioCodec("aac"),
+            new Format("mp4"),
             $bitrate,
         );
 
@@ -71,9 +75,10 @@ final class PresetTest extends TestCase
     public function testChangeBitrateUpdatesPreset(): void
     {
         $preset = Preset::create(
-            new VideoCodec('h264'),
-            new AudioCodec('aac'),
-            new Format('mp4'),
+            new PresetTitle("Test Preset"),
+            new VideoCodec("h264"),
+            new AudioCodec("aac"),
+            new Format("mp4"),
         );
 
         $newBitrate = new PresetBitrate([480 => 2.5, 720 => 5.0]);
@@ -86,9 +91,10 @@ final class PresetTest extends TestCase
     public function testConstructorSetsDefaultBitrateWhenNull(): void
     {
         $preset = new Preset(
-            new VideoCodec('h264'),
-            new AudioCodec('aac'),
-            new Format('mp4'),
+            new PresetTitle("Test Preset"),
+            new VideoCodec("h264"),
+            new AudioCodec("aac"),
+            new Format("mp4"),
             null,
             null,
         );

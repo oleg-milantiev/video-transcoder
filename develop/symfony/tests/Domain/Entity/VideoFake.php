@@ -23,7 +23,7 @@ final class VideoFake
             title: $title,
             extension: $extension,
             userId: $userId,
-            meta: [],
+            meta: ['width' => 1280, 'height' => 720, 'duration' => 10.0],
             dates: VideoDates::create(\DateTimeImmutable::createFromMutable($createdAt)),
             id: $id,
         );

@@ -30,7 +30,7 @@ final class TranscodeProcessServiceTest extends TestCase
         $task = TaskFake::create();
         $video = VideoFake::create();
         // Ensure video has a duration so progress can be calculated
-        $video->updateMeta(['duration' => 10.0]);
+        $video->updateMeta(['duration' => 10.0, 'width' => 1280, 'height' => 720]);
         $preset = new PresetFake();
 
         $task->start($video->duration());
@@ -109,7 +109,7 @@ final class TranscodeProcessServiceTest extends TestCase
     {
         $task = TaskFake::create();
         $video = VideoFake::create();
-        $video->updateMeta(['duration' => 5.0]);
+        $video->updateMeta(['duration' => 5.0, 'width' => 1280, 'height' => 720]);
         $preset = new PresetFake();
 
         $task->start($video->duration());
@@ -168,7 +168,7 @@ final class TranscodeProcessServiceTest extends TestCase
 
         $task = TaskFake::create();
         $video = VideoFake::create();
-        $video->updateMeta(['duration' => 3.0]);
+        $video->updateMeta(['duration' => 3.0, 'width' => 1280, 'height' => 720]);
         $preset = new PresetFake();
 
         $task->start($video->duration());
@@ -213,7 +213,7 @@ final class TranscodeProcessServiceTest extends TestCase
     {
         $task = TaskFake::create();
         $video = VideoFake::create();
-        $video->updateMeta(['duration' => 10.0]);
+        $video->updateMeta(['duration' => 10.0, 'width' => 1280, 'height' => 720]);
         $preset = new PresetFake();
         $task->start($video->duration());
         $task->updateMeta(['width' => 1280, 'height' => 720, 'bitrate' => 5.0]);
@@ -259,7 +259,7 @@ final class TranscodeProcessServiceTest extends TestCase
     {
         $task = TaskFake::create();
         $video = VideoFake::create();
-        $video->updateMeta(['duration' => 10.0]);
+        $video->updateMeta(['duration' => 10.0, 'width' => 1280, 'height' => 720]);
         $preset = new PresetFake();
         $task->start($video->duration());
         $task->updateMeta(['width' => 1280, 'height' => 720, 'bitrate' => 5.0]);
@@ -309,7 +309,7 @@ final class TranscodeProcessServiceTest extends TestCase
     {
         $task = TaskFake::create();
         $video = VideoFake::create();
-        $video->updateMeta(['duration' => 10.0]);
+        $video->updateMeta(['duration' => 10.0, 'width' => 1280, 'height' => 720]);
         $preset = new PresetFake();
         $task->start($video->duration());
         $task->updateMeta(['width' => 1280, 'height' => 720, 'bitrate' => 5.0]);
@@ -355,7 +355,7 @@ final class TranscodeProcessServiceTest extends TestCase
     {
         $task = TaskFake::create();
         $video = VideoFake::create();
-        $video->updateMeta(['duration' => 10.0]);
+        $video->updateMeta(['duration' => 10.0, 'width' => 1280, 'height' => 720]);
         $preset = new PresetFake();
         $task->start($video->duration());
         $task->updateMeta(['width' => 1280, 'height' => 720, 'bitrate' => 5.0]);
@@ -403,7 +403,7 @@ final class TranscodeProcessServiceTest extends TestCase
     {
         $task = TaskFake::create();
         $video = VideoFake::create();
-        $video->updateMeta(['duration' => 10.0]);
+        $video->updateMeta(['duration' => 10.0, 'width' => 1280, 'height' => 720]);
         $preset = new PresetFake();
         $task->start($video->duration());
         $task->updateMeta(['width' => 1280, 'height' => 720, 'bitrate' => 5.0]);
@@ -453,7 +453,7 @@ final class TranscodeProcessServiceTest extends TestCase
     {
         $task = TaskFake::create();
         $video = VideoFake::create();
-        $video->updateMeta(['duration' => 10.0]);
+        $video->updateMeta(['duration' => 10.0, 'width' => 1280, 'height' => 720]);
         $preset = new PresetFake();
         $task->start($video->duration());
         $task->updateMeta(['width' => 1280, 'height' => 720, 'bitrate' => 5.0]);
