@@ -24,8 +24,8 @@ class HumanReadableHelper
     public static function formatDuration(int|float $duration): string
     {
         $hours = (int)floor($duration / 3600);
-        $minutes = (int)floor(($duration % 3600) / 60);
-        $seconds = (int)round($duration % 60);
+        $minutes = (int)floor(fmod($duration, 3600) / 60);
+        $seconds = (int)round(fmod($duration, 60));
 
         return sprintf('%02d:%02d:%02d', $hours, $minutes, $seconds);
     }
