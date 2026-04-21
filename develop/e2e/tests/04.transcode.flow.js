@@ -1,6 +1,6 @@
 const { test, expect } = require('@playwright/test');
 const { attachConsoleCapture } = require('../consoleCapture');
-const {
+    const {
     UI_TIMEOUT,
     NAV_TIMEOUT,
     loginAsTest,
@@ -9,12 +9,13 @@ const {
     expectVideosTableVisible,
     videoRowByTitle,
     waitForVideoDetailsVisible,
+    presetBlock,
     presetRow,
     readPresetTaskState,
     expectFlashPopupTitle,
     clickAndAcceptConfirm,
     clickDownloadAndVerifyMp4,
-    presetsTable,
+    tasksTable,
     logoutToPublic,
     shot, renameVideoFromDetails, expectVideoDetailsTitle, expectDownloadFilename,
 } = require('../helpers');
@@ -27,7 +28,8 @@ test('transcode flow from video details to downloadable mp4', async ({ page }, t
     const uploadedVideoName = '2022_10_04_Two_Maxes-04.mp4';
     const baseFileName = uploadedVideoName.substring(0, uploadedVideoName.lastIndexOf('.'));
     const renamedBaseFileName = `${baseFileName}-renamed`;
-    const presetTitle = '180p';
+    const presetTitle = 'Standart video Quality';
+    // "Standart video Quality" is h264/aac/mp4. We click last button (lowest = 144p) for fast transcode.
     let downloadedMp4Url = '';
 
     try {
@@ -48,14 +50,14 @@ test('transcode flow from video details to downloadable mp4', async ({ page }, t
         await expect(row).toBeVisible({ timeout: NAV_TIMEOUT });
         await row.click({ timeout: UI_TIMEOUT });
 
-    // 4) Verify presets table + preset exists
+    // 4) Verify preset block exists (transcoding section)
         await waitForVideoDetailsVisible(page);
-        const row180p = presetRow(page, presetTitle);
-        await expect(row180p).toBeVisible({ timeout: UI_TIMEOUT });
+        const blockPreset = presetBlock(page, presetTitle);
+        await expect(blockPreset).toBeVisible({ timeout: UI_TIMEOUT });
         await shot(page, testInfo, '03-video-details-with-presets.png');
 
-    // 5) Verify and click Transcode button
-        const transcodeButton = row180p.getByRole('button', { name: 'Transcode' });
+    // 5) Click the 3 (middle resolution = 480p) button for fast, but not instant transcoding
+        const transcodeButton = blockPreset.locator('button.btn-outline-primary:not([disabled])').nth(2);
         await expect(transcodeButton).toBeVisible({ timeout: UI_TIMEOUT });
         await transcodeButton.click({ timeout: UI_TIMEOUT });
         await expectFlashPopupTitle(page, 'Transcoding started');
@@ -106,16 +108,16 @@ test('transcode flow from video details to downloadable mp4', async ({ page }, t
         downloadedMp4Url = await clickDownloadAndVerifyMp4(page, completedRow);
         await shot(page, testInfo, '06-download-verified.png');
 
-    // Before rename - check download filename matches old video title with preset
-        const presetName = '180p'; // or get from table dynamically if available
-        const expectedFilenameBeforeRename = `${baseFileName} - ${presetName}`;
+    // Before rename - check download filename matches video title + codec + resolution
+        // Standart video Quality = h264/aac/mp4, we clicked 144p (last button)
+        const expectedFilenameBeforeRename = `${baseFileName}-aac-h264-144p.mp4`;
         await expectDownloadFilename(page, expectedFilenameBeforeRename);
     // Rename video from details page
         await renameVideoFromDetails(page, renamedBaseFileName);
         await expectVideoDetailsTitle(page, renamedBaseFileName);
 
     // After rename - check download filename matches new video title with preset
-        const expectedFilenameAfterRename = `${renamedBaseFileName} - ${presetName}`;
+        const expectedFilenameAfterRename = `${renamedBaseFileName}-aac-h264-144p.mp4`;
         await expectDownloadFilename(page, expectedFilenameAfterRename);
 
     // 9) Go back to videos list, delete video, verify deleted state in list
@@ -148,10 +150,10 @@ test('transcode flow from video details to downloadable mp4', async ({ page }, t
         await expect(page.getByText('This video has been deleted')).toBeVisible({ timeout: UI_TIMEOUT });
         await expect(page.locator('dd.video-title-deleted')).toContainText(renamedBaseFileName, { timeout: UI_TIMEOUT });
 
-        const presetsBody = presetsTable(page).locator('tbody').first();
-        await expect(presetsBody).toContainText('DELETED', { timeout: UI_TIMEOUT });
-        await expect(presetsBody.getByRole('button')).toHaveCount(0);
-        await expect(presetsBody.getByRole('link')).toHaveCount(0);
+        const tasksBody = tasksTable(page).locator('tbody').first();
+        await expect(tasksBody).toContainText('DELETED', { timeout: UI_TIMEOUT });
+        await expect(tasksBody.getByRole('button')).toHaveCount(0);
+        await expect(tasksBody.getByRole('link')).toHaveCount(0);
         await shot(page, testInfo, '08-video-details-deleted-state.png');
 
     // 11) Verify direct mp4 URL from earlier download now returns 404

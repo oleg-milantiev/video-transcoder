@@ -27,7 +27,8 @@ test('parallel transcode: FHD and 720p process simultaneously on Premium tariff 
   const sourceVideoFileName = '2022_10_04_Two_Maxes.mp4';
   const uploadedVideoName = '2022_10_04_Two_Maxes-07.mp4';
   const baseName = uploadedVideoName.substring(0, uploadedVideoName.lastIndexOf('.'));
-  const parallelPresets = ['FHD', '720p'];
+  const parallelPresets = ['Standart video Quality', 'High video Quality'];
+  // Premium tariff (instance=2) — both run simultaneously with different codecs (h264 vs h265)
 
   try {
     // Step 1 — Login as test user (has Premium tariff, instance=2 after test 06)
@@ -75,10 +76,15 @@ test('parallel transcode: FHD and 720p process simultaneously on Premium tariff 
     }
     await shot(page, testInfo, '09-download-buttons-visible.png');
 
-    // Step 10 — Download each file and verify filename matches "{baseName} - {presetTitle}"
+    // Step 10 — Download each file and verify filename format "{baseName}-{audioCodec}-{videoCodec}-{height}p.{format}"
+    // Premium tariff (max_height=2160): clickTranscodeForPreset clicks first (highest) button = 2160p
+    const presetDownloadSuffix = {
+      'Standart video Quality': 'aac-h264-2160p.mp4',
+      'High video Quality':     'aac-h265-2160p.mp4',
+    };
     for (const title of parallelPresets) {
       const row = presetRow(page, title);
-      const expectedFilename = `${baseName} - ${title}`;
+      const expectedFilename = `${baseName}-${presetDownloadSuffix[title] || title}`;
       await expectRowDownloadFilename(row, expectedFilename);
       await clickDownloadAndVerifyMp4(page, row);
       await shot(page, testInfo, `10-download-verified-${title}.png`);

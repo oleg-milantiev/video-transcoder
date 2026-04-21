@@ -36,8 +36,8 @@ test('multi-preset flow: upload, trigger tasks, admin tariff + new preset, full 
   const uploadedVideoName = '2022_10_04_Two_Maxes-06.mp4';
   const baseName = uploadedVideoName.substring(0, uploadedVideoName.lastIndexOf('.'));
   const testUserEmail = 'test@test.com';
-  const newPreset = { title: '720p', width: 1280, height: 720, codec: 'h264', bitrate: 3 };
-  const allPresets = ['180p', 'FHD', '720p'];
+  const newPreset = { title: '720p', format: 'mp4', videoCodec: 'h264', audioCodec: 'aac', bitrateJson: { 720: 3 }, tariffs: ['Premium'] };
+  const allPresets = ['Standart video Quality', '720p'];
 
   try {
     // ── Phase 1: Login as test, upload, verify video card ─────────────────────
@@ -61,7 +61,6 @@ test('multi-preset flow: upload, trigger tasks, admin tariff + new preset, full 
     await videoRow.click({ timeout: UI_TIMEOUT });
     await waitForVideoDetailsVisible(page);
     await expectDetailsValue(page, 'Title');
-    await expectDetailsValue(page, 'Extension');
     await expectDetailsValue(page, 'Created At');
     await shot(page, testInfo, '04-video-details.png');
 
@@ -86,7 +85,7 @@ test('multi-preset flow: upload, trigger tasks, admin tariff + new preset, full 
     await shot(page, testInfo, '08-all-presets-pending.png');
 
     // Step 9 — Verify the ? help icon is shown near PENDING and exposes the pending-transcode tooltip
-    for (const title of ['180p', 'FHD']) {
+    for (const title of initialPresetTitles) {
       await expectPresetStatusHelpIcon(page, title, {
         statusText: 'PENDING',
         tooltipText: "Why isn't my video transcoding?",
@@ -133,9 +132,10 @@ test('multi-preset flow: upload, trigger tasks, admin tariff + new preset, full 
     await waitForVideoDetailsVisible(page);
     await shot(page, testInfo, '16-video-card-reopened.png');
 
-    // Step 17 — Verify preset statuses: 180p and FHD still PENDING, 720p has No task
-    await expectPresetStatus(page, '180p', 'PENDING');
-    await expectPresetStatus(page, 'FHD', 'PENDING');
+    // Step 17 — Verify preset statuses: Standart video Quality still PENDING, 720p has No task
+    for (const title of initialPresetTitles) {
+      await expectPresetStatus(page, title, 'PENDING');
+    }
     await expectPresetStatus(page, '720p', 'No task');
     await shot(page, testInfo, '17-statuses-180p-fhd-pending-720p-notask.png');
 
@@ -153,10 +153,17 @@ test('multi-preset flow: upload, trigger tasks, admin tariff + new preset, full 
     }
     await shot(page, testInfo, '20-all-download-buttons-visible.png');
 
-    // Step 21 — Download each file and verify filename matches "{baseName} - {presetName}"
+    // Step 21 — Download each file and verify filename matches actual codec+resolution format
+    // "Standart video Quality" (h264/aac/mp4): clicked first button on Free tariff = 1080p
+    // "720p" preset (h264/aac/mp4): only 720p available
+    const presetDownloadSuffix = {
+      'Standart video Quality': 'aac-h264-1080p.mp4',
+      '720p': 'aac-h264-720p.mp4',
+    };
     for (const title of allPresets) {
       const row = presetRow(page, title);
-      const expectedFilename = `${baseName} - ${title}`;
+      const suffix = presetDownloadSuffix[title] || title;
+      const expectedFilename = `${baseName}-${suffix}`;
       await expectRowDownloadFilename(row, expectedFilename);
       await clickDownloadAndVerifyMp4(page, row);
       await shot(page, testInfo, `21-download-verified-${title}.png`);

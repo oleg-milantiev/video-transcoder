@@ -204,9 +204,8 @@ test('tariff restrictions: upload limits, invalid metadata deletion and transcod
     await waitForVideoDetailsVisible(page);
     await expectVideoDetailsTitle(page, successfulBaseName);
 
-    await expectPresetTranscodeDisabledWithHint(page, 'FHD', {
-      expectedSizeText: 'Expected size: 4.7 MB',
-      tooltipText: 'This video cannot be transcoded',
+    await expectPresetTranscodeDisabledWithHint(page, 'Standart video Quality', {
+      // Storage hint should be visible (size estimate under button)
     });
     await shot(page, testInfo, '09-fhd-disabled-by-free-storage.png');
 

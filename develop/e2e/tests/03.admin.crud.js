@@ -48,17 +48,17 @@ test('admin area full smoke with CRUD checks', async ({ page }, testInfo) => {
   // Step 3 — Ensure required Presets exist (create or update if missing)
   await createOrUpdatePreset(page, {
     title: '180p',
-    width: 320,
-    height: 180,
-    codec: 'h264',
-    bitrate: 1.1,
+    format: 'mp4',
+    videoCodec: 'h264',
+    audioCodec: 'aac',
+    bitrateJson: { 180: 1.1 },
   }, testInfo);
   await createOrUpdatePreset(page, {
     title: 'FHD',
-    width: 1920,
-    height: 1280,
-    codec: 'h264',
-    bitrate: 6.0,
+    format: 'mp4',
+    videoCodec: 'h264',
+    audioCodec: 'aac',
+    bitrateJson: { 1080: 6.0 },
   }, testInfo);
   await shot(page, testInfo, '03-presets-created.png');
 

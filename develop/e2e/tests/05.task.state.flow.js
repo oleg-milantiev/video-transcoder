@@ -15,13 +15,14 @@ const {
   expectVideosTableVisible,
   activeVideoRowByTitle,
   waitForVideoDetailsVisible,
+  presetBlock,
   presetRow,
   readPresetTaskState,
   logoutToPublic,
   shot,
 } = require('../helpers');
 
-test('task state flow with 4k preset: progress, cancel, restart, complete', async ({ page }, testInfo) => {
+test('task state flow with FHD preset: progress, cancel, restart, complete', async ({ page }, testInfo) => {
   // Step 1 — Configure local timeouts for this long-flow test and admin credentials
   // Local timeouts for this long-flow test only.
   page.setDefaultTimeout(UI_TIMEOUT);
@@ -31,7 +32,8 @@ test('task state flow with 4k preset: progress, cancel, restart, complete', asyn
   const sourceVideoFileName = '2022_10_04_Two_Maxes.mp4';
   const uploadedVideoName = '2022_10_04_Two_Maxes-05.mp4';
   const baseFileName = uploadedVideoName.substring(0, uploadedVideoName.lastIndexOf('.'));
-  const presetTitle = 'FHD';
+    const presetTitle = 'High video Quality, High Efficiency Audio';
+    // h265/opus/mp4 — slower codec ensures we can catch PROCESSING state before COMPLETED
 
   // Step 2 — start console capture for this test
   const capture = attachConsoleCapture(page, testInfo, { maxBodyChars: 4000 });
@@ -70,12 +72,12 @@ test('task state flow with 4k preset: progress, cancel, restart, complete', asyn
     await expect(videoRow).toBeVisible({ timeout: UI_TIMEOUT });
     await videoRow.click({ timeout: UI_TIMEOUT });
 
-    // Step 7 — Open video details and verify the FHD preset is present
+    // Step 7 — Open video details and verify the FHD preset block is present
     await waitForVideoDetailsVisible(page);
-    await expect(presetRow(page, presetTitle)).toBeVisible({ timeout: UI_TIMEOUT });
+    await expect(presetBlock(page, presetTitle)).toBeVisible({ timeout: UI_TIMEOUT });
     await shot(page, testInfo, '02-video-details-with-fhd-preset.png');
 
-    const startButton = presetRow(page, presetTitle).getByRole('button', { name: 'Transcode' });
+    const startButton = presetBlock(page, presetTitle).locator('button.btn-outline-primary:not([disabled])').first();
     await expect(startButton).toBeVisible({ timeout: UI_TIMEOUT });
     // Step 8 — Start FHD transcode
     await startButton.click({ timeout: UI_TIMEOUT });
@@ -145,7 +147,7 @@ test('task state flow with 4k preset: progress, cancel, restart, complete', asyn
     await cancelledRow.getByRole('button', { name: 'Transcode' }).click({ timeout: UI_TIMEOUT });
 
     await expect
-      .poll(async () => (await readPresetTaskState(page, presetTitle)).status, {
+      .poll(async () => (await readPresetTaskState(page, presetTitle, { preferActive: true })).status, {
         timeout: 45000,
         intervals: [1000, 2000, 5000],
       })
@@ -156,8 +158,8 @@ test('task state flow with 4k preset: progress, cancel, restart, complete', asyn
     let completed = false;
 
     // Step 12 — Wait for completion of restarted task and verify progress increased during run
-    for (let attempt = 1; attempt <= 10; attempt += 1) {
-      const state = await readPresetTaskState(page, presetTitle);
+        for (let attempt = 1; attempt <= 10; attempt += 1) {
+      const state = await readPresetTaskState(page, presetTitle, { preferActive: true });
 
       if (prevRestartProgress >= 0 && state.progress > prevRestartProgress) {
         sawRestartProgressIncrease = true;

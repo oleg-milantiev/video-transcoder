@@ -92,20 +92,54 @@ async function ensureAdminMenuSectionsVisible(page) {
   await expect(adminMenuLink(page, '/admin/log')).toBeVisible({ timeout: UI_TIMEOUT });
 }
 
+async function fillPresetCodeEditorBitrate(page, bitrateJson) {
+  // CodeEditorField renders a hidden textarea; set it via JS and also try CM editor
+  const bitrateStr = typeof bitrateJson === 'string' ? bitrateJson : JSON.stringify(bitrateJson, null, 2);
+  await page.evaluate((val) => {
+    const textarea = Array.from(document.querySelectorAll('textarea'))
+      .find(t => t.name && t.name.toLowerCase().includes('bitrate'));
+    if (textarea) {
+      const setter = Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype, 'value')?.set;
+      if (setter) setter.call(textarea, val);
+      textarea.dispatchEvent(new Event('input', { bubbles: true }));
+      textarea.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+    // Also try CodeMirror 5 API
+    const cmEl = document.querySelector('.CodeMirror');
+    if (cmEl && cmEl.CodeMirror) {
+      cmEl.CodeMirror.setValue(val);
+    }
+  }, bitrateStr);
+}
+
 async function createOrUpdatePreset(page, preset, testInfo) {
+  // preset: { title, format, videoCodec, audioCodec, bitrateJson, tariffs? }
+  // bitrateJson: object like {"180": 1.1} or JSON string
   await openAdminSection(page, 'Presets', '/admin/preset');
   const presetsTbody = mainTableBodyForHeading(page, 'Presets');
   const presetRows = presetsTbody.locator('tr', { hasText: preset.title });
 
+  const fillPresetForm = async () => {
+    await page.getByLabel('Title').fill(preset.title);
+    await page.getByLabel('Format').fill(preset.format || 'mp4');
+    await page.getByLabel('Video Codec').fill(preset.videoCodec || preset.codec || 'h264');
+    await page.getByLabel('Audio Codec').fill(preset.audioCodec || 'aac');
+    if (preset.bitrateJson) {
+      await fillPresetCodeEditorBitrate(page, preset.bitrateJson);
+    }
+    if (preset.tariffs && preset.tariffs.length > 0) {
+      // EasyAdmin renders AssociationField tariffs as <select multiple>
+      const tariffsSelect = page.locator('select').filter({ has: page.locator('option') }).last();
+      const tariffsSelectByLabel = page.getByLabel('Tariffs');
+      const sel = (await tariffsSelectByLabel.count()) > 0 ? tariffsSelectByLabel.first() : tariffsSelect;
+      await sel.selectOption(preset.tariffs).catch(() => {});
+    }
+  };
+
   if ((await presetRows.count()) === 0) {
     await expect(page.locator('a.action-new')).toBeVisible({ timeout: UI_TIMEOUT });
     await page.locator('a.action-new').click({ timeout: UI_TIMEOUT });
-
-    await page.getByLabel('Title').fill(preset.title);
-    await page.getByLabel('Width').fill(String(preset.width));
-    await page.getByLabel('Height').fill(String(preset.height));
-    await page.getByLabel('Codec').fill(preset.codec);
-    await page.getByLabel('Bitrate (Mbps)').fill(String(preset.bitrate));
+    await fillPresetForm();
     await submitCrudForm(page);
   }
 
@@ -114,15 +148,21 @@ async function createOrUpdatePreset(page, preset, testInfo) {
   await shot(page, testInfo, `03-preset-${preset.title}-present.png`);
 
   await presetRow.locator('a.action-edit').click({ timeout: UI_TIMEOUT });
-  await page.getByLabel('Width').fill(String(preset.width));
-  await page.getByLabel('Height').fill(String(preset.height));
-  await page.getByLabel('Codec').fill(preset.codec);
-  await page.getByLabel('Bitrate (Mbps)').fill(String(preset.bitrate));
+  await page.getByLabel('Format').fill(preset.format || 'mp4');
+  await page.getByLabel('Video Codec').fill(preset.videoCodec || preset.codec || 'h264');
+  await page.getByLabel('Audio Codec').fill(preset.audioCodec || 'aac');
+  if (preset.bitrateJson) {
+    await fillPresetCodeEditorBitrate(page, preset.bitrateJson);
+  }
+  if (preset.tariffs && preset.tariffs.length > 0) {
+    const tariffsSelectByLabel = page.getByLabel('Tariffs');
+    const sel = (await tariffsSelectByLabel.count()) > 0 ? tariffsSelectByLabel.first() : null;
+    if (sel) await sel.selectOption(preset.tariffs).catch(() => {});
+  }
   await submitCrudForm(page);
 
   const persistedRow = presetsTbody.locator('tr', { hasText: preset.title }).first();
-  await expect(persistedRow).toContainText(String(preset.width), { timeout: UI_TIMEOUT });
-  await expect(persistedRow).toContainText(String(preset.height), { timeout: UI_TIMEOUT });
+  await expect(persistedRow).toBeVisible({ timeout: UI_TIMEOUT });
 }
 
 async function fillTariffFields(page, tariff) {

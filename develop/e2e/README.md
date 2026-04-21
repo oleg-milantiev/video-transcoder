@@ -59,8 +59,8 @@ Tests are designed to run sequentially (`workers: 1`) and build on data created 
 3. Open `Users` and verify the admin user (`oleg@milantiev.com`) is present and that CRUD controls (New/Edit/Detail) are available where expected. Capture a screenshot.
 
 4. Open `Presets` and ensure required presets exist: create or update
-   - `180p` — width: 320, height: 180, codec: `h264`, bitrate: `1.1` Mbps
-   - `FHD` — width: 1920, height: 1280, codec: `h264`, bitrate: `5.0` Mbps
+   - `180p` — videoCodec: `h264`, audioCodec: `aac`, format: `mp4`, bitrateJson: `{"180": 1.1}`
+   - `FHD` — videoCodec: `h264`, audioCodec: `aac`, format: `mp4`, bitrateJson: `{"1080": 6.0}`
    For each preset, the test creates it if missing and then opens edit to ensure values are persisted. Capture a screenshot per preset.
 
 5. Create a test user `test@test.com` with password `test` and role `ROLE_USER` via `Users -> New` (if the Create action is available). Fill visible fields and submit. Capture a screenshot.
@@ -98,20 +98,19 @@ Tests are designed to run sequentially (`workers: 1`) and build on data created 
 
 - Logs in as test
 - Uploads the source fixture again under the `-04` suffix and operates on that uploaded video (uploads `2022_10_04_Two_Maxes-04.mp4`), then opens `Videos` and enters that video
-- Verifies `Presets` table is visible on `Video Details`
-- Verifies preset `180p` exists and starts transcoding via `Transcode`
+- Verifies the preset block for `180p` is visible in the **Start new Video Transcoding Task** section
+- Clicks the first resolution button (`320x180`) in the `180p` preset block to start transcoding
 - Verifies flash popup title `Transcoding started`
-- Verifies task appears with status in `PENDING|PROCESSING|COMPLETED`
-- Polls the task status every ~6 seconds (no page reload), confirms progress increases, and waits for `COMPLETED`
+- Verifies task row appears in the **Transcoding Tasks** table with status `PENDING|PROCESSING|COMPLETED`
+- Polls the task status every ~1 second (no page reload), confirms progress increases, and waits for `COMPLETED`
 - Verifies flash popup title `Transcoding completed`
-- Verifies `Download` action is shown for completed task
+- Verifies `Download` action is shown in the task row for completed task
 - Clicks `Download` and validates successful endpoint response/redirect to `.mp4`
 - Saves the resolved final `.mp4` URL to a local test variable
-- Accepts browser download redirect behavior where Playwright may report download as `canceled`
-- Verifies that the download link's `download` attribute initially equals "{videoTitle} - {presetTitle}" and, after renaming the video in details, updates to use the new video title
+- Verifies that the download link's `download` attribute initially equals "{videoTitle}-aac-h264-180p.mp4" and, after renaming the video in details, updates to use the new video title
 - Returns to `Videos`, confirms delete popup (`Delete this video?`), and deletes the video
 - Verifies deleted row state in list: title is styled as deleted and active `Delete` action is unavailable
-- Opens video details and verifies deleted UI (`This video has been deleted`, deleted title, `DELETED` in presets, no actions)
+- Opens video details and verifies deleted UI (`This video has been deleted`, deleted title, `DELETED` in tasks table, no action buttons or links)
 - Requests previously saved `.mp4` URL and verifies `404`
 - Performs `Sign out` and verifies `Sign in` links are visible again
 - Saves screenshots for each key step
@@ -120,15 +119,15 @@ Tests are designed to run sequentially (`workers: 1`) and build on data created 
 
 - Logs in as admin, then re-uploads fixture video as `2022_10_04_Two_Maxes-05.mp4`
 - Opens `Video Details` for this `-05` video
-- Uses long-running preset `FHD` and starts transcoding
-- Waits until task appears in runtime states (`PENDING|PROCESSING|COMPLETED`)
+- Uses long-running preset `FHD` — verifies its block is visible in **Start new Video Transcoding Task** section and starts transcoding via the `1920x1080` resolution button
+- Waits until task row appears in `Transcoding Tasks` table with status `PENDING|PROCESSING|COMPLETED`
 - Polls progress (no page reload) and verifies at least one progress increase before cancellation
 - Sends `Cancel` while task is `PROCESSING`
 - Waits until state becomes `CANCELLED`
-- Verifies cancelled row has no `Download` and exposes `Transcode` for restart
-- Starts transcoding again from the same `4k UHD` row (restart path)
+- Verifies cancelled task row has no `Download` link and exposes `Transcode` button for restart
+- Starts transcoding again from the `CANCELLED` task row (restart path)
 - Polls status/progress until `COMPLETED` and verifies progress increase during restarted run
-- Verifies `Download` appears for completed task
+- Verifies `Download` appears in task row for completed task
 - Performs `Sign out` and verifies `Sign in` links are visible again
 - Saves screenshots for each milestone (`start`, `cancel`, `cancelled`, `restart completed`)
 
@@ -154,7 +153,7 @@ End-to-end scenario that exercises the full lifecycle across three presets with 
 - Logs in as admin
 - Opens the admin dashboard
 - Assigns tariff `Premium` to `test@test.com` (removes the scheduler delay constraint)
-- Creates (or updates) preset `720p` — width: 1280, height: 720, codec: `h264`, bitrate: 3 Mbps
+- Creates (or updates) preset `720p` — videoCodec: `h264`, audioCodec: `aac`, format: `mp4`, bitrateJson: `{"720": 3}`
 - Returns to the main site and signs out
 
 #### Phase 3 — Test user: full transcode + download for all three presets
@@ -190,7 +189,7 @@ Verifies that two worker replicas pick up two tasks simultaneously when the user
 - Logs in as admin, remove old 05 test as this test need empty storage
 - Assigns tariff `Free` to the admin user, then re-logs in so the SPA gets refreshed tariff limits
 - Uploads the source fixture under the unique `-08-success` suffix and verifies in `Videos` list + `Video Details` that the upload is successful, the title is correct, and the poster/meta are ready
-- Verifies every preset row exposes a `Transcode` button and an `Expected size:` hint under the button
+- Verifies every preset block in **Start new Video Transcoding Task** section shows resolution buttons with expected size hints (`~X MB`)
 - Opens EasyAdmin and creates/updates four tariff variants cloned from `Free`:
   - `Free-filesize` — `videoSize=3 MB`
   - `Free-storage` — `storageGb=0.01`
@@ -201,8 +200,37 @@ Verifies that two worker replicas pick up two tasks simultaneously when the user
   - `-08-storage` — upload hint contains `as storage is running low`, upload is rejected with `exceeds maximum allowed size`
   - `-08-resolution` — upload hint contains `Max resolution: 320`, upload reaches `Videos`, then the video becomes deleted and has no poster in list/details
   - `-08-duration` — upload reaches `Videos`, then the video becomes deleted and has no poster in list/details
-- Reassigns `Free-storage` to the admin user, re-opens the successfully uploaded `-08-success` video, and verifies preset `FHD` has disabled `Transcode`, red `Expected size: 4.7 MB`, and the help icon tooltip text starts with `This video cannot be transcoded`
+- Reassigns `Free-storage` to the admin user, re-opens the successfully uploaded `-08-success` video, and verifies the `FHD` preset block is visible with resolution buttons and expected size hints (`~X MB`) shown under each button
 - Performs `Sign out`
+
+## Video Details Page UI
+
+The video details page has two main sections relevant to transcoding:
+
+### Start new Video Transcoding Task
+
+Each preset available to the user's tariff is shown as a block with:
+- An `<h6>` heading: `{preset.title} ({videoCodec}/{audioCodec}/{format})`
+- A row of resolution buttons: `{width}x{height}` for each height in `preset.bitrate`
+  - For **landscape** videos (width > height): button label is `{calculatedWidth}x{height}`
+  - For **vertical** videos (height > width): button label is `{height}x{calculatedWidth}` (dimensions swapped)
+- An expected size hint under each button: `~X MB` (calculated from bitrate × duration)
+- This section is **hidden** if the video has no `width`/`height` metadata yet
+
+### Transcoding Tasks
+
+A table showing all tasks started for this video:
+- Columns: **Preset** (preset title), **Resolution** (`{height}p`), **Status**, **Progress**, **Created**, **Actions**
+- Actions: `Cancel` (PENDING/PROCESSING), `Download` (COMPLETED), `Transcode` restart (CANCELLED)
+- This section is **hidden** if no tasks exist for this video
+
+### Vertical Video Handling
+
+Previously, vertical videos (height > width) could not be transcoded or had restrictions.
+Now vertical videos are fully supported:
+- Resolution buttons show dimensions swapped: `{height}x{width}` instead of `{width}x{height}`
+- The backend `Transcode.php` swaps `width`/`height` in the ffmpeg `-vf scale` filter for vertical videos
+- The `Start new Video Transcoding Task` section is hidden only when video metadata (width/height) is absent
 
 ## Execution order
 
