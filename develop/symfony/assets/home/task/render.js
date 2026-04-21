@@ -16,18 +16,12 @@ export function renderTaskAction(task, taskActions) {
 
     // COMPLETED — Download
     if (task.status === 'COMPLETED') {
-        let filename = task.downloadFilename;
-        if (!filename && task.videoTitle && task.presetTitle && task.height) {
-            const parts = task.presetTitle.split('/');
-            const ext = parts.pop();
-            filename = `${task.videoTitle}-${parts.join('-')}-${task.height}p.${ext}`;
-        }
         return h(
             'a',
             {
                 href: getDownloadUrl(task.id),
                 class: 'btn btn-outline-primary btn-sm',
-                download: filename || undefined,
+                download: `${task.videoTitle}-${task.presetAudioCodec}-${task.presetVideoCodec}-${task.height}p.${task.presetFormat}`,
             },
             'Download',
         );
