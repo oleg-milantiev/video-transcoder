@@ -12,8 +12,8 @@ mkdir -p "$ARTIFACTS_DIR"
 cleanup() {
 echo exit
   docker compose -p "$PROJECT_NAME" -f docker-compose.release.yml logs > "$ARTIFACTS_DIR/docker-compose.log" || true
-  rsync -avr --delete /root/video-transcoder/develop/release.check/$PROJECT_NAME/playwright/html-report/ 192.168.2.198:/mnt/goodwin/milantiev/www/oleg/oleg.milantiev.com/www/html-report
   docker compose -p "$PROJECT_NAME" -f docker-compose.release.yml down -v || true
+  rsync -avr --delete /root/video-transcoder/develop/release.check/$PROJECT_NAME/playwright/html-report/ 192.168.2.198:/mnt/goodwin/milantiev/www/oleg/oleg.milantiev.com/www/html-report
 }
 
 trap cleanup EXIT
