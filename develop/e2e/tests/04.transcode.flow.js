@@ -29,7 +29,6 @@ test('transcode flow from video details to downloadable mp4', async ({ page }, t
     const baseFileName = uploadedVideoName.substring(0, uploadedVideoName.lastIndexOf('.'));
     const renamedBaseFileName = `${baseFileName}-renamed`;
     const presetTitle = 'Standart video Quality';
-    // "Standart video Quality" is h264/aac/mp4. We click last button (lowest = 144p) for fast transcode.
     let downloadedMp4Url = '';
 
     try {
@@ -56,8 +55,8 @@ test('transcode flow from video details to downloadable mp4', async ({ page }, t
         await expect(blockPreset).toBeVisible({ timeout: UI_TIMEOUT });
         await shot(page, testInfo, '03-video-details-with-presets.png');
 
-    // 5) Click the 3 (middle resolution = 480p) button for fast, but not instant transcoding
-        const transcodeButton = blockPreset.locator('button.btn-outline-primary:not([disabled])').nth(2);
+    // 5) Click the 2 (HD = 720p) button for fast, but not instant transcoding
+        const transcodeButton = blockPreset.locator('button.btn-outline-primary:not([disabled])').nth(1);
         await expect(transcodeButton).toBeVisible({ timeout: UI_TIMEOUT });
         await transcodeButton.click({ timeout: UI_TIMEOUT });
         await expectFlashPopupTitle(page, 'Transcoding started');
@@ -109,15 +108,14 @@ test('transcode flow from video details to downloadable mp4', async ({ page }, t
         await shot(page, testInfo, '06-download-verified.png');
 
     // Before rename - check download filename matches video title + codec + resolution
-        // Standart video Quality = h264/aac/mp4, we clicked 144p (last button)
-        const expectedFilenameBeforeRename = `${baseFileName}-aac-h264-144p.mp4`;
+        const expectedFilenameBeforeRename = `${baseFileName}-aac-h264-720p.mp4`;
         await expectDownloadFilename(page, expectedFilenameBeforeRename);
     // Rename video from details page
         await renameVideoFromDetails(page, renamedBaseFileName);
         await expectVideoDetailsTitle(page, renamedBaseFileName);
 
     // After rename - check download filename matches new video title with preset
-        const expectedFilenameAfterRename = `${renamedBaseFileName}-aac-h264-144p.mp4`;
+        const expectedFilenameAfterRename = `${renamedBaseFileName}-aac-h264-720p.mp4`;
         await expectDownloadFilename(page, expectedFilenameAfterRename);
 
     // 9) Go back to videos list, delete video, verify deleted state in list
