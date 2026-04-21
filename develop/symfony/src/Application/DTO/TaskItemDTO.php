@@ -42,7 +42,7 @@ readonly class TaskItemDTO
             presetVideoCodec: $preset->videoCodec()->value(),
             presetAudioCodec: $preset->audioCodec()->value(),
             presetFormat: $preset->format()->value(),
-            presetTitle: $preset->label(),
+            presetTitle: $preset->title()->value(),
             height: $task->heightNullable() ?? 0,
             status: $task->status()->name,
             progress: $task->progress()->value(),

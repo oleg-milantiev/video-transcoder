@@ -43,11 +43,6 @@ class Preset
         return $this->title;
     }
 
-    public function label(): string
-    {
-        return sprintf('%s/%s/%s', $this->videoCodec->value(), $this->audioCodec->value(), $this->format->value());
-    }
-
     public function videoCodec(): VideoCodec
     {
         return $this->videoCodec;

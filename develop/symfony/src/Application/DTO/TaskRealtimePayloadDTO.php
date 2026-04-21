@@ -41,7 +41,7 @@ final class TaskRealtimePayloadDTO
     public function addVideoPresetFields(Video $video, Preset $preset): void
     {
         $this->videoTitle = $video->title()->value();
-        $this->presetTitle = $preset->label();
+        $this->presetTitle = $preset->title()->value();
     }
 
     public function toArray(): array
