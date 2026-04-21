@@ -108,7 +108,7 @@ final readonly class StartTranscodeHandler
             throw new HeightExceedsTariffException(sprintf('Height %d exceeds tariff maximum %d', $query->height, $tariff->maxHeight()->value()));
         }
 
-        $ratio = $videoWidth / $videoHeight;
+        $ratio = $videoWidth > $videoHeight ? $videoWidth / $videoHeight : $videoHeight / $videoWidth;
         $rawWidth = (int) round($ratio * $query->height);
         $outputWidth = $rawWidth % 2 === 0 ? $rawWidth : $rawWidth + 1;
 

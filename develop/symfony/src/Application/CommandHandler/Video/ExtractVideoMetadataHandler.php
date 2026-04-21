@@ -83,8 +83,9 @@ final readonly class ExtractVideoMetadataHandler
             if ($width === null || $height === null) {
                 throw VideoMetadataInvalid::missingResolution();
             }
-            $maxWidth = $tariff->maxWidth()->value();
-            $maxHeight = $tariff->maxHeight()->value();
+            // if vertical video, swap limits
+            $maxWidth = ($width > $height) ? $tariff->maxWidth()->value() : $tariff->maxHeight()->value();
+            $maxHeight = ($width > $height) ? $tariff->maxHeight()->value() : $tariff->maxWidth()->value();
             if ($width > $maxWidth || $height > $maxHeight) {
                 throw VideoMetadataInvalid::resolutionExceedsLimit($width, $height, $maxWidth, $maxHeight);
             }

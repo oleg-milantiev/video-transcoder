@@ -16,11 +16,24 @@ readonly class Transcode
             throw new \InvalidArgumentException('Missing meta data');
         }
 
+        if ((int) $meta['width'] <= 0 || (int) $meta['height'] <= 0) {
+            throw new \InvalidArgumentException('Invalid meta data');
+        }
+
+        if ($context->video->meta()['width'] > $context->video->meta()['height']) {
+            $width = (int) $meta['width'];
+            $height = (int) $meta['height'];
+        }
+        else {
+            $width = (int) $meta['height'];
+            $height = (int) $meta['width'];
+        }
+
         return [
             'ffmpeg',
             '-y',
             '-i', $context->inputPath,
-            '-vf', sprintf('scale=%d:%d', (int) $meta['width'], (int) $meta['height']),
+            '-vf', sprintf('scale=%d:%d', $width, $height),
             '-c:v', self::mapVideoCodec($context->preset->videoCodec()),
             '-b:v', self::formatBitrate((float) $meta['bitrate']),
             '-preset', 'medium',

@@ -54,7 +54,7 @@ final class Version20260420201249 extends AbstractMigration
         $this->addSql("INSERT INTO public.preset (id, video_codec, audio_codec, format, title, bitrate) VALUES ('ec070af7-ab40-440c-af9c-760b320025f4', 'av1', 'opus', 'webm', 'Ultra video Quality, High Efficiency Audio', '{\"144\": 0.04, \"240\": 0.15, \"360\": 0.4, \"480\": 1.0, \"720\": 2, \"1080\": 3.5, \"1440\": 7, \"2160\": 15, \"4320\": 35}')");
         $this->addSql("INSERT INTO public.preset (id, video_codec, audio_codec, format, title, bitrate) VALUES ('3ecc3746-530e-46c9-9755-573a552f3990', 'av1', 'opus', 'mp4', 'Ultra video Quality, High Efficiency Audio', '{\"144\": 0.04, \"240\": 0.15, \"360\": 0.4, \"480\": 1.0, \"720\": 2, \"1080\": 3.5, \"1440\": 7, \"2160\": 15, \"4320\": 35}')");
 
-        $this->addSql("INSERT INTO public.tariff (id, title, delay, instance, video_duration, video_size, max_width, max_height, storage_gb, storage_hour) VALUES ('21ce3067-53c0-4400-8921-8d3b22c9bd30', 'Premium', 0, 2, 3600, 100, 3333, 3333, 1, 24)");
+        $this->addSql("INSERT INTO public.tariff (id, title, delay, instance, video_duration, video_size, max_width, max_height, storage_gb, storage_hour) VALUES ('21ce3067-53c0-4400-8921-8d3b22c9bd30', 'Premium', 0, 2, 3600, 100, 3840, 2160, 1, 24)");
         $this->addSql("INSERT INTO public.tariff (id, title, delay, instance, video_duration, video_size, max_width, max_height, storage_gb, storage_hour) VALUES ('905048e3-fd0f-408d-bffd-a596e896a92c', 'Free', 3600, 1, 3600, 100, 1920, 1280, 1, 24)");
 
         $this->addSql("INSERT INTO public.tariff_preset (tariff_entity_id, preset_entity_id) VALUES ('905048e3-fd0f-408d-bffd-a596e896a92c', '8646d1a5-3f87-4382-8abe-7341e18ed0f0')");

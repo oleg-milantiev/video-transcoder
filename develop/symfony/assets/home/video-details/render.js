@@ -70,9 +70,9 @@ function renderResolutionButton(vm, preset, height, isOrigin, taskExists) {
     const originHeight = Number(meta._height) || 0;
     const duration = Number(meta._duration) || 0;
     const width = originHeight > 0 && originWidth > 0 && !isOrigin
-        ? Math.round(originWidth * height / originHeight)
-        : originWidth;
-    const label = `${width}×${height}`;
+        ? Math.round((originWidth > originHeight) ? originWidth / originHeight * height : originHeight / originWidth * height)
+        : ((originWidth > originHeight) ? originWidth : originHeight);
+    const label = (originWidth > originHeight) ? `${width}×${height}` : `${height}×${width}`;
     const expectedSize = calculateExpectedFileSize(preset.bitrate, height, duration);
     const actionKey = 'transcode-' + String(preset.id) + '-' + String(height);
     const isActive = vm.activeActionKey === actionKey;
@@ -81,15 +81,15 @@ function renderResolutionButton(vm, preset, height, isOrigin, taskExists) {
         const el = document.getElementById(TASKS_SECTION_ID);
         if (el) { el.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
     };
-    const heightExists = taskExists[preset.id]?.[height] === true;
+    const isHeightTaskExists = taskExists[preset.id]?.[height] === true;
 
     return h('div', { class: 'text-center', style: 'min-width: 90px; max-width: 110px;' }, [
         h(
             'button',
             {
                 type: 'button',
-                class: 'btn btn-outline-primary btn-sm w-100' + (isOrigin ? ' fw-semibold' : '') + (heightExists ? ' text-decoration-line-through' : ''),
-                disabled: isActive || video.deleted || heightExists,
+                class: 'btn btn-outline-primary btn-sm w-100' + (isOrigin ? ' fw-semibold' : '') + (isHeightTaskExists ? ' text-decoration-line-through' : ''),
+                disabled: isActive || video.deleted || isHeightTaskExists,
                 onClick: () => {
                     vm.startTranscode(preset.id, isOrigin ? originHeight : height);
                     scrollToTasks();
