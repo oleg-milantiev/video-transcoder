@@ -3,6 +3,9 @@
 {% block title %}Video Details{% endblock %}
 
 {% block body %}
-    <div id="home-spa"></div>
-    <script>var config = {{ config|json_encode|raw }};</script>
+    <div class="container">
+        {{ include('_hero.html.twig') }}
+        <div id="home-spa"></div>
+        <script>var config = {{ config|json_encode|raw }};</script>
+    </div>
 {% endblock %}

@@ -24,34 +24,7 @@
     {% set dummyPresetId = '22222222-2222-4222-8222-222222222222' %}
     {% set dummyTaskId = '33333333-3333-4333-8333-333333333333' %}
     <div class="container">
-        <!-- Hero Section - visible on both auth and guest pages -->
-        <div class="row align-items-center mb-4 {% if app.user %}flex-grow-1{% endif %}">
-            <div class="col-md-8">
-                <h2 class="fw-bold text-dark mb-2">
-                    Video Transcoding <span class="text-primary">in the Cloud</span>
-                </h2>
-                <p class="lead text-secondary mt-3" style="max-width: 500px;">
-                    Upload your video. Choose a preset. Get your ready file in minutes.
-                    No hardware, no setup — just your browser.
-                </p>
-            </div>
-            <div class="col-md-4 text-center">
-                <svg width="120" height="120" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
-                    <rect x="20" y="20" width="50" height="50" rx="10" fill="#2563EB" opacity="0.08" stroke="#2563EB" stroke-width="2"/>
-                    <rect x="50" y="50" width="50" height="50" rx="10" fill="#06B6D4" opacity="0.08" stroke="#06B6D4" stroke-width="2"/>
-                    <defs>
-                        <linearGradient id="heroGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                            <stop offset="0%" stop-color="#2563EB" stop-opacity="0.25"/>
-                            <stop offset="100%" stop-color="#06B6D4" stop-opacity="0.25"/>
-                        </linearGradient>
-                    </defs>
-                    <rect x="50" y="50" width="18" height="28" rx="5" fill="url(#heroGrad)"/>
-                    <polygon points="40,35 40,55 56,45" fill="#2563EB" opacity="0.8"/>
-                    <path d="M 80 70 L 80 86 M 74 79 L 80 86 L 86 79" stroke="#06B6D4" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-                    <line x1="70" y1="90" x2="90" y2="90" stroke="#06B6D4" stroke-width="1.8" stroke-linecap="round"/>
-                </svg>
-            </div>
-        </div>
+        {{ include('_hero.html.twig') }}
 
         {% if app.user %}
             <!-- Authorized user content -->
