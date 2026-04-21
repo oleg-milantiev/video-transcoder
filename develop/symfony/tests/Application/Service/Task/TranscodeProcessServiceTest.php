@@ -63,7 +63,11 @@ final class TranscodeProcessServiceTest extends TestCase
 
         $commandBus = $this->createMock(MessageBusInterface::class);
         $commandBus->expects($this->once())->method('dispatch')->willReturn(new \Symfony\Component\Messenger\Envelope(new \stdClass()));
-        $taskRealtimeNotifier = new TaskRealtimeNotifier($commandBus, $this->createStub(PresetRepositoryInterface::class), $this->createStub(VideoRepositoryInterface::class));
+        $videoRepo = $this->createStub(VideoRepositoryInterface::class);
+        $videoRepo->method('findById')->willReturn($video);
+        $presetRepo = $this->createStub(PresetRepositoryInterface::class);
+        $presetRepo->method('findById')->willReturn($preset);
+        $taskRealtimeNotifier = new TaskRealtimeNotifier($commandBus, $presetRepo, $videoRepo);
 
         // Process mock returned by runner
         $processMock = $this->createStub(Process::class);

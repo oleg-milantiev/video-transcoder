@@ -11,28 +11,50 @@ use App\Application\Query\PatchVideoQuery;
 use App\Application\QueryHandler\PatchVideoHandler;
 use App\Application\Service\Video\VideoRealtimeNotifier;
 use App\Application\Service\Task\TaskRealtimeNotifier;
+use App\Domain\Video\Entity\Preset;
 use App\Domain\Video\Repository\TaskRepositoryInterface;
 use App\Domain\Video\Repository\PresetRepositoryInterface;
 use App\Domain\Video\Entity\Video;
 use App\Domain\Video\Entity\Task;
 use App\Domain\Video\Repository\VideoRepositoryInterface;
+use App\Domain\Video\ValueObject\AudioCodec;
 use App\Domain\Video\ValueObject\FileExtension;
+use App\Domain\Video\ValueObject\Format;
+use App\Domain\Video\ValueObject\PresetTitle;
 use App\Domain\Video\ValueObject\Progress;
 use App\Domain\Video\ValueObject\TaskDates;
 use App\Domain\Video\ValueObject\TaskStatus;
 use App\Domain\Video\ValueObject\VideoDates;
+use App\Domain\Video\ValueObject\VideoCodec;
 use App\Domain\Video\ValueObject\VideoTitle;
 use App\Domain\Shared\ValueObject\Uuid;
 use App\Infrastructure\Security\Voter\VideoAccessVoter;
+use App\Domain\Video\Service\Storage\StorageInterface;
 use PHPUnit\Framework\TestCase;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Messenger\Envelope;
 use Symfony\Component\Messenger\MessageBusInterface;
-use App\Domain\Video\Service\Storage\StorageInterface;
 
 final class PatchVideoHandlerTest extends TestCase
 {
+    /** @return array{PresetRepositoryInterface, VideoRepositoryInterface} */
+    private function makeTaskNotifierRepos(Video $video, Uuid $presetId): array
+    {
+        $preset = new Preset(
+            title: new PresetTitle('Preset'),
+            videoCodec: new VideoCodec('h264'),
+            audioCodec: new AudioCodec('aac'),
+            format: new Format('mp4'),
+            id: $presetId,
+        );
+        $videoRepo = $this->createStub(VideoRepositoryInterface::class);
+        $videoRepo->method('findById')->willReturn($video);
+        $presetRepo = $this->createStub(PresetRepositoryInterface::class);
+        $presetRepo->method('findById')->willReturn($preset);
+        return [$presetRepo, $videoRepo];
+    }
+
     private function getRequestWithTitle(string $title): Request
     {
         $payload = json_encode(['title' => $title]);
@@ -165,7 +187,7 @@ final class PatchVideoHandlerTest extends TestCase
         $taskRepository = $this->createMock(TaskRepositoryInterface::class);
         $taskRepository->expects($this->exactly(2))->method('findByVideoId')->with($videoId)->willReturn([$task]);
 
-        $taskRealtimeNotifier = new TaskRealtimeNotifier($notifierBus, $this->createStub(PresetRepositoryInterface::class), $this->createStub(VideoRepositoryInterface::class));
+        $taskRealtimeNotifier = new TaskRealtimeNotifier($notifierBus, ...$this->makeTaskNotifierRepos($video, $presetId));
 
         $logService = $this->createMock(LogServiceInterface::class);
         $logService->expects($this->once())->method('log');

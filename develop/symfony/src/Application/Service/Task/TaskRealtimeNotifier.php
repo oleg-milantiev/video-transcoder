@@ -5,7 +5,7 @@ namespace App\Application\Service\Task;
 
 use App\Application\Command\Mercure\PublishMercureMessage;
 use App\Application\DTO\MercureMessageDTO;
-use App\Application\DTO\TaskRealtimePayloadDTO;
+use App\Application\DTO\TaskItemDTO;
 use App\Domain\Video\Entity\Task;
 use App\Domain\Video\Repository\PresetRepositoryInterface;
 use App\Domain\Video\Repository\VideoRepositoryInterface;
@@ -28,22 +28,24 @@ readonly class TaskRealtimeNotifier
             return;
         }
 
-        $dto = TaskRealtimePayloadDTO::fromTask($task);
+        $video = $this->videoRepository->findById($task->videoId());
+        $preset = $this->presetRepository->findById($task->presetId());
 
-        if (!$task->isDeleted()) {
-            $video = $this->videoRepository->findById($task->videoId());
-            $preset = $this->presetRepository->findById($task->presetId());
-            if ($video !== null && $preset !== null) {
-                $dto->addVideoPresetFields($video, $preset);
-            }
+        if ($video === null || $preset === null) {
+            return;
         }
+
+        $payload = array_merge(
+            TaskItemDTO::fromDomain($task, $video, $preset)->toArray(),
+            $extraPayload,
+        );
 
         $this->commandBus->dispatch(new PublishMercureMessage(new MercureMessageDTO(
             action: $action,
             entity: 'task',
             id: $task->id(),
             userId: $task->userId(),
-            payload: array_merge($dto->toArray(), $extraPayload),
+            payload: $payload,
         )));
     }
 }

@@ -18,7 +18,7 @@
 Координирует выполнение задач. Не содержит бизнес-логики, а делегирует её доменным объектам.
 
 - **Command & CommandHandler**: Используется **Symfony Messenger** для реализации паттерна Command Bus. Команды (`CreateVideo`, `TranscodeVideo`) выражают намерения, хендлеры выполняют их.
-- **DTO (Data Transfer Objects)**: Объекты для передачи данных между слоями (`VideoItemDTO`, `TaskRealtimePayloadDTO`). Помогают сохранять контракт API стабильным.
+- **DTO (Data Transfer Objects)**: Объекты для передачи данных между слоями (`VideoItemDTO`, `TaskItemDTO`). Помогают сохранять контракт API стабильным.
 - **Service**: Сервисы приложения для задач, выходящих за рамки одной сущности (например, `TranscodeProcessService`, `VideoRealtimeNotifier`).
 - **Query & QueryHandler**: (Если есть) Реализация паттерна CQRS для получения данных.
 

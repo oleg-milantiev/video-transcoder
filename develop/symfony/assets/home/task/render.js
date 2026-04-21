@@ -3,7 +3,7 @@ import { h } from 'vue';
 /**
  * Renders the action button(s) for a single task row.
  *
- * @param {Object} task        - Task DTO (id, status, presetId, height, videoId, videoTitle, presetTitle, downloadFilename)
+ * @param {Object} task        - Task DTO (id, status, presetId, height, videoId, videoTitle, presetTitle)
  * @param {Object} taskActions - Result of createTaskActions(): { activeKey, cancelTask, startTranscode, getDownloadUrl }
  */
 export function renderTaskAction(task, taskActions) {

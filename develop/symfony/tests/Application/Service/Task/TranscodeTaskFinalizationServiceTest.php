@@ -13,13 +13,22 @@ use App\Application\Service\Storage\StorageRealtimeNotifier;
 use App\Application\Service\Task\TaskRealtimeNotifier;
 use App\Application\Service\Task\TranscodeTaskFinalizationService;
 use App\Domain\Shared\ValueObject\Uuid;
+use App\Domain\Video\Entity\Preset;
 use App\Domain\Video\Entity\Task;
+use App\Domain\Video\Entity\Video;
 use App\Domain\Video\Repository\PresetRepositoryInterface;
 use App\Domain\Video\Repository\TaskRepositoryInterface;
 use App\Domain\Video\Repository\VideoRepositoryInterface;
+use App\Domain\Video\ValueObject\AudioCodec;
+use App\Domain\Video\ValueObject\FileExtension;
+use App\Domain\Video\ValueObject\Format;
+use App\Domain\Video\ValueObject\PresetTitle;
 use App\Domain\Video\ValueObject\Progress;
 use App\Domain\Video\ValueObject\TaskDates;
 use App\Domain\Video\ValueObject\TaskStatus;
+use App\Domain\Video\ValueObject\VideoDates;
+use App\Domain\Video\ValueObject\VideoCodec;
+use App\Domain\Video\ValueObject\VideoTitle;
 use App\Infrastructure\Task\TaskCancellationTrigger;
 use App\Tests\Domain\Entity\PresetFake;
 use App\Tests\Domain\Entity\VideoFake;
@@ -31,6 +40,36 @@ use Symfony\Component\Messenger\MessageBusInterface;
 
 class TranscodeTaskFinalizationServiceTest extends TestCase
 {
+    // Fixed IDs matching createTask()
+    private const VIDEO_ID  = '123e4567-e89b-42d3-a456-426614174199';
+    private const PRESET_ID = '123e4567-e89b-42d3-a456-426614174001';
+
+    private function makeNotifier(MessageBusInterface $bus): TaskRealtimeNotifier
+    {
+        $video = Video::reconstitute(
+            title: new VideoTitle('Task Video'),
+            extension: new FileExtension('mp4'),
+            userId: Uuid::fromString('123e4567-e89b-42d3-a456-426614174007'),
+            meta: [],
+            dates: VideoDates::create(),
+            id: Uuid::fromString(self::VIDEO_ID),
+        );
+        $preset = new Preset(
+            title: new PresetTitle('HD 720p'),
+            videoCodec: new VideoCodec('h264'),
+            audioCodec: new AudioCodec('aac'),
+            format: new Format('mp4'),
+            id: Uuid::fromString(self::PRESET_ID),
+        );
+
+        $videoRepo = $this->createStub(VideoRepositoryInterface::class);
+        $videoRepo->method('findById')->willReturn($video);
+        $presetRepo = $this->createStub(PresetRepositoryInterface::class);
+        $presetRepo->method('findById')->willReturn($preset);
+
+        return new TaskRealtimeNotifier($bus, $presetRepo, $videoRepo);
+    }
+
     public function testHandleCancellationUsesFreshTaskAndPersistsCancelledReport(): void
     {
         $taskId = Uuid::fromString('123e4567-e89b-42d3-a456-426614174210');
@@ -67,7 +106,7 @@ class TranscodeTaskFinalizationServiceTest extends TestCase
         $commandBus->expects($this->once())
             ->method('dispatch')
             ->willReturn(new Envelope(new \stdClass()));
-        $taskRealtimeNotifier = new TaskRealtimeNotifier($commandBus, $this->createStub(PresetRepositoryInterface::class), $this->createStub(VideoRepositoryInterface::class));
+        $taskRealtimeNotifier = $this->makeNotifier($commandBus);
 
         $service = new TranscodeTaskFinalizationService($taskRepository, $logService, $taskRealtimeNotifier, new FlashNotificationFactory(), $cancellationTrigger, $this->createStub(StorageRealtimeNotifier::class));
         $service->handleCancellation($originalTask, $report);
@@ -112,7 +151,7 @@ class TranscodeTaskFinalizationServiceTest extends TestCase
         $commandBus->expects($this->once())
             ->method('dispatch')
             ->willReturn(new Envelope(new \stdClass()));
-        $taskRealtimeNotifier = new TaskRealtimeNotifier($commandBus, $this->createStub(PresetRepositoryInterface::class), $this->createStub(VideoRepositoryInterface::class));
+        $taskRealtimeNotifier = $this->makeNotifier($commandBus);
 
         $context = new TranscodeStartContextDTO(
             task: $task,
@@ -152,7 +191,7 @@ class TranscodeTaskFinalizationServiceTest extends TestCase
         $commandBus->expects($this->once())
             ->method('dispatch')
             ->willReturn(new Envelope(new \stdClass()));
-        $taskRealtimeNotifier = new TaskRealtimeNotifier($commandBus, $this->createStub(PresetRepositoryInterface::class), $this->createStub(VideoRepositoryInterface::class));
+        $taskRealtimeNotifier = $this->makeNotifier($commandBus);
 
         $service = new TranscodeTaskFinalizationService($taskRepository, $logService, $taskRealtimeNotifier, new FlashNotificationFactory(), new TaskCancellationTrigger(new ArrayAdapter()), $this->createStub(StorageRealtimeNotifier::class));
         $context = new TranscodeStartContextDTO(
@@ -183,7 +222,7 @@ class TranscodeTaskFinalizationServiceTest extends TestCase
 
         $commandBus = $this->createMock(MessageBusInterface::class);
         $commandBus->expects($this->never())->method('dispatch');
-        $taskRealtimeNotifier = new TaskRealtimeNotifier($commandBus, $this->createStub(PresetRepositoryInterface::class), $this->createStub(VideoRepositoryInterface::class));
+        $taskRealtimeNotifier = $this->makeNotifier($commandBus);
 
         $service = new TranscodeTaskFinalizationService($taskRepository, $logService, $taskRealtimeNotifier, new FlashNotificationFactory(), new TaskCancellationTrigger(new ArrayAdapter()), $this->createStub(StorageRealtimeNotifier::class));
 
@@ -215,7 +254,7 @@ class TranscodeTaskFinalizationServiceTest extends TestCase
 
         $commandBus = $this->createMock(MessageBusInterface::class);
         $commandBus->expects($this->once())->method('dispatch')->willReturn(new Envelope(new \stdClass()));
-        $taskRealtimeNotifier = new TaskRealtimeNotifier($commandBus, $this->createStub(PresetRepositoryInterface::class), $this->createStub(VideoRepositoryInterface::class));
+        $taskRealtimeNotifier = $this->makeNotifier($commandBus);
 
         $service = new TranscodeTaskFinalizationService($taskRepository, $logService, $taskRealtimeNotifier, new FlashNotificationFactory(), new TaskCancellationTrigger(new ArrayAdapter()), $this->createStub(StorageRealtimeNotifier::class));
 
@@ -236,8 +275,8 @@ class TranscodeTaskFinalizationServiceTest extends TestCase
     private function createTask(Uuid $id): Task
     {
         return Task::reconstitute(
-            videoId: Uuid::fromString('123e4567-e89b-42d3-a456-426614174199'),
-            presetId: Uuid::fromString('123e4567-e89b-42d3-a456-426614174001'),
+            videoId: Uuid::fromString(self::VIDEO_ID),
+            presetId: Uuid::fromString(self::PRESET_ID),
             userId: Uuid::fromString('123e4567-e89b-42d3-a456-426614174007'),
             status: TaskStatus::STARTING,
             progress: new Progress(0),

@@ -77,7 +77,7 @@ class TranscodeTaskPreparationServiceTest extends TestCase
         $commandBus->expects($this->once())
             ->method('dispatch')
             ->willReturn(new Envelope(new \stdClass()));
-        $taskRealtimeNotifier = new TaskRealtimeNotifier($commandBus, $this->createStub(PresetRepositoryInterface::class), $this->createStub(VideoRepositoryInterface::class));
+        $taskRealtimeNotifier = $this->makeNotifier($commandBus, $video, $preset);
 
         $service = new TranscodeTaskPreparationService($presetRepository, $taskRepository, $logService, $taskRealtimeNotifier, new FlashNotificationFactory(), $storage, $this->createStub(StorageRealtimeNotifier::class));
         $context = $service->prepare($task, $video, 0.0);
@@ -120,6 +120,15 @@ class TranscodeTaskPreparationServiceTest extends TestCase
         $this->expectExceptionMessage('Preset not found for task');
 
         $service->prepare($task, $video, 0.0);
+    }
+
+    private function makeNotifier(MessageBusInterface $bus, Video $video, Preset $preset): TaskRealtimeNotifier
+    {
+        $videoRepo = $this->createStub(VideoRepositoryInterface::class);
+        $videoRepo->method('findById')->willReturn($video);
+        $presetRepo = $this->createStub(PresetRepositoryInterface::class);
+        $presetRepo->method('findById')->willReturn($preset);
+        return new TaskRealtimeNotifier($bus, $presetRepo, $videoRepo);
     }
 
     private function createVideo(float $duration): Video

@@ -122,6 +122,23 @@ final class TaskRealtimeNotifierTest extends TestCase
             deleted: true,
         );
 
+        $video = Video::reconstitute(
+            new VideoTitle('Some video'),
+            new FileExtension('mp4'),
+            $userId,
+            [],
+            VideoDates::create(),
+            $videoId,
+        );
+
+        $preset = new Preset(
+            new PresetTitle('HD 720p'),
+            new VideoCodec('h264'),
+            new AudioCodec('aac'),
+            new Format('mp4'),
+            id: $presetId,
+        );
+
         $commandBus = $this->createMock(MessageBusInterface::class);
         $commandBus->expects($this->once())
             ->method('dispatch')
@@ -130,10 +147,10 @@ final class TaskRealtimeNotifierTest extends TestCase
             });
 
         $videoRepository = $this->createStub(VideoRepositoryInterface::class);
-        $videoRepository->method('findById')->willReturn(null);
+        $videoRepository->method('findById')->willReturn($video);
 
         $presetRepository = $this->createStub(PresetRepositoryInterface::class);
-        $presetRepository->method('findById')->willReturn(null);
+        $presetRepository->method('findById')->willReturn($preset);
 
         $notifier = new TaskRealtimeNotifier($commandBus, $presetRepository, $videoRepository);
         $notifier->notifyTaskUpdated($task, 'deleted');
@@ -157,11 +174,7 @@ final class TaskRealtimeNotifierTest extends TestCase
         );
 
         $commandBus = $this->createMock(MessageBusInterface::class);
-        $commandBus->expects($this->once())
-            ->method('dispatch')
-            ->willReturnCallback(static function (object $message): Envelope {
-                return new Envelope($message);
-            });
+        $commandBus->expects($this->never())->method('dispatch');
 
         $videoRepository = $this->createStub(VideoRepositoryInterface::class);
         $videoRepository->method('findById')->willReturn(null);

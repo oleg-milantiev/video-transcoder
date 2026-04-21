@@ -87,20 +87,19 @@ const config = {
     console.log('✓ applyTaskRealtimeUpdate: ignores empty/missing taskId');
 }
 
-// ── applyTaskRealtimeUpdate: downloadFilename assembled from titles ────────────
+// ── applyTaskRealtimeUpdate: videoTitle and presetTitle updated ────────────────
 
 {
     const state = makeState([
-        { id: '5', videoTitle: 'TestVid', presetTitle: 'HD', status: 'COMPLETED', progress: 100 },
+        { id: '5', videoTitle: 'TestVid', presetTitle: 'HD 720p', status: 'COMPLETED', progress: 100 },
     ]);
     const { applyTaskRealtimeUpdate } = createTasksTabActions({ config, tasksState: state, pageLimit: 10 });
 
-    applyTaskRealtimeUpdate({ taskId: '5', videoTitle: 'NewVid', presetTitle: 'SD', status: 'COMPLETED' });
+    applyTaskRealtimeUpdate({ taskId: '5', videoTitle: 'NewVid', presetTitle: 'SD 480p', status: 'COMPLETED' });
 
-    assert.equal(state.tasks.value[0].downloadFilename, 'NewVid - SD', 'downloadFilename assembled');
-    assert.equal(state.tasks.value[0].videoTitle,  'NewVid', 'videoTitle updated');
-    assert.equal(state.tasks.value[0].presetTitle, 'SD',     'presetTitle updated');
-    console.log('✓ applyTaskRealtimeUpdate: downloadFilename');
+    assert.equal(state.tasks.value[0].videoTitle,  'NewVid',   'videoTitle updated');
+    assert.equal(state.tasks.value[0].presetTitle, 'SD 480p',  'presetTitle updated');
+    console.log('✓ applyTaskRealtimeUpdate: videoTitle and presetTitle updated');
 }
 
 // ── applyTaskRealtimeUpdate: unknown taskId leaves list unchanged ─────────────

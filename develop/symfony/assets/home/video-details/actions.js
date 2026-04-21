@@ -202,12 +202,10 @@ export function createVideoDetailsActions(params) {
                     createdAt: typeof update.createdAt === 'string' ? update.createdAt : task.createdAt,
                     updatedAt: typeof update.updatedAt === 'string' ? update.updatedAt : task.updatedAt,
                     expiredAt: typeof update.expiredAt === 'string' ? update.expiredAt : task.expiredAt,
+                    videoTitle: typeof update.videoTitle === 'string' ? update.videoTitle : task.videoTtitle,
                     waitingTariffInstance: typeof update.waitingTariffInstance === 'boolean' ? update.waitingTariffInstance : (task.waitingTariffInstance ?? null),
                     waitingTariffDelay: typeof update.waitingTariffDelay === 'boolean' ? update.waitingTariffDelay : (task.waitingTariffDelay ?? null),
                     willStartAt: typeof update.willStartAt === 'string' ? update.willStartAt : (update.willStartAt === null ? null : (task.willStartAt ?? null)),
-                    downloadFilename: (typeof update.videoTitle === 'string' && typeof update.presetTitle === 'string')
-                        ? (update.videoTitle + ' - ' + update.presetTitle)
-                        : task.downloadFilename,
                 };
             });
         } else {
@@ -222,9 +220,6 @@ export function createVideoDetailsActions(params) {
                     updatedAt: typeof update.updatedAt === 'string' ? update.updatedAt : undefined,
                     expiredAt: typeof update.expiredAt === 'string' ? update.expiredAt : undefined,
                     presetTitle: typeof update.presetTitle === 'string' ? update.presetTitle : '-',
-                    downloadFilename: (typeof update.videoTitle === 'string' && typeof update.presetTitle === 'string')
-                        ? (update.videoTitle + ' - ' + update.presetTitle)
-                        : '',
                     waitingTariffInstance: typeof update.waitingTariffInstance === 'boolean' ? update.waitingTariffInstance : null,
                     waitingTariffDelay: typeof update.waitingTariffDelay === 'boolean' ? update.waitingTariffDelay : null,
                     willStartAt: typeof update.willStartAt === 'string' ? update.willStartAt : null,

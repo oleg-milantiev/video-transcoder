@@ -22,6 +22,7 @@ readonly class TaskItemDTO
         public string $status,
         public int $progress,
         public string $createdAt,
+        public ?string $updatedAt = null,
         public bool $deleted = false,
         public ?bool $waitingTariffInstance = null,
         public ?bool $waitingTariffDelay = null,
@@ -47,7 +48,31 @@ readonly class TaskItemDTO
             status: $task->status()->name,
             progress: $task->progress()->value(),
             createdAt: $task->createdAt()->format(\DateTimeInterface::ATOM),
+            updatedAt: $task->updatedAt()?->format(\DateTimeInterface::ATOM),
             deleted: $task->isDeleted(),
         );
+    }
+
+    public function toArray(): array
+    {
+        return [
+            'taskId'               => $this->id,
+            'videoId'              => $this->videoId,
+            'videoTitle'           => $this->videoTitle,
+            'presetId'             => $this->presetId,
+            'presetVideoCodec'     => $this->presetVideoCodec,
+            'presetAudioCodec'     => $this->presetAudioCodec,
+            'presetFormat'         => $this->presetFormat,
+            'presetTitle'          => $this->presetTitle,
+            'height'               => $this->height,
+            'status'               => $this->status,
+            'progress'             => $this->progress,
+            'createdAt'            => $this->createdAt,
+            'updatedAt'            => $this->updatedAt,
+            'deleted'              => $this->deleted,
+            'waitingTariffInstance' => $this->waitingTariffInstance,
+            'waitingTariffDelay'   => $this->waitingTariffDelay,
+            'willStartAt'          => $this->willStartAt,
+        ];
     }
 }

@@ -135,13 +135,13 @@ function makeState(dto = null) {
     console.log('✓ applyTaskRealtimeUpdate: ignores empty/missing taskId');
 }
 
-// ── applyTaskRealtimeUpdate: downloadFilename ─────────────────────────────────
+// ── applyTaskRealtimeUpdate: videoTitle updated (drives download attribute) ───
 
 {
     const dto = {
         video: { uuid: 'video-1' },
         presets: [],
-        tasks: [{ id: 'task-10', status: 'PENDING', downloadFilename: '' }],
+        tasks: [{ id: 'task-10', status: 'COMPLETED', videoTitle: 'Old Name', presetAudioCodec: 'aac', presetVideoCodec: 'h264', height: 720, presetFormat: 'mp4' }],
     };
     const state = makeState(dto);
     const { applyTaskRealtimeUpdate } = createVideoDetailsActions({
@@ -154,12 +154,12 @@ function makeState(dto = null) {
     applyTaskRealtimeUpdate({
         taskId: 'task-10',
         videoId: 'video-1',
-        videoTitle: 'My Video',
-        presetTitle: 'HD 1080p'
+        videoTitle: 'Renamed Video',
+        status: 'COMPLETED',
     });
 
-    assert.equal(state.dto.value.tasks[0].downloadFilename, 'My Video - HD 1080p', 'downloadFilename updated');
-    console.log('✓ applyTaskRealtimeUpdate: downloadFilename');
+    assert.equal(state.dto.value.tasks[0].videoTitle, 'Renamed Video', 'videoTitle updated after rename');
+    console.log('✓ applyTaskRealtimeUpdate: videoTitle updated');
 }
 
 // ── applyTaskRealtimeUpdate: unknown taskId (creates new task) ────────────────
