@@ -6,6 +6,7 @@ namespace App\Tests\Application\Service\Ffmpeg;
 
 use App\Application\DTO\TranscodeStartContextDTO;
 use App\Domain\Video\Entity\Preset;
+use App\Domain\Video\ValueObject\PresetTitle;
 use App\Domain\Video\ValueObject\VideoCodec;
 use App\Domain\Video\ValueObject\AudioCodec;
 use App\Domain\Video\ValueObject\Format;
@@ -135,6 +136,7 @@ class TranscodeTest extends TestCase
     private function createPreset(string $title, string $codec): Preset
     {
         return new Preset(
+            new PresetTitle('Test Preset'),
             new VideoCodec($codec),
             new AudioCodec('aac'),
             new Format('mp4'),
@@ -145,6 +147,7 @@ class TranscodeTest extends TestCase
     private function createPresetWithAudio(string $title, string $codec, string $audioCodec): Preset
     {
         return new Preset(
+            new PresetTitle('Test Preset'),
             new VideoCodec($codec),
             new AudioCodec($audioCodec),
             new Format('mp4'),

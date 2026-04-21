@@ -17,6 +17,7 @@ use App\Domain\Video\Repository\PresetRepositoryInterface;
 use App\Domain\Video\Repository\TaskRepositoryInterface;
 use App\Domain\Video\Repository\VideoRepositoryInterface;
 use App\Domain\Video\Service\Storage\StorageInterface;
+use App\Domain\Video\ValueObject\PresetTitle;
 use App\Domain\Video\ValueObject\VideoCodec;
 use App\Domain\Video\ValueObject\AudioCodec;
 use App\Domain\Video\ValueObject\Format;
@@ -136,6 +137,7 @@ class TranscodeTaskPreparationServiceTest extends TestCase
     private function createPreset(Uuid $id): Preset
     {
         return new Preset(
+            title: new PresetTitle('Test Preset'),
             videoCodec: new VideoCodec('h264'),
             audioCodec: new AudioCodec('aac'),
             format: new Format('mp4'),

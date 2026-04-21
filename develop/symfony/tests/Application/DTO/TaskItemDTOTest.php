@@ -8,6 +8,7 @@ use App\Application\DTO\TaskItemDTO;
 use App\Domain\Video\Entity\Preset;
 use App\Domain\Video\Entity\Task;
 use App\Domain\Video\Entity\Video;
+use App\Domain\Video\ValueObject\PresetTitle;
 use App\Domain\Video\ValueObject\VideoCodec;
 use App\Domain\Video\ValueObject\AudioCodec;
 use App\Domain\Video\ValueObject\Format;
@@ -36,6 +37,7 @@ class TaskItemDTOTest extends TestCase
         );
 
         $preset = new Preset(
+            new PresetTitle('Test Preset'),
             new VideoCodec('h264'),
             new AudioCodec('aac'),
             new Format('mp4'),
@@ -74,6 +76,7 @@ class TaskItemDTOTest extends TestCase
         );
 
         $preset = new Preset(
+            new PresetTitle('Test Preset'),
             new VideoCodec('h264'),
             new AudioCodec('aac'),
             new Format('mp4'),
@@ -105,6 +108,7 @@ class TaskItemDTOTest extends TestCase
         );
 
         $preset = new Preset(
+            new PresetTitle('Test Preset'),
             new VideoCodec('h265'),
             new AudioCodec('aac'),
             new Format('mp4'),
