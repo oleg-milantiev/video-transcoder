@@ -77,7 +77,8 @@ test('task state flow with FHD preset: progress, cancel, restart, complete', asy
     await expect(presetBlock(page, presetTitle)).toBeVisible({ timeout: UI_TIMEOUT });
     await shot(page, testInfo, '02-video-details-with-fhd-preset.png');
 
-    const startButton = presetBlock(page, presetTitle).locator('button.btn-outline-primary:not([disabled])').first();
+    // 3th = 1280x720
+    const startButton = presetBlock(page, presetTitle).locator('button.btn-outline-primary:not([disabled])').nth(3);
     await expect(startButton).toBeVisible({ timeout: UI_TIMEOUT });
     // Step 8 — Start FHD transcode
     await startButton.click({ timeout: UI_TIMEOUT });
@@ -203,4 +204,3 @@ test('task state flow with FHD preset: progress, cancel, restart, complete', asy
     await capture.flushAndAttach();
   }
 });
-
