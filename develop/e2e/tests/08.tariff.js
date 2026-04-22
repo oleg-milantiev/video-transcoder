@@ -48,6 +48,7 @@ test('tariff restrictions: upload limits, invalid metadata deletion and transcod
     maxHeight: 1080,
     storageGb: 1,
     storageHour: 24,
+    presets: ['Standard video Quality'],
   };
   const tariffCases = [
     {

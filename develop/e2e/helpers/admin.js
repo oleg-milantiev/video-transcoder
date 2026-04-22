@@ -174,6 +174,25 @@ async function fillTariffFields(page, tariff) {
   await page.getByLabel('Max height').fill(String(tariff.maxHeight));
   await page.getByLabel('Storage (GB)').fill(String(tariff.storageGb));
   await page.getByLabel('Storage retention').fill(String(tariff.storageHour));
+
+  if (tariff.presets && tariff.presets.length > 0) {
+    for (const presetTitle of tariff.presets) {
+      // EasyAdmin 5 uses TomSelect for AssociationField (ManyToMany)
+      // Find the Presets field wrapper and interact with TomSelect
+      const presetsField = page.locator('.field-association').filter({ has: page.locator('label', { hasText: 'Presets' }) }).first();
+      const tsControl = presetsField.locator('.ts-control').first();
+      await tsControl.click({ timeout: UI_TIMEOUT });
+
+      // Type into the TomSelect search input
+      const tsInput = presetsField.locator('.ts-control input, .ts-wrapper input').first();
+      await tsInput.fill(presetTitle, { timeout: UI_TIMEOUT });
+
+      // Wait for and click the matching option in the dropdown
+      const tsOption = presetsField.locator('.ts-dropdown .option', { hasText: presetTitle }).first();
+      await expect(tsOption).toBeVisible({ timeout: UI_TIMEOUT });
+      await tsOption.click({ timeout: UI_TIMEOUT });
+    }
+  }
 }
 
 async function createOrUpdateTariffByTitle(page, title, tariff, testInfo, screenshotName) {

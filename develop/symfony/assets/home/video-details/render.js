@@ -138,8 +138,6 @@ function renderPresetBlock(vm, preset, index, total, taskExists) {
 function renderPresetsSection(vm, taskExists) {
     const presets = vm.dto?.presets || [];
     if (presets.length === 0) {
-        console.log('No presets found');
-        console.log(JSON.stringify(vm.dto, null, 4));
         return null;
     }
     const video = vm.dto?.video || {};
@@ -147,9 +145,6 @@ function renderPresetsSection(vm, taskExists) {
     const hasWidth = typeof meta._width !== 'undefined' && meta._width !== null;
     const hasHeight = typeof meta._height !== 'undefined' && meta._height !== null;
     if (!hasWidth || !hasHeight) {
-        console.log('Video meta data is incomplete');
-        console.log(vm.dto.video);
-        console.log(vm.dto.meta);
         return null;
     }
     return h('div', { class: 'mb-4' }, [
