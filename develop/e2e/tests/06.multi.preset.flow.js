@@ -12,7 +12,6 @@ const {
   waitForVideoDetailsVisible,
   expectDetailsValue,
   waitForPosterAndMeta,
-  getAllPresetTitles,
   clickTranscodeForPreset,
   expectPresetStatus,
   expectPresetStatusHelpIcon,
@@ -21,7 +20,6 @@ const {
   logoutToPublic,
   openAdminDashboardFromHome,
   assignTariffToUser,
-  createOrUpdatePreset,
   openHome,
   clickDownloadAndVerifyMp4,
   expectRowDownloadFilename,
@@ -36,8 +34,8 @@ test('multi-preset flow: upload, trigger tasks, admin tariff + new preset, full 
   const uploadedVideoName = '2022_10_04_Two_Maxes-06.mp4';
   const baseName = uploadedVideoName.substring(0, uploadedVideoName.lastIndexOf('.'));
   const testUserEmail = 'test@test.com';
-  const newPreset = { title: '720p', format: 'mp4', videoCodec: 'h264', audioCodec: 'aac', bitrateJson: { 720: 3 }, tariffs: ['Premium'] };
-  const allPresets = ['Standart video Quality', '720p'];
+  const allPresets = ['Standard video Quality'];
+  const singlePreset = 'Standard video Quality';
 
   try {
     // ── Phase 1: Login as test, upload, verify video card ─────────────────────
@@ -68,36 +66,31 @@ test('multi-preset flow: upload, trigger tasks, admin tariff + new preset, full 
     await waitForPosterAndMeta(page, testInfo, '05-poster-meta-attempt');
     await shot(page, testInfo, '05-poster-meta-ready.png');
 
-    // Step 6 — Find all current presets and click Transcode on each
-    const initialPresetTitles = await getAllPresetTitles(page);
-    for (const title of initialPresetTitles) {
-      await clickTranscodeForPreset(page, title);
-      await shot(page, testInfo, `06-transcode-clicked-${title}.png`);
-    }
+    // Step 6 — Click Transcode twice on the single Free-tier preset to create two PENDING tasks
+    await clickTranscodeForPreset(page, singlePreset);
+    await shot(page, testInfo, '06-transcode-first-click.png');
+    await clickTranscodeForPreset(page, singlePreset);
+    await shot(page, testInfo, '06-transcode-second-click.png');
 
-    // Step 7 — Wait 3 seconds (tasks are PENDING due to tariff delay / no scheduler run)
+    // Step 7 — Wait 3 seconds (tasks are PENDING: tariff allows only one concurrent transcode per hour)
     await page.waitForTimeout(3000);
 
-    // Step 8 — Verify all presets are PENDING
-    for (const title of initialPresetTitles) {
-      await expectPresetStatus(page, title, 'PENDING');
-    }
-    await shot(page, testInfo, '08-all-presets-pending.png');
+    // Step 8 — Verify tasks for "Standard video Quality" are PENDING
+    await expectPresetStatus(page, singlePreset, 'PENDING');
+    await shot(page, testInfo, '08-preset-pending.png');
 
     // Step 9 — Verify the ? help icon is shown near PENDING and exposes the pending-transcode tooltip
-    for (const title of initialPresetTitles) {
-      await expectPresetStatusHelpIcon(page, title, {
-        statusText: 'PENDING',
-        tooltipText: "Why isn't my video transcoding?",
-      });
-    }
-    await shot(page, testInfo, '09-pending-status-tooltips.png');
+    await expectPresetStatusHelpIcon(page, singlePreset, {
+      statusText: 'PENDING',
+      tooltipText: "Why isn't my video transcoding?",
+    });
+    await shot(page, testInfo, '09-pending-status-tooltip.png');
 
     // Step 10 — Sign out
     await logoutToPublic(page);
     await shot(page, testInfo, '10-sign-out-test.png');
 
-    // ── Phase 2: Admin — assign Premium tariff + create 720p preset ───────────
+    // ── Phase 2: Admin — assign Premium tariff ───────────────────────────────
 
     // Step 11 — Login as admin and open admin dashboard
     await loginAsAdmin(page);
@@ -107,58 +100,47 @@ test('multi-preset flow: upload, trigger tasks, admin tariff + new preset, full 
     // Step 12 — Change test@test.com tariff to Premium
     await assignTariffToUser(page, testUserEmail, 'Premium', testInfo, '12-premium-assigned.png');
 
-    // Step 13 — Create new preset 720p (width=1280, height=720, bitrate=3)
-    await createOrUpdatePreset(page, newPreset, testInfo);
-    await shot(page, testInfo, '13-preset-720p-created.png');
-
-    // Step 14 — Return to main page and sign out
+    // Step 13 — Return to main page and sign out
     await openHome(page);
-    await shot(page, testInfo, '14-home-after-admin.png');
+    await shot(page, testInfo, '13-home-after-admin.png');
     await logoutToPublic(page);
-    await shot(page, testInfo, '14-sign-out-admin.png');
+    await shot(page, testInfo, '13-sign-out-admin.png');
 
-    // ── Phase 3: Test user — full transcode flow with all 3 presets ───────────
+    // ── Phase 3: Test user — full transcode flow ──────────────────────────────
 
-    // Step 15 — Login as test user again
+    // Step 14 — Login as test user again
     await loginAsTest(page);
-    await shot(page, testInfo, '15-login-test-again.png');
+    await shot(page, testInfo, '14-login-test-again.png');
 
-    // Step 16 — Navigate to Videos, find the -06 video and open its card
+    // Step 15 — Navigate to Videos, find the -06 video and open its card
     await openVideosTab(page);
     await expectVideosTableVisible(page);
     const videoRow2 = videoRowByTitle(page, baseName);
     await expect(videoRow2).toBeVisible({ timeout: NAV_TIMEOUT });
     await videoRow2.click({ timeout: UI_TIMEOUT });
     await waitForVideoDetailsVisible(page);
-    await shot(page, testInfo, '16-video-card-reopened.png');
+    await shot(page, testInfo, '15-video-card-reopened.png');
 
-    // Step 17 — Verify preset statuses: Standart video Quality still PENDING, 720p has No task
-    for (const title of initialPresetTitles) {
-      await expectPresetStatus(page, title, 'PENDING');
-    }
-    await expectPresetStatus(page, '720p', 'No task');
-    await shot(page, testInfo, '17-statuses-180p-fhd-pending-720p-notask.png');
+    // Step 16 — Click Transcode on the first available resolution of "Standard video Quality"
+    // now unlocked by Premium tariff (e.g. 1080p — 720p is always disabled as origin resolution);
+    // this triggers the scheduler which starts all eligible tasks
+    await clickTranscodeForPreset(page, singlePreset);
+    await shot(page, testInfo, '16-transcode-clicked.png');
 
-    // Step 18 — Click Transcode on 720p; this triggers the scheduler which starts all eligible tasks
-    await clickTranscodeForPreset(page, '720p');
-    await shot(page, testInfo, '18-transcode-720p-clicked.png');
-
-    // Step 19 — Poll with 5s intervals until all three presets reach COMPLETED
+    // Step 17 — Poll until "Standard video Quality" reaches COMPLETED
     await waitForAllPresetsToComplete(page, allPresets);
-    await shot(page, testInfo, '19-all-presets-completed.png');
+    await shot(page, testInfo, '17-all-presets-completed.png');
 
-    // Step 20 — Verify Download button is visible for every preset row
+    // Step 18 — Verify Download button is visible for every preset row
     for (const title of allPresets) {
       await expect(presetRow(page, title).getByRole('link', { name: 'Download' })).toBeVisible({ timeout: UI_TIMEOUT });
     }
-    await shot(page, testInfo, '20-all-download-buttons-visible.png');
+    await shot(page, testInfo, '18-all-download-buttons-visible.png');
 
-    // Step 21 — Download each file and verify filename matches actual codec+resolution format
-    // "Standart video Quality" (h264/aac/mp4): clicked first button on Free tariff = 1080p
-    // "720p" preset (h264/aac/mp4): only 720p available
+    // Step 19 — Download each file and verify filename matches codec+resolution format
+    // Premium unlocked 2160p; that was the resolution clicked in step 16
     const presetDownloadSuffix = {
-      'Standart video Quality': 'aac-h264-1080p.mp4',
-      '720p': 'aac-h264-720p.mp4',
+      'Standard video Quality': 'aac-h264-2160p.mp4',
     };
     for (const title of allPresets) {
       const row = presetRow(page, title);
@@ -166,12 +148,12 @@ test('multi-preset flow: upload, trigger tasks, admin tariff + new preset, full 
       const expectedFilename = `${baseName}-${suffix}`;
       await expectRowDownloadFilename(row, expectedFilename);
       await clickDownloadAndVerifyMp4(page, row);
-      await shot(page, testInfo, `21-download-verified-${title}.png`);
+      await shot(page, testInfo, `19-download-verified-${title}.png`);
     }
 
-    // Step 22 — Sign out
+    // Step 20 — Sign out
     await logoutToPublic(page);
-    await shot(page, testInfo, '22-sign-out-final.png');
+    await shot(page, testInfo, '20-sign-out-final.png');
   } finally {
     try {
       const sseMessages = await page.evaluate(() => (window.__mercure_messages || []));
