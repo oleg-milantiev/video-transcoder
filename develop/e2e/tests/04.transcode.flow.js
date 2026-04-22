@@ -28,7 +28,7 @@ test('transcode flow from video details to downloadable mp4', async ({ page }, t
     const uploadedVideoName = '2022_10_04_Two_Maxes-04.mp4';
     const baseFileName = uploadedVideoName.substring(0, uploadedVideoName.lastIndexOf('.'));
     const renamedBaseFileName = `${baseFileName}-renamed`;
-    const presetTitle = 'Standart video Quality';
+    const presetTitle = 'Standard video Quality';
     let downloadedMp4Url = '';
 
     try {
