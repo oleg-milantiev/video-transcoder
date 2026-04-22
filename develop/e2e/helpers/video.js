@@ -63,12 +63,38 @@ function presetBlock(page, presetTitle) {
   // h6 shows "PresetTitle (videoCodec/audioCodec/format)"
   return page.locator('h6', { hasText: presetTitle }).first().locator('xpath=./parent::div');
 }
+// ── Task row by preset title + specific height (e.g. 1080p) ─────────────────
+function taskRowByPresetAndHeight(page, presetTitle, height) {
+  return tasksTable(page).locator('tbody tr', { hasText: presetTitle })
+    .filter({ has: page.locator('td', { hasText: String(height) + 'p' }) })
+    .first();
+}
+// Returns first non-CANCELLED row for this preset+height (e.g. after a restart)
+function activeTaskRowByPresetAndHeight(page, presetTitle, height) {
+  return tasksTable(page).locator('tbody tr', { hasText: presetTitle })
+    .filter({ has: page.locator('td', { hasText: String(height) + 'p' }) })
+    .filter({ hasNot: page.locator('td', { hasText: 'CANCELLED' }) })
+    .first();
+}
 // ── Read task status/progress from the Transcoding Tasks table ───────────────
 async function readPresetTaskState(page, presetTitle, { preferActive = false } = {}) {
   // When preferActive=true (e.g. after restart), skip CANCELLED rows
   const row = preferActive ? activeTaskRowByPreset(page, presetTitle) : taskRowByPreset(page, presetTitle);
   await expect(row).toBeVisible({ timeout: UI_TIMEOUT });
   // col2 = status (may have "? " icon suffix)
+  const rawStatus = (await row.locator('td').nth(2).innerText({ timeout: UI_TIMEOUT })).trim();
+  const status = rawStatus.replace(/\s+\?\s*$/, '').trim();
+  const progressText = (await row.locator('td').nth(3).innerText({ timeout: UI_TIMEOUT })).trim();
+  const progressMatch = progressText.match(/(\d+)\s*%/);
+  const progress = progressMatch ? Number(progressMatch[1]) : -1;
+  return { status, progress };
+}
+// ── Read task status/progress for a specific preset+height ──────────────────
+async function readPresetTaskStateByHeight(page, presetTitle, height, { preferActive = false } = {}) {
+  const row = preferActive
+    ? activeTaskRowByPresetAndHeight(page, presetTitle, height)
+    : taskRowByPresetAndHeight(page, presetTitle, height);
+  await expect(row).toBeVisible({ timeout: UI_TIMEOUT });
   const rawStatus = (await row.locator('td').nth(2).innerText({ timeout: UI_TIMEOUT })).trim();
   const status = rawStatus.replace(/\s+\?\s*$/, '').trim();
   const progressText = (await row.locator('td').nth(3).innerText({ timeout: UI_TIMEOUT })).trim();
@@ -276,10 +302,13 @@ module.exports = {
   tasksTable,
   taskRowByPreset,
   activeTaskRowByPreset,
+  taskRowByPresetAndHeight,
+  activeTaskRowByPresetAndHeight,
   presetsTable,
   presetRow,
   presetBlock,
   readPresetTaskState,
+  readPresetTaskStateByHeight,
   waitForVideoDetailsVisible,
   expectFlashPopupTitle,
   waitForPosterAndMeta,
