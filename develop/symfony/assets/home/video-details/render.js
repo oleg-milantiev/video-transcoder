@@ -139,7 +139,7 @@ function renderPresetsSection(vm, taskExists) {
     const presets = vm.dto?.presets || [];
     if (presets.length === 0) {
         console.log('No presets found');
-        console.log(vm.dto);
+        console.log(JSON.stringify(vm.dto, null, 4));
         return null;
     }
     const video = vm.dto?.video || {};
