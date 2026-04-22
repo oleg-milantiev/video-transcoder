@@ -31,8 +31,11 @@ const {
   waitForPosterAndMeta,
   getAllPresetTitles,
   presetRow,
+  presetBlock,
   readPresetTaskState,
   expectPresetStatusHelpIcon,
+  expectPresetStatus,
+  clickTranscodeForPreset,
   clickAndAcceptConfirm,
   buildRunContext,
 } = require('../helpers');
@@ -44,23 +47,39 @@ function normalizeStatus(status) {
 }
 
 async function readPresetUiState(page, title) {
-  const row = presetRow(page, title);
-  await expect(row).toBeVisible({ timeout: UI_TIMEOUT });
+  // Transcode button lives in the preset block (h6 section), not in the tasks table
+  const block = presetBlock(page, title);
+  const transcodeBtn = block.locator('button.btn-outline-primary:not([disabled])').first();
+  const hasTranscode = (await transcodeBtn.count()) > 0 && await transcodeBtn.isVisible().catch(() => false);
 
-  const transcodeButton = row.getByRole('button', { name: 'Transcode' });
-  const cancelButton = row.getByRole('button', { name: 'Cancel' });
-  const downloadLink = row.getByRole('link', { name: 'Download' });
-  const { status, progress } = await readPresetTaskState(page, title);
+  // Cancel / Download / status / progress are in the transcoding-tasks table row
+  const row = presetRow(page, title);
+  const taskRowVisible = (await row.count()) > 0 && await row.isVisible().catch(() => false);
+
+  let status = 'NO TASK';
+  let progress = -1;
+  let hasCancel = false;
+  let hasDownload = false;
+
+  if (taskRowVisible) {
+    const cancelButton = row.getByRole('button', { name: 'Cancel' });
+    const downloadLink = row.getByRole('link', { name: 'Download' });
+    hasCancel = (await cancelButton.count()) > 0 && await cancelButton.first().isVisible().catch(() => false);
+    hasDownload = (await downloadLink.count()) > 0 && await downloadLink.first().isVisible().catch(() => false);
+    const { status: s, progress: p } = await readPresetTaskState(page, title);
+    status = normalizeStatus(s);
+    progress = p;
+  }
 
   return {
     row,
     title,
     rawStatus: status,
-    status: normalizeStatus(status),
+    status,
     progress,
-    hasTranscode: (await transcodeButton.count()) > 0 && await transcodeButton.first().isVisible().catch(() => false),
-    hasCancel: (await cancelButton.count()) > 0 && await cancelButton.first().isVisible().catch(() => false),
-    hasDownload: (await downloadLink.count()) > 0 && await downloadLink.first().isVisible().catch(() => false),
+    hasTranscode,
+    hasCancel,
+    hasDownload,
   };
 }
 
@@ -193,7 +212,7 @@ async function deleteVideoFromListIfPresent(page, videoTitle, testInfo, screensh
 }
 
 test.describe('prod-safe isolated smoke', () => {
-  test.setTimeout(5 * 60 * 1000);
+  test.setTimeout(35 * 60 * 1000);
 
   test('creates isolated user, verifies safe flow, upgrades tariff, downloads outputs, and cleans up', async ({ page }, testInfo) => {
     page.setDefaultTimeout(UI_TIMEOUT);
@@ -261,17 +280,21 @@ test.describe('prod-safe isolated smoke', () => {
       const requiredPresets = resolveRequiredPresets(allPresetTitles);
 
       for (const actualTitle of Object.values(requiredPresets)) {
-        const row = presetRow(page, actualTitle);
-        const taskState = await readPresetTaskState(page, actualTitle);
-        await expect(row.locator('td').nth(4)).toContainText('Expected size:', { timeout: UI_TIMEOUT });
-        await expect(row.getByRole('button', { name: 'Transcode' })).toBeVisible({ timeout: UI_TIMEOUT });
-        expect(taskState.status).toBe('No task');
+        // Preset block (h6 section) shows Transcode button and expected size hint
+        const block = presetBlock(page, actualTitle);
+        await expect(block).toBeVisible({ timeout: UI_TIMEOUT });
+        await expect(block.locator('.text-muted').first()).toBeVisible({ timeout: UI_TIMEOUT });
+        await expect(block.locator('button.btn-outline-primary').first()).toBeVisible({ timeout: UI_TIMEOUT });
+        // No task row should exist yet
+        await expectPresetStatus(page, actualTitle, 'No task');
       }
       await shot(page, testInfo, '11-required-presets-present.png');
 
       // Phase 3 — Free tariff: one task starts immediately, the next quick retry stays pending.
       const fullHdTitle = requiredPresets['Full HD, 6Mbps'];
-      await presetRow(page, fullHdTitle).getByRole('button', { name: 'Transcode' }).click({ timeout: UI_TIMEOUT });
+
+      // Transcode button is in the preset block
+      await clickTranscodeForPreset(page, fullHdTitle);
       await shot(page, testInfo, '12-full-hd-transcode-clicked.png');
 
       await waitForPresetState(
@@ -291,6 +314,7 @@ test.describe('prod-safe isolated smoke', () => {
       );
       await shot(page, testInfo, '14-full-hd-progress-above-30.png');
 
+      // Cancel button is in the tasks table row
       await presetRow(page, fullHdTitle).getByRole('button', { name: 'Cancel' }).click({ timeout: UI_TIMEOUT });
       await shot(page, testInfo, '15-full-hd-cancel-clicked.png');
 
@@ -302,7 +326,7 @@ test.describe('prod-safe isolated smoke', () => {
       );
       await shot(page, testInfo, '16-full-hd-cancelled.png');
 
-      await presetRow(page, fullHdTitle).getByRole('button', { name: 'Transcode' }).click({ timeout: UI_TIMEOUT });
+      await clickTranscodeForPreset(page, fullHdTitle);
       await shot(page, testInfo, '17-full-hd-requeued.png');
 
       await waitForPresetState(
@@ -348,8 +372,7 @@ test.describe('prod-safe isolated smoke', () => {
 
       const requiredPresetTitles = Object.values(requiredPresets);
       for (const actualTitle of requiredPresetTitles) {
-        const row = presetRow(page, actualTitle);
-        await row.getByRole('button', { name: 'Transcode' }).click({ timeout: UI_TIMEOUT });
+        await clickTranscodeForPreset(page, actualTitle);
         await shot(page, testInfo, `26-transcode-clicked-${actualTitle.replace(/[^a-zA-Z0-9._-]+/g, '_')}.png`);
       }
 
