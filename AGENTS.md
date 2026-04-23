@@ -18,9 +18,12 @@ docker exec -i -e XDEBUG_MODE=coverage develop-php-1 vendor/bin/phpunit tests/ -
 ## Architecture Overview
 - **Domain-Driven Design (DDD)**: The backend (Symfony) is organized by domain boundaries: `Domain`, `Application`, `Infrastructure`, `Presentation`.
 - **Core Components**:
-  - **Frontend**: Single Page Application (SPA) built with **Vue 3** and **Symfony AssetMapper** (no bundler).
-    - Modular architecture in `assets/home/` (state, actions, render).
-    - Real-time updates via **Mercure**.
+  - **Frontend**: Single Page Application (SPA) built with **Vue 3** and **Symfony AssetMapper** (no bundler yet).
+    - Modular architecture in `assets/home/`: each tab/page is split into `state.js` (Vue `ref()`s), `actions.js` (API + realtime), `render.js` (Vue `h()` render functions), `view.js` (optional `defineComponent` composition).
+    - Tabs: **Upload** (Uppy/tus), **Videos** (paginated list, poster, delete), **Tasks** (paginated list with actions).
+    - **Video Details** page (`video-details/`): poster, rename (SweetAlert2 modal), preset resolution buttons with estimated file size, transcoding tasks table with Cancel/Download/Transcode actions.
+    - Real-time updates via **Mercure**: `connectMercure.js` dispatches `app:video`, `app:task`, `app:storage` CustomEvents; `realtime/` parsers extract payloads; `bindHomeRealtime` / `bindVideoDetailsRealtime` apply updates directly to reactive state.
+    - **Realtime DTO = Initial DTO**: the payload of Mercure `app:video` / `app:task` messages is the same shape as the DTO returned by the initial API fetch, so updates are applied via spread-merge without extra normalization.
     - Resumable uploads via **Uppy + tus**.
   - **API**: Symfony app (`develop/symfony/`) exposes REST endpoints and handles business logic.
   - **Workers**: Symfony Messenger consumers (auto-scaled) process transcoding jobs using ffmpeg.
@@ -53,10 +56,11 @@ docker exec -i -e XDEBUG_MODE=coverage develop-php-1 vendor/bin/phpunit tests/ -
 - **Entity Mapping**: Doctrine entities in `Infrastructure/Persistence/Doctrine`, mapped to domain models.
 - **Preset/Task/Video**: Presets define transcoding options; Tasks link Videos and Presets, track status/progress.
 - **Chunked Uploads**: Uppy + tus protocol for large file uploads, handled by `TusPhp` server.
-- **Realtime UI Sync**: `Application/Command/Mercure` + `Infrastructure/Mercure/HttpMercurePublisher` publish task/video updates; frontend listens and patches tab/detail state.
+- **Realtime UI Sync**: `connectMercure.js` dispatches `app:video`, `app:task`, `app:storage` CustomEvents from Mercure SSE messages. `realtime/` parsers (`appVideoMessage.js`, `appTaskMessage.js`, `appStorageMessage.js`) extract the payload. `bindHomeRealtime` / `bindVideoDetailsRealtime` wire these into `applyVideoRealtimeUpdate` / `applyTaskRealtimeUpdate` functions in each module's `actions.js`. The Mercure message format is `{ entity, payload }` where `payload` matches the same DTO shape as the initial REST response.
 - **Admin UI**: EasyAdmin for CRUD (see `DashboardController`, `TaskCrudController`).
 - **Tariff Page**: `TariffController` renders `/tariffs` via `tariff/index.html.twig`; frontend tariff view in `assets/home/tariff/` (render.js, view.js).
-- **Frontend Tabs**: `assets/home/tabs/` contains sub-modules for `videos/`, `upload/`, `tasks/` (each with state/actions/render), plus `TariffHint.js` and reusable `shared.js`.
+- **Frontend Tabs**: `assets/home/tabs/` contains sub-modules for `videos/`, `upload/`, `tasks/` (each with state/actions/render), plus `TariffHint.js` and reusable `shared.js`. The `task/` module (`actions.js` + `render.js`) provides shared task API actions and action-button rendering reused by both `tabs/tasks/` and `video-details/`.
+- **Realtime DTO parity**: Mercure `app:video` and `app:task` payloads have the same structure as the corresponding API response DTOs. `applyVideoRealtimeUpdate` / `applyTaskRealtimeUpdate` do a direct spread-merge; no separate normalization layer is needed.
 - **Application Sub-layers**: Beyond Command/Handler/DTO, the Application layer also includes `Event/`, `EventListener/`, `Factory/`, `Helper/`, `Logging/`, `Query/`, `QueryHandler/`, `Response/`, and `Service/` directories.
 
 ## Integrations & External Dependencies
@@ -85,4 +89,3 @@ docker exec -i -e XDEBUG_MODE=coverage develop-php-1 vendor/bin/phpunit tests/ -
 - **Add a new transcoding preset**: Implement in `Domain/Video/Entity/Preset.php`, expose via admin CRUD, persist via Doctrine entity.
 - **Add a new async job**: Define command in `Application/Command`, dispatch via Messenger, handle in consumer.
 - **Enforce quota**: Check limits in Application/Domain before persisting new tasks or uploads.
-
