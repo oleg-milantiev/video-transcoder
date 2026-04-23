@@ -7,251 +7,382 @@ This directory contains release smoke tests running against the release Docker C
 - Shared UI interactions and selectors are centralized in `helpers/`.
 - Tests in `tests/` should read like scenario steps and avoid low-level locators.
 - Prefer helper calls such as:
-  - `createOrUpdateTariffByTitle(page, 'Free', 60, 1, testInfo, '07-tariff-free-initial.png')`
+  - `createOrUpdateTariffByTitle(page, 'Free', { delay: 3600, instance: 1, ... }, testInfo, 'screenshot.png')`
   - `openAdminSection(page, 'Users', '/admin/user')`
   - `assignTariffToUser(page, adminEmail, 'Free', testInfo)`
 
 ### Helper modules
 
-- `helpers/auth.js` - login/logout, credentials, sign-in form steps
-- `helpers/mainApp.js` - Upload/Videos/Tasks navigation and table helpers
-- `helpers/upload.js` - Uppy upload actions (fixture upload, upload-as-name)
-- `helpers/video.js` - Video Details, Presets table, task state and flash checks
-- `helpers/admin.js` - EasyAdmin navigation and CRUD helpers (users/presets/tariffs)
-- `helpers/dialogs.js` - native dialog + modal confirm acceptance
-- `helpers/download.js` - download and final mp4 URL verification
-- `helpers/screenshot.js` - consistent screenshot capture
-- `helpers/constants.js` - shared timeouts
+- `helpers/auth.js` — login/logout helpers: `loginAsAdmin`, `loginAsTest`, `logoutToPublic`, `getAdminCredentials`, `getTestCredentials`
+- `helpers/mainApp.js` — Upload/Videos/Tasks tab navigation: `openVideosTab`, `openTasksTab`, `openUploadTab`, `expectTabsVisible`, `expectEmptyVideos`, `expectEmptyTasks`, `videoRowByTitle`, `activeVideoRowByTitle`, `expectVideoRowHasCoreValues`
+- `helpers/upload.js` — Uppy upload actions: `uploadFixture`, `uploadFixtureAsName`, `uploadFixtureAsNameExpectingFailure`, `expectUploadHintText`
+- `helpers/video.js` — Video Details page, preset blocks, task-row helpers:
+  - `waitForVideoDetailsVisible` — waits for `Video Details` heading + first `h6` preset block
+  - `expectDetailsValue` — checks a `<dt>/<dd>` pair is non-empty
+  - `renameVideoFromDetails` — opens SweetAlert2 rename modal and submits
+  - `expectVideoDetailsTitle` — polls `<dd>` span until it matches expected title
+  - `clickBackButton` — clicks the `Back` button in video details
+  - `presetBlock(page, presetTitle)` — locates the `<h6>`-parent `div` for a preset
+  - `tasksTable(page)` — locates `#transcoding-tasks-section table`
+  - `taskRowByPreset(page, presetTitle)` — first task row matching presetTitle (any status)
+  - `activeTaskRowByPreset(page, presetTitle)` — first non-CANCELLED row for preset
+  - `taskRowByPresetAndHeight(page, presetTitle, height)` — row matching preset AND `{height}p`
+  - `activeTaskRowByPresetAndHeight(page, presetTitle, height)` — non-CANCELLED row for preset+height
+  - `presetRow` — alias for `taskRowByPreset`
+  - `readPresetTaskState(page, presetTitle, opts)` — reads `{ status, progress }` from task row (strips `?` icon suffix from status text)
+  - `readPresetTaskStateByHeight(page, presetTitle, height, opts)` — same but height-specific
+  - `waitForPosterAndMeta` — polls until poster `<img>` is fully loaded and `duration` meta is present
+  - `getAllPresetTitles(page)` — returns all visible preset titles from `h6` blocks
+  - `expectAllPresetsToShowTranscodeWithExpectedSize` — checks each preset block shows buttons with `~X MB` size hints
+  - `expectPresetStatusHelpIcon` — checks `?` help icon is visible in status cell with expected tooltip
+  - `clickTranscodeForPreset(page, presetTitle)` — clicks the first enabled resolution button in a preset block
+  - `expectPresetStatus(page, presetTitle, status)` — asserts task row has expected status
+  - `waitForAllPresetsToComplete` — polls until all preset titles reach COMPLETED
+  - `waitForAllPresetsProcessingWithProgress` — polls until all presets are PROCESSING with progress > 0
+  - `waitForDeletedVideoDetailsWithoutPoster` — polls for deleted title + absent poster in details
+  - `expectFlashPopupTitle(page, titleText)` — waits for `.app-flash-toast .app-flash-title`
+- `helpers/admin.js` — EasyAdmin CRUD helpers: `openAdminSection`, `openAdminDashboardFromHome`, `ensureAdminMenuSectionsVisible`, `createOrUpdatePreset`, `createOrUpdateTariffByTitle`, `assignTariffToUser`, `createUserWithTariff`, `mainTableBodyForHeading`, `dismissAllVisibleModals`
+- `helpers/dialogs.js` — `clickAndAcceptConfirm` (handles both native `dialog` events and Bootstrap confirm buttons)
+- `helpers/download.js` — `clickDownloadAndVerifyMp4` (clicks Download, verifies `< 400` status and `.mp4` URL), `expectDownloadFilename`, `expectRowDownloadFilename`
+- `helpers/screenshot.js` — consistent screenshot capture via `shot(page, testInfo, name)`
+- `helpers/constants.js` — `UI_TIMEOUT=8000`, `NAV_TIMEOUT=15000`, `UPLOAD_TIMEOUT=30000`
+
+### Prod-only helpers (`prod/helpers/`)
+
+- `prod/helpers/index.js` — re-exports all shared helpers + `loginAsCredentials`, `buildRunContext`
+- `prod/helpers/admin.js` — `filterUsersByEmail`, `setTariffForFilteredUser`, `deleteUserByEmail`, `deleteFilteredUser` (isolated user management with filter panel)
+- `prod/helpers/runContext.js` — `buildRunContext()` generates a per-run isolated user context (date-based email, random password, video name from env or defaults)
+
+---
+
+## Task table UI
+
+The **Transcoding Tasks** table (HTML id `transcoding-tasks-section`) has these columns:
+
+| # | Column | Notes |
+|---|---|---|
+| 0 | Preset | preset title |
+| 1 | Resolution | `{height}p` (e.g. `1080p`) |
+| 2 | Status | may have `?` icon suffix for PENDING tasks with tariff restrictions |
+| 3 | Progress | `{N}%` or `-` |
+| 4 | Created | formatted date |
+| 5 | Actions | `Cancel` / `Download` / `Transcode` restart |
+
+The `readPresetTaskState` helper strips the ` ?` suffix from column 2 before returning `status`.
+
+After Cancel+Restart there may be **two rows** for the same preset: one CANCELLED and one new active row. `activeTaskRowByPreset` / `activeTaskRowByPresetAndHeight` filters out CANCELLED rows.
+
+---
+
+## Preset block UI
+
+The **Start new Video Transcoding Task** section renders one `<div>` per preset:
+- `<h6>` heading: `{presetTitle} ({videoCodec}/{audioCodec}/{format})`
+- Row of `<button class="btn-outline-primary">` with `{width}x{height}` labels
+- `~X MB` size hint under each button (calculated from bitrate × duration)
+- Buttons filtered by `tariff.height`; buttons for already-existing tasks are struck-through and disabled
+
+Section is **hidden** if `_width` or `_height` are absent in video meta.
+
+---
 
 ## What is covered
 
-Tests are designed to run sequentially (`workers: 1`) and build on data created by previous specs.
+Tests run sequentially (`workers: 1`) and build on data from previous specs.
 
-### `01.admin.login.js` - admin login and empty tabs smoke
+### `01.admin.login.js` — admin login and empty-tabs smoke
 
-- Opens start page and verifies `Sign in` is visible
-- Logs in as admin from migration (`ADMIN_EMAIL` / `ADMIN_PASSWORD`)
-- Verifies `Upload`, `Videos`, `Tasks` tabs after login
-- Verifies Uppy dashboard is visible on `Upload`
-- Verifies empty states in `Videos` (`No videos`) and `Tasks` (`No tasks`)
-- Performs `Sign out` and verifies `Sign in` links are visible again
-- Saves screenshots for each key step
+- Opens root page, verifies `Sign in` link is visible
+- Logs in as admin (`ADMIN_EMAIL` / `ADMIN_PASSWORD`)
+- Verifies `Upload`, `Videos`, `Tasks` tab buttons after login
+- Verifies Uppy dashboard is visible on `Upload` tab
+- Verifies empty states: `No videos` and `No tasks`
+- Signs out and verifies `Sign in` links reappear
+- Screenshots: `01` → `07`
 
-### `02.upload.video.js` - upload video and verify details flow
+### `02.upload.video.js` — upload, details, rename, back-navigation
 
-- Logs in as admin and opens upload tab
+- Logs in as admin and opens Upload tab
 - Uploads `2022_10_04_Two_Maxes.mp4` through Uppy file picker
-- Verifies upload completion status in Uppy
-- Opens `Videos` tab and checks uploaded row fields are filled
-- Opens video details and verifies core fields (`Title`, `Extension`, `Created At`, `User ID`)
-- Waits for async processing with up to 5 retries (5s delay + page reload)
-- Verifies poster is rendered (loaded image, non-zero natural size)
-- Verifies `Duration` meta field exists and is non-empty after processing
-- Performs `Sign out` and verifies `Sign in` links are visible again
-- Saves screenshots for each key step
-
-### `03.admin.crud.js` - admin area CRUD smoke (step-by-step)
-
-1. Navigate to the site root and sign in as the admin account (environment: `ADMIN_EMAIL` / `ADMIN_PASSWORD`).
-
-2. Open the EasyAdmin interface (`Admin` link) and verify the presence of sidebar sections: `Users`, `Tariffs`, `Videos`, `Presets`, `Tasks`, `Logs`.
-
-3. Open `Users` and verify the admin user (`oleg@milantiev.com`) is present and that CRUD controls (New/Edit/Detail) are available where expected. Capture a screenshot.
-
-4. Open `Presets` and ensure required presets exist: create or update
-   - `180p` — videoCodec: `h264`, audioCodec: `aac`, format: `mp4`, bitrateJson: `{"180": 1.1}`
-   - `FHD` — videoCodec: `h264`, audioCodec: `aac`, format: `mp4`, bitrateJson: `{"1080": 6.0}`
-   For each preset, the test creates it if missing and then opens edit to ensure values are persisted. Capture a screenshot per preset.
-
-5. Create a test user `test@test.com` with password `test` and role `ROLE_USER` via `Users -> New` (if the Create action is available). Fill visible fields and submit. Capture a screenshot.
-
-6. Re-open `Users` and verify that `test@test.com` is present in the users table. Capture a screenshot.
-
-7. Open `Tariffs` and ensure tariffs exist and are configured:
-   - Create/update `Free` (first set `delay=60`, then update to `delay=3600`, `instance=1`)
-   - Create/update `Premium` (`delay=0`, `instance=2`)
-   Capture screenshots after create/update steps.
-
-8. Assign tariff `Free` to the admin user (`oleg@milantiev.com`) via `Users -> Edit` and confirm the assignment is visible in the users table. Capture a screenshot.
-
-9. Open `Tasks` and verify the table is present. Locate the first task row that exposes a `Mark deleted` action (if any) and perform the admin-side delete flow:
-   - Click `Mark deleted` on that task and accept the confirmation dialog.
-   - Re-open `Tasks` to refresh the index and verify the affected task row is styled as deleted (the row's video/title cell gets the `video-title-deleted` class — rendered as strikethrough) and that the `Mark deleted` action is no longer available for that task. Capture a screenshot.
-
-10. Open `Videos` and verify the uploaded video from `02.upload.video.js` is present in the list. Open the video's details and verify core fields (Title, Extension, Created At, User ID). Capture a screenshot.
-
-11. While on the `Videos` index (after verifying details), perform the admin-side delete flow for this video:
-   - Click `Mark deleted` on the video row and accept the confirmation dialog.
-   - Re-open `Videos` and verify the video row shows the deleted style (`video-title-deleted`) and that the `Mark deleted` action is no longer available. Capture a screenshot.
-
-12. Re-open `Tasks` (again) and perform final consistency checks:
-   - Ensure task rows reflect the deleted state where applicable and that no `Mark deleted` actions remain for listed tasks.
-   - Confirm the Tasks list still behaves read-only for CRUD where expected (no New/Edit/Delete actions available in CRUD toolbar). Capture a screenshot.
-
-13. Open `Logs` and verify the view is read-only (no New/Edit actions), that filter controls are visible, and that the logs table contains rows. Capture a screenshot.
-
-14. Return to the main site, verify UI elements (`Upload`, `Sign out`) and perform `Sign out`. Verify `Sign in` links are visible again. Capture a final screenshot.
-
-15. Throughout the flow the test saves screenshots for each key milestone and validates UI state changes (action availability, row styling, and persisted field values).
-
-### `04.transcode.flow.js` - transcode, download and remove flow
-
-- Logs in as test
-- Uploads the source fixture again under the `-04` suffix and operates on that uploaded video (uploads `2022_10_04_Two_Maxes-04.mp4`), then opens `Videos` and enters that video
-- Verifies the preset block for `180p` is visible in the **Start new Video Transcoding Task** section
-- Clicks the first resolution button (`320x180`) in the `180p` preset block to start transcoding
-- Verifies flash popup title `Transcoding started`
-- Verifies task row appears in the **Transcoding Tasks** table with status `PENDING|PROCESSING|COMPLETED`
-- Polls the task status every ~1 second (no page reload), confirms progress increases, and waits for `COMPLETED`
-- Verifies flash popup title `Transcoding completed`
-- Verifies `Download` action is shown in the task row for completed task
-- Clicks `Download` and validates successful endpoint response/redirect to `.mp4`
-- Saves the resolved final `.mp4` URL to a local test variable
-- Verifies that the download link's `download` attribute initially equals "{videoTitle}-aac-h264-180p.mp4" and, after renaming the video in details, updates to use the new video title
-- Returns to `Videos`, confirms delete popup (`Delete this video?`), and deletes the video
-- Verifies deleted row state in list: title is styled as deleted and active `Delete` action is unavailable
-- Opens video details and verifies deleted UI (`This video has been deleted`, deleted title, `DELETED` in tasks table, no action buttons or links)
-- Requests previously saved `.mp4` URL and verifies `404`
-- Performs `Sign out` and verifies `Sign in` links are visible again
-- Saves screenshots for each key step
-
-### `05.task.state.flow.js` - TASK_STATE_FLOW coverage for FHD cancel/restart
-
-- Logs in as admin, then re-uploads fixture video as `2022_10_04_Two_Maxes-05.mp4`
-- Opens `Video Details` for this `-05` video
-- Uses long-running preset `FHD` — verifies its block is visible in **Start new Video Transcoding Task** section and starts transcoding via the `1920x1080` resolution button
-- Waits until task row appears in `Transcoding Tasks` table with status `PENDING|PROCESSING|COMPLETED`
-- Polls progress (no page reload) and verifies at least one progress increase before cancellation
-- Sends `Cancel` while task is `PROCESSING`
-- Waits until state becomes `CANCELLED`
-- Verifies cancelled task row has no `Download` link and exposes `Transcode` button for restart
-- Starts transcoding again from the `CANCELLED` task row (restart path)
-- Polls status/progress until `COMPLETED` and verifies progress increase during restarted run
-- Verifies `Download` appears in task row for completed task
-- Performs `Sign out` and verifies `Sign in` links are visible again
-- Saves screenshots for each milestone (`start`, `cancel`, `cancelled`, `restart completed`)
-
-### `06.multi.preset.flow.js` — multi-preset transcode: tariff change, new preset, full download
-
-End-to-end scenario that exercises the full lifecycle across three presets with a mid-flow tariff and preset change.
-
-#### Phase 1 — Login as test, upload, verify video card, trigger initial presets
-
-- Logs in as test user (`test@test.com`)
-- Uploads the source fixture as `2022_10_04_Two_Maxes-06.mp4`
-- Opens `Videos` tab and confirms the `-06` row is visible
-- Clicks the row and verifies core detail fields (`Title`, `Extension`, `Created At`)
-- Waits for the poster image and meta duration to be ready (up to 5 × 5 s retries)
-- Iterates over all presets currently in the system and clicks `Transcode` on each
-- Waits 3 seconds (tasks stay `PENDING` because the Free tariff's delay has not elapsed and the scheduler has not run)
-- Asserts that every preset row shows status `PENDING`
-- Verifies preset rows `180p` and `FHD` show the `?` help icon next to `PENDING`, and that its tooltip begins with `Why isn't my video transcoding?`
+- Opens `Videos` tab, finds the uploaded row, checks core values (title, date)
+- Clicks the row → `Video Details` page
+- Checks `Title` and `Created At` `<dt>/<dd>` pairs are non-empty
+- Waits for poster image and `duration` meta (up to 5 retries × 5 s + page reload)
+- Renames video via SweetAlert2 modal to `{baseName}-02`
+- Verifies the renamed title in `Video Details` and in the `Videos` list row
 - Signs out
+- Screenshots: `01` → `08`
 
-#### Phase 2 — Admin: assign Premium tariff + create 720p preset
+### `03.admin.crud.js` — admin area CRUD smoke
+
+1. Sign in as admin → verify `Admin` link.
+2. Open EasyAdmin → verify sidebar links: `Users`, `Tariffs`, `Videos`, `Presets`, `Tasks`, `Logs`.
+3. Verify admin user `oleg@milantiev.com` is present in Users with New/Edit/Detail actions.
+4. Ensure presets exist (create or update):
+   - `180p` — h264/aac/mp4, bitrate `{"180": 1.1}` *(note: now called `Standard video Quality` in newer tests — see preset naming below)*
+   - `FHD` — h264/aac/mp4, bitrate `{"1080": 6.0}`
+5. Ensure tariffs exist and configure:
+   - `Free` — `delay=60 → 3600`, `instance=1`, `videoDuration=3600`, `videoSize=100`, `maxWidth=1920`, `maxHeight=1080`, `storageGb=1`, `storageHour=24`
+   - `Premium` — `delay=0`, `instance=2`, `videoDuration=86400`, `videoSize=1024`, `maxWidth=3840`, `maxHeight=2160`, `storageGb=100`, `storageHour=720`
+6. Create test user `test@test.com` / `test` / `ROLE_USER` with tariff `Free`. Assign tariff `Free` to admin user.
+7. **Videos**: verify uploaded video (`2022_10_04_Two_Maxes-02`) is listed, no `New` action. Mark it deleted via `Mark deleted` button + confirm dialog; verify row gets `data-deleted-row="1"` and `Mark deleted` action disappears.
+8. **Tasks**: verify no `New`, `Edit`, or `Delete` actions in the admin task list.
+9. **Logs**: verify read-only (no New/Edit), filter control visible, at least one log row present.
+10. Return to site → verify Upload button and Sign out link → sign out.
+- Screenshots: `01` → `11`
+
+> **Note**: The TODO sections (Tasks mark-deleted flow) are commented out — tasks don't exist yet at this step in the flow.
+
+### `04.transcode.flow.js` — transcode, download, rename, delete lifecycle
+
+Uses console capture + Mercure SSE attachment on failure.
+
+- Logs in as `test@test.com`
+- Uploads fixture as `2022_10_04_Two_Maxes-04.mp4`
+- Opens video details → verifies preset block (`Standard video Quality`) is visible
+- Clicks the **2nd** enabled resolution button (HD = 720p) to start transcoding
+- Verifies flash popup: `Transcoding started`
+- Polls task state (no page reload, realtime updates) until `PENDING|PROCESSING|COMPLETED`
+- Confirms progress increases at least once during polling
+- Waits for `COMPLETED`, verifies flash popup: `Transcoding completed`
+- Verifies `Download` link in the task row
+- Clicks Download → verifies `.mp4` response, saves resolved URL
+- **Before rename**: verifies `download` attribute = `{baseName}-aac-h264-720p.mp4`
+- Renames video via SweetAlert2 modal to `{baseName}-renamed`
+- **After rename**: verifies `download` attribute updates to `{renamedBaseName}-aac-h264-720p.mp4`
+- Goes to Videos list → `Delete` button + confirm (`Delete this video?`)
+- Polls until row gets `td.video-title-deleted`; verifies `Delete` button is disabled/gone
+- Opens deleted video details: verifies `This video has been deleted`, `dd.video-title-deleted`, `DELETED` status in tasks table, no action buttons/links in tasks tbody
+- Requests previously saved `.mp4` URL → expects `404`
+- Signs out
+- Screenshots: `01` → `09`
+
+### `05.task.state.flow.js` — cancel-in-PROCESSING + restart lifecycle
+
+Uses console capture + Mercure SSE attachment on failure.
 
 - Logs in as admin
-- Opens the admin dashboard
-- Assigns tariff `Premium` to `test@test.com` (removes the scheduler delay constraint)
-- Creates (or updates) preset `720p` — videoCodec: `h264`, audioCodec: `aac`, format: `mp4`, bitrateJson: `{"720": 3}`
-- Returns to the main site and signs out
+- Assigns `Premium` tariff to admin via EasyAdmin
+- Re-logs in (refreshes security token + tariff context)
+- Uploads fixture as `2022_10_04_Two_Maxes-05.mp4`
+- Opens video details → verifies preset block for `High video Quality, High Efficiency Audio` (h265/opus — slow codec)
+- Clicks the **4th** enabled button (1280×720) to start transcoding
+- Polls until `PENDING|PROCESSING|COMPLETED` appears in task row
+- **Polls until PROCESSING** → sends `Cancel` button click mid-task
+- Waits (up to 60 × 6 s = 6 min) until task reaches `CANCELLED`
+- Verifies no `Download` link, `Transcode` restart button visible
+- Clicks `Transcode` restart button
+- Polls until new task reaches `PENDING|PROCESSING|COMPLETED` (with `preferActive: true`)
+- Waits for `COMPLETED`; verifies progress increased during restarted run
+- Verifies `Download` link visible
+- Signs out
+- Screenshots: `01` → `07`
 
-#### Phase 3 — Test user: full transcode + download for all three presets
+### `06.multi.preset.flow.js` — multi-phase: Free → Premium tariff, single preset, download
 
-- Logs in as test user again
-- Finds the previously uploaded `-06` video and opens its card
-- Verifies preset statuses: `180p = PENDING`, `FHD = PENDING`, `720p = No task`
-- Clicks `Transcode` on the `720p` row; this dispatches `StartTaskScheduler`, which now schedules all three tasks (Premium tariff: `delay=0`, `instance=2`)
-- Polls with 5-second intervals (up to 24 attempts = 2 min) until all three presets reach `COMPLETED`
-- Verifies a `Download` link is visible for each preset row
-- For each preset (`180p`, `FHD`, `720p`):
-  - Verifies the link's `download` attribute matches `{baseName} - {presetTitle}` (no `.mp4` extension in attribute)
-  - Clicks download and confirms the resolved URL returns HTTP `< 400` and ends in `.mp4`
+Uses console capture + Mercure SSE attachment.
+
+#### Phase 1 — test user, upload, pending state verification
+
+- Login as `test@test.com` (Free tariff, `delay=3600`)
+- Upload fixture as `2022_10_04_Two_Maxes-06.mp4`
+- Open Videos tab → find row → verify details fields (Title, Created At)
+- Wait for poster + meta
+- Click `Transcode` **twice** on `Standard video Quality` (both tasks created as PENDING)
+- Wait 3 s → verify both task rows show status `PENDING`
+- Verify `?` help icon visible next to `PENDING` with tooltip `Why isn't my video transcoding?`
+- Sign out
+
+#### Phase 2 — admin upgrades tariff
+
+- Login as admin → assign `Premium` tariff to `test@test.com`
+- Sign out
+
+#### Phase 3 — full transcode + download
+
+- Login as `test@test.com` (now Premium)
+- Find `-06` video, open details
+- Click `Transcode` on `Standard video Quality` (triggers scheduler; dispatches `StartTaskScheduler` for all pending tasks)
+- Poll until `Standard video Quality` reaches `COMPLETED` (up to 24 × 5 s = 2 min)
+- Verify `Download` button visible
+- Verify `download` attribute = `{baseName}-aac-h264-2160p.mp4`
+- Click Download → verify `< 400` response and `.mp4` URL
+- Sign out
+- Screenshots: `01` → `20`
+
+### `07.parallel.transcode.js` — parallel PROCESSING on Premium tariff (2 workers)
+
+Uses console capture + Mercure SSE attachment.
+
+- Login as `test@test.com` (Premium, `instance=2` — set by test 06)
+- Upload fixture as `2022_10_04_Two_Maxes-07.mp4`
+- Open video details → wait for poster + meta
+- Click `1080p` button and `720p` button in `Standard video Quality` preset block
+- **Parallel check**: poll every 1 s (up to 90 s) until **both** `1080p` and `720p` task rows show `PROCESSING` with `progress > 0` simultaneously — confirms two workers running in parallel
+- Poll every 1 s (up to 120 s) until **both** reach `COMPLETED`
+- Verify `Download` links for both rows
+- Verify `download` attribute for each: `{baseName}-aac-h264-1080p.mp4` and `{baseName}-aac-h264-720p.mp4`
+- Click Download for each, verify `.mp4` response
+- Sign out
+- Screenshots: `01` → `11`
+
+### `08.tariff.js` — tariff restrictions: file size, storage, resolution, duration
+
+Uses console capture + Mercure SSE attachment.
+
+**Setup cleanup**: deletes the old `-05` video from test 05 (to free storage for fresh tests).
+
+#### Phase 1 — baseline valid upload
+
+- Login as admin → assign `Free` tariff → re-login (session refresh)
+- Upload `2022_10_04_Two_Maxes-08-success.mp4`
+- Verify row in Videos list, open details, verify title + poster + meta
+- Verify all preset blocks show resolution buttons with `~X MB` size hints
+
+#### Phase 2 — create tariff variants
+
+Creates (or updates) 4 tariffs cloned from Free:
+
+| Tariff | Changed field | Value |
+|---|---|---|
+| `Free-filesize` | `videoSize` | 3 MB |
+| `Free-storage` | `storageGb` | 0.01 GB |
+| `Free-resolution` | `maxWidth=320`, `maxHeight=180` | |
+| `Free-duration` | `videoDuration` | 2 s |
+
+#### Phase 3 — apply each tariff, verify behavior
+
+For each tariff variant:
+1. Assign to admin → re-login
+2. Check upload hint text (if applicable)
+3. Attempt upload:
+   - **Free-filesize**: hint contains `3 MB`; upload rejected with `exceeds maximum allowed size`
+   - **Free-storage**: hint contains `Storage is running low`; upload rejected with `exceeds maximum allowed size`
+   - **Free-resolution**: hint contains `320`; upload completes → video becomes deleted + no poster (both in list and details)
+   - **Free-duration**: upload completes → video becomes deleted + no poster
+
+#### Phase 4 — low storage disables transcoding for existing valid video
+
+- Re-assign `Free-storage` → re-login
+- Open the `-08-success` video details → verify title is correct
+- Sign out
+
+---
+
+## `prod/tests/01.prod.safe.js` — isolated production smoke
+
+Self-contained test with automatic cleanup. Designed to run safely in production without side effects.
+Timeout: **35 minutes**.
+
+### Phases
+
+#### Phase 1 — Admin creates isolated user
+
+- Admin logs in
+- Deletes any pre-existing isolated user with today's email (idempotent)
+- Creates fresh user `{prod-YYYYMMDD}@example.test` with `Free` tariff
 - Signs out
 
-### `07.parallel.transcode.js` — parallel transcode: two heavy presets on Premium tariff
+#### Phase 2 — Fresh user: upload + verify empty state
 
-Verifies that two worker replicas pick up two tasks simultaneously when the user has `instance=2`.
+- Login as the isolated user
+- Verify empty state in Videos, Tasks
+- Verify upload hint `0 MB / 1 GB`
+- Upload `2022_10_04_Two_Maxes.mp4` as `{userLocalPart}.mp4`
+- Verify row in Videos, open details, wait for poster + meta
+- Verify `Standard video Quality` preset block is visible
+- Click `1080p` (first button) → wait 400 ms → click `720p` (next available button)
 
-- Logs in as test user (Premium tariff with `instance=2` set by test `06`)
-- Uploads source fixture as `2022_10_04_Two_Maxes-07.mp4`
-- Opens `Videos` tab and enters the `-07` video card
-- Waits for poster and meta to be ready
-- Clicks `Transcode` on `FHD` and `720p` presets (both scheduled immediately: `delay=0`)
-- **Parallel check** — polls every 1 second until **both** presets are simultaneously in `PROCESSING` state with `progress > 0`, confirming two workers are running in parallel
-- Polls every 1 second until both presets reach `COMPLETED`
-- Verifies `Download` link is visible for each preset row
-- For each preset (`FHD`, `720p`) verifies the link's `download` attribute matches `{baseName} - {presetTitle}` and clicks download confirming a valid `.mp4` response
-- Signs out
+#### Phase 3 — Free tariff: 1080p starts, 720p waits PENDING
 
-### `08.tariff.js` — tariff restrictions: upload limits, invalid uploads, disabled transcode by storage
+- Wait for `1080p` to reach `PROCESSING` with Cancel button visible
+- Wait for `1080p` progress to exceed 30%
+- Click `Cancel` on the `1080p` active task row
+- Wait for `1080p` to reach `CANCELLED` with `Transcode` restart button
+- Restart `1080p` from the CANCELLED task row
+- Wait for `1080p` to reach `PENDING` (blocked by Free `instance=1` — 720p is occupying the slot)
+- Verify `?` help icon with tooltip `Why isn't my video transcoding?` on the PENDING 1080p row
+- Cancel both `1080p` and `720p` pending tasks
+- Wait for both tasks to reach `CANCELLED` with Transcode restart button
+- Sign out
 
-- Logs in as admin, remove old 05 test as this test need empty storage
-- Assigns tariff `Free` to the admin user, then re-logs in so the SPA gets refreshed tariff limits
-- Uploads the source fixture under the unique `-08-success` suffix and verifies in `Videos` list + `Video Details` that the upload is successful, the title is correct, and the poster/meta are ready
-- Verifies every preset block in **Start new Video Transcoding Task** section shows resolution buttons with expected size hints (`~X MB`)
-- Opens EasyAdmin and creates/updates four tariff variants cloned from `Free`:
-  - `Free-filesize` — `videoSize=3 MB`
-  - `Free-storage` — `storageGb=0.01`
-  - `Free-resolution` — `maxWidth=320`, `maxHeight=180`
-  - `Free-duration` — `videoDuration=2 sec`
-- Applies each tariff to the admin user one by one, re-logs in, opens `Upload`, and uploads the same fixture under unique names:
-  - `-08-filesize` — upload hint contains `Max file size: 3 MB.`, upload is rejected with `exceeds maximum allowed size`
-  - `-08-storage` — upload hint contains `as storage is running low`, upload is rejected with `exceeds maximum allowed size`
-  - `-08-resolution` — upload hint contains `Max resolution: 320`, upload reaches `Videos`, then the video becomes deleted and has no poster in list/details
-  - `-08-duration` — upload reaches `Videos`, then the video becomes deleted and has no poster in list/details
-- Reassigns `Free-storage` to the admin user, re-opens the successfully uploaded `-08-success` video, and verifies the `FHD` preset block is visible with resolution buttons and expected size hints (`~X MB`) shown under each button
-- Performs `Sign out`
+#### Phase 4 — Admin upgrades to Premium
 
-## Video Details Page UI
+- Login as admin
+- Filter users by isolated user's email prefix
+- Set tariff to `Premium` for the filtered user
+- Sign out
 
-The video details page has two main sections relevant to transcoding:
+#### Phase 5 — Premium tariff: restart both tasks, download, delete
 
-### Start new Video Transcoding Task
+- Login as isolated user
+- Open video details
+- Click `Transcode` restart on CANCELLED `1080p` row
+- Click `Transcode` restart on CANCELLED `720p` row
+- Wait until both tasks are `PENDING|PROCESSING|STARTING` with Cancel buttons
+- Wait until both tasks reach `COMPLETED` with Download links (up to 5 min)
+- For each task (`1080p`, `720p`): verify `download` attribute contains height+`.mp4`, click Download, verify `< 400` response
+- Delete the uploaded video from Videos list
+- Sign out
 
-Each preset available to the user's tariff is shown as a block with:
-- An `<h6>` heading: `{preset.title} ({videoCodec}/{audioCodec}/{format})`
-- A row of resolution buttons: `{width}x{height}` for each height in `preset.bitrate`
-  - For **landscape** videos (width > height): button label is `{calculatedWidth}x{height}`
-  - For **vertical** videos (height > width): button label is `{height}x{calculatedWidth}` (dimensions swapped)
-- An expected size hint under each button: `~X MB` (calculated from bitrate × duration)
-- This section is **hidden** if the video has no `width`/`height` metadata yet
+#### Phase 6 — Admin deletes isolated user
 
-### Transcoding Tasks
+- Login as admin
+- Filter and delete the isolated user
+- Sign out
 
-A table showing all tasks started for this video:
-- Columns: **Preset** (preset title), **Resolution** (`{height}p`), **Status**, **Progress**, **Created**, **Actions**
-- Actions: `Cancel` (PENDING/PROCESSING), `Download` (COMPLETED), `Transcode` restart (CANCELLED)
-- This section is **hidden** if no tasks exist for this video
+**Cleanup in `finally`**: if video or user were not deleted during the test run, cleanup is attempted automatically.
 
-### Vertical Video Handling
+---
 
-Previously, vertical videos (height > width) could not be transcoded or had restrictions.
-Now vertical videos are fully supported:
-- Resolution buttons show dimensions swapped: `{height}x{width}` instead of `{width}x{height}`
-- The backend `Transcode.php` swaps `width`/`height` in the ffmpeg `-vf scale` filter for vertical videos
-- The `Start new Video Transcoding Task` section is hidden only when video metadata (width/height) is absent
+## Download filename format
+
+All completed tasks produce download links with the `download` attribute set to:
+
+```
+{videoTitle}-{audioCodec}-{videoCodec}-{height}p.{format}
+```
+
+Example: `2022_10_04_Two_Maxes-04-renamed-aac-h264-720p.mp4`
+
+This attribute updates in realtime when the video is renamed (via Mercure SSE `app:video` message updating `dto.video`).
+
+---
+
+## Realtime updates (SSE) in tests
+
+Tests `04`–`08` and `prod/01` do **not reload the page** during status polling. All task status/progress updates are received via Mercure SSE and applied by `applyTaskRealtimeUpdate` directly to `state.dto.value.tasks`. Tests poll `readPresetTaskState` (which reads DOM) to observe realtime changes.
+
+Mercure messages are captured to `mercure-sse.json` attachment via `window.__mercure_messages` for debugging.
+
+Console logs are captured and attached via `attachConsoleCapture` from `consoleCapture.js`.
+
+---
 
 ## Execution order
 
-- `01.admin.login.js`
-- `02.upload.video.js`
-- `03.admin.crud.js`
-- `04.transcode.flow.js`
-- `05.task.state.flow.js`
-- `06.multi.preset.flow.js`
-- `07.parallel.transcode.js`
-- `08.tariff.js`
+```
+01.admin.login.js
+02.upload.video.js
+03.admin.crud.js
+04.transcode.flow.js
+05.task.state.flow.js
+06.multi.preset.flow.js
+07.parallel.transcode.js
+08.tariff.js
+```
 
 ## Data dependencies
 
-- `02` uploads the original source video fixture used by `03` for admin checks.
-- `03` ensures presets `180p` and `FHD`, tariffs (`Free`, `Premium`), and user tariff assignment (`Free` for `test@test.com`) are ready. Additionally, `03` performs admin-side `Mark deleted` actions on the first Task and on the specific Video and verifies UI changes.
-- `04` uploads the source fixture a second time as `2022_10_04_Two_Maxes-04.mp4` and validates the full transcode + delete lifecycle for the `-04` video using preset `180p`.
-- `05` re-uploads the source fixture as `2022_10_04_Two_Maxes-05.mp4` and uses `FHD` from `03` for long-running state-flow checks (progress/cancel/restart).
-- `06` uploads the source fixture as `2022_10_04_Two_Maxes-06.mp4`; relies on `test@test.com` having Free tariff (set by `03`) so that initial tasks stay `PENDING`, verifies the pending-status help tooltip for `180p` and `FHD`, then switches to Premium and adds preset `720p` via admin, and validates all three presets complete and produce downloadable files.
-- `07` relies on `test@test.com` having Premium tariff (`instance=2`, set by `06`) and on preset `720p` existing (created by `06`). Uploads `-07` video and validates simultaneous PROCESSING of `FHD` + `720p` across two worker replicas.
-- `08` relies on baseline tariffs/presets created earlier (`03`, `06`) and intentionally uses `-08-*` file suffixes to avoid clashing with `07`'s existing `-07` fixture name. It mutates the admin user's tariff repeatedly, so it must stay last in the sequence.
+| Test | Creates | Requires |
+|---|---|---|
+| `02` | Video `…-02` (renamed) | — |
+| `03` | Presets (Standard/FHD), Tariffs (Free/Premium), user `test@test.com`; marks `…-02` deleted | `02` uploaded the video |
+| `04` | Video `…-04` (uploads, transcodes, renames, deletes) | `03` created presets + `test@test.com` |
+| `05` | Video `…-05` (uploads, transcodes FHD, cancel/restart) | `03` created FHD preset; assigns Premium to admin temporarily |
+| `06` | Video `…-06`; upgrades `test@test.com` to Premium | `03` created `test@test.com` with Free; `05` left admin on some tariff |
+| `07` | Video `…-07` | `test@test.com` has Premium (from `06`); `Standard` preset exists |
+| `08` | Videos `…-08-*`; creates 4 tariff variants; deletes old `…-05` video | Baseline Free tariff, Standard preset, `test@test.com` |
 
 ## Local run in release stack
 
@@ -262,10 +393,10 @@ bash release.check.sh
 
 Artifacts are saved under `develop/release.check/<PROJECT_NAME>/playwright`.
 
-## Click new test
+## Record a new test
 
-- start docker-compose environment
-- start local xServer (like vcxsrv)
-- docker exec -it relcheck_0_0_3_1774763384-playwright-1 bash
-- export DISPLAY=192.168.2.70:0
-- npx playwright codegen http://nginx
+- Start docker-compose environment
+- Start local X server (e.g. VcXsrv)
+- `docker exec -it relcheck_0_0_3_XXXXXXXX-playwright-1 bash`
+- `export DISPLAY=192.168.2.70:0`
+- `npx playwright codegen http://nginx`
