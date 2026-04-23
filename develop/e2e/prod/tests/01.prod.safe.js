@@ -307,7 +307,7 @@ test.describe('prod-safe isolated smoke', () => {
       await shot(page, testInfo, '14-1080p-progress-above-30.png');
 
       // Cancel the 1080p task (Cancel button is in the active task row)
-      const processing1080Row = activeTaskRowByPresetAndHeight(page, STANDARD_PRESET, 1080);
+      let processing1080Row = activeTaskRowByPresetAndHeight(page, STANDARD_PRESET, 1080);
       await processing1080Row.getByRole('button', { name: 'Cancel' }).click({ timeout: UI_TIMEOUT });
       await shot(page, testInfo, '15-1080p-cancel-clicked.png');
 
@@ -339,12 +339,20 @@ test.describe('prod-safe isolated smoke', () => {
       await pending1080Row.getByRole('button', { name: 'Cancel' }).click({ timeout: UI_TIMEOUT });
       await shot(page, testInfo, '19-1080p-pending-cancel-clicked.png');
 
-      await waitForPresetState(
-        page, STANDARD_PRESET, 1080,
+      // Cancel the pending 720p task
+      const pending720Row = activeTaskRowByPresetAndHeight(page, STANDARD_PRESET, 720);
+      await pending720Row.getByRole('button', { name: 'Cancel' }).click({ timeout: UI_TIMEOUT });
+      await shot(page, testInfo, '19-720p-pending-cancel-clicked.png');
+
+      await waitForAllPresets(
+        page,
+        REQUIRED_TASKS,
         (state) => state.status === 'CANCELLED' && state.hasTranscode,
-        '1080p cancelled after pending cancellation',
+        'all required tasks are cancelled',
+        10000,
+        2000,
       );
-      await shot(page, testInfo, '20-1080p-pending-cancelled.png');
+      await shot(page, testInfo, '20-pending-cancelled.png');
 
       await logoutToPublic(page);
       await shot(page, testInfo, '21-user-sign-out-before-upgrade.png');
@@ -364,19 +372,26 @@ test.describe('prod-safe isolated smoke', () => {
       await openVideoDetailsByTitle(page, run.videoBaseName);
       await shot(page, testInfo, '25-user-video-card-reopened.png');
 
-      // Start transcoding for each required task (restart from cancelled row or start fresh)
-      for (const task of REQUIRED_TASKS) {
-        await startTaskForHeight(page, task.title, task.height);
-        await shot(page, testInfo, `26-transcode-started-${task.height}p.png`);
-        await page.waitForTimeout(500);
-      }
+      const transcodingSection = page.locator('#transcoding-tasks-section');
+
+      const row1080p = transcodingSection
+        .locator('tr')
+        .filter({ has: page.locator('td', { hasText: '1080p' }) });
+      await row1080p.getByRole('button', { name: 'Transcode' }).click({ timeout: UI_TIMEOUT });
+      await shot(page, testInfo, '26-1080p-transcode-clicked.png');
+
+      const row720p = transcodingSection
+        .locator('tr')
+        .filter({ has: page.locator('td', { hasText: '720p' }) });
+      await row720p.getByRole('button', { name: 'Transcode' }).click({ timeout: UI_TIMEOUT });
+      await shot(page, testInfo, '26-720p-transcode-clicked.png');
 
       await waitForAllPresets(
         page,
         REQUIRED_TASKS,
         (state) => state.hasCancel && (state.status === 'PENDING' || state.status === 'PROCESSING' || state.status === 'STARTING'),
         'all required tasks to become pending/processing with cancel buttons',
-        240000,
+        10000,
         2000,
       );
       await shot(page, testInfo, '27-required-tasks-started.png');
@@ -386,8 +401,8 @@ test.describe('prod-safe isolated smoke', () => {
         REQUIRED_TASKS,
         (state) => state.status === 'COMPLETED' && state.hasDownload,
         'all required tasks to complete with download links',
-        60 * 1000,
-        5000,
+        5 * 60 * 1000,
+        2500,
       );
       await shot(page, testInfo, '28-required-tasks-completed.png');
 
