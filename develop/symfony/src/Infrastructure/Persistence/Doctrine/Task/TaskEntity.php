@@ -13,7 +13,8 @@ use Symfony\Component\Uid\UuidV4 as SymfonyUuid;
 #[ORM\Entity(repositoryClass: TaskRepository::class)]
 #[ORM\Table(name: 'task')]
 #[ORM\Index(name: 'idx_task_video_id', columns: ['video_id'])]
-#[ORM\Index(name: 'idx_task_user_storage', columns: ['user_id'])]
+// Partial index for active (not deleted) tasks per user
+#[ORM\Index(name: 'idx_task_user_active', columns: ['user_id'], options: ['where' => '(deleted = false)'])]
 class TaskEntity
 {
     #[ORM\Id]

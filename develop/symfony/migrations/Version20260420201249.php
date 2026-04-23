@@ -30,12 +30,13 @@ final class Version20260420201249 extends AbstractMigration
         $this->addSql('CREATE TABLE task (id UUID NOT NULL, status INT NOT NULL, progress INT NOT NULL, created_at TIMESTAMP(0) WITHOUT TIME ZONE NOT NULL, updated_at TIMESTAMP(0) WITHOUT TIME ZONE DEFAULT NULL, started_at TIMESTAMP(0) WITHOUT TIME ZONE DEFAULT NULL, meta JSON NOT NULL, deleted BOOLEAN DEFAULT false NOT NULL, video_id UUID NOT NULL, preset_id UUID NOT NULL, user_id UUID DEFAULT NULL, PRIMARY KEY (id))');
         $this->addSql('CREATE INDEX IDX_527EDB2580688E6F ON task (preset_id)');
         $this->addSql('CREATE INDEX idx_task_video_id ON task (video_id)');
-        $this->addSql('CREATE INDEX idx_task_user_storage ON task (user_id)');
+        $this->addSql('CREATE INDEX idx_task_user_active ON task (user_id) WHERE (deleted = false)');
         $this->addSql('CREATE TABLE "user" (id UUID NOT NULL, email VARCHAR(180) NOT NULL, roles JSON NOT NULL, password VARCHAR(255) DEFAULT NULL, created_at TIMESTAMP(0) WITHOUT TIME ZONE NOT NULL, logined_at TIMESTAMP(0) WITHOUT TIME ZONE DEFAULT NULL, tariff_id UUID DEFAULT NULL, PRIMARY KEY (id))');
         $this->addSql('CREATE INDEX IDX_8D93D64992348FD2 ON "user" (tariff_id)');
         $this->addSql('CREATE UNIQUE INDEX UNIQ_IDENTIFIER_EMAIL ON "user" (email)');
         $this->addSql('CREATE TABLE video (id UUID NOT NULL, title VARCHAR(255) NOT NULL, extension VARCHAR(10) NOT NULL, created_at TIMESTAMP(0) WITHOUT TIME ZONE NOT NULL, updated_at TIMESTAMP(0) WITHOUT TIME ZONE DEFAULT NULL, meta JSONB NOT NULL, deleted BOOLEAN DEFAULT false NOT NULL, user_id UUID NOT NULL, PRIMARY KEY (id))');
         $this->addSql('CREATE INDEX IDX_7CC7DA2CA76ED395 ON video (user_id)');
+        $this->addSql('CREATE INDEX idx_video_user_active ON video (user_id) WHERE (deleted = false)');
         $this->addSql('ALTER TABLE tariff_preset ADD CONSTRAINT FK_3C8F39A2CE73AC3B FOREIGN KEY (tariff_entity_id) REFERENCES tariff (id) ON DELETE CASCADE');
         $this->addSql('ALTER TABLE tariff_preset ADD CONSTRAINT FK_3C8F39A2437EEC20 FOREIGN KEY (preset_entity_id) REFERENCES preset (id) ON DELETE CASCADE');
         $this->addSql('ALTER TABLE task ADD CONSTRAINT FK_527EDB2529C1004E FOREIGN KEY (video_id) REFERENCES video (id) NOT DEFERRABLE');
@@ -87,8 +88,10 @@ final class Version20260420201249 extends AbstractMigration
         $this->addSql('DROP TABLE preset');
         $this->addSql('DROP TABLE tariff');
         $this->addSql('DROP TABLE tariff_preset');
+        $this->addSql('DROP INDEX IF EXISTS idx_task_user_active');
         $this->addSql('DROP TABLE task');
         $this->addSql('DROP TABLE "user"');
+        $this->addSql('DROP INDEX IF EXISTS idx_video_user_active');
         $this->addSql('DROP TABLE video');
     }
 }
