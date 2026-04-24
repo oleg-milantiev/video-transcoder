@@ -17,7 +17,9 @@ use App\Infrastructure\Persistence\Doctrine\Preset\PresetEntity;
 use App\Infrastructure\Persistence\Doctrine\Shared\Repository\PaginatedRepositoryTrait;
 use App\Infrastructure\Persistence\Doctrine\User\UserEntity;
 use App\Infrastructure\Persistence\Doctrine\Video\VideoEntity;
+use DateTimeImmutable;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\DBAL\Exception;
 use Doctrine\ORM\Exception\ORMException;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Component\Uid\UuidV4 as SymfonyUuid;
@@ -94,6 +96,9 @@ class TaskRepository extends ServiceEntityRepository implements TaskRepositoryIn
         return self::mapToDomain($entity);
     }
 
+    /**
+     * @throws Exception
+     */
     public function findForTranscode(Uuid $videoId, Uuid $presetId, Uuid $userId, int $height): ?Task
     {
         $conn = $this->getEntityManager()->getConnection();
@@ -133,11 +138,14 @@ class TaskRepository extends ServiceEntityRepository implements TaskRepositoryIn
         return array_map(static fn (TaskEntity $entity): Task => self::mapToDomain($entity), $entities);
     }
 
+    /**
+     * @throws Exception
+     */
     public function getDetailsByVideoId(Uuid $videoId): array
     {
         $conn = $this->getEntityManager()->getConnection();
 
-        // todo DRY с шедулером в view
+        // todo DRY с шедулером и getFirstPendingTaskWillStartAt в view
         $sql = <<<SQL
             WITH
             user_metrics AS (
@@ -220,6 +228,9 @@ class TaskRepository extends ServiceEntityRepository implements TaskRepositoryIn
         );
     }
 
+    /**
+     * @throws Exception
+     */
     public function findDeletedTaskForCleanup(): array
     {
         $conn = $this->getEntityManager()->getConnection();
@@ -239,6 +250,9 @@ class TaskRepository extends ServiceEntityRepository implements TaskRepositoryIn
         }, $rows);
     }
 
+    /**
+     * @throws Exception
+     */
     public function getScheduled(): array
     {
         $conn = $this->getEntityManager()->getConnection();
@@ -311,6 +325,115 @@ class TaskRepository extends ServiceEntityRepository implements TaskRepositoryIn
             ),
             $stmt->fetchAllAssociative(),
         );
+    }
+
+    /**
+     * @throws Exception
+     */
+    public function getActiveCountByStatus(Uuid $userId): array
+    {
+        $conn = $this->getEntityManager()->getConnection();
+        $sql = <<<'SQL'
+            SELECT status, COUNT(id) AS count
+            FROM task
+            WHERE user_id = :user_id AND deleted = false
+            GROUP BY status
+        SQL;
+
+        $ret = [];
+        foreach ($conn->executeQuery($sql, ['user_id' => $userId->toRfc4122()])->fetchAllAssociative() as $row) {
+            $ret[$row['status']] = (int)$row['count'];
+        }
+
+        return $ret;
+    }
+
+    /**
+     * @throws Exception
+     */
+    public function getActiveCount(Uuid $userId): int
+    {
+        $conn = $this->getEntityManager()->getConnection();
+
+        $sql = <<< SQL
+            SELECT count(*) AS c
+            FROM task t
+            WHERE t.user_id = :userId
+              AND t.deleted = false
+        SQL;
+
+        return (int) $conn->executeQuery($sql, ['userId' => $userId->toRfc4122()])->fetchOne();
+    }
+
+    /**
+     * @throws Exception
+     */
+    public function getTotalCount(Uuid $userId): int
+    {
+        $conn = $this->getEntityManager()->getConnection();
+
+        $sql = <<< SQL
+            SELECT count(*) AS c
+            FROM task t
+            WHERE t.user_id = :userId
+        SQL;
+
+        return (int) $conn->executeQuery($sql, ['userId' => $userId->toRfc4122()])->fetchOne();
+    }
+
+    /**
+     * @throws Exception
+     * @throws \DateMalformedStringException
+     */
+    public function getFirstPendingTaskWillStartAt(Uuid $userId): ?DateTimeImmutable
+    {
+        $conn = $this->getEntityManager()->getConnection();
+
+        $sql = <<< SQL
+            WITH
+            user_metrics AS (
+                -- from scheduler for one user.id
+                SELECT
+                    t.user_id,
+                    COUNT(CASE WHEN t.status IN (2, 3) THEN 1 END) AS active_count, -- щас выполняется N
+                    MAX(t.started_at) AS last_start_time                            -- последний запуск в хх:хх:хх
+                FROM task t
+                WHERE t.user_id = '123e4567-e89b-42d3-a456-426614174000'
+                GROUP BY t.user_id
+            ),
+            user_metrics_tariff AS (
+                SELECT
+                    m.*, -- user_id,active_count,last_start_time
+                    tt.instance,
+                    tt.delay
+                FROM user_metrics m
+                JOIN "user" u ON u.id = m.user_id
+                JOIN tariff tt ON tt.id = u.tariff_id
+            ),
+            first_pending_task AS (
+                SELECT
+                    t.id, t.user_id
+                FROM task t
+                WHERE t.user_id = '123e4567-e89b-42d3-a456-426614174000'
+                  AND t.deleted = false
+                  AND t.status = 1 -- Pending
+                ORDER BY t.id
+                LIMIT 1
+            )
+            SELECT
+                CASE WHEN active_count >= instance
+                    THEN
+                        last_start_time + ((m.delay + 100) || ' seconds')::interval -- todo через сколько секунд закончится первый активный кодинг (expectTime в task.meta при старте транскода. Да и при Progress обновлять)
+                    ELSE
+                        last_start_time + (m.delay || ' seconds')::interval
+                END as will_start_at
+            FROM first_pending_task t
+            JOIN user_metrics_tariff m ON t.user_id = m.user_id
+        SQL;
+
+        $date = $conn->executeQuery($sql, ['userId' => $userId->toRfc4122()])->fetchOne();
+
+        return $date ? new DateTimeImmutable($date) : null;
     }
 
     protected static function mapToDomain(TaskEntity $entity): Task

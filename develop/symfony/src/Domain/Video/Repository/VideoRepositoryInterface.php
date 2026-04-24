@@ -12,6 +12,20 @@ interface VideoRepositoryInterface extends PaginatedRepositoryInterface
     public function findById(Uuid $id): ?Video;
 
     /**
+     * Get active (not deleted) videos count
+     * @param Uuid $userId
+     * @return int
+     */
+    public function getActiveCount(Uuid $userId): int;
+
+    /**
+     * Get all (include deleted) videos count
+     * @param Uuid $userId
+     * @return int
+     */
+    public function getTotalCount(Uuid $userId): int;
+
+    /**
      * @return array<int, Video>
      */
     public function findDeletedVideoForCleanup(): array;

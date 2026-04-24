@@ -57,6 +57,9 @@ class VideoRepository extends ServiceEntityRepository implements VideoRepository
         return $entity ? self::mapToDomain($entity) : null;
     }
 
+    /**
+     * @throws Exception
+     */
     public function findDeletedVideoForCleanup(): array
     {
         $conn = $this->getEntityManager()->getConnection();
@@ -79,5 +82,38 @@ class VideoRepository extends ServiceEntityRepository implements VideoRepository
     protected static function mapToDomain(VideoEntity $entity): Video
     {
         return VideoMapper::toDomain($entity);
+    }
+
+    /**
+     * @throws Exception
+     */
+    public function getActiveCount(Uuid $userId): int
+    {
+        $conn = $this->getEntityManager()->getConnection();
+
+        $sql = <<< SQL
+            SELECT count(*) AS c
+            FROM video v
+            WHERE v.user_id = :userId
+              AND v.deleted = false
+        SQL;
+
+        return (int) $conn->executeQuery($sql, ['userId' => $userId->toRfc4122()])->fetchOne();
+    }
+
+    /**
+     * @throws Exception
+     */
+    public function getTotalCount(Uuid $userId): int
+    {
+        $conn = $this->getEntityManager()->getConnection();
+
+        $sql = <<< SQL
+            SELECT count(*) AS c
+            FROM video v
+            WHERE v.user_id = :userId
+        SQL;
+
+        return (int) $conn->executeQuery($sql, ['userId' => $userId->toRfc4122()])->fetchOne();
     }
 }

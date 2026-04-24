@@ -17,8 +17,8 @@ function sectionCard(iconLabel, title, bodyContent) {
 
 function infoRow(label, value) {
     return h('div', { class: 'row mb-2' }, [
-        h('div', { class: 'col-sm-5 text-muted' }, label),
-        h('div', { class: 'col-sm-7 fw-semibold' }, value),
+        h('div', { class: 'col-sm-7 text-muted' }, label),
+        h('div', { class: 'col-sm-5 fw-semibold' }, value),
     ]);
 }
 
@@ -141,11 +141,12 @@ function renderTariffBlock(tariff) {
 
 function renderVideosBlock(dto) {
     return sectionCard('🎬', 'Videos & Transcoding', [
-        infoRow('Videos uploaded', dto?.videoCount ?? '—'),
-        infoRow('Transcoding sessions total', dto?.taskCount ?? '—'),
-        infoRow('Currently transcoding', '—'),
-        infoRow('Tasks in queue', '—'),
-        infoRow('Next encoding starts in', '—'),
+        infoRow('Videos active / total', (dto?.statistics?.video?.active ?? '—') +' / '+ (dto?.statistics?.video?.total ?? '—')),
+        infoRow('Transcoding active / total', (dto?.statistics?.task?.active ?? '—') +' / '+ (dto?.statistics?.task?.total ?? '—')),
+        infoRow('Currently transcoding', dto?.statistics?.task?.processing ?? '—'),
+        infoRow('Tasks in queue', dto?.statistics?.task?.queue ?? '—'),
+        infoRow('Completed transcoding', dto?.statistics?.task?.completed ?? '—'),
+        infoRow('Next encoding starts at', dto?.statistics?.task?.willStartAt ?? '—'),
     ]);
 }
 
