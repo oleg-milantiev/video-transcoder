@@ -63,11 +63,12 @@ class SPAController extends AbstractController
                     'patch' => str_replace($dummyUuid, '__UUID__', $this->generateUrl('api_video_patch', ['id' => $dummyUuid])),
                 ],
                 'task' => [
-                    'list' => $this->generateUrl('api_task_list'),
-                    'cancel' => str_replace($dummyTaskId, '__TASK_ID__', $this->generateUrl('api_task_cancel', ['id' => $dummyTaskId])),
-                    'download' => str_replace($dummyTaskId, '__TASK_ID__', $this->generateUrl('task_download', ['id' => $dummyTaskId])),
-                ],
-                'contact' => $this->generateUrl('api_contact'),
+                     'list' => $this->generateUrl('api_task_list'),
+                     'cancel' => str_replace($dummyTaskId, '__TASK_ID__', $this->generateUrl('api_task_cancel', ['id' => $dummyTaskId])),
+                     'download' => str_replace($dummyTaskId, '__TASK_ID__', $this->generateUrl('task_download', ['id' => $dummyTaskId])),
+                 ],
+                 'profile' => $this->generateUrl('api_profile'),
+                 'contact' => $this->generateUrl('api_contact'),
             ],
             'tariff' => [
                 'title' => $user->tariff?->title,

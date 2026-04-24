@@ -66,13 +66,57 @@ class StorageRepository implements StorageRepositoryInterface
             WHERE deleted = false
         SQL;
 
-        $result = $conn->executeQuery($sql);
-        return $result->fetchOne();
+        return (int) $conn->executeQuery($sql)->fetchOne();
     }
 
-    public function getStorageMetrics(Uuid $userId): array
+    public function getDeletedIn24hSize(Uuid $userId): int
     {
-        // todo
-        return [];
+        $conn = $this->em->getConnection();
+
+        $sql = <<< SQL
+            WITH active_user_videos AS (
+                SELECT
+                    (v.meta->>'size')::bigint AS size,
+                    v.id,
+                    v.user_id,
+                    v.created_at
+                FROM video v
+                WHERE v.user_id = :userId
+                  AND v.deleted = false
+            ),
+            current_storage AS (
+                SELECT sum(size) AS size_sum
+                FROM active_user_videos t
+            ),
+            will_deleted_in24h_videos AS (
+                SELECT
+                    v.id,
+                    v.size
+                FROM active_user_videos v
+                JOIN "user" u ON v.user_id = u.id
+                JOIN tariff t ON u.tariff_id = t.id
+                WHERE
+                    v.created_at <= (NOW() - (t.storage_hour || ' hours')::interval + '24 hours'::interval)
+            ),
+            will_deleted_in24h_videos_sum AS (
+                SELECT
+                    sum(size) AS size_sum
+                FROM will_deleted_in24h_videos
+            ),
+            will_deleted_in24h_tasks_sum AS (
+                SELECT
+                    sum((COALESCE(t.meta->>'size', t.meta->>'sizeExpected'))::bigint) AS size_sum
+                FROM will_deleted_in24h_videos v
+                JOIN task t ON v.id = t.video_id
+                WHERE t.deleted = false
+            )
+            SELECT
+                COALESCE(current_storage.size_sum, 0) AS storage_size,
+                COALESCE(will_deleted_in24h_videos_sum.size_sum, 0) +
+                COALESCE(will_deleted_in24h_tasks_sum.size_sum, 0) AS size
+            FROM current_storage, will_deleted_in24h_videos_sum, will_deleted_in24h_tasks_sum;
+        SQL;
+
+        return (int) $conn->executeQuery($sql, ['userId' => $userId->toRfc4122()])->fetchOne();
     }
 }

@@ -1,11 +1,7 @@
 import { h } from 'vue';
 import { bytesToHuman } from '../shared.js';
-import { PLANS, renderPlanCard, renderFeature } from '../tariff/planCard.js';
-import {
-    formatBytes,
-    computeStoragePercent,
-    computeStorageFreeBytes,
-} from '../tabs/TariffHint.js';
+import { PLANS, renderFeature } from '../tariff/planCard.js';
+import { formatBytes } from '../tabs/TariffHint.js';
 
 // ─── helpers ──────────────────────────────────────────────────────────────────
 
@@ -28,9 +24,13 @@ function infoRow(label, value) {
 
 // ─── blocks ───────────────────────────────────────────────────────────────────
 
-function renderUserBlock(user, tariff) {
+function renderUserBlock(user, tariff, dto) {
     const tariffTitle = tariff?.title ?? '—';
     const isFree = !tariff?.title || tariff.title.toLowerCase() === 'free';
+
+    const memberSince = dto?.memberSince
+        ? new Date(dto.memberSince).toLocaleDateString()
+        : '—';
 
     const tariffCell = [
         h('span', { class: `badge ${isFree ? 'bg-secondary' : 'bg-primary'} me-2` }, tariffTitle),
@@ -40,8 +40,8 @@ function renderUserBlock(user, tariff) {
     ];
 
     return sectionCard('👤', 'Account', [
-        infoRow('Email', user?.identifier ?? '—'),
-        infoRow('Member since', '—'),
+        infoRow('Email', user?.identifier ?? dto?.email ?? '—'),
+        infoRow('Member since', memberSince),
         infoRow('Current plan', tariffCell),
     ]);
 }
@@ -139,34 +139,43 @@ function renderTariffBlock(tariff) {
     }
 }
 
-function renderVideosBlock() {
+function renderVideosBlock(dto) {
     return sectionCard('🎬', 'Videos & Transcoding', [
-        infoRow('Videos uploaded', '—'),
-        infoRow('Transcoding sessions total', '—'),
+        infoRow('Videos uploaded', dto?.videoCount ?? '—'),
+        infoRow('Transcoding sessions total', dto?.taskCount ?? '—'),
         infoRow('Currently transcoding', '—'),
         infoRow('Tasks in queue', '—'),
         infoRow('Next encoding starts in', '—'),
     ]);
 }
 
-function renderStorageBlock(tariff) {
-    if (!tariff?.storage) {
+function renderStorageBlock(tariff, dto) {
+    // Build storage object from dto if available, otherwise use tariff config
+    let storage = null;
+    if (dto && (dto.storageUsedBytes !== undefined || dto.storageMaxBytes !== undefined)) {
+        storage = {
+            now: dto.storageUsedBytes ?? 0,
+            max: dto.storageMaxBytes ?? 0,
+            hour: tariff?.storage?.hour ?? 0,
+        };
+    } else if (tariff?.storage) {
+        storage = tariff.storage;
+    }
+
+    if (!storage?.max) {
         return sectionCard('💾', 'Storage', [
             h('p', { class: 'text-muted mb-0' }, 'No storage information available.'),
         ]);
     }
 
-    const storagePercent = computeStoragePercent(tariff);
-    const storageFreeBytes = computeStorageFreeBytes(tariff);
-    const storageNow = tariff.storage.now ?? 0;
-    const storageMax = tariff.storage.max ?? 0;
-    const storageHour = tariff.storage.hour ?? 0;
+    const storagePercent = Math.round((storage.now / storage.max) * 100) || 0;
+    const storageFreeBytes = Math.max(0, storage.max - storage.now);
 
     const barColor = storagePercent >= 90 ? 'bg-danger' : storagePercent >= 70 ? 'bg-warning' : 'bg-primary';
 
     const progressBar = h('div', { class: 'mt-1 mb-3' }, [
         h('div', { class: 'd-flex justify-content-between small text-secondary mb-1' }, [
-            h('span', `${formatBytes(storageNow)} used of ${formatBytes(storageMax)}`),
+            h('span', `${formatBytes(storage.now)} used of ${formatBytes(storage.max)}`),
             h('span', [
                 `${storagePercent}%`,
                 storageFreeBytes > 0
@@ -182,19 +191,19 @@ function renderStorageBlock(tariff) {
         ]),
     ]);
 
-    const retentionNote = storageHour > 0
+    const retentionNote = storage.hour > 0
         ? h('p', { class: 'text-muted small mb-0 mt-3' }, [
             h('span', { class: 'me-1' }, '⏱'),
-            `Files older than ${storageHour} hours may be automatically removed.`,
+            `Videos older than ${storage.hour} hours will be automatically removed.`,
         ])
         : null;
 
     return sectionCard('💾', 'Storage', [
         progressBar,
-        infoRow('Used', bytesToHuman(storageNow)),
+        infoRow('Used', bytesToHuman(storage.now)),
         infoRow('Free', bytesToHuman(storageFreeBytes)),
-        infoRow('Total quota', bytesToHuman(storageMax)),
-        infoRow('Files expiring soon', '—'),
+        infoRow('Total quota', bytesToHuman(storage.max)),
+        infoRow('Expiring in 24h', bytesToHuman(dto?.storage?.delete24 ?? 0)),
         retentionNote,
     ]);
 }
@@ -237,6 +246,7 @@ export function renderProfile(vm) {
     const cfg = vm.config || {};
     const user = cfg.user || null;
     const tariff = cfg.tariff || null;
+    const dto = vm.dto || null;
 
     return h('div', { class: 'py-2' }, [
         h('div', { class: 'd-flex justify-content-between align-items-start mb-3' }, [
@@ -246,12 +256,12 @@ export function renderProfile(vm) {
             ]),
             backBtn,
         ]),
-        renderUserBlock(user, tariff),
+        renderUserBlock(user, tariff, dto),
         renderTariffBlock(tariff),
         // Two-column layout for Videos and Storage
         h('div', { class: 'row g-4' }, [
-            h('div', { class: 'col-12 col-lg-6' }, [renderVideosBlock()]),
-            h('div', { class: 'col-12 col-lg-6' }, [renderStorageBlock(tariff)]),
+            h('div', { class: 'col-12 col-lg-6' }, [renderVideosBlock(dto)]),
+            h('div', { class: 'col-12 col-lg-6' }, [renderStorageBlock(tariff, dto)]),
         ]),
     ]);
 }

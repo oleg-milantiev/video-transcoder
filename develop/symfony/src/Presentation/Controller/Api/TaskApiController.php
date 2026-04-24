@@ -4,7 +4,6 @@ declare(strict_types=1);
 namespace App\Presentation\Controller\Api;
 
 use App\Application\Exception\InvalidUuidException;
-use App\Application\Exception\QueryException;
 use App\Application\Exception\TaskCancelAccessDeniedException;
 use App\Application\Exception\TaskNotFoundException;
 use App\Application\Exception\VideoNotFoundException;
