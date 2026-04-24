@@ -97,6 +97,9 @@ class UserCrudController extends AbstractCrudController
                 ->hideOnForm(),
             DateTimeField::new('loginedAt')
                 ->hideOnForm(),
+            AssociationField::new('payments')
+                ->onlyOnDetail()
+                ->setLabel('Payments'),
         ];
     }
 

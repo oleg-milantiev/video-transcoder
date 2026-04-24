@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\Persistence\Doctrine\User;
 
+use App\Infrastructure\Persistence\Doctrine\Payment\PaymentEntity;
 use App\Infrastructure\Persistence\Doctrine\Video\VideoEntity;
 use App\Presentation\Validator\Constraints\AtLeastOneAdmin;
 use Doctrine\Common\Collections\ArrayCollection;
@@ -56,6 +57,12 @@ class UserEntity implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\OneToMany(targetEntity: VideoEntity::class, mappedBy: 'user', orphanRemoval: true)]
     public Collection $videos;
 
+    /**
+     * @var Collection<int, PaymentEntity>
+     */
+    #[ORM\OneToMany(targetEntity: PaymentEntity::class, mappedBy: 'user')]
+    public Collection $payments;
+
     #[ORM\Column]
     public \DateTimeImmutable $createdAt;
 
@@ -64,7 +71,8 @@ class UserEntity implements UserInterface, PasswordAuthenticatedUserInterface
 
     public function __construct()
     {
-        $this->videos = new ArrayCollection();
+        $this->videos   = new ArrayCollection();
+        $this->payments = new ArrayCollection();
         $this->createdAt = new \DateTimeImmutable();
     }
 

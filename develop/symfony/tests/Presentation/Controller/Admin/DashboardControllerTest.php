@@ -16,7 +16,7 @@ class DashboardControllerTest extends TestCase
     {
         $controller = new DashboardController();
         $dashboard = $controller->configureDashboard();
-        
+
         self::assertInstanceOf(\EasyCorp\Bundle\EasyAdminBundle\Config\Dashboard::class, $dashboard);
     }
 
@@ -24,10 +24,10 @@ class DashboardControllerTest extends TestCase
     {
         $controller = new DashboardController();
         $menuItems = $controller->configureMenuItems();
-        
+
         self::assertIsIterable($menuItems);
-        
+
         $menuItems = iterator_to_array($menuItems);
-        self::assertCount(7, $menuItems); // Dashboard + 6 entity links
+        self::assertCount(8, $menuItems); // Dashboard + 7 entity links
     }
 }

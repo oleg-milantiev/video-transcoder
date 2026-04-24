@@ -30,6 +30,7 @@ class DashboardController extends AbstractDashboardController
         yield MenuItem::linkToDashboard('Dashboard', 'fa fa-home');
         yield MenuItem::linkTo(UserCrudController::class, 'Users', 'fas fa-users');
         yield MenuItem::linkTo(TariffCrudController::class, 'Tariffs', 'fas fa-money-bill-wave');
+        yield MenuItem::linkTo(PaymentCrudController::class, 'Payments', 'fas fa-credit-card');
         yield MenuItem::linkTo(VideoCrudController::class, 'Videos', 'fas fa-video');
         yield MenuItem::linkTo(PresetCrudController::class, 'Presets', 'fas fa-list');
         yield MenuItem::linkTo(TaskCrudController::class, 'Tasks', 'fas fa-tasks');
