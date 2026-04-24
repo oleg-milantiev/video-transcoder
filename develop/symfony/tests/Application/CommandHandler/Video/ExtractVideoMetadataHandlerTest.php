@@ -615,7 +615,6 @@ class ExtractVideoMetadataHandlerTest extends TestCase
 
         // Trigger inner catch: taskRepository throws when findByVideoId is called in handleMetadataExtractionError
         $taskRepository = $this->createStub(TaskRepositoryInterface::class);
-        $taskRepository->method('getStorageSize')->willReturn(0);
         $taskRepository->method('findByVideoId')->willThrowException(new \RuntimeException('DB connection lost'));
 
         $logService = $this->createMock(LogServiceInterface::class);

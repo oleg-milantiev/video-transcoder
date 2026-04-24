@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\Presentation\Console;
 
 use App\Application\Logging\LogServiceInterface;
-use App\Domain\Video\Repository\VideoRepositoryInterface;
+use App\Domain\Video\Repository\StorageRepositoryInterface;
 use App\Infrastructure\Upload\Maintenance\TusCleanupService;
 use App\Presentation\Console\HourCommand;
 use PHPUnit\Framework\TestCase;
@@ -43,7 +43,7 @@ final class HourCommandTest extends TestCase
             $this->createStub(LogServiceInterface::class),
             $tusCleanupService,
             $lockFactory,
-            $this->createStub(VideoRepositoryInterface::class),
+            $this->createStub(StorageRepositoryInterface::class),
         );
 
         $tester = new CommandTester($command);
@@ -65,7 +65,7 @@ final class HourCommandTest extends TestCase
             $this->createStub(LogServiceInterface::class),
             new TusCleanupService($this->createStub(TusServer::class), $this->createStub(LogServiceInterface::class)),
             $lockFactory,
-            $this->createStub(VideoRepositoryInterface::class),
+            $this->createStub(StorageRepositoryInterface::class),
         );
 
         $tester = new CommandTester($command);
@@ -99,7 +99,7 @@ final class HourCommandTest extends TestCase
             $logService,
             $tusCleanupService,
             $lockFactory,
-            $this->createStub(VideoRepositoryInterface::class),
+            $this->createStub(StorageRepositoryInterface::class),
         );
 
         $tester = new CommandTester($command);
@@ -134,7 +134,7 @@ final class HourCommandTest extends TestCase
             $logService,
             $tusCleanupService,
             $lockFactory,
-            $this->createStub(VideoRepositoryInterface::class),
+            $this->createStub(StorageRepositoryInterface::class),
         );
 
         $tester = new CommandTester($command);

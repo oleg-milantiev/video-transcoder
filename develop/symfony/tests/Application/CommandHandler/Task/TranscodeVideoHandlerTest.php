@@ -38,6 +38,7 @@ use App\Domain\User\ValueObject\TariffVideoSize;
 use App\Domain\User\ValueObject\UserEmail;
 use App\Domain\User\ValueObject\UserRoles;
 use App\Domain\Video\Entity\Video;
+use App\Domain\Video\Repository\StorageRepositoryInterface;
 use App\Domain\Video\Repository\TaskRepositoryInterface;
 use App\Domain\Video\Repository\VideoRepositoryInterface;
 use App\Domain\Video\ValueObject\FileExtension;
@@ -191,6 +192,7 @@ class TranscodeVideoHandlerTest extends TestCase
         MessageBusInterface $eventBus,
          TaskRepositoryInterface $taskRepository,
          VideoRepositoryInterface $videoRepository,
+         StorageRepositoryInterface $storageRepository,
          LogServiceInterface $logService,
          LockFactory $lockFactory,
          TaskCancellationTrigger $cancellationTrigger,
@@ -204,6 +206,7 @@ class TranscodeVideoHandlerTest extends TestCase
              $eventBus,
              $taskRepository,
              $videoRepository,
+             $storageRepository,
              $logService,
              $lockFactory,
              $cancellationTrigger,
@@ -234,6 +237,7 @@ class TranscodeVideoHandlerTest extends TestCase
             $eventBus,
             $taskRepository,
             $this->createStub(VideoRepositoryInterface::class),
+            $this->createStub(StorageRepositoryInterface::class),
             $this->createStub(LogServiceInterface::class),
             $lockFactory,
             new TaskCancellationTrigger(new ArrayAdapter()),
@@ -266,6 +270,7 @@ class TranscodeVideoHandlerTest extends TestCase
             $eventBus,
             $taskRepository,
             $this->createStub(VideoRepositoryInterface::class),
+            $this->createStub(StorageRepositoryInterface::class),
             $this->createStub(LogServiceInterface::class),
             $this->makeLockFactory(acquired: false),
             new TaskCancellationTrigger(new ArrayAdapter()),
@@ -298,6 +303,7 @@ class TranscodeVideoHandlerTest extends TestCase
             $eventBus,
             $taskRepository,
             $videoRepository,
+            $this->createStub(StorageRepositoryInterface::class),
             $this->createStub(LogServiceInterface::class),
             $this->makeLockFactory(acquired: true, expectRelease: true),
             new TaskCancellationTrigger(new ArrayAdapter()),
@@ -339,6 +345,7 @@ class TranscodeVideoHandlerTest extends TestCase
             $eventBus,
             $taskRepository,
             $videoRepository,
+            $this->createStub(StorageRepositoryInterface::class),
             $this->createStub(LogServiceInterface::class),
             $this->makeLockFactory(acquired: true, expectRelease: true),
             $cancellationTrigger,
@@ -376,6 +383,7 @@ class TranscodeVideoHandlerTest extends TestCase
             $eventBus,
             $taskRepository,
             $videoRepository,
+            $this->createStub(StorageRepositoryInterface::class),
             $this->createStub(LogServiceInterface::class),
             $this->makeLockFactory(acquired: true, expectRelease: true),
             new TaskCancellationTrigger(new ArrayAdapter()),
@@ -427,6 +435,7 @@ class TranscodeVideoHandlerTest extends TestCase
             $eventBus,
             $taskRepository,
             $videoRepository,
+            $this->createStub(StorageRepositoryInterface::class),
             $this->createStub(LogServiceInterface::class),
             $this->makeLockFactory(acquired: true, expectRelease: true),
             new TaskCancellationTrigger(new ArrayAdapter()),
@@ -479,6 +488,7 @@ class TranscodeVideoHandlerTest extends TestCase
             $eventBus,
             $taskRepository,
             $videoRepository,
+            $this->createStub(StorageRepositoryInterface::class),
             $this->createStub(LogServiceInterface::class),
             $this->makeLockFactory(acquired: true, expectRelease: true),
             new TaskCancellationTrigger(new ArrayAdapter()),
@@ -547,6 +557,7 @@ class TranscodeVideoHandlerTest extends TestCase
             $eventBus,
             $taskRepository,
             $videoRepository,
+            $this->createStub(StorageRepositoryInterface::class),
             $logService,
             $lockFactory,
             new TaskCancellationTrigger(new ArrayAdapter()),
@@ -594,6 +605,7 @@ class TranscodeVideoHandlerTest extends TestCase
             $eventBus,
             $taskRepository,
             $videoRepository,
+            $this->createStub(StorageRepositoryInterface::class),
             $this->createStub(LogServiceInterface::class),
             $this->makeLockFactory(acquired: true, expectRelease: true),
             new TaskCancellationTrigger(new ArrayAdapter()),
@@ -631,6 +643,7 @@ class TranscodeVideoHandlerTest extends TestCase
             $eventBus,
             $taskRepository,
             $videoRepository,
+            $this->createStub(StorageRepositoryInterface::class),
             $this->createStub(LogServiceInterface::class),
             $this->makeLockFactory(acquired: true, expectRelease: true),
             new TaskCancellationTrigger(new ArrayAdapter()),
@@ -667,6 +680,7 @@ class TranscodeVideoHandlerTest extends TestCase
             $eventBus,
             $taskRepository,
             $videoRepository,
+            $this->createStub(StorageRepositoryInterface::class),
             $this->createStub(LogServiceInterface::class),
             $this->makeLockFactory(acquired: true, expectRelease: true),
             new TaskCancellationTrigger(new ArrayAdapter()),
@@ -692,11 +706,12 @@ class TranscodeVideoHandlerTest extends TestCase
 
         $taskRepository = $this->createStub(TaskRepositoryInterface::class);
         $taskRepository->method('findByIdFresh')->willReturn($task);
-        $taskRepository->method('getStorageSize')->willReturn(0);
 
         $videoRepository = $this->createStub(VideoRepositoryInterface::class);
         $videoRepository->method('findById')->willReturn($video);
-        $videoRepository->method('getStorageSize')->willReturn(0);
+
+        $storageRepository = $this->createStub(StorageRepositoryInterface::class);
+        $storageRepository->method('getUsedStorageSize')->willReturn(0);
 
         $transcodeTaskPreparationService = $this->createMock(TranscodeTaskPreparationService::class);
         $transcodeTaskPreparationService->expects($this->never())->method('prepare');
@@ -709,6 +724,7 @@ class TranscodeVideoHandlerTest extends TestCase
             $eventBus,
             $taskRepository,
             $videoRepository,
+            $storageRepository,
             $this->createStub(LogServiceInterface::class),
             $this->makeLockFactory(acquired: true, expectRelease: true),
             new TaskCancellationTrigger(new ArrayAdapter()),

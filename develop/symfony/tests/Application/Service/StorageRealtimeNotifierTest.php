@@ -11,8 +11,7 @@ use App\Domain\User\Entity\Tariff;
 use App\Domain\User\Entity\User;
 use App\Domain\User\Repository\UserRepositoryInterface;
 use App\Domain\User\ValueObject\TariffStorageGb;
-use App\Domain\Video\Repository\TaskRepositoryInterface;
-use App\Domain\Video\Repository\VideoRepositoryInterface;
+use App\Domain\Video\Repository\StorageRepositoryInterface;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Messenger\Envelope;
 use Symfony\Component\Messenger\MessageBusInterface;
@@ -32,11 +31,8 @@ final class StorageRealtimeNotifierTest extends TestCase
         $userRepository = $this->createStub(UserRepositoryInterface::class);
         $userRepository->method('findById')->willReturn($user);
 
-        $videoRepository = $this->createStub(VideoRepositoryInterface::class);
-        $videoRepository->method('getStorageSize')->willReturn(100 * 1024 * 1024); // 100 MB
-
-        $taskRepository = $this->createStub(TaskRepositoryInterface::class);
-        $taskRepository->method('getStorageSize')->willReturn(50 * 1024 * 1024); // 50 MB
+        $storageRepository = $this->createStub(StorageRepositoryInterface::class);
+        $storageRepository->method('getUsedStorageSize')->willReturn(150 * 1024 * 1024); // 150 MB
 
         $dispatched = [];
         $commandBus = $this->createMock(MessageBusInterface::class);
@@ -47,7 +43,7 @@ final class StorageRealtimeNotifierTest extends TestCase
                 return new Envelope($message);
             });
 
-        $notifier = new StorageRealtimeNotifier($commandBus, $userRepository, $videoRepository, $taskRepository);
+        $notifier = new StorageRealtimeNotifier($commandBus, $userRepository, $storageRepository);
         $notifier->notifyStorageUpdated($userId);
 
         $this->assertCount(1, $dispatched);
@@ -73,8 +69,7 @@ final class StorageRealtimeNotifierTest extends TestCase
         $notifier = new StorageRealtimeNotifier(
             $commandBus,
             $userRepository,
-            $this->createStub(VideoRepositoryInterface::class),
-            $this->createStub(TaskRepositoryInterface::class),
+            $this->createStub(StorageRepositoryInterface::class),
         );
         $notifier->notifyStorageUpdated($userId);
     }
@@ -95,8 +90,7 @@ final class StorageRealtimeNotifierTest extends TestCase
         $notifier = new StorageRealtimeNotifier(
             $commandBus,
             $userRepository,
-            $this->createStub(VideoRepositoryInterface::class),
-            $this->createStub(TaskRepositoryInterface::class),
+            $this->createStub(StorageRepositoryInterface::class),
         );
         $notifier->notifyStorageUpdated($userId);
     }
