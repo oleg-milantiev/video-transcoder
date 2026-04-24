@@ -8,6 +8,7 @@ use App\Domain\Video\Repository\StorageRepositoryInterface;
 use App\Infrastructure\Persistence\Doctrine\User\UserEntity;
 use App\Infrastructure\Security\ApiTokenService;
 use App\Infrastructure\Security\MercureTokenService;
+use DateTimeInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 
 class SPAController extends AbstractController
@@ -39,6 +40,7 @@ class SPAController extends AbstractController
         return [
             'user' => [
                 'id' => $userId->toRfc4122(),
+                'createdAt' => $user->createdAt->format(DateTimeInterface::ATOM),
                 'identifier' => $user->getUserIdentifier(),
             ],
             'token' => [

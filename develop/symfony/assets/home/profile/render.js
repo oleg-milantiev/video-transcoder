@@ -1,5 +1,5 @@
 import { h } from 'vue';
-import { bytesToHuman } from '../shared.js';
+import {bytesToHuman, humanReadableDateTime} from '../shared.js';
 import { PLANS, renderFeature } from '../tariff/planCard.js';
 import { formatBytes } from '../tabs/TariffHint.js';
 
@@ -28,10 +28,6 @@ function renderUserBlock(user, tariff, dto) {
     const tariffTitle = tariff?.title ?? '—';
     const isFree = !tariff?.title || tariff.title.toLowerCase() === 'free';
 
-    const memberSince = dto?.memberSince
-        ? new Date(dto.memberSince).toLocaleDateString()
-        : '—';
-
     const tariffCell = [
         h('span', { class: `badge ${isFree ? 'bg-secondary' : 'bg-primary'} me-2` }, tariffTitle),
         isFree
@@ -40,8 +36,8 @@ function renderUserBlock(user, tariff, dto) {
     ];
 
     return sectionCard('👤', 'Account', [
-        infoRow('Email', user?.identifier ?? dto?.email ?? '—'),
-        infoRow('Member since', memberSince),
+        infoRow('Email', user.identifier),
+        infoRow('Member since', humanReadableDateTime(user.createdAt)),
         infoRow('Current plan', tariffCell),
     ]);
 }
