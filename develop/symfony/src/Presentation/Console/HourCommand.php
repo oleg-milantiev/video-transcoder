@@ -4,7 +4,7 @@ declare(strict_types=1);
 namespace App\Presentation\Console;
 
 use App\Application\Logging\LogServiceInterface;
-use App\Domain\Video\Repository\VideoRepositoryInterface;
+use App\Domain\Video\Repository\StorageRepositoryInterface;
 use App\Infrastructure\Upload\Maintenance\TusCleanupService;
 use Psr\Log\LogLevel;
 use Symfony\Component\Console\Attribute\AsCommand;
@@ -22,7 +22,7 @@ final class HourCommand extends Command
         private readonly LogServiceInterface $logService,
         private readonly TusCleanupService $tusCleanupService,
         private readonly LockFactory $lockFactory,
-        private readonly VideoRepositoryInterface $videoRepository,
+        private readonly StorageRepositoryInterface $storageRepository,
     ) {
         parent::__construct();
     }
@@ -38,13 +38,13 @@ final class HourCommand extends Command
         try {
             $acquired = $lock->acquire();
             if (!$acquired) {
-                $this->logService->log('cron', 'hour', null, LogLevel::DEBUG, 'Another instance is already running');
+                $this->logService->log('cron', 'hour', null, LogLevel::INFO, 'Another instance is already running');
 
                 return Command::SUCCESS;
             }
 
             $deleted = $this->tusCleanupService->cleanupExpiredUploads();
-            $expiredCount = $this->videoRepository->deleteExpiredVideosAndTasks();
+            $expiredCount = $this->storageRepository->deleteExpiredVideosAndTasks();
 
             $this->logService->log('cron', 'hour', null, LogLevel::INFO, 'Finish', [
                 'time' => microtime(true) - $ms,

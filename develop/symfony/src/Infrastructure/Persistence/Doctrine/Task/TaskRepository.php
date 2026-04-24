@@ -239,20 +239,6 @@ class TaskRepository extends ServiceEntityRepository implements TaskRepositoryIn
         }, $rows);
     }
 
-    public function getStorageSize(Uuid $userId): int
-    {
-        $conn = $this->getEntityManager()->getConnection();
-
-        $sql = "SELECT sum((COALESCE(t.meta->>'size', t.meta->>'sizeExpected'))::bigint)
-            FROM task t
-            WHERE t.user_id = :userId
-                AND t.deleted = false";
-
-        $size = $conn->executeQuery($sql, ['userId' => $userId->toRfc4122()])->fetchOne();
-
-        return $size ? (int)$size : 0;
-    }
-
     public function getScheduled(): array
     {
         $conn = $this->getEntityManager()->getConnection();

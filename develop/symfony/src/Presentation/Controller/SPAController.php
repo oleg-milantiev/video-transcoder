@@ -4,8 +4,7 @@ declare(strict_types=1);
 namespace App\Presentation\Controller;
 
 use App\Domain\Shared\ValueObject\Uuid;
-use App\Domain\Video\Repository\TaskRepositoryInterface;
-use App\Domain\Video\Repository\VideoRepositoryInterface;
+use App\Domain\Video\Repository\StorageRepositoryInterface;
 use App\Infrastructure\Persistence\Doctrine\User\UserEntity;
 use App\Infrastructure\Security\ApiTokenService;
 use App\Infrastructure\Security\MercureTokenService;
@@ -16,8 +15,7 @@ class SPAController extends AbstractController
     public function __construct(
         protected readonly ApiTokenService $tokenService,
         protected readonly MercureTokenService $mercureTokenService,
-        protected readonly VideoRepositoryInterface $videoRepository,
-        protected readonly TaskRepositoryInterface $taskRepository,
+        protected readonly StorageRepositoryInterface $storageRepository,
     ) {
     }
 
@@ -80,7 +78,7 @@ class SPAController extends AbstractController
                 'width' => $user->tariff?->maxWidth,
                 'height' => $user->tariff?->maxHeight,
                 'storage' => [
-                    'now' => $this->videoRepository->getStorageSize($userId) + $this->taskRepository->getStorageSize($userId),
+                    'now' => $this->storageRepository->getUsedStorageSize($userId),
                     'max' => (int)($user->tariff?->storageGb * 1024 * 1024 * 1024 ?? 0),
                     'hour' => $user->tariff?->storageHour,
                 ],

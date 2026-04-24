@@ -38,7 +38,7 @@ final class DayCommand extends Command
         try {
             $acquired = $lock->acquire();
             if (!$acquired) {
-                $this->logService->log('cron', 'day', null, LogLevel::DEBUG, 'Another instance is already running');
+                $this->logService->log('cron', 'day', null, LogLevel::INFO, 'Another instance is already running');
 
                 return Command::SUCCESS;
             }

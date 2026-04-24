@@ -8,8 +8,7 @@ use App\Application\DTO\MercureMessageDTO;
 use App\Application\DTO\StorageRealtimePayloadDTO;
 use App\Domain\Shared\ValueObject\Uuid;
 use App\Domain\User\Repository\UserRepositoryInterface;
-use App\Domain\Video\Repository\TaskRepositoryInterface;
-use App\Domain\Video\Repository\VideoRepositoryInterface;
+use App\Domain\Video\Repository\StorageRepositoryInterface;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Messenger\MessageBusInterface;
 
@@ -19,8 +18,7 @@ readonly class StorageRealtimeNotifier
         #[Autowire(service: 'messenger.bus.command')]
         private MessageBusInterface $commandBus,
         private UserRepositoryInterface $userRepository,
-        private VideoRepositoryInterface $videoRepository,
-        private TaskRepositoryInterface $taskRepository,
+        private StorageRepositoryInterface $storageRepository,
     ) {
     }
 
@@ -32,9 +30,7 @@ readonly class StorageRealtimeNotifier
             return;
         }
 
-        $storageNow = $this->videoRepository->getStorageSize($userId)
-            + $this->taskRepository->getStorageSize($userId);
-
+        $storageNow = $this->storageRepository->getUsedStorageSize($userId);
         $storageMax = (int) ($user->tariff()->storageGb()->value() * 1024 * 1024 * 1024);
 
         $dto = StorageRealtimePayloadDTO::fromSizes($storageNow, $storageMax);

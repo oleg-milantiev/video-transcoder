@@ -39,7 +39,7 @@ final class MinuteCommand extends Command
         try {
             $acquired = $lock->acquire();
             if (!$acquired) {
-                $this->logService->log('cron', 'minute', null, LogLevel::DEBUG, 'Another instance is already running');
+                $this->logService->log('cron', 'minute', null, LogLevel::INFO, 'Another instance is already running');
 
                 return Command::SUCCESS;
             }

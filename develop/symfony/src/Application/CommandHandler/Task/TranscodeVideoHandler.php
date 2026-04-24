@@ -17,6 +17,7 @@ use App\Application\Service\Task\TranscodeTaskPreparationService;
 use App\Domain\User\Exception\TariffNotFound;
 use App\Domain\User\Exception\UserNotFound;
 use App\Domain\User\Repository\UserRepositoryInterface;
+use App\Domain\Video\Repository\StorageRepositoryInterface;
 use App\Domain\Video\Repository\TaskRepositoryInterface;
 use App\Domain\Video\Repository\VideoRepositoryInterface;
 use App\Infrastructure\Task\TaskCancellationTrigger;
@@ -38,6 +39,7 @@ final readonly class TranscodeVideoHandler
         private MessageBusInterface $eventBus,
         private TaskRepositoryInterface $taskRepository,
         private VideoRepositoryInterface $videoRepository,
+        private StorageRepositoryInterface $storageRepository,
         private LogServiceInterface $logService,
         private LockFactory $lockFactory,
         private TaskCancellationTrigger $cancellationTrigger,
@@ -134,7 +136,7 @@ final readonly class TranscodeVideoHandler
             }
 
             $fileSizeMb = ($video->size() ?? 0) / 1024 / 1024;
-            $storageNowMb = ($this->videoRepository->getStorageSize($user->id()) + $this->taskRepository->getStorageSize($user->id())) / 1024 / 1024;
+            $storageNowMb = $this->storageRepository->getUsedStorageSize($user->id()) / 1024 / 1024;
             $storageCapacityMb = $tariff->storageGb()->value() * 1024;
             if ($fileSizeMb + $storageNowMb > $storageCapacityMb) {
                 throw StorageSizeExceedsQuota::create($fileSizeMb, $storageNowMb, $storageCapacityMb);

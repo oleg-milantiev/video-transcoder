@@ -14,6 +14,7 @@ use App\Application\Factory\FlashNotificationFactory;
 use App\Application\Factory\VideoFactory;
 use App\Application\Service\Mercure\FlashRealtimeNotifier;
 use App\Application\Service\Video\VideoRealtimeNotifier;
+use App\Domain\Video\Repository\StorageRepositoryInterface;
 use App\Domain\Video\Repository\TaskRepositoryInterface;
 use App\Domain\Video\Exception\VideoSizeExceedsQuota;
 use App\Domain\Video\Exception\VideoFileNotFound;
@@ -37,6 +38,7 @@ final readonly class CreateVideoHandler
         #[Autowire(service: 'messenger.bus.event')]
         private MessageBusInterface $eventBus,
         private VideoRepositoryInterface $videoRepository,
+        private StorageRepositoryInterface $storageRepository,
         private UserRepositoryInterface $userRepository,
         private VideoRealtimeNotifier $videoRealtimeNotifier,
         private FlashRealtimeNotifier $flashRealtimeNotifier,
@@ -104,7 +106,7 @@ final readonly class CreateVideoHandler
             }
 
             // storage size tariff limits
-            $storageNowMb = ($this->videoRepository->getStorageSize($user->id()) + $this->taskRepository->getStorageSize($user->id()))/1024/1024;
+            $storageNowMb = $this->storageRepository->getUsedStorageSize($user->id()) / 1024 / 1024;
             $storageCapacityMb = $tariff->storageGb()->value()*1024;
             if ($fileSizeMb + $storageNowMb > $storageCapacityMb) {
                 unlink($filePath);
