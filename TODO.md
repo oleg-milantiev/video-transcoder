@@ -10,9 +10,6 @@
 ## Sprint 0.1.2 (Дизайн, Тексты)
 
 - в проде все протестировать новым автотестом: создаёт тест тариф, набирает туда все пресеты, загружает видео верт и гориз, кодирует во все пресеты, проверяет скачивание
-- страница профиля
-  - наполнить данными
-  - realtime
 - av1, ожидаемо, ну очень тормозной (и чё?)
 
 ## Sprint 0.1.3 (Тарифы, Оплата)
@@ -74,6 +71,23 @@
 
 ## Backlog
 
+- уведомления в телегу. То ссылки есть, то их нет
+  - [22.04.2026 23:52] Oleg Milantiev: Transcoding started (4f15708e-d1dc-4d13-9046-891e70d6c695)
+    video: prod-20260422 (https://yc.milantiev.com/admin/video/8abd8eab-1540-432f-8549-b2b6c8ce0a3d)
+    preset: Standard video Quality (https://yc.milantiev.com/admin/preset/8646d1a5-3f87-4382-8abe-7341e18ed0f0)
+    user: prod-20260422@example.test (https://yc.milantiev.com/admin/user/7b9a3f5a-8ec9-4d49-9396-67cb5a646c2f)
+    [22.04.2026 23:52] Oleg Milantiev: Transcode requested (16a45aba-946e-4eb3-a22f-b763f8a6e24c)
+    video: prod-20260422
+    preset: Standard video Quality
+    user: prod-20260422@example.test
+  - [22.04.2026 23:52] Oleg Milantiev: ? Video created: 2022_10_04_Two_Maxes (https://yc.milantiev.com/video/92e43d68-29cd-478b-ac80-55c3db2c5be8)
+    By oleg@milantiev.com
+    [22.04.2026 23:52] Oleg Milantiev: ? Video created: prod-20260422
+    By prod-20260422@example.test
+- в лог начала транскодинга добавить высоту
+- загружаешь видео и не влезаешь в тариф? Рекламу перехода на премиум
+- висит Pending? Рекламу перехода на премиум
+- на странице кодирования серым другие пресеты с рекламой перехода на премиум
 - в log аду фильтр по uuid не работает. SQL падает от сравнения uuid со строкой
 - при expire видео и таски удаляются. Можно добавить статус expired.
 - телеграм бот транскодинга. В него же уведомления о готовности
