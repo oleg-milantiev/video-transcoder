@@ -87,7 +87,9 @@ export function renderPlanCard(plan, colClass = 'col-12 col-md-4', config = null
             : h('div', { class: 'fs-5 fw-semibold mb-2 text-success' }, 'Free'),
     ];
 
-    if (plan.isCurrent) {
+    const isCurrent = plan.name === config.tariff.title;
+
+    if (isCurrent) {
         headerChildren.push(
             h('span', { class: 'badge bg-success' }, 'Your current plan')
         );
@@ -101,12 +103,14 @@ export function renderPlanCard(plan, colClass = 'col-12 col-md-4', config = null
         enterpriseBtnAttrs.onClick = () => void openContactUsModal(config);
     }
 
-    const footerBtn = plan.isCurrent
+    const footerBtn = isCurrent
         ? h('button', { class: 'btn btn-outline-secondary w-100', disabled: true }, 'Current plan')
-        : h('button', isEnterprise ? enterpriseBtnAttrs : {
-            class: `btn w-100 btn-primary`,
-            type: 'button',
-        }, isEnterprise ? 'Contact us' : 'Upgrade to ' + plan.name);
+        : isEnterprise || plan.name === 'Premium'
+            ? h('button', isEnterprise ? enterpriseBtnAttrs : {
+                    class: `btn w-100 btn-primary`,
+                    type: 'button',
+                }, isEnterprise ? 'Contact us' : 'Upgrade to ' + plan.name)
+            : '';
 
     return h('div', { class: colClass }, [
         h('div', {
