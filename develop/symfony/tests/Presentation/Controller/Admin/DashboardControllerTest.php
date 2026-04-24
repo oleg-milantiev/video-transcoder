@@ -5,11 +5,10 @@ declare(strict_types=1);
 namespace App\Tests\Presentation\Controller\Admin;
 
 use App\Presentation\Controller\Admin\DashboardController;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
-/**
- * @covers \App\Presentation\Controller\Admin\DashboardController
- */
+#[CoversClass(\App\Presentation\Controller\Admin\DashboardController::class)]
 class DashboardControllerTest extends TestCase
 {
     public function testConfigureDashboardReturnsDashboardWithTitle(): void
