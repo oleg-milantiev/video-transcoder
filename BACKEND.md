@@ -8,6 +8,24 @@
 
 Содержит ядро бизнес-логики. Не зависит от фреймворков и внешних библиотек.
 
+Domain/
+├── Shared/
+│   ├── Exception/InvalidUuidException.php
+│   └── ValueObject/Uuid.php
+├── User/
+│   ├── Entity/User.php, Tariff.php, Payment.php
+│   ├── Exception/UserNotFound.php, TariffNotFound.php, InvalidPaymentDates, PaymentNotFound
+│   ├── Repository/UserRepositoryInterface.php, TariffRepositoryInterface.php, PaymentRepositoryInterface
+│   └── ValueObject/ (User*, PasswordHash, Tariff*, Payment*)
+└── Video/
+    ├── DTO/
+    ├── Entity/Video.php, Task.php, Preset.php
+    ├── Event/
+    ├── Exception/
+    ├── Repository/ (VideoRepositoryInterface, TaskRepositoryInterface, PresetRepositoryInterface, StorageRepositoryInterface, PaginatedRepositoryInterface)
+    ├── Service/
+    └── ValueObject/ (16 files: VideoTitle, FileExtension, VideoDates, TaskDates, TaskStatus, Progress, AudioCodec, Codec, Format, PresetBitrate, PresetName, PresetTitle, RealtimeNotification, RealtimeNotificationLevel, RealtimeNotificationPosition, VideoCodec)
+
 ### Агрегаты и Сущности
 
 | Агрегат | Класс | Описание |
@@ -274,6 +292,33 @@ EasyAdmin CRUD: `DashboardController`, `UserCrudController`, `VideoCrudControlle
 | Google OAuth | Авторизация через Google |
 
 ---
+
+## Тестирование (phpUnit)
+
+tests/
+├── Domain/
+│   ├── Entity/              ← Fake builders (VideoFake, TaskFake, PresetFake, PaymentFake)
+│   ├── Shared/
+│   ├── User/
+│   │   ├── Entity/UserTest.php, TariffTest.php
+│   │   ├── Exception/
+│   │   └── ValueObject/     ← One *Test.php per VO
+│   └── Video/
+│       ├── DTO/
+│       ├── Entity/VideoTest.php, TaskTest.php, PresetTest.php
+│       ├── Event/
+│       ├── Exception/VideoExceptionTest.php
+│       └── ValueObject/     ← One *Test.php per VO (13 files)
+├── Infrastructure/
+│   ├── Persistence/Doctrine/Entity/TariffFake.php
+│   ├── Security/
+│   ├── Admin/
+│   └── Logging/
+├── Application/
+│   └── Query/               ← Query handler tests
+├── Presentation/
+├── Unit/                    ← Unit tests for services (VideoRealtimeNotifier, etc.)
+└── bootstrap.php
 
 ## Рабочие процессы (Workflows)
 

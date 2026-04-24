@@ -1,0 +1,45 @@
+<?php
+declare(strict_types=1);
+
+namespace App\Domain\User\ValueObject;
+
+/**
+ * Snapshot of the tariff/plan title at the time of payment.
+ * Preserved for historical billing records even if the tariff changes later.
+ */
+final readonly class PaymentPlanSnapshot
+{
+    private const int MAX_LENGTH = 255;
+
+    private string $value;
+
+    public function __construct(string $value)
+    {
+        $normalized = trim($value);
+
+        if ($normalized === '') {
+            throw new \DomainException('Payment plan snapshot cannot be empty.');
+        }
+
+        if (mb_strlen($normalized) > self::MAX_LENGTH) {
+            throw new \DomainException('Payment plan snapshot must not exceed 255 characters.');
+        }
+
+        $this->value = $normalized;
+    }
+
+    public function value(): string
+    {
+        return $this->value;
+    }
+
+    public function equals(self $other): bool
+    {
+        return $this->value === $other->value;
+    }
+
+    public function __toString(): string
+    {
+        return $this->value;
+    }
+}
