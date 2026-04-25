@@ -259,7 +259,7 @@ final class PaymentTest extends TestCase
             userId: $userId,
             status: PaymentStatus::COMPLETED,
             currency: new PaymentCurrency('EUR'),
-            gateway: PaymentGateway::YOOKASSA,
+            gateway: PaymentGateway::PAYPAL,
             amount: new PaymentAmount(500),
             planSnapshot: new PaymentPlanSnapshot('Basic'),
             dates: \App\Domain\User\ValueObject\PaymentDates::fromPersistence($created, $paid, $until),
@@ -273,7 +273,7 @@ final class PaymentTest extends TestCase
         $this->assertTrue($id->equals($payment->id()));
         $this->assertSame(PaymentStatus::COMPLETED, $payment->status());
         $this->assertSame('EUR', $payment->currency()->value());
-        $this->assertSame(PaymentGateway::YOOKASSA, $payment->gateway());
+        $this->assertSame(PaymentGateway::PAYPAL, $payment->gateway());
         $this->assertSame(500, $payment->amount()->value());
         $this->assertSame('Basic', $payment->planSnapshot()->value());
         $this->assertSame($created, $payment->createdAt());

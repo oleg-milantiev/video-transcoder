@@ -6,11 +6,11 @@ namespace App\Domain\User\ValueObject;
 enum PaymentGateway: string
 {
     case STRIPE = 'stripe';
-    case YOOKASSA = 'yookassa';
+    case PAYPAL = 'paypal';
 
     public const array NAMES = [
         self::STRIPE->value => self::STRIPE->name,
-        self::YOOKASSA->value => self::YOOKASSA->name,
+        self::PAYPAL->value => self::PAYPAL->name,
     ];
 
     public static function stripe(): self
@@ -18,8 +18,8 @@ enum PaymentGateway: string
         return self::STRIPE;
     }
 
-    public static function yookassa(): self
+    public static function paypal(): self
     {
-        return self::YOOKASSA;
+        return self::PAYPAL;
     }
 }

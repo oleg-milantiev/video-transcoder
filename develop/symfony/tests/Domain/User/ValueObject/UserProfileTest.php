@@ -189,7 +189,9 @@ final class UserProfileTest extends TestCase
         $paidAt    = new \DateTimeImmutable('2026-03-15T12:00:00+00:00');
         $paidUntil = new \DateTimeImmutable('2027-03-15T12:00:00+00:00');
         $history   = [
-            ['gateway' => 'yookassa', 'method' => 'bank_transfer',
+            [
+                'gateway' => 'paypal',
+                'method' => 'bank_transfer',
              'paidAt' => '2026-03-15T12:00:00+00:00', 'amount' => 50000, 'currency' => 'RUB', 'plan' => 'Pro'],
         ];
 

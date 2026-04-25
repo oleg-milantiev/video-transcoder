@@ -27,9 +27,9 @@ services:
 
     # Interface binding
     App\Domain\Video\Service\Storage\StorageInterface: '@App\Infrastructure\Storage\FilesystemStorage'
-    App\Domain\Repository\VideoRepositoryInterface: '@App\Repository\VideoRepository'
     App\Infrastructure\Ffmpeg\ProcessRunnerInterface: '@App\Infrastructure\Ffmpeg\SymfonyProcessRunner'
     App\Application\Service\Mercure\MercurePublisherInterface: '@App\Infrastructure\Mercure\HttpMercurePublisher'
+    App\Application\Service\Payment\PaymentProviderInterface: '@App\Infrastructure\Payment\PayPal\PayPalPaymentProvider'
     App\Application\Logging\LogServiceInterface:
         class: App\Infrastructure\Logging\CompositeLogService
         arguments:

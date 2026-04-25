@@ -100,6 +100,9 @@ class SPAController extends AbstractController
                 ],
                 'profile' => $this->generateUrl('api_profile'),
                 'contact' => $this->generateUrl('api_contact'),
+                'payment' => [
+                    'paypalCheckout' => $this->generateUrl('payment_paypal_checkout'),
+                ],
             ],
             'tariff' => [
                 'title' => $user->tariff?->title,

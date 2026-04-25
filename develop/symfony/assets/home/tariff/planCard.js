@@ -1,5 +1,5 @@
-import { h } from 'vue';
-import { openContactUsModal } from '../contactUs.js';
+import {h} from 'vue';
+import {openContactUsModal} from '../contactUs.js';
 
 export const PLANS = [
     {
@@ -103,13 +103,19 @@ export function renderPlanCard(plan, colClass = 'col-12 col-md-4', config = null
         enterpriseBtnAttrs.onClick = () => void openContactUsModal(config);
     }
 
+    const upgradePremiumAttrs = {
+        class: 'btn w-100 btn-primary',
+        type: 'button',
+        onClick: () => {
+            window.location.href = config?.route?.payment?.paypalCheckout ?? '/payment/paypal/checkout';
+        },
+    };
+
     const footerBtn = isCurrent
         ? h('button', { class: 'btn btn-outline-secondary w-100', disabled: true }, 'Current plan')
         : isEnterprise || plan.name === 'Premium'
-            ? h('button', isEnterprise ? enterpriseBtnAttrs : {
-                    class: `btn w-100 btn-primary`,
-                    type: 'button',
-                }, isEnterprise ? 'Contact us' : 'Upgrade to ' + plan.name)
+            ? h('button', isEnterprise ? enterpriseBtnAttrs : upgradePremiumAttrs,
+                isEnterprise ? 'Contact us' : 'Upgrade to ' + plan.name)
             : '';
 
     return h('div', { class: colClass }, [

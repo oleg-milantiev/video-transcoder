@@ -30,7 +30,7 @@ final class PaymentFake
         $until   = \DateTimeImmutable::createFromMutable($faker->dateTimeBetween('now', '+2 years'));
 
         $resolvedStatus  = $status  ?? PaymentStatus::COMPLETED;
-        $resolvedGateway = $gateway ?? $faker->randomElement([PaymentGateway::STRIPE, PaymentGateway::YOOKASSA]);
+        $resolvedGateway = $gateway ?? $faker->randomElement([PaymentGateway::STRIPE, PaymentGateway::PAYPAL]);
 
         $dates = match ($resolvedStatus) {
             PaymentStatus::COMPLETED, PaymentStatus::REFUNDED => PaymentDates::fromPersistence($created, $paid, $until),
