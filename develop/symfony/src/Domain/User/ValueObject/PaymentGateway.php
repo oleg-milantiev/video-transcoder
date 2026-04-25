@@ -5,11 +5,11 @@ namespace App\Domain\User\ValueObject;
 
 enum PaymentGateway: string
 {
-    case STRIPE   = 'stripe';
+    case STRIPE = 'stripe';
     case YOOKASSA = 'yookassa';
 
     public const array NAMES = [
-        self::STRIPE->value   => self::STRIPE->name,
+        self::STRIPE->value => self::STRIPE->name,
         self::YOOKASSA->value => self::YOOKASSA->name,
     ];
 

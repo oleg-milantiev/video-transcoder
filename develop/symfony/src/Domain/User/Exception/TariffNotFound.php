@@ -3,7 +3,9 @@ declare(strict_types=1);
 
 namespace App\Domain\User\Exception;
 
-final class TariffNotFound extends \DomainException
+use DomainException;
+
+final class TariffNotFound extends DomainException
 {
     public static function forUser(string $userId): self
     {

@@ -16,6 +16,7 @@ use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 use Symfony\Component\Messenger\Exception\ExceptionInterface;
 use Symfony\Component\Messenger\MessageBusInterface;
+use Throwable;
 
 #[AsMessageHandler(bus: 'messenger.bus.command')]
 final readonly class StartTaskSchedulerHandler
@@ -54,7 +55,7 @@ final readonly class StartTaskSchedulerHandler
             }
 
             $this->eventBus->dispatch(new StartTaskSchedulerSuccess(count($scheduled)));
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             $this->eventBus->dispatch(new StartTaskSchedulerFail($e->getMessage()));
             throw $e;
         }

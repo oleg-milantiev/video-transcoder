@@ -21,11 +21,15 @@ use App\Domain\Video\Repository\StorageRepositoryInterface;
 use App\Domain\Video\Repository\TaskRepositoryInterface;
 use App\Domain\Video\Repository\VideoRepositoryInterface;
 use App\Infrastructure\Task\TaskCancellationTrigger;
+use DateTimeImmutable;
+use DateTimeInterface;
 use Psr\Log\LogLevel;
+use RuntimeException;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Lock\LockFactory;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 use Symfony\Component\Messenger\MessageBusInterface;
+use Throwable;
 
 #[AsMessageHandler(bus: 'messenger.bus.command')]
 final readonly class TranscodeVideoHandler
@@ -52,32 +56,58 @@ final readonly class TranscodeVideoHandler
     }
 
     /**
-     * @throws \Throwable
+     * @throws Throwable
      */
     public function __invoke(TranscodeVideo $command): void
     {
         $ms = microtime(true);
 
         $scheduledTask = $command->scheduledTask;
-        $this->eventBus->dispatch(new TranscodeVideoStart(
-            taskId: $scheduledTask->taskId->toRfc4122(),
-            userId: $scheduledTask->userId->toRfc4122(),
-            videoId: $scheduledTask->videoId->toRfc4122(),
-        ));
+        $this->eventBus->dispatch(
+            new TranscodeVideoStart(
+                taskId: $scheduledTask->taskId->toRfc4122(),
+                userId: $scheduledTask->userId->toRfc4122(),
+                videoId: $scheduledTask->videoId->toRfc4122(),
+            )
+        );
 
         $task = $this->taskRepository->findByIdFresh($scheduledTask->taskId);
 
         if (!$task) {
-            $this->eventBus->dispatch(new TranscodeVideoFail('Scheduled task not found for transcoding', $scheduledTask->taskId->toRfc4122()));
-            $this->logService->log('task', 'transcode', $scheduledTask->taskId, LogLevel::ERROR, 'Scheduled task not found for transcoding');
+            $this->eventBus->dispatch(
+                new TranscodeVideoFail('Scheduled task not found for transcoding', $scheduledTask->taskId->toRfc4122())
+            );
+            $this->logService->log(
+                'task',
+                'transcode',
+                $scheduledTask->taskId,
+                LogLevel::ERROR,
+                'Scheduled task not found for transcoding'
+            );
+
             return;
         }
 
-        $lock = $this->lockFactory->createLock(sprintf('transcode-task:%s', $scheduledTask->taskId->toRfc4122()), self::TASK_MUTEX_TTL);
+        $lock = $this->lockFactory->createLock(
+            sprintf('transcode-task:%s', $scheduledTask->taskId->toRfc4122()),
+            self::TASK_MUTEX_TTL
+        );
         $acquired = $lock->acquire();
         if (!$acquired) {
-            $this->eventBus->dispatch(new TranscodeVideoFail('Skipping task because mutex is already acquired by another worker', $scheduledTask->taskId->toRfc4122()));
-            $this->logService->log('task', 'transcode', $task->id(), LogLevel::WARNING, 'Skipping task because mutex is already acquired by another worker');
+            $this->eventBus->dispatch(
+                new TranscodeVideoFail(
+                    'Skipping task because mutex is already acquired by another worker',
+                    $scheduledTask->taskId->toRfc4122()
+                )
+            );
+            $this->logService->log(
+                'task',
+                'transcode',
+                $task->id(),
+                LogLevel::WARNING,
+                'Skipping task because mutex is already acquired by another worker'
+            );
+
             return;
         }
 
@@ -87,9 +117,17 @@ final readonly class TranscodeVideoHandler
         try {
             $video = $this->videoRepository->findById($task->videoId());
             if (!$video) {
-                $this->eventBus->dispatch(new TranscodeVideoFail('Video not found for transcoding', $task->id()->toRfc4122()));
-                $this->logService->log('task', 'transcode', $task->id(), LogLevel::ERROR, 'Video not found for transcoding');
-                throw new \RuntimeException('Video not found for transcoding');
+                $this->eventBus->dispatch(
+                    new TranscodeVideoFail('Video not found for transcoding', $task->id()->toRfc4122())
+                );
+                $this->logService->log(
+                    'task',
+                    'transcode',
+                    $task->id(),
+                    LogLevel::ERROR,
+                    'Video not found for transcoding'
+                );
+                throw new RuntimeException('Video not found for transcoding');
             }
 
             if ($this->cancellationTrigger->isRequested($task->id())) {
@@ -97,30 +135,52 @@ final readonly class TranscodeVideoHandler
                     $task->cancel();
                     $task->clearSizeExpected();
                     $task->updateMeta([
-                        'cancelledAt' => new \DateTimeImmutable()->format(\DateTimeInterface::ATOM),
+                        'cancelledAt' => new DateTimeImmutable()->format(DateTimeInterface::ATOM),
                     ]);
                     $this->taskRepository->save($task);
-                    $this->logService->log('task', 'transcode', $task->id(), LogLevel::INFO, 'Task cancelled before ffmpeg start', [
-                        'videoId' => $video->id()?->toRfc4122(),
-                        'presetId' => $task->presetId()?->toRfc4122(),
-                        'userId' => $task->userId()?->toRfc4122(),
-                    ]);
+                    $this->logService->log(
+                        'task',
+                        'transcode',
+                        $task->id(),
+                        LogLevel::INFO,
+                        'Task cancelled before ffmpeg start',
+                        [
+                            'videoId' => $video->id()?->toRfc4122(),
+                            'presetId' => $task->presetId()?->toRfc4122(),
+                            'userId' => $task->userId()?->toRfc4122(),
+                        ]
+                    );
                 }
 
                 $this->cancellationTrigger->clear($task->id());
                 $this->storageNotifier->notifyStorageUpdated($task->userId());
-                $this->eventBus->dispatch(new TranscodeVideoFail('Task cancelled before ffmpeg start', $task->id()->toRfc4122()));
+                $this->eventBus->dispatch(
+                    new TranscodeVideoFail('Task cancelled before ffmpeg start', $task->id()->toRfc4122())
+                );
 
                 return;
             }
 
             if (!$task->canStart($video->duration())) {
-                $this->eventBus->dispatch(new TranscodeVideoFail('Task cannot be started for transcoding (invalid state or video duration).', $task->id()->toRfc4122()));
-                $this->logService->log('task', 'transcode', $task->id(), LogLevel::ERROR, 'Task cannot be started for transcoding (invalid state or video duration).', [
-                    'duration' => $video->duration(),
-                    'status' => $task->status()->name,
-                    'startedAt' => $task->startedAt()?->format(\DateTimeInterface::ATOM),
-                ]);
+                $this->eventBus->dispatch(
+                    new TranscodeVideoFail(
+                        'Task cannot be started for transcoding (invalid state or video duration).',
+                        $task->id()->toRfc4122()
+                    )
+                );
+                $this->logService->log(
+                    'task',
+                    'transcode',
+                    $task->id(),
+                    LogLevel::ERROR,
+                    'Task cannot be started for transcoding (invalid state or video duration).',
+                    [
+                        'duration' => $video->duration(),
+                        'status' => $task->status()->name,
+                        'startedAt' => $task->startedAt()?->format(DateTimeInterface::ATOM),
+                    ]
+                );
+
                 return;
             }
 
@@ -148,7 +208,9 @@ final readonly class TranscodeVideoHandler
 
             if ($transcodeReport->cancelled === true) {
                 $this->transcodeTaskFinalizationService->handleCancellation($context->task, $transcodeReport);
-                $this->eventBus->dispatch(new TranscodeVideoFail('Transcoding cancelled', $context->task->id()->toRfc4122()));
+                $this->eventBus->dispatch(
+                    new TranscodeVideoFail('Transcoding cancelled', $context->task->id()->toRfc4122())
+                );
 
                 $this->commandBus->dispatch(new StartTaskScheduler());
 
@@ -156,28 +218,39 @@ final readonly class TranscodeVideoHandler
             }
 
             $this->transcodeTaskFinalizationService->handleSuccess($context, $transcodeReport);
-            $this->eventBus->dispatch(new TranscodeVideoSuccess(
-                taskId: $context->task->id()->toRfc4122(),
-                videoId: $context->video->id()?->toRfc4122(),
-            ));
+            $this->eventBus->dispatch(
+                new TranscodeVideoSuccess(
+                    taskId: $context->task->id()->toRfc4122(),
+                    videoId: $context->video->id()?->toRfc4122(),
+                )
+            );
 
             $this->commandBus->dispatch(new StartTaskScheduler());
-        } catch (\Throwable $exception) {
+        } catch (Throwable $exception) {
             $this->transcodeTaskFinalizationService->handleFailure($task, $exception, $context?->absoluteOutputPath);
-            $this->eventBus->dispatch(new TranscodeVideoFail(
-                error: $exception->getMessage(),
-                taskId: $task->id()->toRfc4122(),
-                videoId: $video->id()->toRfc4122(),
-            ));
+            $this->eventBus->dispatch(
+                new TranscodeVideoFail(
+                    error: $exception->getMessage(),
+                    taskId: $task->id()->toRfc4122(),
+                    videoId: $video->id()->toRfc4122(),
+                )
+            );
 
             throw $exception;
         } finally {
             try {
                 $lock->release();
-            } catch (\Throwable $exception) {
-                $this->logService->log('task', 'transcode', $task->id(), LogLevel::ERROR, 'Failed to release transcode task mutex', [
-                    'message' => $exception->getMessage(),
-                ]);
+            } catch (Throwable $exception) {
+                $this->logService->log(
+                    'task',
+                    'transcode',
+                    $task->id(),
+                    LogLevel::ERROR,
+                    'Failed to release transcode task mutex',
+                    [
+                        'message' => $exception->getMessage(),
+                    ]
+                );
             }
         }
     }

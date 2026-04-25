@@ -9,6 +9,7 @@ use App\Application\Query\GetTaskListQuery;
 use App\Application\Query\GetVideoListQuery;
 use App\Application\QueryHandler\QueryBus;
 use App\Domain\Shared\ValueObject\Uuid;
+use App\Domain\User\Entity\User;
 use App\Domain\User\Repository\UserRepositoryInterface;
 use Psr\Log\LogLevel;
 use Symfony\Component\Console\Attribute\AsCommand;
@@ -16,6 +17,7 @@ use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\HttpFoundation\Request;
+use Throwable;
 
 #[AsCommand(name: 'app:smoke:prod', description: 'Run smoke tests to verify basic functionality after release')]
 final class SmokeProdCommand extends Command
@@ -43,6 +45,7 @@ final class SmokeProdCommand extends Command
             if (!$adminUser) {
                 $output->writeln('<error>Admin user not found</error>');
                 $this->logService->log('smoke', 'prod', null, LogLevel::ERROR, 'Admin user not found');
+
                 return Command::FAILURE;
             }
 
@@ -88,7 +91,7 @@ final class SmokeProdCommand extends Command
             $output->writeln(sprintf('Duration: %.3f seconds', $duration));
 
             return $failed === 0 ? Command::SUCCESS : Command::FAILURE;
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             $this->logService->log('smoke', 'prod', null, LogLevel::ERROR, 'Smoke tests failed with exception', [
                 'message' => $e->getMessage(),
                 'file' => $e->getFile(),
@@ -104,26 +107,33 @@ final class SmokeProdCommand extends Command
     private function testVideoList(OutputInterface $output, Uuid $userId): bool
     {
         try {
-            $result = $this->queryBus->query(new GetVideoListQuery(new Request(['page' => '1', 'limit' => '10']), $userId));
+            $result = $this->queryBus->query(
+                new GetVideoListQuery(new Request(['page' => '1', 'limit' => '10']), $userId)
+            );
 
             if (!is_array($result->items)) {
                 $output->writeln('<error>  ✗ Invalid video list response: items is not an array</error>');
+
                 return false;
             }
 
-            $output->writeln(sprintf(
-                '<fg=green>  ✓ Video list retrieved (%d items, total: %d, pages: %d)</>',
-                count($result->items),
-                $result->total,
-                $result->totalPages,
-            ));
+            $output->writeln(
+                sprintf(
+                    '<fg=green>  ✓ Video list retrieved (%d items, total: %d, pages: %d)</>',
+                    count($result->items),
+                    $result->total,
+                    $result->totalPages,
+                )
+            );
 
             return true;
         } catch (QueryException $e) {
             $output->writeln(sprintf('<error>  ✗ Video list query failed: %s</error>', $e->getMessage()));
+
             return false;
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             $output->writeln(sprintf('<error>  ✗ Video list test failed: %s</error>', $e->getMessage()));
+
             return false;
         }
     }
@@ -131,10 +141,13 @@ final class SmokeProdCommand extends Command
     private function testVideoItemsStructure(OutputInterface $output, Uuid $userId): bool
     {
         try {
-            $result = $this->queryBus->query(new GetVideoListQuery(new Request(['page' => '1', 'limit' => '5']), $userId));
+            $result = $this->queryBus->query(
+                new GetVideoListQuery(new Request(['page' => '1', 'limit' => '5']), $userId)
+            );
 
             if (empty($result->items)) {
                 $output->writeln('<fg=yellow>  ⊘ No videos to check structure</>');
+
                 return true;
             }
 
@@ -147,17 +160,21 @@ final class SmokeProdCommand extends Command
 
             if ($failed > 0) {
                 $output->writeln(sprintf('<error>  ✗ %d video items have invalid structure</error>', $failed));
+
                 return false;
             }
 
-            $output->writeln(sprintf(
-                '<fg=green>  ✓ All %d video items have valid structure (uuid, title, createdAt)</>',
-                count($result->items),
-            ));
+            $output->writeln(
+                sprintf(
+                    '<fg=green>  ✓ All %d video items have valid structure (uuid, title, createdAt)</>',
+                    count($result->items),
+                )
+            );
 
             return true;
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             $output->writeln(sprintf('<error>  ✗ Video items structure test failed: %s</error>', $e->getMessage()));
+
             return false;
         }
     }
@@ -165,51 +182,63 @@ final class SmokeProdCommand extends Command
     private function testTaskList(OutputInterface $output, Uuid $userId): bool
     {
         try {
-            $result = $this->queryBus->query(new GetTaskListQuery(new Request(['page' => '1', 'limit' => '10']), $userId));
+            $result = $this->queryBus->query(
+                new GetTaskListQuery(new Request(['page' => '1', 'limit' => '10']), $userId)
+            );
 
             if (!is_array($result->items)) {
                 $output->writeln('<error>  ✗ Invalid task list response: items is not an array</error>');
+
                 return false;
             }
 
-            $output->writeln(sprintf(
-                '<fg=green>  ✓ Task list retrieved (%d items, total: %d)</>',
-                count($result->items),
-                $result->total,
-            ));
+            $output->writeln(
+                sprintf(
+                    '<fg=green>  ✓ Task list retrieved (%d items, total: %d)</>',
+                    count($result->items),
+                    $result->total,
+                )
+            );
 
             return true;
         } catch (QueryException $e) {
             $output->writeln(sprintf('<error>  ✗ Task list query failed: %s</error>', $e->getMessage()));
+
             return false;
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             $output->writeln(sprintf('<error>  ✗ Task list test failed: %s</error>', $e->getMessage()));
+
             return false;
         }
     }
 
-    private function testUserData(OutputInterface $output, \App\Domain\User\Entity\User $user): bool
+    private function testUserData(OutputInterface $output, User $user): bool
     {
         try {
             $email = $user->email()->value();
             if (empty($email)) {
                 $output->writeln('<error>  ✗ User email is empty</error>');
+
                 return false;
             }
 
             if (!$user->hasRole('ROLE_ADMIN')) {
                 $output->writeln('<error>  ✗ User is not an admin</error>');
+
                 return false;
             }
 
-            $output->writeln(sprintf(
-                '<fg=green>  ✓ User data verified (email: %s, roles: ROLE_ADMIN)</>',
-                $email,
-            ));
+            $output->writeln(
+                sprintf(
+                    '<fg=green>  ✓ User data verified (email: %s, roles: ROLE_ADMIN)</>',
+                    $email,
+                )
+            );
 
             return true;
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             $output->writeln(sprintf('<error>  ✗ User data test failed: %s</error>', $e->getMessage()));
+
             return false;
         }
     }

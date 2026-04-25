@@ -5,6 +5,7 @@ namespace App\Application\Query;
 
 use App\Application\Exception\InvalidUuidException;
 use App\Domain\Shared\ValueObject\Uuid;
+use Throwable;
 
 final readonly class TaskDownloadQuery
 {
@@ -16,7 +17,7 @@ final readonly class TaskDownloadQuery
         try {
             $this->taskId = Uuid::fromString($taskId);
             $this->requestedByUserId = Uuid::fromString($requestedByUserId);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             throw new InvalidUuidException('Invalid UUID', previous: $e);
         }
     }

@@ -9,6 +9,7 @@ use App\Domain\Video\Entity\Video;
 interface VideoRepositoryInterface extends PaginatedRepositoryInterface
 {
     public function save(Video $video): Video;
+
     public function findById(Uuid $id): ?Video;
 
     /**

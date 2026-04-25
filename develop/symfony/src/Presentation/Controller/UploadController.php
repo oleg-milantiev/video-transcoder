@@ -3,12 +3,12 @@ declare(strict_types=1);
 
 namespace App\Presentation\Controller;
 
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use TusPhp\Tus\Server as TusServer;
-use Symfony\Component\HttpFoundation\Response;
-use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 
 #[IsGranted('IS_AUTHENTICATED_FULLY')]
 class UploadController extends AbstractController
@@ -17,8 +17,7 @@ class UploadController extends AbstractController
     public function uploadHandler(
         TusServer $server,
         EventDispatcherInterface $symfonyDispatcher,
-    ): Response
-    {
+    ): Response {
         if (!is_dir($server->getUploadDir())) {
             mkdir($server->getUploadDir());
         }

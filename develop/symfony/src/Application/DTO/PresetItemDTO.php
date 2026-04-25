@@ -14,7 +14,8 @@ readonly class PresetItemDTO
         public string $audioCodec,
         public string $format,
         public array $bitrate,
-    ) {}
+    ) {
+    }
 
     public static function fromDomain(Preset $preset): self
     {

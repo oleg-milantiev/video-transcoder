@@ -15,7 +15,8 @@ readonly class TaskCancellationTrigger
     public function __construct(
         #[Autowire(service: 'cache.app')]
         private CacheItemPoolInterface $cache,
-    ) {}
+    ) {
+    }
 
     /**
      * @throws InvalidArgumentException
@@ -26,6 +27,11 @@ readonly class TaskCancellationTrigger
         $item->set(true);
         $item->expiresAfter($ttlSeconds);
         $this->cache->save($item);
+    }
+
+    private function key(Uuid $taskId): string
+    {
+        return sprintf('task_cancel_trigger_%s', $taskId->toRfc4122());
     }
 
     /**
@@ -42,11 +48,6 @@ readonly class TaskCancellationTrigger
     public function clear(Uuid $taskId): void
     {
         $this->cache->deleteItem($this->key($taskId));
-    }
-
-    private function key(Uuid $taskId): string
-    {
-        return sprintf('task_cancel_trigger_%s', $taskId->toRfc4122());
     }
 }
 

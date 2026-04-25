@@ -6,6 +6,8 @@ namespace App\Application\DTO;
 use App\Domain\Video\Entity\Preset;
 use App\Domain\Video\Entity\Task;
 use App\Domain\Video\Entity\Video;
+use DateTimeInterface;
+use DomainException;
 
 readonly class TaskItemDTO
 {
@@ -27,12 +29,13 @@ readonly class TaskItemDTO
         public ?bool $waitingTariffInstance = null,
         public ?bool $waitingTariffDelay = null,
         public ?string $willStartAt = null,
-    ) {}
+    ) {
+    }
 
     public static function fromDomain(Task $task, Video $video, Preset $preset): self
     {
         if ($task->id() === null) {
-            throw new \DomainException('Task id must be set for TaskItemDTO mapping.');
+            throw new DomainException('Task id must be set for TaskItemDTO mapping.');
         }
 
         return new self(
@@ -47,8 +50,8 @@ readonly class TaskItemDTO
             height: $task->heightNullable() ?? 0,
             status: $task->status()->name,
             progress: $task->progress()->value(),
-            createdAt: $task->createdAt()->format(\DateTimeInterface::ATOM),
-            updatedAt: $task->updatedAt()?->format(\DateTimeInterface::ATOM),
+            createdAt: $task->createdAt()->format(DateTimeInterface::ATOM),
+            updatedAt: $task->updatedAt()?->format(DateTimeInterface::ATOM),
             deleted: $task->isDeleted(),
         );
     }
@@ -56,23 +59,23 @@ readonly class TaskItemDTO
     public function toArray(): array
     {
         return [
-            'taskId'               => $this->id,
-            'videoId'              => $this->videoId,
-            'videoTitle'           => $this->videoTitle,
-            'presetId'             => $this->presetId,
-            'presetVideoCodec'     => $this->presetVideoCodec,
-            'presetAudioCodec'     => $this->presetAudioCodec,
-            'presetFormat'         => $this->presetFormat,
-            'presetTitle'          => $this->presetTitle,
-            'height'               => $this->height,
-            'status'               => $this->status,
-            'progress'             => $this->progress,
-            'createdAt'            => $this->createdAt,
-            'updatedAt'            => $this->updatedAt,
-            'deleted'              => $this->deleted,
+            'taskId' => $this->id,
+            'videoId' => $this->videoId,
+            'videoTitle' => $this->videoTitle,
+            'presetId' => $this->presetId,
+            'presetVideoCodec' => $this->presetVideoCodec,
+            'presetAudioCodec' => $this->presetAudioCodec,
+            'presetFormat' => $this->presetFormat,
+            'presetTitle' => $this->presetTitle,
+            'height' => $this->height,
+            'status' => $this->status,
+            'progress' => $this->progress,
+            'createdAt' => $this->createdAt,
+            'updatedAt' => $this->updatedAt,
+            'deleted' => $this->deleted,
             'waitingTariffInstance' => $this->waitingTariffInstance,
-            'waitingTariffDelay'   => $this->waitingTariffDelay,
-            'willStartAt'          => $this->willStartAt,
+            'waitingTariffDelay' => $this->waitingTariffDelay,
+            'willStartAt' => $this->willStartAt,
         ];
     }
 }

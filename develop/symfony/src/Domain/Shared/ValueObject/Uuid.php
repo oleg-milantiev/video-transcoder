@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace App\Domain\Shared\ValueObject;
 
 use App\Domain\Shared\Exception\InvalidUuidException;
+use Stringable;
 
 class Uuid
 {
@@ -16,6 +17,14 @@ class Uuid
         }
 
         $this->value = $value;
+    }
+
+    public static function isValid(string $value): bool
+    {
+        // RFC 4122 for UUID v4: variant 8-9-a-b
+        $pattern = '/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i';
+
+        return preg_match($pattern, $value) === 1;
     }
 
     public static function generate(): self
@@ -53,14 +62,6 @@ class Uuid
         }
     }
 
-    public static function isValid(string $value): bool
-    {
-        // RFC 4122 for UUID v4: variant 8-9-a-b
-        $pattern = '/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i';
-
-        return preg_match($pattern, $value) === 1;
-    }
-
     public function toString(): string
     {
         return $this->value;
@@ -71,13 +72,13 @@ class Uuid
         return $this->value;
     }
 
-    public function equals(self|string|\Stringable $other): bool
+    public function equals(self|string|Stringable $other): bool
     {
         if ($other instanceof self) {
             return $this->value === $other->value;
         }
 
-        return $this->value === (string) $other;
+        return $this->value === (string)$other;
     }
 
     public function __toString(): string

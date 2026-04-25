@@ -5,6 +5,7 @@ namespace App\Infrastructure\Persistence\Doctrine\Storage;
 
 use App\Domain\Shared\ValueObject\Uuid;
 use App\Domain\Video\Repository\StorageRepositoryInterface;
+use Doctrine\DBAL\Exception;
 use Doctrine\ORM\EntityManagerInterface;
 
 class StorageRepository implements StorageRepositoryInterface
@@ -14,6 +15,9 @@ class StorageRepository implements StorageRepositoryInterface
     ) {
     }
 
+    /**
+     * @throws Exception
+     */
     public function getUsedStorageSize(Uuid $userId): int
     {
         $conn = $this->em->getConnection();
@@ -35,9 +39,12 @@ class StorageRepository implements StorageRepositoryInterface
             FROM active_user_videos_size, active_user_tasks_size;
         SQL;
 
-        return (int) $conn->executeQuery($sql, ['userId' => $userId->toRfc4122()])->fetchOne();
+        return (int)$conn->executeQuery($sql, ['userId' => $userId->toRfc4122()])->fetchOne();
     }
 
+    /**
+     * @throws Exception
+     */
     public function deleteExpiredVideosAndTasks(): int
     {
         $conn = $this->em->getConnection();
@@ -66,9 +73,12 @@ class StorageRepository implements StorageRepositoryInterface
             WHERE deleted = false
         SQL;
 
-        return (int) $conn->executeQuery($sql)->fetchOne();
+        return (int)$conn->executeQuery($sql)->fetchOne();
     }
 
+    /**
+     * @throws Exception
+     */
     public function getDeletedIn24hSize(Uuid $userId): int
     {
         $conn = $this->em->getConnection();
@@ -117,6 +127,6 @@ class StorageRepository implements StorageRepositoryInterface
             FROM current_storage, will_deleted_in24h_videos_sum, will_deleted_in24h_tasks_sum;
         SQL;
 
-        return (int) $conn->executeQuery($sql, ['userId' => $userId->toRfc4122()])->fetchOne();
+        return (int)$conn->executeQuery($sql, ['userId' => $userId->toRfc4122()])->fetchOne();
     }
 }

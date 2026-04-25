@@ -18,6 +18,7 @@ final readonly class CreateVideo
     {
         return $this->file;
     }
+
     public function userId(): Uuid
     {
         return $this->userId;

@@ -17,6 +17,7 @@ use App\Presentation\Controller\Admin\UserCrudController;
 use App\Presentation\Controller\Admin\VideoCrudController;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Crud;
 use EasyCorp\Bundle\EasyAdminBundle\Router\AdminUrlGenerator;
+use Throwable;
 
 /**
  * Enriches log context with entity titles and admin detail links.
@@ -41,8 +42,14 @@ final readonly class EnrichContextLogDecorator implements LogServiceInterface
     ) {
     }
 
-    public function log(string $name, string $action, ?Uuid $objectId, string $level, string $text, array $context = []): void
-    {
+    public function log(
+        string $name,
+        string $action,
+        ?Uuid $objectId,
+        string $level,
+        string $text,
+        array $context = []
+    ): void {
         $context = $this->enrich($context);
         $this->inner->log($name, $action, $objectId, $level, $text, $context);
     }
@@ -73,13 +80,23 @@ final readonly class EnrichContextLogDecorator implements LogServiceInterface
         try {
             $entity = $this->videoRepository->find($context['videoId']);
             if ($entity !== null) {
-                $context['videoTitle'] = $entity->title ?? (string) $context['videoId'];
+                $context['videoTitle'] = $entity->title ?? (string)$context['videoId'];
                 $context['videoAdminUrl'] = $this->buildDetailUrl(VideoCrudController::class, $context['videoId']);
             }
-        } catch (\Throwable) {
+        } catch (Throwable) {
         }
 
         return $context;
+    }
+
+    private function buildDetailUrl(string $crudController, mixed $entityId): string
+    {
+        return $this->adminUrlGenerator
+            ->unsetAll()
+            ->setController($crudController)
+            ->setAction(Crud::PAGE_DETAIL)
+            ->setEntityId((string)$entityId)
+            ->generateUrl();
     }
 
     private function enrichUser(array $context): array
@@ -87,10 +104,10 @@ final readonly class EnrichContextLogDecorator implements LogServiceInterface
         try {
             $entity = $this->userRepository->find($context['userId']);
             if ($entity !== null) {
-                $context['userEmail'] = $entity->email ?? (string) $context['userId'];
+                $context['userEmail'] = $entity->email ?? (string)$context['userId'];
                 $context['userAdminUrl'] = $this->buildDetailUrl(UserCrudController::class, $context['userId']);
             }
-        } catch (\Throwable) {
+        } catch (Throwable) {
         }
 
         return $context;
@@ -101,10 +118,10 @@ final readonly class EnrichContextLogDecorator implements LogServiceInterface
         try {
             $entity = $this->presetRepository->find($context['presetId']);
             if ($entity !== null) {
-                $context['presetTitle'] = $entity->title ?? (string) $context['presetId'];
+                $context['presetTitle'] = $entity->title ?? (string)$context['presetId'];
                 $context['presetAdminUrl'] = $this->buildDetailUrl(PresetCrudController::class, $context['presetId']);
             }
-        } catch (\Throwable) {
+        } catch (Throwable) {
         }
 
         return $context;
@@ -117,7 +134,7 @@ final readonly class EnrichContextLogDecorator implements LogServiceInterface
             if ($entity !== null) {
                 $context['taskAdminUrl'] = $this->buildDetailUrl(TaskCrudController::class, $context['taskId']);
             }
-        } catch (\Throwable) {
+        } catch (Throwable) {
         }
 
         return $context;
@@ -128,22 +145,12 @@ final readonly class EnrichContextLogDecorator implements LogServiceInterface
         try {
             $entity = $this->tariffRepository->find($context['tariffId']);
             if ($entity !== null) {
-                $context['tariffTitle'] = $entity->title ?? (string) $context['tariffId'];
+                $context['tariffTitle'] = $entity->title ?? (string)$context['tariffId'];
                 $context['tariffAdminUrl'] = $this->buildDetailUrl(TariffCrudController::class, $context['tariffId']);
             }
-        } catch (\Throwable) {
+        } catch (Throwable) {
         }
 
         return $context;
-    }
-
-    private function buildDetailUrl(string $crudController, mixed $entityId): string
-    {
-        return $this->adminUrlGenerator
-            ->unsetAll()
-            ->setController($crudController)
-            ->setAction(Crud::PAGE_DETAIL)
-            ->setEntityId((string) $entityId)
-            ->generateUrl();
     }
 }

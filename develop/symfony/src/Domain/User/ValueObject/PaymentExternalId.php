@@ -3,6 +3,8 @@ declare(strict_types=1);
 
 namespace App\Domain\User\ValueObject;
 
+use DomainException;
+
 /**
  * External payment ID assigned by the payment gateway (e.g. Stripe payment_intent ID).
  */
@@ -17,11 +19,11 @@ final readonly class PaymentExternalId
         $normalized = trim($value);
 
         if ($normalized === '') {
-            throw new \DomainException('Payment external ID cannot be empty.');
+            throw new DomainException('Payment external ID cannot be empty.');
         }
 
         if (mb_strlen($normalized) > self::MAX_LENGTH) {
-            throw new \DomainException('Payment external ID must not exceed 255 characters.');
+            throw new DomainException('Payment external ID must not exceed 255 characters.');
         }
 
         $this->value = $normalized;

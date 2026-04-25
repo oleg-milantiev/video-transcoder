@@ -4,13 +4,14 @@ declare(strict_types=1);
 namespace App\Domain\User\ValueObject;
 
 use App\Domain\User\Exception\InvalidPaymentDates;
+use DateTimeImmutable;
 
 final readonly class PaymentDates
 {
     private function __construct(
-        private \DateTimeImmutable $createdAt,
-        private ?\DateTimeImmutable $paidAt,
-        private ?\DateTimeImmutable $validUntil,
+        private DateTimeImmutable $createdAt,
+        private ?DateTimeImmutable $paidAt,
+        private ?DateTimeImmutable $validUntil,
     ) {
         if ($this->paidAt !== null && $this->paidAt < $this->createdAt) {
             throw InvalidPaymentDates::paidAtBeforeCreatedAt();
@@ -25,37 +26,37 @@ final readonly class PaymentDates
         }
     }
 
-    public static function create(?\DateTimeImmutable $createdAt = null): self
+    public static function create(?DateTimeImmutable $createdAt = null): self
     {
-        return new self($createdAt ?? new \DateTimeImmutable(), null, null);
+        return new self($createdAt ?? new DateTimeImmutable(), null, null);
     }
 
     public static function fromPersistence(
-        \DateTimeImmutable $createdAt,
-        ?\DateTimeImmutable $paidAt,
-        ?\DateTimeImmutable $validUntil,
+        DateTimeImmutable $createdAt,
+        ?DateTimeImmutable $paidAt,
+        ?DateTimeImmutable $validUntil,
     ): self {
         return new self($createdAt, $paidAt, $validUntil);
     }
 
     public function markPaid(
-        ?\DateTimeImmutable $paidAt = null,
-        ?\DateTimeImmutable $validUntil = null,
+        ?DateTimeImmutable $paidAt = null,
+        ?DateTimeImmutable $validUntil = null,
     ): self {
-        return new self($this->createdAt, $paidAt ?? new \DateTimeImmutable(), $validUntil);
+        return new self($this->createdAt, $paidAt ?? new DateTimeImmutable(), $validUntil);
     }
 
-    public function createdAt(): \DateTimeImmutable
+    public function createdAt(): DateTimeImmutable
     {
         return $this->createdAt;
     }
 
-    public function paidAt(): ?\DateTimeImmutable
+    public function paidAt(): ?DateTimeImmutable
     {
         return $this->paidAt;
     }
 
-    public function validUntil(): ?\DateTimeImmutable
+    public function validUntil(): ?DateTimeImmutable
     {
         return $this->validUntil;
     }

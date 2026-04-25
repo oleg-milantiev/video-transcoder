@@ -14,8 +14,6 @@ use App\Domain\User\ValueObject\TariffStorageHour;
 use App\Domain\User\ValueObject\TariffTitle;
 use App\Domain\User\ValueObject\TariffVideoDuration;
 use App\Domain\User\ValueObject\TariffVideoSize;
-use App\Infrastructure\Persistence\Doctrine\Preset\PresetMapper;
-use Symfony\Component\Uid\UuidV4 as SymfonyUuid;
 
 class TariffMapper
 {

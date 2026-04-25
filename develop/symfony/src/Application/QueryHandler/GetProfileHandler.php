@@ -9,6 +9,7 @@ use App\Domain\Video\Repository\StorageRepositoryInterface;
 use App\Domain\Video\Repository\TaskRepositoryInterface;
 use App\Domain\Video\Repository\VideoRepositoryInterface;
 use App\Domain\Video\ValueObject\TaskStatus;
+use DateTimeInterface;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 
 #[AsMessageHandler(bus: 'messenger.bus.command')]
@@ -33,7 +34,9 @@ final readonly class GetProfileHandler
             taskCountTotal: $this->taskRepository->getTotalCount($query->userId),
             taskCountByStatus: $taskCountByStatus,
             willStartAt: isset($taskCountByStatus[TaskStatus::PENDING->value])
-                ? $this->taskRepository->getFirstPendingTaskWillStartAt($query->userId)?->format(\DateTimeInterface::ATOM)
+                ? $this->taskRepository->getFirstPendingTaskWillStartAt($query->userId)?->format(
+                    DateTimeInterface::ATOM
+                )
                 : '',
         );
     }

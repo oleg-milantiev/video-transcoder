@@ -5,7 +5,7 @@ namespace App\Application\CommandHandler\Message;
 
 use App\Application\Command\Message\TelegramMessage;
 use App\Application\Logging\LogServiceInterface;
-use App\Tests\Application\CommandHandler\Message\TelegramMessageHandlerTest;
+use LogicException;
 use Psr\Cache\CacheItemPoolInterface;
 use Psr\Log\LogLevel;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
@@ -30,7 +30,7 @@ final readonly class TelegramMessageHandler
     public function __invoke(TelegramMessage $command): void
     {
         if (empty($this->token)) {
-            throw new \LogicException('Telegram message token cannot be empty.');
+            throw new LogicException('Telegram message token cannot be empty.');
         }
 
         $chatId = $command->chatId;
@@ -39,7 +39,14 @@ final readonly class TelegramMessageHandler
         $deferredCountKey = "telegram_deferred_count_{$chatId}";
 
         if ($this->cache->hasItem($floodedKey)) {
-            $this->logService->log('telegram', 'message', null, LogLevel::WARNING, "Channel {$chatId} is flooded, skipping message");
+            $this->logService->log(
+                'telegram',
+                'message',
+                null,
+                LogLevel::WARNING,
+                "Channel {$chatId} is flooded, skipping message"
+            );
+
             return;
         }
 
@@ -59,7 +66,13 @@ final readonly class TelegramMessageHandler
             $this->cache->save($lastTimeItem);
 
             $this->sendTelegramMessage($chatId, $command->text, $command->silent);
-            $this->logService->log('telegram', 'message', null, LogLevel::DEBUG, "Normal message sent to channel {$chatId}");
+            $this->logService->log(
+                'telegram',
+                'message',
+                null,
+                LogLevel::DEBUG,
+                "Normal message sent to channel {$chatId}"
+            );
         } else {
             $deferredCount = $deferredCountItem->get() ?: 0;
             if ($deferredCount < self::RATE_LIMIT_MAX) {
@@ -76,16 +89,32 @@ final readonly class TelegramMessageHandler
                 $this->cache->save($lastTimeItem);
 
                 $this->sendTelegramMessage($chatId, $command->text, $command->silent);
-                $this->logService->log('telegram', 'message', null, LogLevel::DEBUG, "Channel {$chatId} increase deferred messages count to {$deferredCount}");
+                $this->logService->log(
+                    'telegram',
+                    'message',
+                    null,
+                    LogLevel::DEBUG,
+                    "Channel {$chatId} increase deferred messages count to {$deferredCount}"
+                );
             } else {
-                $this->sendTelegramMessage($chatId, '<b>⚠️ Channel Flooded</b>\nToo many messages, skipping next for some time.', true);
+                $this->sendTelegramMessage(
+                    $chatId,
+                    '<b>⚠️ Channel Flooded</b>\nToo many messages, skipping next for some time.',
+                    true
+                );
 
                 $floodedItem = $this->cache->getItem($floodedKey);
                 $floodedItem->set(true);
                 $floodedItem->expiresAfter(self::RATE_LIMIT_SKIP_TIME);
                 $this->cache->save($floodedItem);
 
-                $this->logService->log('telegram', 'message', null, LogLevel::WARNING, "Channel {$chatId} flooded after {$deferredCount} deferred messages");
+                $this->logService->log(
+                    'telegram',
+                    'message',
+                    null,
+                    LogLevel::WARNING,
+                    "Channel {$chatId} flooded after {$deferredCount} deferred messages"
+                );
             }
         }
     }
@@ -101,7 +130,7 @@ final readonly class TelegramMessageHandler
             'text' => $text,
             'parse_mode' => 'html',
             'disable_web_page_preview' => true,
-            'disable_notification' => $silent
+            'disable_notification' => $silent,
         );
 
         $ch = curl_init("https://api.telegram.org/bot{$this->token}/sendMessage");
@@ -129,7 +158,13 @@ final readonly class TelegramMessageHandler
             $this->logService->log('telegram', 'message', null, LogLevel::ERROR, $error);
         }
 
-        $this->logService->log('telegram', 'message', null, LogLevel::DEBUG, 'Response',
-            is_string($response) ? (json_decode($response, true) ?? []) : []);
+        $this->logService->log(
+            'telegram',
+            'message',
+            null,
+            LogLevel::DEBUG,
+            'Response',
+            is_string($response) ? (json_decode($response, true) ?? []) : []
+        );
     }
 }

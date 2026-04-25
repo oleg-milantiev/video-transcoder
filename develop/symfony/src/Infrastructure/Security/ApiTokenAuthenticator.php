@@ -13,8 +13,9 @@ use Symfony\Component\Security\Core\Exception\CustomUserMessageAuthenticationExc
 use Symfony\Component\Security\Core\User\UserProviderInterface;
 use Symfony\Component\Security\Http\Authenticator\AbstractAuthenticator;
 use Symfony\Component\Security\Http\Authenticator\Passport\Badge\UserBadge;
-use Symfony\Component\Security\Http\Authenticator\Passport\SelfValidatingPassport;
 use Symfony\Component\Security\Http\Authenticator\Passport\Passport;
+use Symfony\Component\Security\Http\Authenticator\Passport\SelfValidatingPassport;
+use Throwable;
 
 final class ApiTokenAuthenticator extends AbstractAuthenticator
 {
@@ -32,7 +33,7 @@ final class ApiTokenAuthenticator extends AbstractAuthenticator
 
     public function authenticate(Request $request): Passport
     {
-        $header = (string) $request->headers->get('Authorization', '');
+        $header = (string)$request->headers->get('Authorization', '');
         if (!preg_match('/^Bearer\s+(.+)$/', $header, $matches)) {
             throw new CustomUserMessageAuthenticationException('Missing Bearer token.');
         }
@@ -41,7 +42,7 @@ final class ApiTokenAuthenticator extends AbstractAuthenticator
 
         try {
             $claims = $this->tokenService->parseToken($rawToken);
-        } catch (\Throwable $e) {
+        } catch (Throwable) {
             throw new CustomUserMessageAuthenticationException('Invalid or expired token.');
         }
 
@@ -50,7 +51,7 @@ final class ApiTokenAuthenticator extends AbstractAuthenticator
         return new SelfValidatingPassport(
             new UserBadge(
                 $identifier,
-                fn (string $userIdentifier) => $this->userProvider->loadUserByIdentifier($userIdentifier)
+                fn(string $userIdentifier) => $this->userProvider->loadUserByIdentifier($userIdentifier)
             )
         );
     }

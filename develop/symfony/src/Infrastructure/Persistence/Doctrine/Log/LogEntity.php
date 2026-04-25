@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\Persistence\Doctrine\Log;
 
+use DateTimeImmutable;
 use Doctrine\ORM\Mapping as ORM;
 use Psr\Log\LogLevel;
 use Symfony\Component\Uid\UuidV4 as SymfonyUuid;
@@ -39,14 +40,14 @@ class LogEntity
     public string $text;
 
     #[ORM\Column]
-    public \DateTimeImmutable $createdAt;
+    public DateTimeImmutable $createdAt;
 
     #[ORM\Column(type: 'json', options: ['jsonb' => true])]
     public array $context = [];
 
     public function __construct()
     {
-        $this->createdAt = new \DateTimeImmutable();
+        $this->createdAt = new DateTimeImmutable();
         $this->level = LogLevel::INFO;
         $this->name = '';
         $this->action = '';

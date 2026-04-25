@@ -15,6 +15,8 @@ use App\Domain\Video\Repository\VideoRepositoryInterface;
 use App\Domain\Video\ValueObject\TaskStatus;
 use App\Infrastructure\Security\Voter\VideoAccessVoter;
 use App\Infrastructure\Task\TaskCancellationTrigger;
+use DateTimeImmutable;
+use DateTimeInterface;
 use Psr\Log\LogLevel;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
@@ -30,7 +32,8 @@ final readonly class TaskCancelHandler
         private TaskRealtimeNotifier $taskRealtimeNotifier,
         private Security $security,
         private StorageRealtimeNotifier $storageNotifier,
-    ) {}
+    ) {
+    }
 
     public function __invoke(TaskCancelQuery $query): void
     {
@@ -50,7 +53,7 @@ final readonly class TaskCancelHandler
 
         $task->updateMeta([
             'cancelledByUserId' => $query->requestedByUserId->toRfc4122(),
-            'cancelRequestedAt' => new \DateTimeImmutable()->format(\DateTimeInterface::ATOM),
+            'cancelRequestedAt' => new DateTimeImmutable()->format(DateTimeInterface::ATOM),
         ]);
 
         $cancelledNow = $task->status() === TaskStatus::PENDING || $task->status() === TaskStatus::STARTING;
@@ -63,10 +66,17 @@ final readonly class TaskCancelHandler
                 'userId' => $query->requestedByUserId?->toRfc4122(),
             ]);
         } else {
-            $this->logService->log('task', 'cancel', $task->id(), LogLevel::INFO, 'Cancellation requested in progress', [
-                'videoId' => $video->id()?->toRfc4122(),
-                'userId' => $query->requestedByUserId?->toRfc4122(),
-            ]);
+            $this->logService->log(
+                'task',
+                'cancel',
+                $task->id(),
+                LogLevel::INFO,
+                'Cancellation requested in progress',
+                [
+                    'videoId' => $video->id()?->toRfc4122(),
+                    'userId' => $query->requestedByUserId?->toRfc4122(),
+                ]
+            );
         }
 
         $this->taskRepository->save($task);

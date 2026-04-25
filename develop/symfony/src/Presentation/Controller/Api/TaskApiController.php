@@ -7,9 +7,9 @@ use App\Application\Exception\InvalidUuidException;
 use App\Application\Exception\TaskCancelAccessDeniedException;
 use App\Application\Exception\TaskNotFoundException;
 use App\Application\Exception\VideoNotFoundException;
-use App\Application\Query\TaskCancelQuery;
 use App\Application\Logging\LogServiceInterface;
 use App\Application\Query\GetTaskListQuery;
+use App\Application\Query\TaskCancelQuery;
 use App\Application\QueryHandler\QueryBus;
 use App\Domain\Shared\ValueObject\Uuid;
 use App\Domain\Video\Repository\TaskRepositoryInterface;
@@ -22,6 +22,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
+use Throwable;
 
 #[Route('/api/task')]
 #[IsGranted('IS_AUTHENTICATED_FULLY')]
@@ -42,15 +43,17 @@ class TaskApiController extends AbstractController
     public function index(Request $request): Response
     {
         try {
-            return $this->apiSuccess((array)
+            return $this->apiSuccess(
+                (array)
                 $this->queryBus->query(
                     new GetTaskListQuery($request, Uuid::fromString($this->getUser()->id->toRfc4122()))
                 )
             );
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             $this->logService->log('task', 'index', null, LogLevel::CRITICAL, 'Fail', [
                 'message' => $e->getMessage(),
             ]);
+
             return $this->apiError('INTERNAL_ERROR', 'Failed to list tasks', 500);
         }
     }
@@ -63,6 +66,7 @@ class TaskApiController extends AbstractController
     {
         try {
             $this->queryBus->query(new TaskCancelQuery($id, $this->getUser()->id->toRfc4122()));
+
             return $this->apiSuccess(null, 204);
         } catch (InvalidUuidException $e) {
             return $this->apiError('INVALID_TASK_ID', $e->getMessage(), 400);
@@ -72,7 +76,7 @@ class TaskApiController extends AbstractController
             return $this->apiError('VIDEO_NOT_FOUND', $e->getMessage(), 404);
         } catch (TaskCancelAccessDeniedException $e) {
             return $this->apiError('ACCESS_DENIED', $e->getMessage(), 403);
-        } catch (\Throwable $e ) {
+        } catch (Throwable $e) {
             $this->logService->log('task', 'cancel', Uuid::fromStringNullable($id), LogLevel::CRITICAL, 'Fail', [
                 'id' => $id,
                 'message' => $e->getMessage(),

@@ -17,11 +17,13 @@ use App\Infrastructure\Persistence\Doctrine\Preset\PresetEntity;
 use App\Infrastructure\Persistence\Doctrine\Shared\Repository\PaginatedRepositoryTrait;
 use App\Infrastructure\Persistence\Doctrine\User\UserEntity;
 use App\Infrastructure\Persistence\Doctrine\Video\VideoEntity;
+use DateMalformedStringException;
 use DateTimeImmutable;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\DBAL\Exception;
 use Doctrine\ORM\Exception\ORMException;
 use Doctrine\Persistence\ManagerRegistry;
+use RuntimeException;
 use Symfony\Component\Uid\UuidV4 as SymfonyUuid;
 
 /**
@@ -36,8 +38,7 @@ class TaskRepository extends ServiceEntityRepository implements TaskRepositoryIn
         private readonly VideoRepositoryInterface $videoRepository,
         private readonly PresetRepositoryInterface $presetRepository,
         private readonly UserRepositoryInterface $userRepository,
-    )
-    {
+    ) {
         parent::__construct($registry, TaskEntity::class);
     }
 
@@ -58,7 +59,7 @@ class TaskRepository extends ServiceEntityRepository implements TaskRepositoryIn
             /** @var TaskEntity|null $taskEntity */
             $taskEntity = $this->find(SymfonyUuid::fromString($task->id()->toRfc4122()));
             if (!$taskEntity) {
-                throw new \RuntimeException(sprintf('Task with id %s not found', $task->id()->toRfc4122()));
+                throw new RuntimeException(sprintf('Task with id %s not found', $task->id()->toRfc4122()));
             }
             TaskMapper::hydrate($taskEntity, $task, $videoRef, $presetRef, $userRef);
         }
@@ -69,13 +70,6 @@ class TaskRepository extends ServiceEntityRepository implements TaskRepositoryIn
         if ($task->id() === null) {
             $task->assignId(Uuid::fromString($taskEntity->id->toRfc4122()));
         }
-    }
-
-    public function findById(Uuid $id): ?Task
-    {
-        $entity = $this->find(SymfonyUuid::fromString($id->toRfc4122()));
-
-        return $entity ? self::mapToDomain($entity) : null;
     }
 
     /**
@@ -94,6 +88,11 @@ class TaskRepository extends ServiceEntityRepository implements TaskRepositoryIn
         $em->refresh($entity);
 
         return self::mapToDomain($entity);
+    }
+
+    protected static function mapToDomain(TaskEntity $entity): Task
+    {
+        return TaskMapper::toDomain($entity);
     }
 
     /**
@@ -126,6 +125,7 @@ class TaskRepository extends ServiceEntityRepository implements TaskRepositoryIn
         }
 
         $entity = $this->find(SymfonyUuid::fromString($row['id']));
+
         return $entity ? self::mapToDomain($entity) : null;
     }
 
@@ -135,7 +135,7 @@ class TaskRepository extends ServiceEntityRepository implements TaskRepositoryIn
             'video' => SymfonyUuid::fromString($videoId->toRfc4122()),
         ]);
 
-        return array_map(static fn (TaskEntity $entity): Task => self::mapToDomain($entity), $entities);
+        return array_map(static fn(TaskEntity $entity): Task => self::mapToDomain($entity), $entities);
     }
 
     /**
@@ -206,7 +206,7 @@ class TaskRepository extends ServiceEntityRepository implements TaskRepositoryIn
         $stmt = $conn->executeQuery($sql, ['video_id' => $videoId->toRfc4122()]);
 
         return array_map(
-            static fn (array $row): TaskItemDTO => new TaskItemDTO( // todo via TaskItemDTO::some-static
+            static fn(array $row): TaskItemDTO => new TaskItemDTO( // todo via TaskItemDTO::some-static
                 id: $row['id'],
                 videoId: $row['video_id'],
                 videoTitle: $row['video_title'],
@@ -248,6 +248,13 @@ class TaskRepository extends ServiceEntityRepository implements TaskRepositoryIn
         return array_map(function (array $row): ?Task {
             return $this->findById(Uuid::fromString($row['id']));
         }, $rows);
+    }
+
+    public function findById(Uuid $id): ?Task
+    {
+        $entity = $this->find(SymfonyUuid::fromString($id->toRfc4122()));
+
+        return $entity ? self::mapToDomain($entity) : null;
     }
 
     /**
@@ -318,7 +325,7 @@ class TaskRepository extends ServiceEntityRepository implements TaskRepositoryIn
         $stmt = $conn->executeQuery($sql);
 
         return array_map(
-            static fn (array $row): ScheduledTaskDTO => new ScheduledTaskDTO(
+            static fn(array $row): ScheduledTaskDTO => new ScheduledTaskDTO(
                 Uuid::fromString($row['task_id']),
                 Uuid::fromString($row['user_id']),
                 Uuid::fromString($row['video_id']),
@@ -362,7 +369,7 @@ class TaskRepository extends ServiceEntityRepository implements TaskRepositoryIn
               AND t.deleted = false
         SQL;
 
-        return (int) $conn->executeQuery($sql, ['userId' => $userId->toRfc4122()])->fetchOne();
+        return (int)$conn->executeQuery($sql, ['userId' => $userId->toRfc4122()])->fetchOne();
     }
 
     /**
@@ -378,12 +385,12 @@ class TaskRepository extends ServiceEntityRepository implements TaskRepositoryIn
             WHERE t.user_id = :userId
         SQL;
 
-        return (int) $conn->executeQuery($sql, ['userId' => $userId->toRfc4122()])->fetchOne();
+        return (int)$conn->executeQuery($sql, ['userId' => $userId->toRfc4122()])->fetchOne();
     }
 
     /**
      * @throws Exception
-     * @throws \DateMalformedStringException
+     * @throws DateMalformedStringException
      */
     public function getFirstPendingTaskWillStartAt(Uuid $userId): ?DateTimeImmutable
     {
@@ -434,10 +441,5 @@ class TaskRepository extends ServiceEntityRepository implements TaskRepositoryIn
         $date = $conn->executeQuery($sql, ['userId' => $userId->toRfc4122()])->fetchOne();
 
         return $date ? new DateTimeImmutable($date) : null;
-    }
-
-    protected static function mapToDomain(TaskEntity $entity): Task
-    {
-        return TaskMapper::toDomain($entity);
     }
 }

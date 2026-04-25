@@ -3,12 +3,13 @@ declare(strict_types=1);
 
 namespace App\Domain\Video\Entity;
 
+use App\Domain\Shared\ValueObject\Uuid;
 use App\Domain\Video\Exception\VideoAlreadyDeleted;
 use App\Domain\Video\Exception\VideoHasTranscodingTasks;
 use App\Domain\Video\ValueObject\FileExtension;
 use App\Domain\Video\ValueObject\VideoDates;
 use App\Domain\Video\ValueObject\VideoTitle;
-use App\Domain\Shared\ValueObject\Uuid;
+use DateTimeImmutable;
 
 class Video
 {
@@ -74,12 +75,12 @@ class Video
         return $this->extension;
     }
 
-    public function createdAt(): \DateTimeImmutable
+    public function createdAt(): DateTimeImmutable
     {
         return $this->dates->createdAt();
     }
 
-    public function updatedAt(): ?\DateTimeImmutable
+    public function updatedAt(): ?DateTimeImmutable
     {
         return $this->dates->updatedAt();
     }
@@ -99,6 +100,13 @@ class Video
         $this->assertNotDeleted();
         $this->meta = array_merge($this->meta, $meta);
         $this->dates = $this->dates->touch();
+    }
+
+    private function assertNotDeleted(): void
+    {
+        if ($this->deleted) {
+            throw VideoAlreadyDeleted::forVideo();
+        }
     }
 
     /**
@@ -146,12 +154,5 @@ class Video
         $this->assertNotDeleted();
         $this->title = $title;
         $this->dates = $this->dates->touch();
-    }
-
-    private function assertNotDeleted(): void
-    {
-        if ($this->deleted) {
-            throw VideoAlreadyDeleted::forVideo();
-        }
     }
 }

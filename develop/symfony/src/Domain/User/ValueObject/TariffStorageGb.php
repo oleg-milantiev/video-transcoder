@@ -3,13 +3,15 @@ declare(strict_types=1);
 
 namespace App\Domain\User\ValueObject;
 
+use DomainException;
+
 final readonly class TariffStorageGb
 {
     public function __construct(
         private float $value,
     ) {
         if ($this->value <= 0) {
-            throw new \DomainException('Tariff storage must be greater than 0 gigabytes.');
+            throw new DomainException('Tariff storage must be greater than 0 gigabytes.');
         }
     }
 

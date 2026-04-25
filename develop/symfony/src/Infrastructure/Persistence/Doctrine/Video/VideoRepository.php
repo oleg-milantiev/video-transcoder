@@ -12,6 +12,7 @@ use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\DBAL\Exception;
 use Doctrine\ORM\Exception\ORMException;
 use Doctrine\Persistence\ManagerRegistry;
+use RuntimeException;
 use Symfony\Component\Uid\UuidV4 as SymfonyUuid;
 
 /**
@@ -39,7 +40,7 @@ class VideoRepository extends ServiceEntityRepository implements VideoRepository
         } else {
             $entity = $this->find(SymfonyUuid::fromString($video->id()->toRfc4122()));
             if (!$entity) {
-                throw new \RuntimeException(sprintf('Video with id %s not found', $video->id()));
+                throw new RuntimeException(sprintf('Video with id %s not found', $video->id()));
             }
             VideoMapper::hydrate($entity, $video, $user);
         }
@@ -48,13 +49,6 @@ class VideoRepository extends ServiceEntityRepository implements VideoRepository
         $em->flush();
 
         return VideoMapper::toDomain($entity);
-    }
-
-    public function findById(Uuid $id): ?Video
-    {
-        $entity = $this->find(SymfonyUuid::fromString($id->toRfc4122()));
-
-        return $entity ? self::mapToDomain($entity) : null;
     }
 
     /**
@@ -79,6 +73,13 @@ class VideoRepository extends ServiceEntityRepository implements VideoRepository
         }, $rows)));
     }
 
+    public function findById(Uuid $id): ?Video
+    {
+        $entity = $this->find(SymfonyUuid::fromString($id->toRfc4122()));
+
+        return $entity ? self::mapToDomain($entity) : null;
+    }
+
     protected static function mapToDomain(VideoEntity $entity): Video
     {
         return VideoMapper::toDomain($entity);
@@ -98,7 +99,7 @@ class VideoRepository extends ServiceEntityRepository implements VideoRepository
               AND v.deleted = false
         SQL;
 
-        return (int) $conn->executeQuery($sql, ['userId' => $userId->toRfc4122()])->fetchOne();
+        return (int)$conn->executeQuery($sql, ['userId' => $userId->toRfc4122()])->fetchOne();
     }
 
     /**
@@ -114,6 +115,6 @@ class VideoRepository extends ServiceEntityRepository implements VideoRepository
             WHERE v.user_id = :userId
         SQL;
 
-        return (int) $conn->executeQuery($sql, ['userId' => $userId->toRfc4122()])->fetchOne();
+        return (int)$conn->executeQuery($sql, ['userId' => $userId->toRfc4122()])->fetchOne();
     }
 }

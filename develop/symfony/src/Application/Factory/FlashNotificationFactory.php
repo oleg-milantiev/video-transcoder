@@ -8,6 +8,7 @@ use App\Domain\Video\Entity\Task;
 use App\Domain\Video\Entity\Video;
 use App\Domain\Video\ValueObject\RealtimeNotification;
 use App\Domain\Video\ValueObject\RealtimeNotificationLevel;
+use Throwable;
 
 final readonly class FlashNotificationFactory
 {
@@ -32,7 +33,7 @@ final readonly class FlashNotificationFactory
         $notification = RealtimeNotification::create(
             level: RealtimeNotificationLevel::ERROR,
             title: 'Upload failed',
-            html: 'Video upload failed.'. ($videoId ? ' <a href="/video/'. $videoId .'">Open details</a>' : '') .'<br>'. $message,
+            html: 'Video upload failed.'.($videoId ? ' <a href="/video/'.$videoId.'">Open details</a>' : '').'<br>'.$message,
             timerMs: 7000,
         );
 
@@ -72,7 +73,7 @@ final readonly class FlashNotificationFactory
         return FlashNotificationDTO::fromDomain($notification);
     }
 
-    public function transcodeFailed(Task $task, \Throwable $exception): FlashNotificationDTO
+    public function transcodeFailed(Task $task, Throwable $exception): FlashNotificationDTO
     {
         $videoId = $task->videoId()->toRfc4122();
         $safeMessage = htmlspecialchars($exception->getMessage(), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');

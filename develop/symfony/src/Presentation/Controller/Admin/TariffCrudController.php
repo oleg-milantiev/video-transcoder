@@ -63,7 +63,11 @@ class TariffCrudController extends AbstractCrudController
         return [
             TextField::new('id')
                 ->hideOnForm()
-                ->formatValue(static fn ($value) => is_object($value) && method_exists($value, 'toRfc4122') ? $value->toRfc4122() : (string) $value),
+                ->formatValue(
+                    static fn($value) => is_object($value) && method_exists($value, 'toRfc4122')
+                        ? $value->toRfc4122()
+                        : (string)$value
+                ),
             TextField::new('title'),
             IntegerField::new('delay', 'Delay (sec)')
                 ->setHelp('Minimum seconds between tasks. 0 = no limit.'),
@@ -90,7 +94,7 @@ class TariffCrudController extends AbstractCrudController
             AssociationField::new('presets')
                 ->setLabel('Presets')
                 ->setTemplatePath('admin/field/tariff_presets_summary.html.twig')
-                ->formatValue(fn ($value, ?TariffEntity $entity) => [
+                ->formatValue(fn($value, ?TariffEntity $entity) => [
                     'presets' => $this->collectPresetLinks($entity),
                 ])
                 ->onlyOnIndex(),
@@ -108,7 +112,7 @@ class TariffCrudController extends AbstractCrudController
             if (null !== $preset?->id) {
                 $id = $preset->id->toRfc4122();
                 $presets[$id] = [
-                    'title' => (string) $preset,
+                    'title' => (string)$preset,
                     'url' => $this->buildPresetUrl($preset->id->toRfc4122()),
                 ];
             }

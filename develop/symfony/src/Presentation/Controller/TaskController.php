@@ -20,6 +20,7 @@ use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
+use Throwable;
 
 #[IsGranted('IS_AUTHENTICATED_FULLY')]
 class TaskController extends AbstractController
@@ -47,7 +48,7 @@ class TaskController extends AbstractController
             throw new NotFoundHttpException('VIDEO_NOT_FOUND');
         } catch (TaskDownloadAccessDeniedException) {
             throw new AccessDeniedHttpException('ACCESS_DENIED');
-        } catch (\Throwable $e ) {
+        } catch (Throwable $e) {
             $this->logService->log('task', 'download', Uuid::fromStringNullable($id), LogLevel::CRITICAL, 'Fail', [
                 'id' => $id,
                 'message' => $e->getMessage(),

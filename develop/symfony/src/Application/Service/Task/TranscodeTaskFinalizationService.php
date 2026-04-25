@@ -13,7 +13,10 @@ use App\Domain\Video\Repository\TaskRepositoryInterface;
 use App\Domain\Video\ValueObject\Progress;
 use App\Domain\Video\ValueObject\TaskStatus;
 use App\Infrastructure\Task\TaskCancellationTrigger;
+use DateTimeImmutable;
+use DateTimeInterface;
 use Psr\Log\LogLevel;
+use Throwable;
 
 readonly class TranscodeTaskFinalizationService
 {
@@ -37,7 +40,7 @@ readonly class TranscodeTaskFinalizationService
         $cancelledTask->clearSizeExpected();
         $cancelledTask->updateMeta([
             'transcode' => [
-                'cancelledAt' => new \DateTimeImmutable()->format(\DateTimeInterface::ATOM),
+                'cancelledAt' => new DateTimeImmutable()->format(DateTimeInterface::ATOM),
                 'report' => $report->toArray(),
             ],
         ]);
@@ -57,7 +60,7 @@ readonly class TranscodeTaskFinalizationService
             'size' => $fileSize,
             'output' => $context->relativeOutputPath,
             'transcode' => [
-                'finishedAt' => new \DateTimeImmutable()->format(\DateTimeInterface::ATOM),
+                'finishedAt' => new DateTimeImmutable()->format(DateTimeInterface::ATOM),
                 'report' => $report->toArray(),
             ],
         ]);
@@ -78,7 +81,7 @@ readonly class TranscodeTaskFinalizationService
         ]);
     }
 
-    public function handleFailure(Task $task, \Throwable $exception, ?string $absoluteOutputPath): void
+    public function handleFailure(Task $task, Throwable $exception, ?string $absoluteOutputPath): void
     {
         if (!$task->status()->isFinished()) {
             $task->fail();

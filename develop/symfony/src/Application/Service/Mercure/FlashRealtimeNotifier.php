@@ -23,12 +23,16 @@ final readonly class FlashRealtimeNotifier
      */
     public function notify(Uuid $userId, FlashNotificationDTO $flash): void
     {
-        $this->commandBus->dispatch(new PublishMercureMessage(new MercureMessageDTO(
-            action: 'notify',
-            entity: 'flash',
-            id: null,
-            userId: $userId,
-            payload: $flash->toArray(),
-        )));
+        $this->commandBus->dispatch(
+            new PublishMercureMessage(
+                new MercureMessageDTO(
+                    action: 'notify',
+                    entity: 'flash',
+                    id: null,
+                    userId: $userId,
+                    payload: $flash->toArray(),
+                )
+            )
+        );
     }
 }

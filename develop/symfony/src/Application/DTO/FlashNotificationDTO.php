@@ -47,6 +47,6 @@ final readonly class FlashNotificationDTO
             'position' => $this->position,
             'imageUrl' => $this->imageUrl,
             'imageAlt' => $this->imageAlt,
-        ], static fn (mixed $value): bool => $value !== null);
+        ], static fn(mixed $value): bool => $value !== null);
     }
 }

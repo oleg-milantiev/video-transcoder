@@ -7,6 +7,7 @@ use App\Application\Exception\InvalidUuidException;
 use App\Application\Exception\QueryException;
 use App\Domain\Shared\ValueObject\Uuid;
 use Symfony\Component\HttpFoundation\Request;
+use Throwable;
 
 final readonly class PatchVideoQuery
 {
@@ -27,7 +28,7 @@ final readonly class PatchVideoQuery
             $this->videoId = Uuid::fromString($videoId);
             $this->requestedByUserId = Uuid::fromString($requestedByUserId);
             $this->title = $title;
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             throw new InvalidUuidException('Invalid UUID', previous: $e);
         }
     }

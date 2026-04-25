@@ -3,8 +3,10 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\Google;
 
+use Exception;
 use League\OAuth2\Client\Provider\Google;
 use League\OAuth2\Client\Provider\GoogleUser;
+use RuntimeException;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
@@ -48,7 +50,7 @@ class GoogleAuthenticator
         $session = $this->getSession();
 
         $authUrl = $this->provider->getAuthorizationUrl([
-            'scope' => ['email', 'profile']
+            'scope' => ['email', 'profile'],
         ]);
 
         // Сохраняем state в сессии для защиты от CSRF
@@ -58,9 +60,36 @@ class GoogleAuthenticator
     }
 
     /**
+     * @throws RuntimeException
+     */
+    private function assertConfigured(): void
+    {
+        if ($this->isConfigured) {
+            return;
+        }
+
+        throw new RuntimeException(
+            'Google OAuth is not configured. Please set OAUTH_GOOGLE_CLIENT_ID, OAUTH_GOOGLE_CLIENT_SECRET and OAUTH_GOOGLE_REDIRECT_URI.'
+        );
+    }
+
+    /**
+     * @throws RuntimeException
+     */
+    private function getSession(): SessionInterface
+    {
+        $request = $this->requestStack->getCurrentRequest();
+        if ($request === null || !$request->hasSession()) {
+            throw new RuntimeException('Google OAuth requires an active session.');
+        }
+
+        return $request->getSession();
+    }
+
+    /**
      * Получить пользователя от Google по коду авторизации
      *
-     * @throws \RuntimeException
+     * @throws RuntimeException
      */
     public function getUserFromCode(Request $request): GoogleUser
     {
@@ -70,7 +99,7 @@ class GoogleAuthenticator
         $error = $request->query->getString('error');
         if ($error) {
             $errorDescription = $request->query->getString('error_description', 'Unknown error');
-            throw new \RuntimeException("Google OAuth error: $error - $errorDescription");
+            throw new RuntimeException("Google OAuth error: $error - $errorDescription");
         }
 
         // Проверяем state (защита от CSRF)
@@ -79,13 +108,13 @@ class GoogleAuthenticator
         $session->remove(self::SESSION_STATE_KEY);
 
         if (!$state || $state !== $savedState) {
-            throw new \RuntimeException('Invalid OAuth state - possible CSRF attack');
+            throw new RuntimeException('Invalid OAuth state - possible CSRF attack');
         }
 
         // Получаем код авторизации
         $code = $request->query->getString('code');
         if (!$code) {
-            throw new \RuntimeException('No authorization code provided');
+            throw new RuntimeException('No authorization code provided');
         }
 
         try {
@@ -93,7 +122,7 @@ class GoogleAuthenticator
 
             // Получаем токен доступа
             $token = $this->provider->getAccessToken('authorization_code', [
-                'code' => $code
+                'code' => $code,
             ]);
 
             // Получаем данные пользователя
@@ -101,33 +130,8 @@ class GoogleAuthenticator
             $resourceOwner = $this->provider->getResourceOwner($token);
 
             return $resourceOwner;
-        } catch (\Exception $e) {
-            throw new \RuntimeException('Failed to get access token: ' . $e->getMessage(), 0, $e);
+        } catch (Exception $e) {
+            throw new RuntimeException('Failed to get access token: '.$e->getMessage(), 0, $e);
         }
-    }
-
-    /**
-     * @throws \RuntimeException
-     */
-    private function assertConfigured(): void
-    {
-        if ($this->isConfigured) {
-            return;
-        }
-
-        throw new \RuntimeException('Google OAuth is not configured. Please set OAUTH_GOOGLE_CLIENT_ID, OAUTH_GOOGLE_CLIENT_SECRET and OAUTH_GOOGLE_REDIRECT_URI.');
-    }
-
-    /**
-     * @throws \RuntimeException
-     */
-    private function getSession(): SessionInterface
-    {
-        $request = $this->requestStack->getCurrentRequest();
-        if ($request === null || !$request->hasSession()) {
-            throw new \RuntimeException('Google OAuth requires an active session.');
-        }
-
-        return $request->getSession();
     }
 }

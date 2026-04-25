@@ -4,6 +4,8 @@ declare(strict_types=1);
 namespace App\Infrastructure\Security;
 
 use App\Domain\Shared\ValueObject\Uuid;
+use InvalidArgumentException;
+use JsonException;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
 final readonly class ApiTokenService
@@ -26,11 +28,6 @@ final readonly class ApiTokenService
         return $this->buildToken($userId, $identifier, $this->ttlSeconds(), self::TYPE_ACCESS);
     }
 
-    public function createRefreshToken(Uuid $userId, string $identifier): string
-    {
-        return $this->buildToken($userId, $identifier, $this->refreshTtlSeconds(), self::TYPE_REFRESH);
-    }
-
     private function buildToken(Uuid $userId, string $identifier, int $ttl, string $type): string
     {
         $payload = [
@@ -40,15 +37,35 @@ final readonly class ApiTokenService
             'type' => $type,
         ];
 
-        $payloadPart = $this->base64UrlEncode((string) json_encode($payload, JSON_THROW_ON_ERROR));
+        $payloadPart = $this->base64UrlEncode((string)json_encode($payload, JSON_THROW_ON_ERROR));
         $signaturePart = $this->base64UrlEncode(hash_hmac('sha256', $payloadPart, $this->secret, true));
 
         return sprintf('%s.%s', $payloadPart, $signaturePart);
     }
 
+    private function base64UrlEncode(string $value): string
+    {
+        return rtrim(strtr(base64_encode($value), '+/', '-_'), '=');
+    }
+
+    public function ttlSeconds(): int
+    {
+        return $this->ttlSeconds > 0 ? $this->ttlSeconds : self::DEFAULT_TTL_SECONDS;
+    }
+
+    public function createRefreshToken(Uuid $userId, string $identifier): string
+    {
+        return $this->buildToken($userId, $identifier, $this->refreshTtlSeconds(), self::TYPE_REFRESH);
+    }
+
+    public function refreshTtlSeconds(): int
+    {
+        return $this->refreshTtlSecondsValue > 0 ? $this->refreshTtlSecondsValue : self::DEFAULT_REFRESH_TTL_SECONDS;
+    }
+
     /**
      * @return array{sub: string, identifier: string, exp: int}
-     * @throws \JsonException
+     * @throws JsonException
      */
     public function parseToken(string $token): array
     {
@@ -57,36 +74,27 @@ final readonly class ApiTokenService
 
     /**
      * @return array{sub: string, identifier: string, exp: int}
-     * @throws \JsonException
-     */
-    public function parseRefreshToken(string $token): array
-    {
-        return $this->parseAndValidate($token, self::TYPE_REFRESH);
-    }
-
-    /**
-     * @return array{sub: string, identifier: string, exp: int}
-     * @throws \JsonException
+     * @throws JsonException
      */
     private function parseAndValidate(string $token, string $expectedType): array
     {
         $parts = explode('.', $token, 2);
         if (count($parts) !== 2 || $parts[0] === '' || $parts[1] === '') {
-            throw new \InvalidArgumentException('Malformed token.');
+            throw new InvalidArgumentException('Malformed token.');
         }
 
         [$payloadPart, $signaturePart] = $parts;
         $expectedSignature = $this->base64UrlEncode(hash_hmac('sha256', $payloadPart, $this->secret, true));
 
         if (!hash_equals($expectedSignature, $signaturePart)) {
-            throw new \InvalidArgumentException('Invalid token signature.');
+            throw new InvalidArgumentException('Invalid token signature.');
         }
 
         $payloadJson = $this->base64UrlDecode($payloadPart);
         $payload = json_decode($payloadJson, true, 512, JSON_THROW_ON_ERROR);
 
         if (!is_array($payload)) {
-            throw new \InvalidArgumentException('Invalid token payload.');
+            throw new InvalidArgumentException('Invalid token payload.');
         }
 
         $sub = $payload['sub'] ?? null;
@@ -95,15 +103,15 @@ final readonly class ApiTokenService
         $type = $payload['type'] ?? null;
 
         if (!is_string($sub) || !Uuid::isValid($sub) || !is_string($identifier) || !is_int($exp)) {
-            throw new \InvalidArgumentException('Invalid token claims.');
+            throw new InvalidArgumentException('Invalid token claims.');
         }
 
         if ($type !== $expectedType) {
-            throw new \InvalidArgumentException('Invalid token type.');
+            throw new InvalidArgumentException('Invalid token type.');
         }
 
         if ($exp < time()) {
-            throw new \InvalidArgumentException('Token expired.');
+            throw new InvalidArgumentException('Token expired.');
         }
 
         return [
@@ -111,21 +119,6 @@ final readonly class ApiTokenService
             'identifier' => $identifier,
             'exp' => $exp,
         ];
-    }
-
-    public function ttlSeconds(): int
-    {
-        return $this->ttlSeconds > 0 ? $this->ttlSeconds : self::DEFAULT_TTL_SECONDS;
-    }
-
-    public function refreshTtlSeconds(): int
-    {
-        return $this->refreshTtlSecondsValue > 0 ? $this->refreshTtlSecondsValue : self::DEFAULT_REFRESH_TTL_SECONDS;
-    }
-
-    private function base64UrlEncode(string $value): string
-    {
-        return rtrim(strtr(base64_encode($value), '+/', '-_'), '=');
     }
 
     private function base64UrlDecode(string $value): string
@@ -137,10 +130,19 @@ final readonly class ApiTokenService
 
         $decoded = base64_decode(strtr($value, '-_', '+/'), true);
         if ($decoded === false) {
-            throw new \InvalidArgumentException('Invalid base64 token part.');
+            throw new InvalidArgumentException('Invalid base64 token part.');
         }
 
         return $decoded;
+    }
+
+    /**
+     * @return array{sub: string, identifier: string, exp: int}
+     * @throws JsonException
+     */
+    public function parseRefreshToken(string $token): array
+    {
+        return $this->parseAndValidate($token, self::TYPE_REFRESH);
     }
 }
 

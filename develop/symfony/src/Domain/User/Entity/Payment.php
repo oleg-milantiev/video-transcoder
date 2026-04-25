@@ -4,7 +4,6 @@ declare(strict_types=1);
 namespace App\Domain\User\Entity;
 
 use App\Domain\Shared\ValueObject\Uuid;
-use App\Domain\User\Exception\PaymentNotFound;
 use App\Domain\User\ValueObject\PaymentAmount;
 use App\Domain\User\ValueObject\PaymentCurrency;
 use App\Domain\User\ValueObject\PaymentDates;
@@ -14,6 +13,8 @@ use App\Domain\User\ValueObject\PaymentInvoiceUrl;
 use App\Domain\User\ValueObject\PaymentMethod;
 use App\Domain\User\ValueObject\PaymentPlanSnapshot;
 use App\Domain\User\ValueObject\PaymentStatus;
+use DateTimeImmutable;
+use DomainException;
 
 class Payment
 {
@@ -44,18 +45,18 @@ class Payment
         array $meta,
         ?Uuid $id,
     ) {
-        $this->id            = $id;
-        $this->userId        = $userId;
-        $this->status        = $status;
-        $this->currency      = $currency;
-        $this->gateway       = $gateway;
-        $this->amount        = $amount;
-        $this->planSnapshot  = $planSnapshot;
-        $this->dates         = $dates;
-        $this->externalId    = $externalId;
+        $this->id = $id;
+        $this->userId = $userId;
+        $this->status = $status;
+        $this->currency = $currency;
+        $this->gateway = $gateway;
+        $this->amount = $amount;
+        $this->planSnapshot = $planSnapshot;
+        $this->dates = $dates;
+        $this->externalId = $externalId;
         $this->paymentMethod = $paymentMethod;
-        $this->invoiceUrl    = $invoiceUrl;
-        $this->meta          = $meta;
+        $this->invoiceUrl = $invoiceUrl;
+        $this->meta = $meta;
     }
 
     public static function create(
@@ -107,42 +108,51 @@ class Payment
     public function complete(
         ?PaymentExternalId $externalId = null,
         ?PaymentMethod $paymentMethod = null,
-        ?\DateTimeImmutable $validUntil = null,
+        ?DateTimeImmutable $validUntil = null,
         ?PaymentInvoiceUrl $invoiceUrl = null,
         array $meta = [],
     ): void {
         if (!$this->status->canBeCompleted()) {
-            throw new \DomainException(sprintf(
-                'Payment in status "%s" cannot be completed.', $this->status->value
-            ));
+            throw new DomainException(
+                sprintf(
+                    'Payment in status "%s" cannot be completed.',
+                    $this->status->value
+                )
+            );
         }
 
-        $this->status        = PaymentStatus::completed();
-        $this->externalId    = $externalId ?? $this->externalId;
+        $this->status = PaymentStatus::completed();
+        $this->externalId = $externalId ?? $this->externalId;
         $this->paymentMethod = $paymentMethod ?? $this->paymentMethod;
-        $this->invoiceUrl    = $invoiceUrl ?? $this->invoiceUrl;
-        $this->dates         = $this->dates->markPaid(new \DateTimeImmutable(), $validUntil);
-        $this->meta          = array_merge($this->meta, $meta);
+        $this->invoiceUrl = $invoiceUrl ?? $this->invoiceUrl;
+        $this->dates = $this->dates->markPaid(new DateTimeImmutable(), $validUntil);
+        $this->meta = array_merge($this->meta, $meta);
     }
 
     public function fail(array $meta = []): void
     {
         if (!$this->status->canBeFailed()) {
-            throw new \DomainException(sprintf(
-                'Payment in status "%s" cannot be failed.', $this->status->value
-            ));
+            throw new DomainException(
+                sprintf(
+                    'Payment in status "%s" cannot be failed.',
+                    $this->status->value
+                )
+            );
         }
 
         $this->status = PaymentStatus::failed();
-        $this->meta   = array_merge($this->meta, $meta);
+        $this->meta = array_merge($this->meta, $meta);
     }
 
     public function cancel(): void
     {
         if (!$this->status->canBeCancelled()) {
-            throw new \DomainException(sprintf(
-                'Payment in status "%s" cannot be cancelled.', $this->status->value
-            ));
+            throw new DomainException(
+                sprintf(
+                    'Payment in status "%s" cannot be cancelled.',
+                    $this->status->value
+                )
+            );
         }
 
         $this->status = PaymentStatus::cancelled();
@@ -151,13 +161,16 @@ class Payment
     public function refund(array $meta = []): void
     {
         if (!$this->status->canBeRefunded()) {
-            throw new \DomainException(sprintf(
-                'Payment in status "%s" cannot be refunded.', $this->status->value
-            ));
+            throw new DomainException(
+                sprintf(
+                    'Payment in status "%s" cannot be refunded.',
+                    $this->status->value
+                )
+            );
         }
 
         $this->status = PaymentStatus::refunded();
-        $this->meta   = array_merge($this->meta, $meta);
+        $this->meta = array_merge($this->meta, $meta);
     }
 
     // ── Mutations ────────────────────────────────────────────────────────────
@@ -234,19 +247,14 @@ class Payment
         return $this->dates;
     }
 
-    public function createdAt(): \DateTimeImmutable
+    public function createdAt(): DateTimeImmutable
     {
         return $this->dates->createdAt();
     }
 
-    public function paidAt(): ?\DateTimeImmutable
+    public function paidAt(): ?DateTimeImmutable
     {
         return $this->dates->paidAt();
-    }
-
-    public function validUntil(): ?\DateTimeImmutable
-    {
-        return $this->dates->validUntil();
     }
 
     public function isActive(): bool
@@ -257,7 +265,12 @@ class Payment
 
         $validUntil = $this->dates->validUntil();
 
-        return $validUntil === null || $validUntil >= new \DateTimeImmutable();
+        return $validUntil === null || $validUntil >= new DateTimeImmutable();
+    }
+
+    public function validUntil(): ?DateTimeImmutable
+    {
+        return $this->dates->validUntil();
     }
 
     public function __toString(): string

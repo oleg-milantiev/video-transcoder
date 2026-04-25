@@ -17,7 +17,7 @@ trait PaginatedRepositoryTrait
             ->setParameter('userId', $userId->toRfc4122());
 
         $countQuery = clone $queryBuilder;
-        $total = (int) $countQuery
+        $total = (int)$countQuery
             ->select('COUNT(v.id)')
             ->getQuery()
             ->getSingleScalarResult();

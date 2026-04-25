@@ -19,7 +19,8 @@ readonly class TusPostFinishListener
         #[Autowire(service: 'messenger.bus.command')]
         private MessageBusInterface $commandBus,
         private Security $security,
-    ) {}
+    ) {
+    }
 
     /**
      * @throws ExceptionInterface
@@ -27,9 +28,11 @@ readonly class TusPostFinishListener
     #[AsEventListener(event: UploadComplete::NAME)]
     public function __invoke(UploadComplete $event): void
     {
-        $this->commandBus->dispatch(new CreateVideo(
-            file: $event->getFile(),
-            userId: Uuid::fromString($this->security->getUser()->id->toRfc4122()),
-        ));
+        $this->commandBus->dispatch(
+            new CreateVideo(
+                file: $event->getFile(),
+                userId: Uuid::fromString($this->security->getUser()->id->toRfc4122()),
+            )
+        );
     }
 }

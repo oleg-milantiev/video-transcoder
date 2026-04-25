@@ -3,6 +3,8 @@ declare(strict_types=1);
 
 namespace App\Domain\User\ValueObject;
 
+use DomainException;
+
 /**
  * Snapshot of the tariff/plan title at the time of payment.
  * Preserved for historical billing records even if the tariff changes later.
@@ -18,11 +20,11 @@ final readonly class PaymentPlanSnapshot
         $normalized = trim($value);
 
         if ($normalized === '') {
-            throw new \DomainException('Payment plan snapshot cannot be empty.');
+            throw new DomainException('Payment plan snapshot cannot be empty.');
         }
 
         if (mb_strlen($normalized) > self::MAX_LENGTH) {
-            throw new \DomainException('Payment plan snapshot must not exceed 255 characters.');
+            throw new DomainException('Payment plan snapshot must not exceed 255 characters.');
         }
 
         $this->value = $normalized;

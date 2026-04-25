@@ -3,6 +3,8 @@ declare(strict_types=1);
 
 namespace App\Domain\User\ValueObject;
 
+use DomainException;
+
 final readonly class UserEmail
 {
     private const int MAX_LENGTH = 180;
@@ -14,15 +16,15 @@ final readonly class UserEmail
         $normalized = mb_strtolower(trim($value));
 
         if ($normalized === '') {
-            throw new \DomainException('User email cannot be empty.');
+            throw new DomainException('User email cannot be empty.');
         }
 
         if (mb_strlen($normalized) > self::MAX_LENGTH) {
-            throw new \DomainException('User email must be less than or equal to 180 characters long.');
+            throw new DomainException('User email must be less than or equal to 180 characters long.');
         }
 
         if (!filter_var($normalized, FILTER_VALIDATE_EMAIL)) {
-            throw new \DomainException('User email has invalid format.');
+            throw new DomainException('User email has invalid format.');
         }
 
         $this->value = $normalized;

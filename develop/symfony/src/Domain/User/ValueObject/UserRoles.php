@@ -3,6 +3,8 @@ declare(strict_types=1);
 
 namespace App\Domain\User\ValueObject;
 
+use DomainException;
+
 final readonly class UserRoles
 {
     /**
@@ -16,7 +18,7 @@ final readonly class UserRoles
     public function __construct(array $values)
     {
         if ($values === []) {
-            throw new \DomainException('User must have at least one role.');
+            throw new DomainException('User must have at least one role.');
         }
 
         $normalized = [];
@@ -25,11 +27,11 @@ final readonly class UserRoles
             $role = strtoupper(trim($value));
 
             if ($role === '') {
-                throw new \DomainException('User role cannot be empty.');
+                throw new DomainException('User role cannot be empty.');
             }
 
             if (!preg_match('/^ROLE_[A-Z0-9_]+$/', $role)) {
-                throw new \DomainException(sprintf('Invalid user role: %s.', $value));
+                throw new DomainException(sprintf('Invalid user role: %s.', $value));
             }
 
             $normalized[$role] = true;

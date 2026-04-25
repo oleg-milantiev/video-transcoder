@@ -3,6 +3,8 @@ declare(strict_types=1);
 
 namespace App\Domain\Video\ValueObject;
 
+use DomainException;
+
 final class Format
 {
     private const array ALLOWED = ['mp4', 'webm'];
@@ -13,7 +15,7 @@ final class Format
         $normalized = mb_strtolower(trim($this->value));
 
         if (!in_array($normalized, self::ALLOWED, true)) {
-            throw new \DomainException(sprintf('Unsupported format: %s', $this->value));
+            throw new DomainException(sprintf('Unsupported format: %s', $this->value));
         }
 
         $this->value = $normalized;

@@ -39,32 +39,6 @@ final readonly class DeletedTaskCleanupService
         ];
     }
 
-    /**
-     * @return array{candidates:int, filesDeleted:int}
-     */
-    public function cleanupByVideoId(Uuid $videoId): array
-    {
-        $tasks = $this->taskRepository->findByVideoId($videoId);
-
-        $candidates = 0;
-        $filesDeleted = 0;
-        foreach ($tasks as $task) {
-            if (!$task->isDeleted()) {
-                continue;
-            }
-
-            $candidates++;
-            if ($this->cleanupTask($task)) {
-                $filesDeleted++;
-            }
-        }
-
-        return [
-            'candidates' => $candidates,
-            'filesDeleted' => $filesDeleted,
-        ];
-    }
-
     public function cleanupTask(Task $task): bool
     {
         $outputKey = $task->meta()['output'] ?? null;
@@ -90,5 +64,31 @@ final readonly class DeletedTaskCleanupService
         );
 
         return $deleted;
+    }
+
+    /**
+     * @return array{candidates:int, filesDeleted:int}
+     */
+    public function cleanupByVideoId(Uuid $videoId): array
+    {
+        $tasks = $this->taskRepository->findByVideoId($videoId);
+
+        $candidates = 0;
+        $filesDeleted = 0;
+        foreach ($tasks as $task) {
+            if (!$task->isDeleted()) {
+                continue;
+            }
+
+            $candidates++;
+            if ($this->cleanupTask($task)) {
+                $filesDeleted++;
+            }
+        }
+
+        return [
+            'candidates' => $candidates,
+            'filesDeleted' => $filesDeleted,
+        ];
     }
 }

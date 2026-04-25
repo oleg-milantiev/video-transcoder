@@ -14,8 +14,14 @@ final readonly class PromtailLogService implements LogServiceInterface
     ) {
     }
 
-    public function log(string $name, string $action, ?Uuid $objectId, string $level, string $text, array $context = []): void
-    {
+    public function log(
+        string $name,
+        string $action,
+        ?Uuid $objectId,
+        string $level,
+        string $text,
+        array $context = []
+    ): void {
         $this->logger->log($level, $text, array_merge($context, [
             'action' => $action,
             'name' => $name,

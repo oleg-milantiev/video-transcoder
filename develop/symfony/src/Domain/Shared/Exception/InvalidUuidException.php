@@ -3,7 +3,9 @@ declare(strict_types=1);
 
 namespace App\Domain\Shared\Exception;
 
-class InvalidUuidException extends \DomainException
+use DomainException;
+
+class InvalidUuidException extends DomainException
 {
     public static function invalidFormat(string $uuid): self
     {

@@ -8,6 +8,8 @@ use App\Domain\Video\Exception\TaskAlreadyDeleted;
 use App\Domain\Video\ValueObject\Progress;
 use App\Domain\Video\ValueObject\TaskDates;
 use App\Domain\Video\ValueObject\TaskStatus;
+use DateTimeImmutable;
+use DomainException;
 
 class Task
 {
@@ -72,6 +74,30 @@ class Task
         return new self($videoId, $presetId, $userId, $status, $progress, $dates, $id, $meta, $deleted);
     }
 
+    public function start(?float $videoDuration): void
+    {
+        $this->assertNotDeleted();
+
+        if (!$this->canStart($videoDuration)) {
+            throw new DomainException('Task cannot be started.');
+        }
+
+        $this->status = TaskStatus::processing();
+        $this->dates = $this->dates->markStarted();
+    }
+
+    private function assertNotDeleted(): void
+    {
+        if ($this->isDeleted()) {
+            throw TaskAlreadyDeleted::forTask();
+        }
+    }
+
+    public function isDeleted(): bool
+    {
+        return $this->deleted || $this->status->isDeleted();
+    }
+
     public function canStart(?float $videoDuration): bool
     {
         if ($this->deleted) {
@@ -85,28 +111,21 @@ class Task
         return $videoDuration !== null && $videoDuration > 0.0;
     }
 
-    public function start(?float $videoDuration): void
-    {
-        $this->assertNotDeleted();
-
-        if (!$this->canStart($videoDuration)) {
-            throw new \DomainException('Task cannot be started.');
-        }
-
-        $this->status = TaskStatus::processing();
-        $this->dates = $this->dates->markStarted();
-    }
-
     public function restart(): void
     {
         $this->assertNotDeleted();
 
         if (!$this->status->canBeRestarted()) {
-            throw new \DomainException('Task cannot be restarted.');
+            throw new DomainException('Task cannot be restarted.');
         }
 
         $this->status = TaskStatus::pending();
         $this->progress = new Progress(0);
+        $this->dates = $this->dates->touch();
+    }
+
+    private function touch(): void
+    {
         $this->dates = $this->dates->touch();
     }
 
@@ -115,7 +134,7 @@ class Task
         $this->assertNotDeleted();
 
         if ($this->status !== TaskStatus::PROCESSING) {
-            throw new \DomainException('Cannot update progress for task that is not processing.');
+            throw new DomainException('Cannot update progress for task that is not processing.');
         }
 
         $this->progress = $progress;
@@ -132,10 +151,22 @@ class Task
         $this->assertNotDeleted();
 
         if ($this->status->isFinished()) {
-            throw new \DomainException('Finished task cannot fail.');
+            throw new DomainException('Finished task cannot fail.');
         }
 
         $this->status = TaskStatus::failed();
+        $this->touch();
+    }
+
+    public function cancel(): void
+    {
+        $this->assertNotDeleted();
+
+        if (!$this->canBeCancelled()) {
+            throw new DomainException('Task cannot be cancelled.');
+        }
+
+        $this->status = TaskStatus::cancelled();
         $this->touch();
     }
 
@@ -148,34 +179,22 @@ class Task
         return $this->status === TaskStatus::PENDING || $this->status === TaskStatus::PROCESSING || $this->status === TaskStatus::STARTING;
     }
 
-    public function cancel(): void
-    {
-        $this->assertNotDeleted();
-
-        if (!$this->canBeCancelled()) {
-            throw new \DomainException('Task cannot be cancelled.');
-        }
-
-        $this->status = TaskStatus::cancelled();
-        $this->touch();
-    }
-
     public function progress(): Progress
     {
         return $this->progress;
     }
 
-    public function createdAt(): \DateTimeImmutable
+    public function createdAt(): DateTimeImmutable
     {
         return $this->dates->createdAt();
     }
 
-    public function startedAt(): ?\DateTimeImmutable
+    public function startedAt(): ?DateTimeImmutable
     {
         return $this->dates->startedAt();
     }
 
-    public function updatedAt(): ?\DateTimeImmutable
+    public function updatedAt(): ?DateTimeImmutable
     {
         return $this->dates->updatedAt();
     }
@@ -203,7 +222,7 @@ class Task
     public function assignId(Uuid $id): void
     {
         if ($this->id !== null && !$this->id->equals($id)) {
-            throw new \DomainException('Task id is already assigned and cannot be changed.');
+            throw new DomainException('Task id is already assigned and cannot be changed.');
         }
 
         $this->id = $id;
@@ -224,7 +243,7 @@ class Task
         $this->assertNotDeleted();
 
         if ($this->status === TaskStatus::COMPLETED) {
-            throw new \DomainException('Completed task metadata cannot be changed.');
+            throw new DomainException('Completed task metadata cannot be changed.');
         }
 
         $this->meta = array_merge($this->meta, $meta);
@@ -242,11 +261,6 @@ class Task
         $this->touch();
     }
 
-    public function isDeleted(): bool
-    {
-        return $this->deleted || $this->status->isDeleted();
-    }
-
     public function clearOutput(): void
     {
         $this->meta['output'] = null;
@@ -257,18 +271,6 @@ class Task
     {
         unset($this->meta['sizeExpected']);
         $this->touch();
-    }
-
-    private function touch(): void
-    {
-        $this->dates = $this->dates->touch();
-    }
-
-    private function assertNotDeleted(): void
-    {
-        if ($this->isDeleted()) {
-            throw TaskAlreadyDeleted::forTask();
-        }
     }
 
     public function heightNullable(): ?int

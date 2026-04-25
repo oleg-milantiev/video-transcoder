@@ -68,6 +68,7 @@ class PresetEntity
         if ($this->bitrate === null) {
             return null;
         }
+
         return json_encode($this->bitrate, JSON_PRETTY_PRINT);
     }
 }

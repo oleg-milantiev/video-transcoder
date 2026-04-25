@@ -3,13 +3,15 @@ declare(strict_types=1);
 
 namespace App\Domain\User\ValueObject;
 
+use DomainException;
+
 final readonly class TariffVideoSize
 {
     public function __construct(
         private float $value,
     ) {
         if ($this->value <= 0) {
-            throw new \DomainException('Tariff video size must be greater than 0 megabytes.');
+            throw new DomainException('Tariff video size must be greater than 0 megabytes.');
         }
     }
 

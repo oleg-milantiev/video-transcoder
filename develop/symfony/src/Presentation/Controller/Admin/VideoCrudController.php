@@ -8,15 +8,17 @@ use App\Application\Exception\TranscodeAccessDeniedException;
 use App\Application\Exception\VideoNotFoundException;
 use App\Application\Query\DeleteVideoQuery;
 use App\Application\QueryHandler\QueryBus;
-use App\Domain\Video\ValueObject\TaskStatus;
 use App\Domain\Video\Exception\VideoAlreadyDeleted;
 use App\Domain\Video\Exception\VideoHasTranscodingTasks;
+use App\Domain\Video\ValueObject\TaskStatus;
 use App\Infrastructure\Persistence\Doctrine\Video\VideoEntity;
+use DomainException;
 use EasyCorp\Bundle\EasyAdminBundle\Attribute\AdminRoute;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Action;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Actions;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Crud;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Filters;
+use EasyCorp\Bundle\EasyAdminBundle\Context\AdminContext;
 use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractCrudController;
 use EasyCorp\Bundle\EasyAdminBundle\Field\ArrayField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\AssociationField;
@@ -26,8 +28,8 @@ use EasyCorp\Bundle\EasyAdminBundle\Filter\DateTimeFilter;
 use EasyCorp\Bundle\EasyAdminBundle\Filter\EntityFilter;
 use EasyCorp\Bundle\EasyAdminBundle\Filter\TextFilter;
 use EasyCorp\Bundle\EasyAdminBundle\Router\AdminUrlGenerator;
-use EasyCorp\Bundle\EasyAdminBundle\Context\AdminContext;
 use Symfony\Component\HttpFoundation\Response;
+use Throwable;
 
 class VideoCrudController extends AbstractCrudController
 {
@@ -92,7 +94,11 @@ class VideoCrudController extends AbstractCrudController
         return [
             TextField::new('id')
                 ->hideOnForm()
-                ->formatValue(static fn ($value) => is_object($value) && method_exists($value, 'toRfc4122') ? $value->toRfc4122() : (string) $value),
+                ->formatValue(
+                    static fn($value) => is_object($value) && method_exists($value, 'toRfc4122')
+                        ? $value->toRfc4122()
+                        : (string)$value
+                ),
             TextField::new('title'),
             AssociationField::new('user')->onlyOnIndex(),
             ArrayField::new('meta')
@@ -102,7 +108,7 @@ class VideoCrudController extends AbstractCrudController
             DateTimeField::new('updatedAt')->hideOnForm(),
             AssociationField::new('tasks')
                 ->setTemplatePath('admin/field/video_tasks_summary.html.twig')
-                ->formatValue(fn ($value, ?VideoEntity $entity) => [
+                ->formatValue(fn($value, ?VideoEntity $entity) => [
                     'presets' => $this->collectPresetLinks($entity),
                 ])
                 ->hideOnForm(),
@@ -121,7 +127,7 @@ class VideoCrudController extends AbstractCrudController
             if (null !== $preset?->id) {
                 $id = $preset->id->toRfc4122();
                 $presets[$id] = [
-                    'title' => (string) $preset,
+                    'title' => (string)$preset,
                     'url' => $this->buildTasksUrl($video, $id),
                 ];
             }
@@ -159,19 +165,21 @@ class VideoCrudController extends AbstractCrudController
         $user = $this->getUser();
 
         try {
-            $query = new DeleteVideoQuery((string) $entityId, $user->id->toRfc4122());
+            $query = new DeleteVideoQuery((string)$entityId, $user->id->toRfc4122());
             $this->queryBus->query($query);
             $this->addFlash('success', 'Video marked as deleted.');
         } catch (InvalidUuidException $e) {
             $this->addFlash('danger', sprintf('Invalid video id: %s', $e->getMessage()));
         } catch (TranscodeAccessDeniedException|VideoNotFoundException $e) {
             $this->addFlash('danger', $e->getMessage());
-        } catch (VideoAlreadyDeleted|VideoHasTranscodingTasks|\DomainException $e) {
+        } catch (VideoAlreadyDeleted|VideoHasTranscodingTasks|DomainException $e) {
             $this->addFlash('warning', $e->getMessage());
-        } catch (\Throwable) {
+        } catch (Throwable) {
             $this->addFlash('danger', 'Failed to mark video as deleted.');
         }
 
-        return $this->redirect($this->adminUrlGenerator->unsetAll()->setController(self::class)->setAction(Crud::PAGE_INDEX)->generateUrl());
+        return $this->redirect(
+            $this->adminUrlGenerator->unsetAll()->setController(self::class)->setAction(Crud::PAGE_INDEX)->generateUrl()
+        );
     }
 }

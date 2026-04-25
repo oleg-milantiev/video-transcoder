@@ -3,6 +3,8 @@ declare(strict_types=1);
 
 namespace App\Domain\User\ValueObject;
 
+use DomainException;
+
 /**
  * Payment method identifier, e.g. 'card', 'bank_transfer', 'wallet'.
  */
@@ -17,11 +19,11 @@ final readonly class PaymentMethod
         $normalized = trim($value);
 
         if ($normalized === '') {
-            throw new \DomainException('Payment method cannot be empty.');
+            throw new DomainException('Payment method cannot be empty.');
         }
 
         if (mb_strlen($normalized) > self::MAX_LENGTH) {
-            throw new \DomainException('Payment method must not exceed 100 characters.');
+            throw new DomainException('Payment method must not exceed 100 characters.');
         }
 
         $this->value = $normalized;

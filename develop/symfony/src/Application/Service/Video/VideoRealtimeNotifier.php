@@ -33,12 +33,16 @@ final readonly class VideoRealtimeNotifier
 
         $dto = VideoItemDTO::fromDomain($video, $this->storage, $this->taskRepository);
 
-        $this->commandBus->dispatch(new PublishMercureMessage(new MercureMessageDTO(
-            action: $action,
-            entity: 'video',
-            id: $video->id(),
-            userId: $video->userId(),
-            payload: array_merge($dto->toArray(), $extraPayload),
-        )));
+        $this->commandBus->dispatch(
+            new PublishMercureMessage(
+                new MercureMessageDTO(
+                    action: $action,
+                    entity: 'video',
+                    id: $video->id(),
+                    userId: $video->userId(),
+                    payload: array_merge($dto->toArray(), $extraPayload),
+                )
+            )
+        );
     }
 }

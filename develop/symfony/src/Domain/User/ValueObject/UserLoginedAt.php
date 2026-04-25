@@ -3,13 +3,16 @@ declare(strict_types=1);
 
 namespace App\Domain\User\ValueObject;
 
+use DateTimeImmutable;
+use DateTimeInterface;
+
 final readonly class UserLoginedAt
 {
-    public function __construct(private \DateTimeImmutable $value)
+    public function __construct(private DateTimeImmutable $value)
     {
     }
 
-    public function value(): \DateTimeImmutable
+    public function value(): DateTimeImmutable
     {
         return $this->value;
     }
@@ -21,6 +24,6 @@ final readonly class UserLoginedAt
 
     public function __toString(): string
     {
-        return $this->value->format(\DateTimeInterface::ATOM);
+        return $this->value->format(DateTimeInterface::ATOM);
     }
 }

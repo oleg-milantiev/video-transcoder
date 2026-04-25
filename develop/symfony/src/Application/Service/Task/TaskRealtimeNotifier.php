@@ -40,12 +40,16 @@ readonly class TaskRealtimeNotifier
             $extraPayload,
         );
 
-        $this->commandBus->dispatch(new PublishMercureMessage(new MercureMessageDTO(
-            action: $action,
-            entity: 'task',
-            id: $task->id(),
-            userId: $task->userId(),
-            payload: $payload,
-        )));
+        $this->commandBus->dispatch(
+            new PublishMercureMessage(
+                new MercureMessageDTO(
+                    action: $action,
+                    entity: 'task',
+                    id: $task->id(),
+                    userId: $task->userId(),
+                    payload: $payload,
+                )
+            )
+        );
     }
 }

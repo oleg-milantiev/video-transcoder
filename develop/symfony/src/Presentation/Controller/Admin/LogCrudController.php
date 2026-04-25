@@ -48,16 +48,18 @@ class LogCrudController extends AbstractCrudController
             ->add(TextFilter::new('name'))
             ->add(TextFilter::new('action'))
             ->add(TextFilter::new('objectId'))
-            ->add(ChoiceFilter::new('level')->setChoices([
-                LogLevel::EMERGENCY => LogLevel::EMERGENCY,
-                LogLevel::ALERT => LogLevel::ALERT,
-                LogLevel::CRITICAL => LogLevel::CRITICAL,
-                LogLevel::ERROR => LogLevel::ERROR,
-                LogLevel::WARNING => LogLevel::WARNING,
-                LogLevel::NOTICE => LogLevel::NOTICE,
-                LogLevel::INFO => LogLevel::INFO,
-                LogLevel::DEBUG => LogLevel::DEBUG,
-            ]))
+            ->add(
+                ChoiceFilter::new('level')->setChoices([
+                    LogLevel::EMERGENCY => LogLevel::EMERGENCY,
+                    LogLevel::ALERT => LogLevel::ALERT,
+                    LogLevel::CRITICAL => LogLevel::CRITICAL,
+                    LogLevel::ERROR => LogLevel::ERROR,
+                    LogLevel::WARNING => LogLevel::WARNING,
+                    LogLevel::NOTICE => LogLevel::NOTICE,
+                    LogLevel::INFO => LogLevel::INFO,
+                    LogLevel::DEBUG => LogLevel::DEBUG,
+                ])
+            )
             ->add(TextFilter::new('text'))
             ->add(DateTimeFilter::new('createdAt'));
     }
@@ -67,11 +69,19 @@ class LogCrudController extends AbstractCrudController
         return [
             TextField::new('id')
                 ->hideOnForm()
-                ->formatValue(static fn ($value) => is_object($value) && method_exists($value, 'toRfc4122') ? $value->toRfc4122() : (string) $value),
+                ->formatValue(
+                    static fn($value) => is_object($value) && method_exists($value, 'toRfc4122')
+                        ? $value->toRfc4122()
+                        : (string)$value
+                ),
             TextField::new('name'),
             TextField::new('action'),
             TextField::new('objectId')
-                ->formatValue(static fn ($value) => is_object($value) && method_exists($value, 'toRfc4122') ? $value->toRfc4122() : (string) $value),
+                ->formatValue(
+                    static fn($value) => is_object($value) && method_exists($value, 'toRfc4122')
+                        ? $value->toRfc4122()
+                        : (string)$value
+                ),
             TextField::new('level'),
             TextField::new('text'),
             DateTimeField::new('createdAt')->hideOnForm(),

@@ -26,7 +26,7 @@ final class SmokeResultCommand extends Command
             ? ($input->getStream() ?? STDIN)
             : STDIN;
 
-        $raw = trim((string) stream_get_contents($stream));
+        $raw = trim((string)stream_get_contents($stream));
 
         if ($raw === '' || $raw === 'null') {
             $this->logService->log('smoke', 'result', null, LogLevel::ERROR, 'Result file not found', [

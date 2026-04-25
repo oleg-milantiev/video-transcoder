@@ -23,7 +23,7 @@ final readonly class VideoPreviewGenerator
         return [
             'ffmpeg',
             '-y',
-            '-ss', (string) $time,
+            '-ss', (string)$time,
             '-i', $inputPath,
             '-frames:v', '1',
             '-q:v', '2',

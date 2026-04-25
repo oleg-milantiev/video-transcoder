@@ -54,23 +54,52 @@ class SPAController extends AbstractController
             ],
             'route' => [
                 'home' => $this->generateUrl('app_home'),
-                'videoDetails' => str_replace($dummyUuid, '__UUID__', $this->generateUrl('video_details', ['uuid' => $dummyUuid])),
+                'videoDetails' => str_replace(
+                    $dummyUuid,
+                    '__UUID__',
+                    $this->generateUrl('video_details', ['uuid' => $dummyUuid])
+                ),
                 'refreshToken' => $this->generateUrl('api_auth_refresh'),
                 'upload' => $this->generateUrl('api_tus'),
                 'video' => [
                     'list' => $this->generateUrl('api_video_list'),
-                    'details' => str_replace($dummyUuid, '__UUID__', $this->generateUrl('api_video_details', ['id' => $dummyUuid])),
-                    'transcode' => str_replace([$dummyUuid, $dummyPresetId, (string) $dummyHeight], ['__UUID__', '__PRESET_ID__', '__HEIGHT__'], $this->generateUrl('api_video_transcode', ['id' => $dummyUuid, 'presetId' => $dummyPresetId, 'height' => $dummyHeight])),
-                    'delete' => str_replace($dummyUuid, '__UUID__', $this->generateUrl('api_video_delete', ['id' => $dummyUuid])),
-                    'patch' => str_replace($dummyUuid, '__UUID__', $this->generateUrl('api_video_patch', ['id' => $dummyUuid])),
+                    'details' => str_replace(
+                        $dummyUuid,
+                        '__UUID__',
+                        $this->generateUrl('api_video_details', ['id' => $dummyUuid])
+                    ),
+                    'transcode' => str_replace([$dummyUuid, $dummyPresetId, (string)$dummyHeight],
+                        ['__UUID__', '__PRESET_ID__', '__HEIGHT__'],
+                        $this->generateUrl(
+                            'api_video_transcode',
+                            ['id' => $dummyUuid, 'presetId' => $dummyPresetId, 'height' => $dummyHeight]
+                        )),
+                    'delete' => str_replace(
+                        $dummyUuid,
+                        '__UUID__',
+                        $this->generateUrl('api_video_delete', ['id' => $dummyUuid])
+                    ),
+                    'patch' => str_replace(
+                        $dummyUuid,
+                        '__UUID__',
+                        $this->generateUrl('api_video_patch', ['id' => $dummyUuid])
+                    ),
                 ],
                 'task' => [
-                     'list' => $this->generateUrl('api_task_list'),
-                     'cancel' => str_replace($dummyTaskId, '__TASK_ID__', $this->generateUrl('api_task_cancel', ['id' => $dummyTaskId])),
-                     'download' => str_replace($dummyTaskId, '__TASK_ID__', $this->generateUrl('task_download', ['id' => $dummyTaskId])),
-                 ],
-                 'profile' => $this->generateUrl('api_profile'),
-                 'contact' => $this->generateUrl('api_contact'),
+                    'list' => $this->generateUrl('api_task_list'),
+                    'cancel' => str_replace(
+                        $dummyTaskId,
+                        '__TASK_ID__',
+                        $this->generateUrl('api_task_cancel', ['id' => $dummyTaskId])
+                    ),
+                    'download' => str_replace(
+                        $dummyTaskId,
+                        '__TASK_ID__',
+                        $this->generateUrl('task_download', ['id' => $dummyTaskId])
+                    ),
+                ],
+                'profile' => $this->generateUrl('api_profile'),
+                'contact' => $this->generateUrl('api_contact'),
             ],
             'tariff' => [
                 'title' => $user->tariff?->title,

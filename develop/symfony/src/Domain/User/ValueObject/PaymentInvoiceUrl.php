@@ -3,6 +3,8 @@ declare(strict_types=1);
 
 namespace App\Domain\User\ValueObject;
 
+use DomainException;
+
 /**
  * URL to the hosted payment invoice/receipt.
  */
@@ -17,15 +19,15 @@ final readonly class PaymentInvoiceUrl
         $normalized = trim($value);
 
         if ($normalized === '') {
-            throw new \DomainException('Payment invoice URL cannot be empty.');
+            throw new DomainException('Payment invoice URL cannot be empty.');
         }
 
         if (mb_strlen($normalized) > self::MAX_LENGTH) {
-            throw new \DomainException('Payment invoice URL must not exceed 2048 characters.');
+            throw new DomainException('Payment invoice URL must not exceed 2048 characters.');
         }
 
         if (!filter_var($normalized, FILTER_VALIDATE_URL)) {
-            throw new \DomainException('Payment invoice URL has invalid format.');
+            throw new DomainException('Payment invoice URL has invalid format.');
         }
 
         $this->value = $normalized;

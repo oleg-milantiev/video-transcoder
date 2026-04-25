@@ -7,6 +7,7 @@ use App\Application\Logging\LogServiceInterface;
 use App\Domain\Shared\ValueObject\Uuid;
 use App\Infrastructure\Persistence\Doctrine\User\UserEntity;
 use App\Infrastructure\Security\ApiTokenService;
+use JsonException;
 use Psr\Log\LogLevel;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
@@ -17,6 +18,7 @@ use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserProviderInterface;
+use Throwable;
 
 #[Route('/api/auth')]
 final class AuthApiController extends AbstractController
@@ -31,7 +33,7 @@ final class AuthApiController extends AbstractController
     }
 
     /**
-     * @throws \JsonException
+     * @throws JsonException
      */
     #[Route('/token', name: 'api_auth_token', methods: ['POST'])]
     public function token(Request $request): Response
@@ -41,8 +43,8 @@ final class AuthApiController extends AbstractController
             return new JsonResponse(['error' => 'Invalid JSON payload.'], Response::HTTP_BAD_REQUEST);
         }
 
-        $email = trim((string) ($payload['email'] ?? ''));
-        $password = (string) ($payload['password'] ?? '');
+        $email = trim((string)($payload['email'] ?? ''));
+        $password = (string)($payload['password'] ?? '');
 
         if ($email === '' || $password === '') {
             return new JsonResponse(['error' => 'Email and password are required.'], Response::HTTP_BAD_REQUEST);
@@ -50,7 +52,7 @@ final class AuthApiController extends AbstractController
 
         try {
             $user = $this->userProvider->loadUserByIdentifier($email);
-        } catch (\Throwable) {
+        } catch (Throwable) {
             return new JsonResponse(['error' => 'Invalid credentials.'], Response::HTTP_UNAUTHORIZED);
         }
 
@@ -66,11 +68,18 @@ final class AuthApiController extends AbstractController
             return new JsonResponse(['error' => 'Invalid credentials.'], Response::HTTP_UNAUTHORIZED);
         }
 
-        $this->logService->log('user', 'token', Uuid::fromString($user->id->toRfc4122()), LogLevel::INFO, 'User signed in via API token', [
-            'email' => $user->getUserIdentifier(),
-            'ip' => $request->getClientIp(),
-            'route' => (string) $request->attributes->get('_route', 'api_auth_token'),
-        ]);
+        $this->logService->log(
+            'user',
+            'token',
+            Uuid::fromString($user->id->toRfc4122()),
+            LogLevel::INFO,
+            'User signed in via API token',
+            [
+                'email' => $user->getUserIdentifier(),
+                'ip' => $request->getClientIp(),
+                'route' => (string)$request->attributes->get('_route', 'api_auth_token'),
+            ]
+        );
 
         $userId = Uuid::fromString($user->id->toRfc4122());
 
@@ -83,7 +92,7 @@ final class AuthApiController extends AbstractController
     }
 
     /**
-     * @throws \JsonException
+     * @throws JsonException
      */
     #[Route('/refresh', name: 'api_auth_refresh', methods: ['POST'])]
     public function refresh(Request $request): Response
@@ -93,20 +102,20 @@ final class AuthApiController extends AbstractController
             return new JsonResponse(['error' => 'Invalid JSON payload.'], Response::HTTP_BAD_REQUEST);
         }
 
-        $refreshTokenStr = (string) ($payload['refreshToken'] ?? '');
+        $refreshTokenStr = (string)($payload['refreshToken'] ?? '');
         if ($refreshTokenStr === '') {
             return new JsonResponse(['error' => 'refreshToken is required.'], Response::HTTP_BAD_REQUEST);
         }
 
         try {
             $claims = $this->tokenService->parseRefreshToken($refreshTokenStr);
-        } catch (\Throwable) {
+        } catch (Throwable) {
             return new JsonResponse(['error' => 'Invalid or expired refresh token.'], Response::HTTP_UNAUTHORIZED);
         }
 
         try {
             $user = $this->userProvider->loadUserByIdentifier($claims['identifier']);
-        } catch (\Throwable) {
+        } catch (Throwable) {
             return new JsonResponse(['error' => 'Invalid credentials.'], Response::HTTP_UNAUTHORIZED);
         }
 

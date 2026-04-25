@@ -19,30 +19,31 @@ class PresetBitrateJsonValidator extends ConstraintValidator
             return;
         }
 
-        $decoded = json_decode((string) $value, true);
+        $decoded = json_decode((string)$value, true);
 
         if (!is_array($decoded)) {
             $this->context->buildViolation('Invalid JSON: must be a JSON object.')
                 ->addViolation();
+
             return;
         }
 
         foreach ($decoded as $key => $val) {
-            $intKey = (int) $key;
-            if ((string) $intKey !== (string) $key || $intKey <= 0) {
+            $intKey = (int)$key;
+            if ((string)$intKey !== (string)$key || $intKey <= 0) {
                 $this->context->buildViolation(
                     'Invalid key "{{ key }}": each key must be a positive integer height (e.g. "720").'
                 )
-                    ->setParameter('{{ key }}', (string) $key)
+                    ->setParameter('{{ key }}', (string)$key)
                     ->addViolation();
                 continue;
             }
 
-            if (!is_numeric($val) || (float) $val < 0) {
+            if (!is_numeric($val) || (float)$val < 0) {
                 $this->context->buildViolation(
                     'Invalid bitrate for height {{ height }}: must be a non-negative number (Mbps).'
                 )
-                    ->setParameter('{{ height }}', (string) $key)
+                    ->setParameter('{{ height }}', (string)$key)
                     ->addViolation();
             }
         }

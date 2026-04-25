@@ -3,7 +3,9 @@ declare(strict_types=1);
 
 namespace App\Domain\Video\Exception;
 
-final class TaskAlreadyDeleted extends \DomainException
+use DomainException;
+
+final class TaskAlreadyDeleted extends DomainException
 {
     public static function forTask(): self
     {

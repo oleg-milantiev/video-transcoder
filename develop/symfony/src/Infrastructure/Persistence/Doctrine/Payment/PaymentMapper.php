@@ -15,6 +15,7 @@ use App\Domain\User\ValueObject\PaymentMethod;
 use App\Domain\User\ValueObject\PaymentPlanSnapshot;
 use App\Domain\User\ValueObject\PaymentStatus;
 use App\Infrastructure\Persistence\Doctrine\User\UserEntity;
+use DateTimeImmutable;
 use Symfony\Component\Uid\UuidV4 as SymfonyUuid;
 
 class PaymentMapper
@@ -29,7 +30,7 @@ class PaymentMapper
             amount: new PaymentAmount($entity->amount),
             planSnapshot: new PaymentPlanSnapshot($entity->planSnapshot),
             dates: PaymentDates::fromPersistence(
-                $entity->createdAt ?? new \DateTimeImmutable(),
+                $entity->createdAt ?? new DateTimeImmutable(),
                 $entity->paidAt,
                 $entity->validUntil,
             ),
@@ -55,17 +56,17 @@ class PaymentMapper
 
     public static function hydrate(PaymentEntity $entity, Payment $payment, UserEntity $user): void
     {
-        $entity->user          = $user;
-        $entity->status        = $payment->status()->value;
-        $entity->currency      = $payment->currency()->value();
-        $entity->gateway       = $payment->gateway()->value;
-        $entity->externalId    = $payment->externalId()?->value();
+        $entity->user = $user;
+        $entity->status = $payment->status()->value;
+        $entity->currency = $payment->currency()->value();
+        $entity->gateway = $payment->gateway()->value;
+        $entity->externalId = $payment->externalId()?->value();
         $entity->paymentMethod = $payment->paymentMethod()?->value();
-        $entity->meta          = $payment->meta();
-        $entity->planSnapshot  = $payment->planSnapshot()->value();
-        $entity->invoiceUrl    = $payment->invoiceUrl()?->value();
-        $entity->amount        = $payment->amount()->value();
-        $entity->paidAt        = $payment->paidAt();
-        $entity->validUntil    = $payment->validUntil();
+        $entity->meta = $payment->meta();
+        $entity->planSnapshot = $payment->planSnapshot()->value();
+        $entity->invoiceUrl = $payment->invoiceUrl()?->value();
+        $entity->amount = $payment->amount()->value();
+        $entity->paidAt = $payment->paidAt();
+        $entity->validUntil = $payment->validUntil();
     }
 }

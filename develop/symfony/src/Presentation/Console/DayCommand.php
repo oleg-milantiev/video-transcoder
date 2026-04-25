@@ -12,6 +12,7 @@ use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Lock\LockFactory;
+use Throwable;
 
 #[AsCommand(name: 'app:day', description: 'Run every day from cron')]
 final class DayCommand extends Command
@@ -59,7 +60,7 @@ final class DayCommand extends Command
                     'deleted' => $taskResult['filesDeleted'],
                 ],
             ]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             $this->logService->log('cron', 'day', null, LogLevel::ERROR, 'Fail', [
                 'message' => $e->getMessage(),
             ]);
@@ -71,7 +72,7 @@ final class DayCommand extends Command
                     $lock->release();
 
                     return Command::SUCCESS;
-                } catch (\Throwable $e) {
+                } catch (Throwable $e) {
                     $this->logService->log('cron', 'day', null, LogLevel::ERROR, 'Fail', [
                         'message' => $e->getMessage(),
                     ]);

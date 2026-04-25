@@ -21,11 +21,11 @@ use EasyCorp\Bundle\EasyAdminBundle\Router\AdminUrlGenerator;
 class PresetCrudController extends AbstractCrudController
 {
     private const array BITRATE_DEFAULT = [
-        '144'  => 0.1,
-        '240'  => 0.4,
-        '360'  => 1.0,
-        '480'  => 2.5,
-        '720'  => 5.0,
+        '144' => 0.1,
+        '240' => 0.4,
+        '360' => 1.0,
+        '480' => 2.5,
+        '720' => 5.0,
         '1080' => 8.0,
         '1440' => 16.0,
         '2160' => 35.0,
@@ -72,7 +72,10 @@ class PresetCrudController extends AbstractCrudController
 
         yield TextField::new('id')
             ->hideOnForm()
-            ->formatValue(static fn ($value) => is_object($value) && method_exists($value, 'toRfc4122') ? $value->toRfc4122() : (string) $value);
+            ->formatValue(
+                static fn($value) => is_object($value) && method_exists($value, 'toRfc4122') ? $value->toRfc4122(
+                ) : (string)$value
+            );
         yield TextField::new('title')
             ->setFormTypeOption('attr.minlength', 3)
             ->setHelp('At least 3 characters.');
@@ -82,13 +85,15 @@ class PresetCrudController extends AbstractCrudController
 
         if (in_array($pageName, [Crud::PAGE_NEW, Crud::PAGE_EDIT], true)) {
             yield CodeEditorField::new('bitrateJson', 'Bitrate (JSON, height → Mbps)')
-                ->setHelp('JSON object mapping resolution height (integer) to bitrate in Mbps (float). Example: {"720": 5.0}')
+                ->setHelp(
+                    'JSON object mapping resolution height (integer) to bitrate in Mbps (float). Example: {"720": 5.0}'
+                )
                 ->setFormTypeOptions([
-                    'mapped'      => false,
-                    'required'    => false,
+                    'mapped' => false,
+                    'required' => false,
                     'constraints' => [new PresetBitrateJsonConstraint()],
-                    'attr'        => ['rows' => 12],
-                    'data'        => $bitrateDefault,
+                    'attr' => ['rows' => 12],
+                    'data' => $bitrateDefault,
                 ])
                 ->setLanguage('javascript');
         } else {
@@ -104,48 +109,10 @@ class PresetCrudController extends AbstractCrudController
         yield AssociationField::new('tariffs')
             ->setLabel('Tariffs')
             ->setTemplatePath('admin/field/preset_tariffs_summary.html.twig')
-            ->formatValue(fn ($value, ?PresetEntity $entity) => [
+            ->formatValue(fn($value, ?PresetEntity $entity) => [
                 'tariffs' => $this->collectTariffLinks($entity),
             ])
             ->onlyOnIndex();
-    }
-
-    public function updateEntity(EntityManagerInterface $entityManager, $entityInstance): void
-    {
-        $this->applyBitrateFromForm($entityInstance);
-        $this->syncTariffsInverseSide($entityManager, $entityInstance);
-        parent::updateEntity($entityManager, $entityInstance);
-    }
-
-    public function persistEntity(EntityManagerInterface $entityManager, $entityInstance): void
-    {
-        $this->applyBitrateFromForm($entityInstance);
-        $this->syncTariffsInverseSide($entityManager, $entityInstance);
-        parent::persistEntity($entityManager, $entityInstance);
-    }
-
-    private function applyBitrateFromForm(mixed $entity): void
-    {
-        if (!$entity instanceof PresetEntity) {
-            return;
-        }
-
-        $context = $this->getContext();
-        if ($context === null) {
-            return;
-        }
-
-        $form = $context->getRequest()->request->all();
-        $bitrateJson = $form['PresetEntity']['bitrateJson'] ?? null;
-
-        if ($bitrateJson === null || trim((string) $bitrateJson) === '') {
-            return;
-        }
-
-        $decoded = json_decode((string) $bitrateJson, true);
-        if (is_array($decoded)) {
-            $entity->bitrate = $decoded;
-        }
     }
 
     private function collectTariffLinks(?PresetEntity $preset): array
@@ -159,8 +126,8 @@ class PresetCrudController extends AbstractCrudController
             if (null !== $tariff?->id) {
                 $id = $tariff->id->toRfc4122();
                 $tariffs[$id] = [
-                    'title' => (string) $tariff,
-                    'url'   => $this->buildTariffUrl($tariff->id->toRfc4122()),
+                    'title' => (string)$tariff,
+                    'url' => $this->buildTariffUrl($tariff->id->toRfc4122()),
                 ];
             }
         }
@@ -178,6 +145,37 @@ class PresetCrudController extends AbstractCrudController
             ->generateUrl();
     }
 
+    public function updateEntity(EntityManagerInterface $entityManager, $entityInstance): void
+    {
+        $this->applyBitrateFromForm($entityInstance);
+        $this->syncTariffsInverseSide($entityManager, $entityInstance);
+        parent::updateEntity($entityManager, $entityInstance);
+    }
+
+    private function applyBitrateFromForm(mixed $entity): void
+    {
+        if (!$entity instanceof PresetEntity) {
+            return;
+        }
+
+        $context = $this->getContext();
+        if ($context === null) {
+            return;
+        }
+
+        $form = $context->getRequest()->request->all();
+        $bitrateJson = $form['PresetEntity']['bitrateJson'] ?? null;
+
+        if ($bitrateJson === null || trim((string)$bitrateJson) === '') {
+            return;
+        }
+
+        $decoded = json_decode((string)$bitrateJson, true);
+        if (is_array($decoded)) {
+            $entity->bitrate = $decoded;
+        }
+    }
+
     private function syncTariffsInverseSide(EntityManagerInterface $em, mixed $entity): void
     {
         if (!$entity instanceof PresetEntity) {
@@ -193,7 +191,7 @@ class PresetCrudController extends AbstractCrudController
 
         if ($entity->id !== null) {
             $tariffsWithThisPreset = $em->createQuery(
-                'SELECT t FROM ' . TariffEntity::class . ' t JOIN t.presets p WHERE p.id = :presetId'
+                'SELECT t FROM '.TariffEntity::class.' t JOIN t.presets p WHERE p.id = :presetId'
             )
                 ->setParameter('presetId', $entity->id)
                 ->getResult();
@@ -210,5 +208,12 @@ class PresetCrudController extends AbstractCrudController
                 $tariff->presets->add($entity);
             }
         }
+    }
+
+    public function persistEntity(EntityManagerInterface $entityManager, $entityInstance): void
+    {
+        $this->applyBitrateFromForm($entityInstance);
+        $this->syncTariffsInverseSide($entityManager, $entityInstance);
+        parent::persistEntity($entityManager, $entityInstance);
     }
 }

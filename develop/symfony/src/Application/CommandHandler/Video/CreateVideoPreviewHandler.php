@@ -7,12 +7,13 @@ use App\Application\Command\Video\CreateVideoPreview;
 use App\Application\Event\CreateVideoPreviewFail;
 use App\Application\Event\CreateVideoPreviewStart;
 use App\Application\Event\CreateVideoPreviewSuccess;
-use App\Application\Service\Video\VideoRealtimeNotifier;
-use Psr\Log\LogLevel;
 use App\Application\Logging\LogServiceInterface;
+use App\Application\Service\Video\VideoRealtimeNotifier;
 use App\Domain\Video\Repository\VideoRepositoryInterface;
 use App\Domain\Video\Service\Storage\StorageInterface;
 use App\Infrastructure\Ffmpeg\VideoPreviewGenerator;
+use Exception;
+use Psr\Log\LogLevel;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 use Symfony\Component\Messenger\MessageBusInterface;
@@ -61,7 +62,7 @@ final readonly class CreateVideoPreviewHandler
             ]);
 
             $this->eventBus->dispatch(new CreateVideoPreviewSuccess($videoId));
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $this->logService->log('video', 'preview', $video->id(), LogLevel::ERROR, 'Error Create Preview', [
                 'time' => microtime(true) - $ms,
                 'message' => $e->getMessage(),

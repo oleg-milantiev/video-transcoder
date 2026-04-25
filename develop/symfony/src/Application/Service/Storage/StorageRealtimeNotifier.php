@@ -31,16 +31,20 @@ readonly class StorageRealtimeNotifier
         }
 
         $storageNow = $this->storageRepository->getUsedStorageSize($userId);
-        $storageMax = (int) ($user->tariff()->storageGb()->value() * 1024 * 1024 * 1024);
+        $storageMax = (int)($user->tariff()->storageGb()->value() * 1024 * 1024 * 1024);
 
         $dto = StorageRealtimePayloadDTO::fromSizes($storageNow, $storageMax);
 
-        $this->commandBus->dispatch(new PublishMercureMessage(new MercureMessageDTO(
-            action: 'updated',
-            entity: 'storage',
-            id: $userId,
-            userId: $userId,
-            payload: $dto->toArray(),
-        )));
+        $this->commandBus->dispatch(
+            new PublishMercureMessage(
+                new MercureMessageDTO(
+                    action: 'updated',
+                    entity: 'storage',
+                    id: $userId,
+                    userId: $userId,
+                    payload: $dto->toArray(),
+                )
+            )
+        );
     }
 }

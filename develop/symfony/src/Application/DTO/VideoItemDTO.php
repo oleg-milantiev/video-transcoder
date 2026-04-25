@@ -8,6 +8,8 @@ use App\Domain\User\Entity\Tariff;
 use App\Domain\Video\Entity\Video;
 use App\Domain\Video\Repository\TaskRepositoryInterface;
 use App\Domain\Video\Service\Storage\StorageInterface;
+use DateInterval;
+use DateTimeInterface;
 
 readonly class VideoItemDTO
 {
@@ -22,15 +24,20 @@ readonly class VideoItemDTO
         public bool $canBeDeleted,
         public array $meta,
         public ?string $poster = null,
-    ) {}
+    ) {
+    }
 
-    public static function fromDomain(Video $video, StorageInterface $storage, TaskRepositoryInterface $taskRepository, ?Tariff $tariff = null): self
-    {
+    public static function fromDomain(
+        Video $video,
+        StorageInterface $storage,
+        TaskRepositoryInterface $taskRepository,
+        ?Tariff $tariff = null
+    ): self {
         $hasPreview = ($video->meta()['preview'] ?? false) === true;
         $poster = $hasPreview ? $storage->publicUrl($storage->previewKey($video)) : null;
 
         if ($tariff) {
-            $expiredAt = $video->createdAt()->add(new \DateInterval('PT' . $tariff->storageHour()->value() . 'H'));
+            $expiredAt = $video->createdAt()->add(new DateInterval('PT'.$tariff->storageHour()->value().'H'));
         }
 
         $canBeDeleted = true;
@@ -44,9 +51,9 @@ readonly class VideoItemDTO
         return new self(
             uuid: $video->id()?->toRfc4122() ?? '',
             title: $video->title()->value(),
-            createdAt: $video->createdAt()->format(\DateTimeInterface::ATOM),
-            updatedAt: $video->updatedAt()?->format(\DateTimeInterface::ATOM) ?? '',
-            expiredAt: $tariff ? $expiredAt->format(\DateTimeInterface::ATOM) : null,
+            createdAt: $video->createdAt()->format(DateTimeInterface::ATOM),
+            updatedAt: $video->updatedAt()?->format(DateTimeInterface::ATOM) ?? '',
+            expiredAt: $tariff ? $expiredAt->format(DateTimeInterface::ATOM) : null,
             expiredInterval: $tariff ? HumanReadableHelper::formatDateExpired($expiredAt) : null,
             deleted: $video->isDeleted(),
             canBeDeleted: $canBeDeleted,
@@ -86,16 +93,16 @@ readonly class VideoItemDTO
     public function toArray(): array
     {
         return [
-            'uuid'            => $this->uuid,
-            'title'           => $this->title,
-            'createdAt'       => $this->createdAt,
-            'updatedAt'       => $this->updatedAt,
-            'expiredAt'       => $this->expiredAt,
+            'uuid' => $this->uuid,
+            'title' => $this->title,
+            'createdAt' => $this->createdAt,
+            'updatedAt' => $this->updatedAt,
+            'expiredAt' => $this->expiredAt,
             'expiredInterval' => $this->expiredInterval,
-            'deleted'         => $this->deleted,
-            'canBeDeleted'    => $this->canBeDeleted,
-            'meta'            => $this->meta,
-            'poster'          => $this->poster,
+            'deleted' => $this->deleted,
+            'canBeDeleted' => $this->canBeDeleted,
+            'meta' => $this->meta,
+            'poster' => $this->poster,
         ];
     }
 }

@@ -5,6 +5,7 @@ namespace App\Infrastructure\Persistence\Doctrine\Video;
 
 use App\Infrastructure\Persistence\Doctrine\Task\TaskEntity;
 use App\Infrastructure\Persistence\Doctrine\User\UserEntity;
+use DateTimeImmutable;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
@@ -31,10 +32,10 @@ class VideoEntity
     public ?string $extension = null;
 
     #[ORM\Column]
-    public ?\DateTimeImmutable $createdAt = null;
+    public ?DateTimeImmutable $createdAt = null;
 
     #[ORM\Column(nullable: true)]
-    public ?\DateTimeImmutable $updatedAt = null;
+    public ?DateTimeImmutable $updatedAt = null;
 
     #[ORM\ManyToOne(inversedBy: 'videos')]
     #[ORM\JoinColumn(nullable: false)]
@@ -54,7 +55,7 @@ class VideoEntity
 
     public function __construct()
     {
-        $this->createdAt = new \DateTimeImmutable();
+        $this->createdAt = new DateTimeImmutable();
         $this->tasks = new ArrayCollection();
     }
 

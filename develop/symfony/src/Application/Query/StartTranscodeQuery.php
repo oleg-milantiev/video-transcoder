@@ -5,6 +5,7 @@ namespace App\Application\Query;
 
 use App\Application\Exception\InvalidUuidException;
 use App\Domain\Shared\ValueObject\Uuid;
+use Throwable;
 
 final readonly class StartTranscodeQuery
 {
@@ -19,7 +20,7 @@ final readonly class StartTranscodeQuery
             $this->uuid = Uuid::fromString($uuid);
             $this->presetId = Uuid::fromString($presetId);
             $this->userId = Uuid::fromString($userId);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             throw new InvalidUuidException('Invalid UUID', previous: $e);
         }
         $this->height = $height;

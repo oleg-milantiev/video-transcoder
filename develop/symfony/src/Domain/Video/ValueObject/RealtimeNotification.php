@@ -64,6 +64,40 @@ final readonly class RealtimeNotification
         );
     }
 
+    private static function normalizeImageUrl(?string $imageUrl): ?string
+    {
+        if ($imageUrl === null) {
+            return null;
+        }
+
+        $trimmed = trim($imageUrl);
+        if ($trimmed === '') {
+            return null;
+        }
+
+        $isAbsoluteUrl = filter_var($trimmed, FILTER_VALIDATE_URL) !== false;
+        $isAbsolutePath = str_starts_with($trimmed, '/');
+        if (!$isAbsoluteUrl && !$isAbsolutePath) {
+            throw InvalidRealtimeNotification::invalidImageUrl($trimmed);
+        }
+
+        return $trimmed;
+    }
+
+    private static function normalizeImageAlt(?string $imageAlt, string $title, bool $hasImage): ?string
+    {
+        if (!$hasImage) {
+            return null;
+        }
+
+        $trimmed = trim((string)$imageAlt);
+        if ($trimmed !== '') {
+            return $trimmed;
+        }
+
+        return $title;
+    }
+
     public function level(): RealtimeNotificationLevel
     {
         return $this->level;
@@ -97,39 +131,5 @@ final readonly class RealtimeNotification
     public function imageAlt(): ?string
     {
         return $this->imageAlt;
-    }
-
-    private static function normalizeImageUrl(?string $imageUrl): ?string
-    {
-        if ($imageUrl === null) {
-            return null;
-        }
-
-        $trimmed = trim($imageUrl);
-        if ($trimmed === '') {
-            return null;
-        }
-
-        $isAbsoluteUrl = filter_var($trimmed, FILTER_VALIDATE_URL) !== false;
-        $isAbsolutePath = str_starts_with($trimmed, '/');
-        if (!$isAbsoluteUrl && !$isAbsolutePath) {
-            throw InvalidRealtimeNotification::invalidImageUrl($trimmed);
-        }
-
-        return $trimmed;
-    }
-
-    private static function normalizeImageAlt(?string $imageAlt, string $title, bool $hasImage): ?string
-    {
-        if (!$hasImage) {
-            return null;
-        }
-
-        $trimmed = trim((string) $imageAlt);
-        if ($trimmed !== '') {
-            return $trimmed;
-        }
-
-        return $title;
     }
 }

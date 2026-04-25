@@ -11,14 +11,13 @@ use App\Application\QueryHandler\QueryBus;
 use App\Domain\Video\Exception\TaskAlreadyDeleted;
 use App\Domain\Video\ValueObject\TaskStatus;
 use App\Infrastructure\Persistence\Doctrine\Task\TaskEntity;
+use DomainException;
 use EasyCorp\Bundle\EasyAdminBundle\Attribute\AdminRoute;
-use EasyCorp\Bundle\EasyAdminBundle\Context\AdminContext;
-use EasyCorp\Bundle\EasyAdminBundle\Router\AdminUrlGeneratorInterface;
-use Symfony\Component\HttpFoundation\Response;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Action;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Actions;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Crud;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Filters;
+use EasyCorp\Bundle\EasyAdminBundle\Context\AdminContext;
 use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractCrudController;
 use EasyCorp\Bundle\EasyAdminBundle\Field\ArrayField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\AssociationField;
@@ -30,6 +29,9 @@ use EasyCorp\Bundle\EasyAdminBundle\Filter\ChoiceFilter;
 use EasyCorp\Bundle\EasyAdminBundle\Filter\DateTimeFilter;
 use EasyCorp\Bundle\EasyAdminBundle\Filter\EntityFilter;
 use EasyCorp\Bundle\EasyAdminBundle\Filter\NumericFilter;
+use EasyCorp\Bundle\EasyAdminBundle\Router\AdminUrlGeneratorInterface;
+use Symfony\Component\HttpFoundation\Response;
+use Throwable;
 
 class TaskCrudController extends AbstractCrudController
 {
@@ -38,6 +40,7 @@ class TaskCrudController extends AbstractCrudController
         private readonly QueryBus $queryBus,
     ) {
     }
+
     public static function getEntityFqcn(): string
     {
         return TaskEntity::class;
@@ -68,7 +71,12 @@ class TaskCrudController extends AbstractCrudController
     {
         $markDeleted = Action::new('markDeleted', 'Mark deleted', 'fas fa-trash')
             ->displayIf(static function (TaskEntity $entity) {
-                return !$entity->deleted || !in_array($entity->status, [TaskStatus::PROCESSING->value, TaskStatus::DELETED->value], true);
+                return !$entity->deleted ||
+                    !in_array(
+                        $entity->status,
+                        [TaskStatus::PROCESSING->value, TaskStatus::DELETED->value],
+                        true
+                    );
             })
             ->askConfirmation()
             ->linkToCrudAction('markDeleted');
@@ -87,7 +95,11 @@ class TaskCrudController extends AbstractCrudController
         return [
             TextField::new('id')
                 ->hideOnForm()
-                ->formatValue(static fn ($value) => is_object($value) && method_exists($value, 'toRfc4122') ? $value->toRfc4122() : (string) $value),
+                ->formatValue(
+                    static fn($value) => is_object($value) && method_exists($value, 'toRfc4122')
+                        ? $value->toRfc4122()
+                        : (string)$value
+                ),
             ChoiceField::new('status')
                 ->setChoices(array_flip(TaskStatus::NAMES)),
             IntegerField::new('progress')->setFormTypeOptions([
@@ -115,19 +127,21 @@ class TaskCrudController extends AbstractCrudController
         $user = $this->getUser();
 
         try {
-            $query = new DeleteTaskQuery((string) $entityId, $user->id->toRfc4122());
+            $query = new DeleteTaskQuery((string)$entityId, $user->id->toRfc4122());
             $this->queryBus->query($query);
             $this->addFlash('success', 'Task marked as deleted.');
         } catch (InvalidUuidException $e) {
             $this->addFlash('danger', sprintf('Invalid task id: %s', $e->getMessage()));
         } catch (TaskNotFoundException|TranscodeAccessDeniedException $e) {
             $this->addFlash('danger', $e->getMessage());
-        } catch (TaskAlreadyDeleted|\DomainException $e) {
+        } catch (TaskAlreadyDeleted|DomainException $e) {
             $this->addFlash('warning', $e->getMessage());
-        } catch (\Throwable) {
+        } catch (Throwable) {
             $this->addFlash('danger', 'Failed to mark task as deleted.');
         }
 
-        return $this->redirect($this->adminUrlGenerator->unsetAll()->setController(self::class)->setAction(Crud::PAGE_INDEX)->generateUrl());
+        return $this->redirect(
+            $this->adminUrlGenerator->unsetAll()->setController(self::class)->setAction(Crud::PAGE_INDEX)->generateUrl()
+        );
     }
 }

@@ -18,10 +18,12 @@ use App\Domain\Video\Repository\TaskRepositoryInterface;
 use App\Domain\Video\Repository\VideoRepositoryInterface;
 use App\Infrastructure\Security\Voter\VideoAccessVoter;
 use Psr\Log\LogLevel;
+use RuntimeException;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 use Symfony\Component\Messenger\MessageBusInterface;
+use Throwable;
 
 #[AsMessageHandler(bus: 'messenger.bus.command')]
 final readonly class DeleteVideoHandler
@@ -43,35 +45,41 @@ final readonly class DeleteVideoHandler
 
     public function __invoke(DeleteVideoQuery $query): void
     {
-        $this->eventBus->dispatch(new DeleteVideoStart(
-            videoId: $query->videoId->toRfc4122(),
-            requestedByUserId: $query->requestedByUserId->toRfc4122(),
-        ));
+        $this->eventBus->dispatch(
+            new DeleteVideoStart(
+                videoId: $query->videoId->toRfc4122(),
+                requestedByUserId: $query->requestedByUserId->toRfc4122(),
+            )
+        );
 
         $video = $this->videoRepository->findById($query->videoId);
         if ($video === null) {
-            $this->eventBus->dispatch(new DeleteVideoFail(
-                error: 'Video not found',
-                videoId: $query->videoId->toRfc4122(),
-                requestedByUserId: $query->requestedByUserId->toRfc4122(),
-            ));
+            $this->eventBus->dispatch(
+                new DeleteVideoFail(
+                    error: 'Video not found',
+                    videoId: $query->videoId->toRfc4122(),
+                    requestedByUserId: $query->requestedByUserId->toRfc4122(),
+                )
+            );
 
             throw new VideoNotFoundException('Video not found');
         }
 
         if (!$this->security->isGranted(VideoAccessVoter::CAN_DELETE, $video)) {
-            $this->eventBus->dispatch(new DeleteVideoFail(
-                error: 'Access denied',
-                videoId: $query->videoId->toRfc4122(),
-                requestedByUserId: $query->requestedByUserId->toRfc4122(),
-            ));
+            $this->eventBus->dispatch(
+                new DeleteVideoFail(
+                    error: 'Access denied',
+                    videoId: $query->videoId->toRfc4122(),
+                    requestedByUserId: $query->requestedByUserId->toRfc4122(),
+                )
+            );
 
             throw new TranscodeAccessDeniedException('Access denied');
         }
 
         try {
             if ($video->id() === null) {
-                throw new \RuntimeException('Video id is required for deletion.');
+                throw new RuntimeException('Video id is required for deletion.');
             }
 
             $tasks = $this->taskRepository->findByVideoId($video->id());
@@ -84,13 +92,15 @@ final readonly class DeleteVideoHandler
                 }
 
                 if ($task->id() === null) {
-                    throw new \RuntimeException('Task id is required for deletion.');
+                    throw new RuntimeException('Task id is required for deletion.');
                 }
 
-                $this->queryBus->query(new DeleteTaskQuery(
-                    $task->id()->toRfc4122(),
-                    $query->requestedByUserId->toRfc4122(),
-                ));
+                $this->queryBus->query(
+                    new DeleteTaskQuery(
+                        $task->id()->toRfc4122(),
+                        $query->requestedByUserId->toRfc4122(),
+                    )
+                );
                 $deletedTaskCount++;
             }
 
@@ -101,7 +111,14 @@ final readonly class DeleteVideoHandler
                 'requestedByUserId' => $query->requestedByUserId->toRfc4122(),
                 'deletedTaskCount' => $deletedTaskCount,
             ];
-            $this->logService->log('video', 'delete', $video->id(), LogLevel::INFO, 'Video marked as deleted', $context);
+            $this->logService->log(
+                'video',
+                'delete',
+                $video->id(),
+                LogLevel::INFO,
+                'Video marked as deleted',
+                $context
+            );
             $this->videoRealtimeNotifier->notifyVideoUpdated($video, 'deleted', [
                 'deleted' => true,
             ]);
@@ -109,17 +126,21 @@ final readonly class DeleteVideoHandler
 
             $this->commandBus->dispatch(new CleanupDeletedVideoMedia($video->id()));
 
-            $this->eventBus->dispatch(new DeleteVideoSuccess(
-                videoId: $video->id()->toRfc4122(),
-                requestedByUserId: $query->requestedByUserId->toRfc4122(),
-                deletedTaskCount: $deletedTaskCount,
-            ));
-        } catch (\Throwable $e) {
-            $this->eventBus->dispatch(new DeleteVideoFail(
-                error: $e->getMessage(),
-                videoId: $query->videoId->toRfc4122(),
-                requestedByUserId: $query->requestedByUserId->toRfc4122(),
-            ));
+            $this->eventBus->dispatch(
+                new DeleteVideoSuccess(
+                    videoId: $video->id()->toRfc4122(),
+                    requestedByUserId: $query->requestedByUserId->toRfc4122(),
+                    deletedTaskCount: $deletedTaskCount,
+                )
+            );
+        } catch (Throwable $e) {
+            $this->eventBus->dispatch(
+                new DeleteVideoFail(
+                    error: $e->getMessage(),
+                    videoId: $query->videoId->toRfc4122(),
+                    requestedByUserId: $query->requestedByUserId->toRfc4122(),
+                )
+            );
 
             throw $e;
         }

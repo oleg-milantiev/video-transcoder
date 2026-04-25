@@ -6,6 +6,7 @@ namespace App\Infrastructure\Persistence\Doctrine\Payment;
 use App\Domain\User\ValueObject\PaymentGateway;
 use App\Domain\User\ValueObject\PaymentStatus;
 use App\Infrastructure\Persistence\Doctrine\User\UserEntity;
+use DateTimeImmutable;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Uid\UuidV4 as SymfonyUuid;
 
@@ -55,17 +56,17 @@ class PaymentEntity
     public int $amount = 0;
 
     #[ORM\Column]
-    public ?\DateTimeImmutable $createdAt = null;
+    public ?DateTimeImmutable $createdAt = null;
 
     #[ORM\Column(nullable: true)]
-    public ?\DateTimeImmutable $paidAt = null;
+    public ?DateTimeImmutable $paidAt = null;
 
     #[ORM\Column(nullable: true)]
-    public ?\DateTimeImmutable $validUntil = null;
+    public ?DateTimeImmutable $validUntil = null;
 
     public function __construct()
     {
-        $this->createdAt = new \DateTimeImmutable();
+        $this->createdAt = new DateTimeImmutable();
     }
 
     public function __toString(): string

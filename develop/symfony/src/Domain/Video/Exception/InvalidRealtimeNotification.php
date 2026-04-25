@@ -3,7 +3,9 @@ declare(strict_types=1);
 
 namespace App\Domain\Video\Exception;
 
-final class InvalidRealtimeNotification extends \DomainException
+use DomainException;
+
+final class InvalidRealtimeNotification extends DomainException
 {
     public static function titleEmpty(): self
     {
@@ -22,7 +24,9 @@ final class InvalidRealtimeNotification extends \DomainException
 
     public static function timerOutOfRange(int $timerMs, int $min, int $max): self
     {
-        return new self(sprintf('Realtime notification timer must be between %d and %d ms, got %d.', $min, $max, $timerMs));
+        return new self(
+            sprintf('Realtime notification timer must be between %d and %d ms, got %d.', $min, $max, $timerMs)
+        );
     }
 
     public static function invalidImageUrl(string $imageUrl): self

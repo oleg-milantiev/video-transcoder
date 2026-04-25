@@ -12,6 +12,7 @@ use App\Infrastructure\Persistence\Doctrine\User\UserEntity;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\ORM\Exception\ORMException;
 use Doctrine\Persistence\ManagerRegistry;
+use RuntimeException;
 use Symfony\Component\Uid\UuidV4 as SymfonyUuid;
 
 /**
@@ -29,7 +30,7 @@ class PaymentRepository extends ServiceEntityRepository implements PaymentReposi
      */
     public function save(Payment $payment): Payment
     {
-        $em   = $this->getEntityManager();
+        $em = $this->getEntityManager();
         $user = $em->getReference(UserEntity::class, SymfonyUuid::fromString($payment->userId()->toRfc4122()));
 
         if ($payment->id() === null) {
@@ -37,7 +38,7 @@ class PaymentRepository extends ServiceEntityRepository implements PaymentReposi
         } else {
             $entity = $this->find(SymfonyUuid::fromString($payment->id()->toRfc4122()));
             if (!$entity) {
-                throw new \RuntimeException(sprintf('Payment with id %s not found', $payment->id()));
+                throw new RuntimeException(sprintf('Payment with id %s not found', $payment->id()));
             }
             PaymentMapper::hydrate($entity, $payment, $user);
         }
@@ -66,7 +67,7 @@ class PaymentRepository extends ServiceEntityRepository implements PaymentReposi
             ->getResult();
 
         return array_map(
-            static fn (PaymentEntity $e): Payment => PaymentMapper::toDomain($e),
+            static fn(PaymentEntity $e): Payment => PaymentMapper::toDomain($e),
             $entities,
         );
     }
@@ -74,7 +75,7 @@ class PaymentRepository extends ServiceEntityRepository implements PaymentReposi
     public function findByExternalId(PaymentGateway $gateway, PaymentExternalId $externalId): ?Payment
     {
         $entity = $this->findOneBy([
-            'gateway'    => $gateway->value,
+            'gateway' => $gateway->value,
             'externalId' => $externalId->value(),
         ]);
 

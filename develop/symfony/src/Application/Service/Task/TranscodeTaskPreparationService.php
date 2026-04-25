@@ -13,6 +13,7 @@ use App\Domain\Video\Repository\PresetRepositoryInterface;
 use App\Domain\Video\Repository\TaskRepositoryInterface;
 use App\Domain\Video\Service\Storage\StorageInterface;
 use Psr\Log\LogLevel;
+use RuntimeException;
 
 readonly class TranscodeTaskPreparationService
 {
@@ -32,7 +33,7 @@ readonly class TranscodeTaskPreparationService
         $preset = $this->presetRepository->findById($task->presetId());
         if (!$preset) {
             $this->logService->log('task', 'transcode', $task->id(), LogLevel::ERROR, 'Preset not found for task');
-            throw new \RuntimeException('Preset not found for task');
+            throw new RuntimeException('Preset not found for task');
         }
 
         $relativeOutputPath = $this->storage->taskOutputKey($video, $preset);

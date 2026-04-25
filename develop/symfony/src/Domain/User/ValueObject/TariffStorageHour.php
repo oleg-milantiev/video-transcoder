@@ -3,13 +3,15 @@ declare(strict_types=1);
 
 namespace App\Domain\User\ValueObject;
 
+use DomainException;
+
 final readonly class TariffStorageHour
 {
     public function __construct(
         private int $value,
     ) {
         if ($this->value < 1) {
-            throw new \DomainException('Tariff storage hour must be at least 1 hour.');
+            throw new DomainException('Tariff storage hour must be at least 1 hour.');
         }
     }
 

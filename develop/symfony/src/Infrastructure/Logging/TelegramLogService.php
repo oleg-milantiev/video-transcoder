@@ -52,7 +52,7 @@ By {{ user.email }}
 TWIG,
                     'userIds' => [self::ADMIN_USER_ID],
                 ],
-            ]
+            ],
         ],
         'contact' => [
             'submit' => [
@@ -98,8 +98,14 @@ TWIG;
     ) {
     }
 
-    public function log(string $name, string $action, ?Uuid $objectId, string $level, string $text, array $context = []): void
-    {
+    public function log(
+        string $name,
+        string $action,
+        ?Uuid $objectId,
+        string $level,
+        string $text,
+        array $context = []
+    ): void {
         $route = null;
 
         if (in_array($level, [LogLevel::CRITICAL, LogLevel::ERROR, LogLevel::EMERGENCY], true) &&

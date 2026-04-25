@@ -4,7 +4,6 @@ declare(strict_types=1);
 namespace App\Application\QueryHandler;
 
 use App\Application\DTO\PresetItemDTO;
-use App\Application\DTO\TaskItemDTO;
 use App\Application\DTO\VideoDetailsDTO;
 use App\Application\DTO\VideoItemDTO;
 use App\Application\Exception\VideoAccessDeniedException;
@@ -17,6 +16,7 @@ use App\Domain\Video\Service\Storage\StorageInterface;
 use App\Infrastructure\Persistence\Doctrine\User\UserEntity;
 use App\Infrastructure\Persistence\Doctrine\User\UserMapper;
 use App\Infrastructure\Security\Voter\VideoAccessVoter;
+use RuntimeException;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 
@@ -29,7 +29,8 @@ final readonly class GetVideoDetailsHandler
         private TaskRepositoryInterface $taskRepository,
         private StorageInterface $storage,
         private Security $security,
-    ) {}
+    ) {
+    }
 
     public function __invoke(GetVideoDetailsQuery $query): VideoDetailsDTO
     {
@@ -48,7 +49,7 @@ final readonly class GetVideoDetailsHandler
 
         $tariff = $user->tariff();
         if (!$tariff) {
-            throw new \RuntimeException('User without tariff');
+            throw new RuntimeException('User without tariff');
         }
 
         $videoItemDto = VideoItemDTO::fromDomain($video, $this->storage, $this->taskRepository, $tariff);

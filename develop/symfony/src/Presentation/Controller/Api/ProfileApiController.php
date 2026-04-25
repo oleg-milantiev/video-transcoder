@@ -13,6 +13,7 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
+use Throwable;
 
 #[Route('/api/profile')]
 #[IsGranted('IS_AUTHENTICATED_FULLY')]
@@ -39,7 +40,7 @@ final class ProfileApiController extends AbstractController
                     new GetProfileQuery($uuid)
                 )->toArray()
             );
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             $this->logService->log('profile', 'index', $uuid, LogLevel::CRITICAL, 'Fail', [
                 'message' => $e->getMessage(),
             ]);

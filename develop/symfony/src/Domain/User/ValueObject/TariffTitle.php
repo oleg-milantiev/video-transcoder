@@ -3,6 +3,8 @@ declare(strict_types=1);
 
 namespace App\Domain\User\ValueObject;
 
+use DomainException;
+
 final readonly class TariffTitle
 {
     private string $value;
@@ -12,11 +14,11 @@ final readonly class TariffTitle
         $trimmed = trim($value);
 
         if ($trimmed === '') {
-            throw new \DomainException('Tariff title cannot be empty.');
+            throw new DomainException('Tariff title cannot be empty.');
         }
 
         if (mb_strlen($trimmed) > 255) {
-            throw new \DomainException('Tariff title must be less than 255 characters long.');
+            throw new DomainException('Tariff title must be less than 255 characters long.');
         }
 
         $this->value = $trimmed;

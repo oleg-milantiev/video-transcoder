@@ -22,12 +22,41 @@ final class PresetBitrate
             if (!is_float($bitrate) && !is_int($bitrate)) {
                 throw InvalidPresetBitrate::invalidBitrate($height, $bitrate);
             }
-            if ((float) $bitrate < 0) {
-                throw InvalidPresetBitrate::negativeBitrate($height, (float) $bitrate);
+            if ((float)$bitrate < 0) {
+                throw InvalidPresetBitrate::negativeBitrate($height, (float)$bitrate);
             }
         }
 
-        $this->rates = array_map(static fn ($v) => (float) $v, $rates);
+        $this->rates = array_map(static fn($v) => (float)$v, $rates);
+    }
+
+    /**
+     * @param array<string|int, mixed> $raw Raw array from JSON / DB (keys may be strings)
+     */
+    public static function fromRaw(array $raw): self
+    {
+        $normalized = [];
+        foreach ($raw as $key => $value) {
+            $intKey = (int)$key;
+            $normalized[$intKey] = (float)$value;
+        }
+
+        return new self($normalized);
+    }
+
+    public static function default(): self
+    {
+        return new self([
+            144 => 0.1,
+            240 => 0.4,
+            360 => 1.0,
+            480 => 2.5,
+            720 => 5.0,
+            1080 => 8.0,
+            1440 => 16.0,
+            2160 => 35.0,
+            4320 => 85.0,
+        ]);
     }
 
     /**
@@ -49,44 +78,15 @@ final class PresetBitrate
     }
 
     /**
-     * @param array<string|int, mixed> $raw  Raw array from JSON / DB (keys may be strings)
-     */
-    public static function fromRaw(array $raw): self
-    {
-        $normalized = [];
-        foreach ($raw as $key => $value) {
-            $intKey = (int) $key;
-            $normalized[$intKey] = (float) $value;
-        }
-
-        return new self($normalized);
-    }
-
-    /**
      * @return array<string, float>  String keys for JSON serialisation
      */
     public function toJsonArray(): array
     {
         $out = [];
         foreach ($this->rates as $height => $bitrate) {
-            $out[(string) $height] = $bitrate;
+            $out[(string)$height] = $bitrate;
         }
 
         return $out;
-    }
-
-    public static function default(): self
-    {
-        return new self([
-            144  => 0.1,
-            240  => 0.4,
-            360  => 1.0,
-            480  => 2.5,
-            720  => 5.0,
-            1080 => 8.0,
-            1440 => 16.0,
-            2160 => 35.0,
-            4320 => 85.0,
-        ]);
     }
 }

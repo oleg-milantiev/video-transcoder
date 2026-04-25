@@ -3,13 +3,15 @@ declare(strict_types=1);
 
 namespace App\Domain\User\ValueObject;
 
+use DomainException;
+
 final readonly class TariffInstance
 {
     public function __construct(
         private int $value,
     ) {
         if ($this->value < 1) {
-            throw new \DomainException('Tariff instance must be greater than or equal to 1.');
+            throw new DomainException('Tariff instance must be greater than or equal to 1.');
         }
     }
 

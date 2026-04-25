@@ -33,6 +33,31 @@ class Preset
         $this->changeOutput($videoCodec, $audioCodec, $format);
     }
 
+    public function rename(PresetTitle $title): void
+    {
+        $this->title = $title;
+    }
+
+    public function changeOutput(
+        VideoCodec $videoCodec,
+        AudioCodec $audioCodec,
+        Format $format,
+    ): void {
+        $this->videoCodec = $videoCodec;
+        $this->audioCodec = $audioCodec;
+        $this->format = $format;
+    }
+
+    public static function create(
+        PresetTitle $title,
+        VideoCodec $videoCodec,
+        AudioCodec $audioCodec,
+        Format $format,
+        ?PresetBitrate $bitrate = null,
+    ): self {
+        return new self($title, $videoCodec, $audioCodec, $format, null, $bitrate);
+    }
+
     public function id(): ?Uuid
     {
         return $this->id;
@@ -61,31 +86,6 @@ class Preset
     public function bitrate(): PresetBitrate
     {
         return $this->bitrate;
-    }
-
-    public static function create(
-        PresetTitle $title,
-        VideoCodec $videoCodec,
-        AudioCodec $audioCodec,
-        Format $format,
-        ?PresetBitrate $bitrate = null,
-    ): self {
-        return new self($title, $videoCodec, $audioCodec, $format, null, $bitrate);
-    }
-
-    public function rename(PresetTitle $title): void
-    {
-        $this->title = $title;
-    }
-
-    public function changeOutput(
-        VideoCodec $videoCodec,
-        AudioCodec $audioCodec,
-        Format $format,
-    ): void {
-        $this->videoCodec = $videoCodec;
-        $this->audioCodec = $audioCodec;
-        $this->format = $format;
     }
 
     public function changeBitrate(PresetBitrate $bitrate): void

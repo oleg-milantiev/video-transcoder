@@ -9,6 +9,8 @@ use App\Domain\User\Entity\Tariff;
 interface TariffRepositoryInterface
 {
     public function findById(Uuid $id): ?Tariff;
+
     public function findAll(): array;
+
     public function delete(Tariff $tariff): void;
 }

@@ -3,6 +3,8 @@ declare(strict_types=1);
 
 namespace App\Domain\User\ValueObject;
 
+use DomainException;
+
 final readonly class PasswordHash
 {
     private string $value;
@@ -12,7 +14,7 @@ final readonly class PasswordHash
         $normalized = trim($value);
 
         if ($normalized === '') {
-            throw new \DomainException('Password hash cannot be empty.');
+            throw new DomainException('Password hash cannot be empty.');
         }
 
         $this->value = $normalized;

@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace App\Application\Event;
 
 use Psr\Log\LoggerInterface;
+use ReflectionClass;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 
 #[AsMessageHandler(bus: 'messenger.bus.event')]
@@ -16,7 +17,7 @@ final readonly class ApplicationEventLoggerHandler
     public function __invoke(ApplicationEvent $event): void
     {
         $eventClass = $event::class;
-        $eventName = new \ReflectionClass($event)->getShortName();
+        $eventName = new ReflectionClass($event)->getShortName();
         $context = [
             'eventClass' => $eventClass,
             'payload' => get_object_vars($event),
@@ -24,11 +25,13 @@ final readonly class ApplicationEventLoggerHandler
 
         if (str_ends_with($eventName, 'Fail')) {
             $this->logger->error('Application event dispatched', $context);
+
             return;
         }
 
         if (str_ends_with($eventName, 'Start') || str_ends_with($eventName, 'Success')) {
             $this->logger->info('Application event dispatched', $context);
+
             return;
         }
 

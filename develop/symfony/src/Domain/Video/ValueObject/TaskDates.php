@@ -4,13 +4,14 @@ declare(strict_types=1);
 namespace App\Domain\Video\ValueObject;
 
 use App\Domain\Video\Exception\InvalidTaskDates;
+use DateTimeImmutable;
 
 final readonly class TaskDates
 {
     private function __construct(
-        private \DateTimeImmutable $createdAt,
-        private ?\DateTimeImmutable $startedAt,
-        private ?\DateTimeImmutable $updatedAt,
+        private DateTimeImmutable $createdAt,
+        private ?DateTimeImmutable $startedAt,
+        private ?DateTimeImmutable $updatedAt,
     ) {
         if ($this->startedAt !== null && $this->startedAt < $this->createdAt) {
             throw InvalidTaskDates::startedAtBeforeCreatedAt();
@@ -25,42 +26,42 @@ final readonly class TaskDates
         }
     }
 
-    public static function create(?\DateTimeImmutable $createdAt = null): self
+    public static function create(?DateTimeImmutable $createdAt = null): self
     {
-        return new self($createdAt ?? new \DateTimeImmutable(), null, null);
+        return new self($createdAt ?? new DateTimeImmutable(), null, null);
     }
 
     public static function fromPersistence(
-        \DateTimeImmutable $createdAt,
-        ?\DateTimeImmutable $startedAt,
-        ?\DateTimeImmutable $updatedAt,
+        DateTimeImmutable $createdAt,
+        ?DateTimeImmutable $startedAt,
+        ?DateTimeImmutable $updatedAt,
     ): self {
         return new self($createdAt, $startedAt, $updatedAt);
     }
 
-    public function markStarted(?\DateTimeImmutable $startedAt = null): self
+    public function markStarted(?DateTimeImmutable $startedAt = null): self
     {
-        $now = $startedAt ?? new \DateTimeImmutable();
+        $now = $startedAt ?? new DateTimeImmutable();
 
         return new self($this->createdAt, $now, $now);
     }
 
-    public function touch(?\DateTimeImmutable $updatedAt = null): self
+    public function touch(?DateTimeImmutable $updatedAt = null): self
     {
-        return new self($this->createdAt, $this->startedAt, $updatedAt ?? new \DateTimeImmutable());
+        return new self($this->createdAt, $this->startedAt, $updatedAt ?? new DateTimeImmutable());
     }
 
-    public function createdAt(): \DateTimeImmutable
+    public function createdAt(): DateTimeImmutable
     {
         return $this->createdAt;
     }
 
-    public function startedAt(): ?\DateTimeImmutable
+    public function startedAt(): ?DateTimeImmutable
     {
         return $this->startedAt;
     }
 
-    public function updatedAt(): ?\DateTimeImmutable
+    public function updatedAt(): ?DateTimeImmutable
     {
         return $this->updatedAt;
     }

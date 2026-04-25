@@ -16,7 +16,7 @@ class VideoController extends SPAController
         return $this->render('video/details.html.twig', [
             'config' => array_merge($this->getSPA(), [
                 'videoUuid' => $uuid,
-            ])
+            ]),
         ]);
     }
 }

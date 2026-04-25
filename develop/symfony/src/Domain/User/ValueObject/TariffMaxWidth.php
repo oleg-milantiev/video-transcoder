@@ -3,13 +3,15 @@ declare(strict_types=1);
 
 namespace App\Domain\User\ValueObject;
 
+use DomainException;
+
 final readonly class TariffMaxWidth
 {
     public function __construct(
         private int $value,
     ) {
         if ($this->value < 1) {
-            throw new \DomainException('Tariff max width must be at least 1 pixel.');
+            throw new DomainException('Tariff max width must be at least 1 pixel.');
         }
     }
 

@@ -5,17 +5,17 @@ namespace App\Domain\User\ValueObject;
 
 enum PaymentStatus: string
 {
-    case PENDING   = 'pending';
+    case PENDING = 'pending';
     case COMPLETED = 'completed';
-    case FAILED    = 'failed';
-    case REFUNDED  = 'refunded';
+    case FAILED = 'failed';
+    case REFUNDED = 'refunded';
     case CANCELLED = 'cancelled';
 
     public const array NAMES = [
-        self::PENDING->value   => self::PENDING->name,
+        self::PENDING->value => self::PENDING->name,
         self::COMPLETED->value => self::COMPLETED->name,
-        self::FAILED->value    => self::FAILED->name,
-        self::REFUNDED->value  => self::REFUNDED->name,
+        self::FAILED->value => self::FAILED->name,
+        self::REFUNDED->value => self::REFUNDED->name,
         self::CANCELLED->value => self::CANCELLED->name,
     ];
 

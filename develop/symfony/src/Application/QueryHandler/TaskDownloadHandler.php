@@ -26,7 +26,8 @@ final readonly class TaskDownloadHandler
         private LogServiceInterface $logService,
         private Security $security,
         private StorageInterface $storage,
-    ) {}
+    ) {
+    }
 
     public function __invoke(TaskDownloadQuery $query): string
     {

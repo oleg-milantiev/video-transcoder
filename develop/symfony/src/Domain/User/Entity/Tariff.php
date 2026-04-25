@@ -13,7 +13,6 @@ use App\Domain\User\ValueObject\TariffStorageHour;
 use App\Domain\User\ValueObject\TariffTitle;
 use App\Domain\User\ValueObject\TariffVideoDuration;
 use App\Domain\User\ValueObject\TariffVideoSize;
-use App\Domain\Video\Entity\Preset;
 
 class Tariff
 {

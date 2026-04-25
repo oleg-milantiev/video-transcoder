@@ -11,7 +11,8 @@ readonly class VideoDetailsDTO
         public array $presets,
         /** @var TaskItemDTO[] */
         public array $tasks,
-    ) {}
+    ) {
+    }
 
     /**
      * @param PresetItemDTO[] $presets

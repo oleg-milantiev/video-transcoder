@@ -10,68 +10,83 @@ use EasyCorp\Bundle\EasyAdminBundle\Event\AfterEntityDeletedEvent;
 use EasyCorp\Bundle\EasyAdminBundle\Event\AfterEntityPersistedEvent;
 use EasyCorp\Bundle\EasyAdminBundle\Event\AfterEntityUpdatedEvent;
 use Psr\Log\LogLevel;
+use ReflectionClass;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\EventDispatcher\Attribute\AsEventListener;
 use Symfony\Component\HttpFoundation\RequestStack;
 
 final readonly class AdminCrudAuditListener
 {
-	public function __construct(
-		private LogServiceInterface $logService,
-		private Security $security,
-		private RequestStack $requestStack,
-	) {
-	}
+    public function __construct(
+        private LogServiceInterface $logService,
+        private Security $security,
+        private RequestStack $requestStack,
+    ) {
+    }
 
-	#[AsEventListener(event: AfterEntityPersistedEvent::class)]
-	public function onEntityPersisted(AfterEntityPersistedEvent $event): void
-	{
-		$this->audit('created', $event->getEntityInstance());
-	}
+    #[AsEventListener(event: AfterEntityPersistedEvent::class)]
+    public function onEntityPersisted(AfterEntityPersistedEvent $event): void
+    {
+        $this->audit('created', $event->getEntityInstance());
+    }
 
-	#[AsEventListener(event: AfterEntityUpdatedEvent::class)]
-	public function onEntityUpdated(AfterEntityUpdatedEvent $event): void
-	{
-		$this->audit('updated', $event->getEntityInstance());
-	}
+    private function audit(string $action, object $entity): void
+    {
+        $actor = $this->security->getUser();
+        if (!$actor instanceof UserEntity || $actor->id === null) {
+            return;
+        }
 
-	#[AsEventListener(event: AfterEntityDeletedEvent::class)]
-	public function onEntityDeleted(AfterEntityDeletedEvent $event): void
-	{
-		$this->audit('deleted', $event->getEntityInstance());
-	}
+        $request = $this->requestStack->getCurrentRequest();
+        $shortClass = new ReflectionClass($entity)->getShortName();
+        $entityName = strtolower((string)preg_replace('/Entity$/', '', $shortClass));
+        $entityId = $entity->id;
 
-	private function audit(string $action, object $entity): void
-	{
-		$actor = $this->security->getUser();
-		if (!$actor instanceof UserEntity || $actor->id === null) {
-			return;
-		}
+        $context = [
+            'action' => $action,
+            'entityClass' => $entity::class,
+            'entityId' => $entityId?->toRfc4122(),
+            'actorUserId' => $actor->id->toRfc4122(),
+            'actorEmail' => $actor->email,
+            'roles' => implode(', ', $actor->roles),
+            'route' => $request?->attributes->get('_route'),
+            'path' => $request?->getPathInfo(),
+            'ip' => $request?->getClientIp(),
+            'userAgent' => $request?->headers->get('User-Agent'),
+        ];
 
-		$request = $this->requestStack->getCurrentRequest();
-		$shortClass = new \ReflectionClass($entity)->getShortName();
-		$entityName = strtolower((string) preg_replace('/Entity$/', '', $shortClass));
-		$entityId = $entity->id;
+        $message = sprintf('Admin %s %s', $action, $shortClass);
 
-		$context = [
-			'action' => $action,
-			'entityClass' => $entity::class,
-			'entityId' => $entityId?->toRfc4122(),
-			'actorUserId' => $actor->id->toRfc4122(),
-			'actorEmail' => $actor->email,
-			'roles' => implode(', ', $actor->roles),
-			'route' => $request?->attributes->get('_route'),
-			'path' => $request?->getPathInfo(),
-			'ip' => $request?->getClientIp(),
-			'userAgent' => $request?->headers->get('User-Agent'),
-		];
+        $this->logService->log(
+            'admin',
+            $action,
+            Uuid::fromString($actor->id->toRfc4122()),
+            LogLevel::INFO,
+            $message,
+            $context
+        );
 
-		$message = sprintf('Admin %s %s', $action, $shortClass);
+        if ($entityId !== null) {
+            $this->logService->log(
+                $entityName,
+                $action,
+                Uuid::fromString($entityId->toRfc4122()),
+                LogLevel::INFO,
+                $message,
+                $context
+            );
+        }
+    }
 
-		$this->logService->log('admin', $action, Uuid::fromString($actor->id->toRfc4122()), LogLevel::INFO, $message, $context);
+    #[AsEventListener(event: AfterEntityUpdatedEvent::class)]
+    public function onEntityUpdated(AfterEntityUpdatedEvent $event): void
+    {
+        $this->audit('updated', $event->getEntityInstance());
+    }
 
-		if ($entityId !== null) {
-			$this->logService->log($entityName, $action, Uuid::fromString($entityId->toRfc4122()), LogLevel::INFO, $message, $context);
-		}
-	}
+    #[AsEventListener(event: AfterEntityDeletedEvent::class)]
+    public function onEntityDeleted(AfterEntityDeletedEvent $event): void
+    {
+        $this->audit('deleted', $event->getEntityInstance());
+    }
 }

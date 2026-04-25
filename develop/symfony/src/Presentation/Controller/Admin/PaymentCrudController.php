@@ -51,7 +51,7 @@ class PaymentCrudController extends AbstractCrudController
 
     public function configureFilters(Filters $filters): Filters
     {
-        $statusChoices  = array_flip(PaymentStatus::NAMES);
+        $statusChoices = array_flip(PaymentStatus::NAMES);
         $gatewayChoices = array_flip(PaymentGateway::NAMES);
 
         return $filters
@@ -70,23 +70,25 @@ class PaymentCrudController extends AbstractCrudController
 
     public function configureFields(string $pageName): iterable
     {
-        $statusChoices  = array_flip(PaymentStatus::NAMES);
+        $statusChoices = array_flip(PaymentStatus::NAMES);
         $gatewayChoices = array_flip(PaymentGateway::NAMES);
 
         return [
             TextField::new('id')
                 ->hideOnForm()
-                ->formatValue(static fn ($v) => is_object($v) && method_exists($v, 'toRfc4122') ? $v->toRfc4122() : (string) $v),
+                ->formatValue(
+                    static fn($v) => is_object($v) && method_exists($v, 'toRfc4122') ? $v->toRfc4122() : (string)$v
+                ),
 
             AssociationField::new('user'),
 
             ChoiceField::new('status')
                 ->setChoices($statusChoices)
                 ->renderAsBadges([
-                    'pending'   => 'warning',
+                    'pending' => 'warning',
                     'completed' => 'success',
-                    'failed'    => 'danger',
-                    'refunded'  => 'info',
+                    'failed' => 'danger',
+                    'refunded' => 'info',
                     'cancelled' => 'secondary',
                 ]),
 

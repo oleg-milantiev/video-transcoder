@@ -3,13 +3,15 @@ declare(strict_types=1);
 
 namespace App\Domain\User\ValueObject;
 
+use DomainException;
+
 final readonly class TariffVideoDuration
 {
     public function __construct(
         private int $value,
     ) {
         if ($this->value < 1) {
-            throw new \DomainException('Tariff video duration must be at least 1 second.');
+            throw new DomainException('Tariff video duration must be at least 1 second.');
         }
     }
 

@@ -12,19 +12,20 @@ use App\Application\Event\CreateVideoSuccess;
 use App\Application\Exception\StorageSizeExceedsQuota;
 use App\Application\Factory\FlashNotificationFactory;
 use App\Application\Factory\VideoFactory;
+use App\Application\Logging\LogServiceInterface;
 use App\Application\Service\Mercure\FlashRealtimeNotifier;
 use App\Application\Service\Video\VideoRealtimeNotifier;
+use App\Domain\User\Exception\TariffNotFound;
+use App\Domain\User\Exception\UserNotFound;
+use App\Domain\User\Repository\UserRepositoryInterface;
+use App\Domain\Video\Exception\VideoFileNotFound;
+use App\Domain\Video\Exception\VideoSizeExceedsQuota;
 use App\Domain\Video\Repository\StorageRepositoryInterface;
 use App\Domain\Video\Repository\TaskRepositoryInterface;
-use App\Domain\Video\Exception\VideoSizeExceedsQuota;
-use App\Domain\Video\Exception\VideoFileNotFound;
-use App\Domain\User\Exception\UserNotFound;
-use App\Domain\User\Exception\TariffNotFound;
-use App\Domain\User\Repository\UserRepositoryInterface;
-use Psr\Log\LogLevel;
-use App\Application\Logging\LogServiceInterface;
 use App\Domain\Video\Repository\VideoRepositoryInterface;
 use App\Domain\Video\Service\Storage\StorageInterface;
+use Exception;
+use Psr\Log\LogLevel;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 use Symfony\Component\Messenger\MessageBusInterface;
@@ -53,10 +54,12 @@ final readonly class CreateVideoHandler
     public function __invoke(CreateVideo $command): void
     {
         try {
-            $this->eventBus->dispatch(new CreateVideoStart(
-                userId: $command->userId()->toRfc4122(),
-                filename: $command->file()->getName(),
-            ));
+            $this->eventBus->dispatch(
+                new CreateVideoStart(
+                    userId: $command->userId()->toRfc4122(),
+                    filename: $command->file()->getName(),
+                )
+            );
 
             $filePath = $command->file()->getFilePath();
 
@@ -100,14 +103,14 @@ final readonly class CreateVideoHandler
                 unlink($filePath);
                 $this->flashRealtimeNotifier->notify(
                     $command->userId(),
-                    $this->flashNotificationFactory->uploadFailed(null, 'File size exceeds '. $maxSizeMb.' MB')
+                    $this->flashNotificationFactory->uploadFailed(null, 'File size exceeds '.$maxSizeMb.' MB')
                 );
                 throw VideoSizeExceedsQuota::fromSize($fileSizeMb, $maxSizeMb);
             }
 
             // storage size tariff limits
             $storageNowMb = $this->storageRepository->getUsedStorageSize($user->id()) / 1024 / 1024;
-            $storageCapacityMb = $tariff->storageGb()->value()*1024;
+            $storageCapacityMb = $tariff->storageGb()->value() * 1024;
             if ($fileSizeMb + $storageNowMb > $storageCapacityMb) {
                 unlink($filePath);
                 $this->flashRealtimeNotifier->notify(
@@ -146,17 +149,21 @@ final readonly class CreateVideoHandler
 
             // todo стоит тут прописать meta.size и слать notifyStorageUpdated, а не после extractMeta
 
-            $this->eventBus->dispatch(new CreateVideoSuccess(
-                videoId: $video->id()?->toRfc4122(),
-                userId: $command->userId()->toRfc4122(),
-            ));
+            $this->eventBus->dispatch(
+                new CreateVideoSuccess(
+                    videoId: $video->id()?->toRfc4122(),
+                    userId: $command->userId()->toRfc4122(),
+                )
+            );
             $this->commandBus->dispatch(new ExtractVideoMetadata($video));
-        } catch (\Exception $e) {
-            $this->eventBus->dispatch(new CreateVideoFail(
-                error: $e->getMessage(),
-                userId: $command->userId()->toRfc4122(),
-                filename: $command->file()->getName(),
-            ));
+        } catch (Exception $e) {
+            $this->eventBus->dispatch(
+                new CreateVideoFail(
+                    error: $e->getMessage(),
+                    userId: $command->userId()->toRfc4122(),
+                    filename: $command->file()->getName(),
+                )
+            );
         }
     }
 }

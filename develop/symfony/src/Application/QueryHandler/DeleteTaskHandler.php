@@ -10,6 +10,7 @@ use App\Application\Query\DeleteTaskQuery;
 use App\Domain\Video\Repository\TaskRepositoryInterface;
 use App\Domain\Video\Repository\VideoRepositoryInterface;
 use App\Infrastructure\Security\Voter\VideoAccessVoter;
+use DomainException;
 use Psr\Log\LogLevel;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
@@ -34,7 +35,7 @@ final readonly class DeleteTaskHandler
 
         $video = $this->videoRepository->findById($task->videoId());
         if ($video === null) {
-            throw new \DomainException('Task video not found');
+            throw new DomainException('Task video not found');
         }
 
         if (!$this->security->isGranted(VideoAccessVoter::CAN_DELETE, $video)) {
@@ -42,7 +43,7 @@ final readonly class DeleteTaskHandler
         }
 
         if ($task->status()->isTranscoding()) {
-            throw new \DomainException('Task is active and cannot be deleted.');
+            throw new DomainException('Task is active and cannot be deleted.');
         }
 
         $task->markDeleted();

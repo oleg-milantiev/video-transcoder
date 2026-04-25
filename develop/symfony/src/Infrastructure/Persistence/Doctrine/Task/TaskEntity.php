@@ -5,8 +5,9 @@ namespace App\Infrastructure\Persistence\Doctrine\Task;
 
 use App\Domain\Video\ValueObject\TaskStatus;
 use App\Infrastructure\Persistence\Doctrine\Preset\PresetEntity;
-use App\Infrastructure\Persistence\Doctrine\Video\VideoEntity;
 use App\Infrastructure\Persistence\Doctrine\User\UserEntity;
+use App\Infrastructure\Persistence\Doctrine\Video\VideoEntity;
+use DateTimeImmutable;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Uid\UuidV4 as SymfonyUuid;
 
@@ -30,13 +31,13 @@ class TaskEntity
     public ?int $progress = 0;
 
     #[ORM\Column]
-    public ?\DateTimeImmutable $createdAt = null;
+    public ?DateTimeImmutable $createdAt = null;
 
     #[ORM\Column(nullable: true)]
-    public ?\DateTimeImmutable $updatedAt = null;
+    public ?DateTimeImmutable $updatedAt = null;
 
     #[ORM\Column(nullable: true)]
-    public ?\DateTimeImmutable $startedAt = null;
+    public ?DateTimeImmutable $startedAt = null;
 
     #[ORM\Column(type: 'json')]
     public array $meta = [];
@@ -58,7 +59,7 @@ class TaskEntity
 
     public function __construct()
     {
-        $this->createdAt = new \DateTimeImmutable();
+        $this->createdAt = new DateTimeImmutable();
     }
 
     public function __toString(): string

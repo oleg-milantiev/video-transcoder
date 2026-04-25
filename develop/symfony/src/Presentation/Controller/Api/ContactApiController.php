@@ -28,8 +28,8 @@ class ContactApiController extends AbstractController
         /** @var UserEntity $user */
         $user = $this->getUser();
 
-        $data = json_decode((string) $request->getContent(), true, 512, JSON_THROW_ON_ERROR);
-        $message = isset($data['message']) ? trim((string) $data['message']) : '';
+        $data = json_decode((string)$request->getContent(), true, 512, JSON_THROW_ON_ERROR);
+        $message = isset($data['message']) ? trim((string)$data['message']) : '';
 
         if ($message === '') {
             return $this->apiError('VALIDATION_ERROR', 'Message must not be empty', 400);

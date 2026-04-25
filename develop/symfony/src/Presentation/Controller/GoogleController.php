@@ -5,11 +5,13 @@ namespace App\Presentation\Controller;
 
 use App\Application\Logging\LogServiceInterface;
 use App\Domain\Shared\ValueObject\Uuid;
+use App\Infrastructure\Google\GoogleAuthenticator;
 use App\Infrastructure\Persistence\Doctrine\User\TariffEntity;
 use App\Infrastructure\Persistence\Doctrine\User\UserEntity;
-use App\Infrastructure\Google\GoogleAuthenticator;
+use DateTimeImmutable;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LogLevel;
+use RuntimeException;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\HttpFoundation\RedirectResponse;
@@ -19,6 +21,7 @@ use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Util\TargetPathTrait;
 use Symfony\Component\Uid\UuidV4 as SymfonyUuid;
+use Throwable;
 
 class GoogleController extends AbstractController
 {
@@ -47,7 +50,7 @@ class GoogleController extends AbstractController
 
         try {
             return $this->redirect($this->googleAuth->getAuthorizationUrl());
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             $this->logService->log('user', 'google', null, LogLevel::ERROR, 'Google connect error', [
                 'message' => $e->getMessage(),
             ]);
@@ -71,14 +74,14 @@ class GoogleController extends AbstractController
     ): Response {
         try {
             $googleUser = $this->googleAuth->getUserFromCode($request);
-            $email = mb_strtolower(trim((string) $googleUser->getEmail()));
+            $email = mb_strtolower(trim((string)$googleUser->getEmail()));
 
             if (!$email) {
-                throw new \RuntimeException('Email not provided');
+                throw new RuntimeException('Email not provided');
             }
 
             if ($googleUser->getEmailVerified() !== true) {
-                throw new \RuntimeException('Google account email is not verified');
+                throw new RuntimeException('Google account email is not verified');
             }
 
             /** @var UserEntity|null $user */
@@ -94,18 +97,32 @@ class GoogleController extends AbstractController
                 $em->persist($user);
                 $em->flush();
 
-                $this->logService->log('user', 'create', Uuid::fromString($user->id->toRfc4122()), LogLevel::INFO, 'Created User via Google', [
-                    'email' => $email,
-                    'tariffId' => self::TARIFF_FREE_ID,
-                ]);
+                $this->logService->log(
+                    'user',
+                    'create',
+                    Uuid::fromString($user->id->toRfc4122()),
+                    LogLevel::INFO,
+                    'Created User via Google',
+                    [
+                        'email' => $email,
+                        'tariffId' => self::TARIFF_FREE_ID,
+                    ]
+                );
             }
 
-            $user->loginedAt = new \DateTimeImmutable();
+            $user->loginedAt = new DateTimeImmutable();
             $em->flush();
 
-            $this->logService->log('user', 'login', Uuid::fromString($user->id->toRfc4122()), LogLevel::INFO, 'Login via Google', [
-                'email' => $email,
-            ]);
+            $this->logService->log(
+                'user',
+                'login',
+                Uuid::fromString($user->id->toRfc4122()),
+                LogLevel::INFO,
+                'Login via Google',
+                [
+                    'email' => $email,
+                ]
+            );
 
             $response = $security->login($user, 'form_login', self::FIREWALL_NAME);
             if ($response instanceof Response) {
@@ -120,7 +137,7 @@ class GoogleController extends AbstractController
             }
 
             return $this->redirectToRoute('app_home');
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             $this->logService->log('user', 'google', null, LogLevel::ERROR, 'Google login error', [
                 'message' => $e->getMessage(),
             ]);

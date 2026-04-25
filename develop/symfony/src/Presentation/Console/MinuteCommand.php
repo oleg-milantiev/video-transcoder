@@ -11,8 +11,9 @@ use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
-use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Lock\LockFactory;
+use Symfony\Component\Messenger\MessageBusInterface;
+use Throwable;
 
 #[AsCommand(name: 'app:minute', description: 'Run every minute from cron to schedule tasks.')]
 final class MinuteCommand extends Command
@@ -51,7 +52,7 @@ final class MinuteCommand extends Command
                 ]);
 
                 return Command::SUCCESS;
-            } catch (\Throwable $e) {
+            } catch (Throwable $e) {
                 $this->logService->log('cron', 'minute', null, LogLevel::ERROR, 'Fail', [
                     'message' => $e->getMessage(),
                 ]);
@@ -62,7 +63,7 @@ final class MinuteCommand extends Command
             if ($acquired) {
                 try {
                     $lock->release();
-                } catch (\Throwable $e) {
+                } catch (Throwable $e) {
                     $this->logService->log('cron', 'minute', null, LogLevel::ERROR, 'Fail', [
                         'message' => $e->getMessage(),
                     ]);

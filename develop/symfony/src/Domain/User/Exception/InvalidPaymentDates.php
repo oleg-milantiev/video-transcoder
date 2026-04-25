@@ -3,7 +3,9 @@ declare(strict_types=1);
 
 namespace App\Domain\User\Exception;
 
-final class InvalidPaymentDates extends \DomainException
+use DomainException;
+
+final class InvalidPaymentDates extends DomainException
 {
     public static function paidAtBeforeCreatedAt(): self
     {

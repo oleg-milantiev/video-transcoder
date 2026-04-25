@@ -26,11 +26,6 @@ final readonly class MercureTokenService
     ) {
     }
 
-    public function createUserTopic(Uuid $userId): string
-    {
-        return rtrim($this->normalizeUrl($this->topicPrefix), '/') . '/' . $userId->toRfc4122();
-    }
-
     public function createSubscriberTokenForUser(Uuid $userId): string
     {
         $topic = $this->createUserTopic($userId);
@@ -40,6 +35,44 @@ final readonly class MercureTokenService
                 'subscribe' => [$topic],
             ],
         ], $this->subscriberKey);
+    }
+
+    public function createUserTopic(Uuid $userId): string
+    {
+        return rtrim($this->normalizeUrl($this->topicPrefix), '/').'/'.$userId->toRfc4122();
+    }
+
+    private function normalizeUrl(string $value): string
+    {
+        $normalized = trim($value);
+        $normalized = preg_replace('#^((https?)://)((https?)://)+#i', '$1', $normalized) ?? $normalized;
+
+        return $normalized;
+    }
+
+    private function createJwt(array $claims, string $key): string
+    {
+        $now = time();
+        $payload = array_merge($claims, [
+            'iat' => $now,
+            'exp' => $now + $this->ttlSeconds(),
+        ]);
+
+        $headerPart = $this->base64UrlEncode('{"alg":"HS256","typ":"JWT"}');
+        $payloadPart = $this->base64UrlEncode((string)json_encode($payload, JSON_THROW_ON_ERROR));
+        $signaturePart = $this->base64UrlEncode(hash_hmac('sha256', $headerPart.'.'.$payloadPart, $key, true));
+
+        return sprintf('%s.%s.%s', $headerPart, $payloadPart, $signaturePart);
+    }
+
+    private function ttlSeconds(): int
+    {
+        return $this->ttlSeconds > 0 ? $this->ttlSeconds : self::DEFAULT_TTL_SECONDS;
+    }
+
+    private function base64UrlEncode(string $value): string
+    {
+        return rtrim(strtr(base64_encode($value), '+/', '-_'), '=');
     }
 
     public function createPublisherTokenForTopic(string $topic): string
@@ -59,38 +92,5 @@ final readonly class MercureTokenService
     public function internalHubUrl(): string
     {
         return $this->normalizeUrl($this->internalHubUrl);
-    }
-
-    private function createJwt(array $claims, string $key): string
-    {
-        $now = time();
-        $payload = array_merge($claims, [
-            'iat' => $now,
-            'exp' => $now + $this->ttlSeconds(),
-        ]);
-
-        $headerPart = $this->base64UrlEncode('{"alg":"HS256","typ":"JWT"}');
-        $payloadPart = $this->base64UrlEncode((string) json_encode($payload, JSON_THROW_ON_ERROR));
-        $signaturePart = $this->base64UrlEncode(hash_hmac('sha256', $headerPart . '.' . $payloadPart, $key, true));
-
-        return sprintf('%s.%s.%s', $headerPart, $payloadPart, $signaturePart);
-    }
-
-    private function ttlSeconds(): int
-    {
-        return $this->ttlSeconds > 0 ? $this->ttlSeconds : self::DEFAULT_TTL_SECONDS;
-    }
-
-    private function base64UrlEncode(string $value): string
-    {
-        return rtrim(strtr(base64_encode($value), '+/', '-_'), '=');
-    }
-
-    private function normalizeUrl(string $value): string
-    {
-        $normalized = trim($value);
-        $normalized = preg_replace('#^((https?)://)((https?)://)+#i', '$1', $normalized) ?? $normalized;
-
-        return $normalized;
     }
 }

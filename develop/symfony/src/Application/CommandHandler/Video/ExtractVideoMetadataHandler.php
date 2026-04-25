@@ -21,6 +21,7 @@ use App\Domain\Video\Repository\TaskRepositoryInterface;
 use App\Domain\Video\Repository\VideoRepositoryInterface;
 use App\Domain\Video\Service\Storage\StorageInterface;
 use App\Infrastructure\Ffmpeg\VideoMetadataExtractor;
+use Exception;
 use Psr\Log\LogLevel;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
@@ -108,7 +109,7 @@ final readonly class ExtractVideoMetadataHandler
 
             $this->commandBus->dispatch(new CreateVideoPreview($video));
             $this->eventBus->dispatch(new ExtractVideoMetadataSuccess($videoId));
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $this->handleMetadataExtractionError($video, $e);
         }
     }
@@ -116,7 +117,7 @@ final readonly class ExtractVideoMetadataHandler
     /**
      * @throws ExceptionInterface
      */
-    private function handleMetadataExtractionError($video, \Exception $e): void
+    private function handleMetadataExtractionError($video, Exception $e): void
     {
         $videoId = $video->id()?->toRfc4122();
 
@@ -126,10 +127,17 @@ final readonly class ExtractVideoMetadataHandler
             $this->videoRepository->save($video);
 
             $this->commandBus->dispatch(new CleanupDeletedVideoMedia($video->id()));
-        } catch (\Exception $deleteError) {
-            $this->logService->log('video', 'delete', $video->id(), LogLevel::ERROR, 'Failed to mark video for deletion', [
-                'message' => $deleteError->getMessage(),
-            ]);
+        } catch (Exception $deleteError) {
+            $this->logService->log(
+                'video',
+                'delete',
+                $video->id(),
+                LogLevel::ERROR,
+                'Failed to mark video for deletion',
+                [
+                    'message' => $deleteError->getMessage(),
+                ]
+            );
         }
 
         $this->logService->log('video', 'meta', $video->id(), LogLevel::ERROR, 'Metadata validation failed', [

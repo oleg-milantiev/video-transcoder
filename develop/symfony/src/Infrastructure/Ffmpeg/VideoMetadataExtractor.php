@@ -3,6 +3,8 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\Ffmpeg;
 
+use RuntimeException;
+
 final readonly class VideoMetadataExtractor
 {
     public function __construct(
@@ -43,7 +45,7 @@ final readonly class VideoMetadataExtractor
         $decoded = json_decode($output, true);
 
         if ($decoded === null) {
-            throw new \RuntimeException('Failed to parse ffprobe output.');
+            throw new RuntimeException('Failed to parse ffprobe output.');
         }
 
         $videoStream = null;
@@ -55,15 +57,15 @@ final readonly class VideoMetadataExtractor
         }
 
         $metadata = [
-            'duration' => (float) ($decoded['format']['duration'] ?? 0.0),
-            'bitrate' => (int) ($decoded['format']['bit_rate'] ?? 0),
+            'duration' => (float)($decoded['format']['duration'] ?? 0.0),
+            'bitrate' => (int)($decoded['format']['bit_rate'] ?? 0),
             'format' => $decoded['format']['format_name'] ?? 'unknown',
-            'size' => (int) ($decoded['format']['size'] ?? 0),
+            'size' => (int)($decoded['format']['size'] ?? 0),
         ];
 
         if ($videoStream) {
-            $metadata['width'] = (int) ($videoStream['width'] ?? 0);
-            $metadata['height'] = (int) ($videoStream['height'] ?? 0);
+            $metadata['width'] = (int)($videoStream['width'] ?? 0);
+            $metadata['height'] = (int)($videoStream['height'] ?? 0);
             $metadata['codec'] = $videoStream['codec_name'] ?? 'unknown';
             $metadata['frame_rate'] = $videoStream['avg_frame_rate'] ?? 'unknown';
         }

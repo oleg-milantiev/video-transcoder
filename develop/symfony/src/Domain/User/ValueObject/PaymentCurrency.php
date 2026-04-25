@@ -3,6 +3,8 @@ declare(strict_types=1);
 
 namespace App\Domain\User\ValueObject;
 
+use DomainException;
+
 /**
  * ISO 4217 currency code, e.g. USD, EUR, RUB.
  */
@@ -15,11 +17,11 @@ final readonly class PaymentCurrency
         $normalized = strtoupper(trim($value));
 
         if ($normalized === '') {
-            throw new \DomainException('Payment currency cannot be empty.');
+            throw new DomainException('Payment currency cannot be empty.');
         }
 
         if (!preg_match('/^[A-Z]{3}$/', $normalized)) {
-            throw new \DomainException('Payment currency must be a 3-letter ISO 4217 code (e.g. USD, EUR, RUB).');
+            throw new DomainException('Payment currency must be a 3-letter ISO 4217 code (e.g. USD, EUR, RUB).');
         }
 
         $this->value = $normalized;

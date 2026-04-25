@@ -12,6 +12,7 @@ use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Lock\LockFactory;
+use Throwable;
 
 #[AsCommand(name: 'app:hour', description: 'Run every hour from cron')]
 final class HourCommand extends Command
@@ -57,7 +58,7 @@ final class HourCommand extends Command
             ]);
 
             return Command::SUCCESS;
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             $this->logService->log('cron', 'hour', null, LogLevel::ERROR, 'Fail', [
                 'message' => $e->getMessage(),
             ]);
@@ -69,7 +70,7 @@ final class HourCommand extends Command
                     $lock->release();
 
                     return Command::SUCCESS;
-                } catch (\Throwable $e) {
+                } catch (Throwable $e) {
                     $this->logService->log('cron', 'hour', null, LogLevel::ERROR, 'Fail', [
                         'message' => $e->getMessage(),
                     ]);

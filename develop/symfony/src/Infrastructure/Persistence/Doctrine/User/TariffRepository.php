@@ -23,18 +23,23 @@ class TariffRepository extends ServiceEntityRepository implements TariffReposito
     public function findById(Uuid $id): ?Tariff
     {
         $entity = $this->find(SymfonyUuid::fromString($id->toRfc4122()));
+
         return $entity ? TariffMapper::toDomain($entity) : null;
     }
 
     public function findAll(): array
     {
         $entities = parent::findAll();
+
         return array_map(fn(TariffEntity $entity) => TariffMapper::toDomain($entity), $entities);
     }
 
     public function delete(Tariff $tariff): void
     {
-        $entity = $this->getEntityManager()->getReference(TariffEntity::class, SymfonyUuid::fromString($tariff->id()->toRfc4122()));
+        $entity = $this->getEntityManager()->getReference(
+            TariffEntity::class,
+            SymfonyUuid::fromString($tariff->id()->toRfc4122())
+        );
         $this->getEntityManager()->remove($entity);
         $this->getEntityManager()->flush();
     }

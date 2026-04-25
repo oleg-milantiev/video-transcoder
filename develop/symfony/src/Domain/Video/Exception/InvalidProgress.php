@@ -3,7 +3,9 @@ declare(strict_types=1);
 
 namespace App\Domain\Video\Exception;
 
-final class InvalidProgress extends \DomainException
+use DomainException;
+
+final class InvalidProgress extends DomainException
 {
     public static function outOfRange(int $value): self
     {

@@ -19,16 +19,23 @@ readonly class VideoListResponse
         public int $page,
         public int $limit,
         public int $totalPages,
-    ) {}
+    ) {
+    }
 
-    public static function fromDomain(array $items, int $total, int $page, int $limit, StorageInterface $storage, TaskRepositoryInterface $taskRepository): self
-    {
+    public static function fromDomain(
+        array $items,
+        int $total,
+        int $page,
+        int $limit,
+        StorageInterface $storage,
+        TaskRepositoryInterface $taskRepository
+    ): self {
         return new self(
             items: array_map(fn(Video $video) => VideoItemDTO::fromDomain($video, $storage, $taskRepository), $items),
             total: $total,
             page: $page,
             limit: $limit,
-            totalPages: (int) ceil($total / $limit),
+            totalPages: (int)ceil($total / $limit),
         );
     }
 }
