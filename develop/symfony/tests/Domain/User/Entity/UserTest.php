@@ -20,6 +20,7 @@ use App\Domain\User\ValueObject\TariffVideoSize;
 use App\Domain\User\ValueObject\UserCreatedAt;
 use App\Domain\User\ValueObject\UserEmail;
 use App\Domain\User\ValueObject\UserLoginedAt;
+use App\Domain\User\ValueObject\UserProfile;
 use App\Domain\User\ValueObject\UserRoles;
 use PHPUnit\Framework\TestCase;
 
@@ -198,6 +199,84 @@ final class UserTest extends TestCase
 
         $this->assertNotNull($user->loginedAt());
         $this->assertSame($dt, $user->loginedAt()->value());
+    }
+
+    /** profile() по умолчанию — UserProfile::empty(). */
+    public function testProfileIsEmptyByDefault(): void
+    {
+        $user = new User(
+            email: new UserEmail('user@example.com'),
+            roles: new UserRoles(['ROLE_USER']),
+        );
+
+        $this->assertSame([], $user->profile()->paymentHistory);
+        $this->assertSame(0,  $user->profile()->videoCountActive);
+        $this->assertNull($user->profile()->paidAt);
+        $this->assertNull($user->profile()->paidUntil);
+    }
+
+    /** Явно переданный профиль сохраняется в конструкторе. */
+    public function testProfileCanBeProvidedInConstructor(): void
+    {
+        $profile = UserProfile::create(
+            videoCountActive:    3,
+            videoCountTotal:     10,
+            taskCountActive:     1,
+            taskCountTotal:      50,
+            taskCountByStatus:   [],
+            storageUsedBytes:    1024,
+            storageDelete24Bytes: 0,
+            willStartAt:         'in 5 minutes',
+        );
+
+        $user = new User(
+            email: new UserEmail('user@example.com'),
+            roles: new UserRoles(['ROLE_USER']),
+            profile: $profile,
+        );
+
+        $this->assertSame(3,    $user->profile()->videoCountActive);
+        $this->assertSame(1024, $user->profile()->storageUsedBytes);
+    }
+
+    /** updateProfile() заменяет профиль на новый. */
+    public function testUpdateProfileReplacesData(): void
+    {
+        $user = new User(
+            email: new UserEmail('user@example.com'),
+            roles: new UserRoles(['ROLE_USER']),
+        );
+
+        $newProfile = UserProfile::create(
+            videoCountActive:    5,
+            videoCountTotal:     5,
+            taskCountActive:     0,
+            taskCountTotal:      10,
+            taskCountByStatus:   [],
+            storageUsedBytes:    2048,
+            storageDelete24Bytes: 512,
+            willStartAt:         '',
+        );
+
+        $user->updateProfile($newProfile);
+
+        $this->assertSame(5,    $user->profile()->videoCountActive);
+        $this->assertSame(2048, $user->profile()->storageUsedBytes);
+    }
+
+    /** updateProfile() с UserProfile::empty() сбрасывает профиль. */
+    public function testUpdateProfileWithEmptyResetsData(): void
+    {
+        $user = new User(
+            email: new UserEmail('user@example.com'),
+            roles: new UserRoles(['ROLE_USER']),
+            profile: UserProfile::create(5, 5, 0, 10, [], 2048, 0, ''),
+        );
+
+        $user->updateProfile(UserProfile::empty());
+
+        $this->assertSame(0, $user->profile()->videoCountActive);
+        $this->assertSame(0, $user->profile()->storageUsedBytes);
     }
 
     // ── helpers ──────────────────────────────────────────────────────────────

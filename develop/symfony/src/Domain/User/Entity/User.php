@@ -8,7 +8,9 @@ use App\Domain\User\ValueObject\PasswordHash;
 use App\Domain\User\ValueObject\UserCreatedAt;
 use App\Domain\User\ValueObject\UserEmail;
 use App\Domain\User\ValueObject\UserLoginedAt;
+use App\Domain\User\ValueObject\UserProfile;
 use App\Domain\User\ValueObject\UserRoles;
+use DateTimeImmutable;
 
 class User
 {
@@ -19,6 +21,7 @@ class User
     private ?Tariff $tariff;
     private UserCreatedAt $createdAt;
     private ?UserLoginedAt $loginedAt;
+    private UserProfile $profile;
 
     public function __construct(
         UserEmail $email,
@@ -28,14 +31,16 @@ class User
         ?Uuid $id = null,
         ?UserCreatedAt $createdAt = null,
         ?UserLoginedAt $loginedAt = null,
+        ?UserProfile $profile = null,
     ) {
         $this->id = $id;
         $this->email = $email;
         $this->roles = $roles;
         $this->password = $password;
         $this->tariff = $tariff;
-        $this->createdAt = $createdAt ?? new UserCreatedAt(new \DateTimeImmutable());
+        $this->createdAt = $createdAt ?? new UserCreatedAt(new DateTimeImmutable());
         $this->loginedAt = $loginedAt;
+        $this->profile = $profile ?? UserProfile::empty();
     }
 
     public function id(): ?Uuid
@@ -109,6 +114,16 @@ class User
     public function updateLoginedAt(UserLoginedAt $loginedAt): void
     {
         $this->loginedAt = $loginedAt;
+    }
+
+    public function profile(): UserProfile
+    {
+        return $this->profile;
+    }
+
+    public function updateProfile(UserProfile $profile): void
+    {
+        $this->profile = $profile;
     }
 
     public function __toString(): string

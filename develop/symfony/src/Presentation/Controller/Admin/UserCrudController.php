@@ -8,6 +8,7 @@ use App\Infrastructure\Persistence\Doctrine\User\UserEntity;
 use App\Infrastructure\Persistence\Doctrine\User\UserRepository;
 use Doctrine\DBAL\Exception;
 use Doctrine\ORM\EntityManagerInterface;
+use Doctrine\ORM\EntityRepository;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Action;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Actions;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Crud;
@@ -19,8 +20,8 @@ use EasyCorp\Bundle\EasyAdminBundle\Field\DateTimeField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\TextField;
 use EasyCorp\Bundle\EasyAdminBundle\Filter\EntityFilter;
 use EasyCorp\Bundle\EasyAdminBundle\Filter\TextFilter;
-use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Form\Extension\Core\Type\PasswordType;
+use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
 class UserCrudController extends AbstractCrudController
 {
@@ -49,6 +50,7 @@ class UserCrudController extends AbstractCrudController
 
             if ($this->userRepository->countAdmins($excludeId) === 0) {
                 $this->addFlash('danger', 'Cannot delete the last administrator.');
+
                 return;
             }
         }
@@ -83,20 +85,27 @@ class UserCrudController extends AbstractCrudController
         return [
             TextField::new('id')
                 ->hideOnForm()
-                ->formatValue(static fn ($value) => is_object($value) && method_exists($value, 'toRfc4122') ? $value->toRfc4122() : (string) $value),
+                ->formatValue(
+                    static fn($value) => is_object($value) && method_exists($value, 'toRfc4122')
+                        ? $value->toRfc4122()
+                        : (string)$value
+                ),
             TextField::new('email'),
             TextField::new('plainPassword')
                 ->setFormType(PasswordType::class)
                 ->onlyOnForms(),
             ArrayField::new('roles'),
             AssociationField::new('tariff')
-                ->setFormTypeOption('query_builder', static function(\Doctrine\ORM\EntityRepository $repository) {
+                ->setFormTypeOption('query_builder', static function (EntityRepository $repository) {
                     return $repository->createQueryBuilder('t')->orderBy('t.title', 'ASC');
                 }),
             DateTimeField::new('createdAt')
                 ->hideOnForm(),
             DateTimeField::new('loginedAt')
                 ->hideOnForm(),
+            ArrayField::new('profile')
+                ->setTemplatePath('admin/field/associative_array_detail.html.twig')
+                ->onlyOnDetail(),
             AssociationField::new('payments')
                 ->onlyOnDetail()
                 ->setLabel('Payments'),

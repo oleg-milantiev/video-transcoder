@@ -9,6 +9,7 @@ use App\Domain\User\ValueObject\PasswordHash;
 use App\Domain\User\ValueObject\UserCreatedAt;
 use App\Domain\User\ValueObject\UserEmail;
 use App\Domain\User\ValueObject\UserLoginedAt;
+use App\Domain\User\ValueObject\UserProfile;
 use App\Domain\User\ValueObject\UserRoles;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Uid\UuidV4 as SymfonyUuid;
@@ -25,6 +26,7 @@ class UserMapper
             id: $entity->id ? Uuid::fromString($entity->id->toRfc4122()) : null,
             createdAt: new UserCreatedAt($entity->createdAt),
             loginedAt: $entity->loginedAt !== null ? new UserLoginedAt($entity->loginedAt) : null,
+            profile: UserProfile::fromArray($entity->profile),
         );
     }
 
@@ -40,6 +42,7 @@ class UserMapper
         $entity->tariff = $user->tariff()?->id() ? $em->getReference(TariffEntity::class, $user->tariff()->id()) : null;
         $entity->createdAt = $user->createdAt()->value();
         $entity->loginedAt = $user->loginedAt()?->value();
+        $entity->profile = $user->profile()->toArray();
 
         return $entity;
     }

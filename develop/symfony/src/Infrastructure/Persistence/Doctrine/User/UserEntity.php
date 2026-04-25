@@ -6,12 +6,14 @@ namespace App\Infrastructure\Persistence\Doctrine\User;
 use App\Infrastructure\Persistence\Doctrine\Payment\PaymentEntity;
 use App\Infrastructure\Persistence\Doctrine\Video\VideoEntity;
 use App\Presentation\Validator\Constraints\AtLeastOneAdmin;
+use DateTimeImmutable;
+use Deprecated;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
-use Symfony\Component\Uid\UuidV4 as SymfonyUuid;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
+use Symfony\Component\Uid\UuidV4 as SymfonyUuid;
 
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 #[ORM\Table(name: '`user`')]
@@ -64,16 +66,19 @@ class UserEntity implements UserInterface, PasswordAuthenticatedUserInterface
     public Collection $payments;
 
     #[ORM\Column]
-    public \DateTimeImmutable $createdAt;
+    public DateTimeImmutable $createdAt;
 
     #[ORM\Column(nullable: true)]
-    public ?\DateTimeImmutable $loginedAt;
+    public ?DateTimeImmutable $loginedAt;
+
+    #[ORM\Column(type: 'json', options: ['jsonb' => true])]
+    public array $profile = [];
 
     public function __construct()
     {
-        $this->videos   = new ArrayCollection();
+        $this->videos = new ArrayCollection();
         $this->payments = new ArrayCollection();
-        $this->createdAt = new \DateTimeImmutable();
+        $this->createdAt = new DateTimeImmutable();
     }
 
     /**
@@ -83,13 +88,13 @@ class UserEntity implements UserInterface, PasswordAuthenticatedUserInterface
      */
     public function getUserIdentifier(): string
     {
-        return (string) $this->email;
+        return (string)$this->email;
     }
 
     /**
+     * @return list<string>
      * @see UserInterface
      *
-     * @return list<string>
      */
     public function getRoles(): array
     {
@@ -124,7 +129,7 @@ class UserEntity implements UserInterface, PasswordAuthenticatedUserInterface
     /**
      * @see UserInterface
      */
-    #[\Deprecated('This method is deprecated since Symfony 7.3. Logic is kept here for now.', 'symfony/security-http')]
+    #[Deprecated('This method is deprecated since Symfony 7.3. Logic is kept here for now.', 'symfony/security-http')]
     public function eraseCredentials(): void
     {
         // If you store any temporary, sensitive data on the user, clear it here
