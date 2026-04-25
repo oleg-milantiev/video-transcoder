@@ -104,4 +104,77 @@ final class ApiTokenServiceTest extends TestCase
     {
         self::assertSame(86400, $this->service->refreshTtlSeconds());
     }
+
+    public function testNegativeTtlFallsBackToDefault(): void
+    {
+        $service = new ApiTokenService(secret: 'test-secret', ttlSeconds: -1);
+        self::assertSame(3600, $service->ttlSeconds());
+    }
+
+    public function testZeroTtlFallsBackToDefault(): void
+    {
+        $service = new ApiTokenService(secret: 'test-secret', ttlSeconds: 0);
+        self::assertSame(3600, $service->ttlSeconds());
+    }
+
+    public function testNegativeRefreshTtlFallsBackToDefault(): void
+    {
+        $service = new ApiTokenService(secret: 'test-secret', refreshTtlSecondsValue: -5);
+        self::assertSame(86400, $service->refreshTtlSeconds());
+    }
+
+    public function testTokenWithNegativeTtlIsStillParseable(): void
+    {
+        // negative ttl falls back to 3600 so token should parse fine
+        $service = new ApiTokenService(secret: 'sec', ttlSeconds: -1);
+        $token = $service->createToken($this->userId, 'u@example.com');
+        $claims = $service->parseToken($token);
+
+        self::assertSame($this->userId->toRfc4122(), $claims['sub']);
+    }
+
+    public function testParseTokenRejectsTokenWithInvalidPayload(): void
+    {
+        // Build a token with valid signature but non-JSON payload — json_decode throws JsonException
+        $badPayload = rtrim(strtr(base64_encode('not-json'), '+/', '-_'), '=');
+        $sig = rtrim(strtr(base64_encode(hash_hmac('sha256', $badPayload, 'test-secret', true)), '+/', '-_'), '=');
+
+        $this->expectException(\JsonException::class);
+        $this->service->parseToken($badPayload . '.' . $sig);
+    }
+
+    public function testParseTokenWithNonArrayJsonPayloadThrowsInvalidArgument(): void
+    {
+        // Payload is valid JSON but NOT an array (a JSON integer) → !is_array($payload) branch
+        $payloadPart = rtrim(strtr(base64_encode('42'), '+/', '-_'), '=');
+        $sig = rtrim(strtr(base64_encode(hash_hmac('sha256', $payloadPart, 'test-secret', true)), '+/', '-_'), '=');
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Invalid token payload.');
+        $this->service->parseToken($payloadPart . '.' . $sig);
+    }
+
+    public function testParseTokenWithInvalidClaimsThrows(): void
+    {
+        // Payload is a valid JSON array but sub is not a valid UUID
+        $payload = json_encode(['sub' => 'not-a-uuid', 'identifier' => 'user@test.com', 'exp' => time() + 3600, 'type' => 'access']);
+        $payloadPart = rtrim(strtr(base64_encode($payload), '+/', '-_'), '=');
+        $sig = rtrim(strtr(base64_encode(hash_hmac('sha256', $payloadPart, 'test-secret', true)), '+/', '-_'), '=');
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Invalid token claims.');
+        $this->service->parseToken($payloadPart . '.' . $sig);
+    }
+
+    public function testParseTokenWithMissingSubThrows(): void
+    {
+        // Payload missing 'sub' key → null sub fails string check
+        $payload = json_encode(['identifier' => 'user@test.com', 'exp' => time() + 3600, 'type' => 'access']);
+        $payloadPart = rtrim(strtr(base64_encode($payload), '+/', '-_'), '=');
+        $sig = rtrim(strtr(base64_encode(hash_hmac('sha256', $payloadPart, 'test-secret', true)), '+/', '-_'), '=');
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Invalid token claims.');
+        $this->service->parseToken($payloadPart . '.' . $sig);
+    }
 }

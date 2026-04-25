@@ -15,8 +15,8 @@ use App\Presentation\Controller\Admin\TariffCrudController;
 use App\Presentation\Controller\Admin\TaskCrudController;
 use App\Presentation\Controller\Admin\UserCrudController;
 use App\Presentation\Controller\Admin\VideoCrudController;
+use EasyCorp\Bundle\EasyAdminBundle\Router\AdminUrlGeneratorInterface;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Crud;
-use EasyCorp\Bundle\EasyAdminBundle\Router\AdminUrlGenerator;
 use Throwable;
 
 /**
@@ -33,7 +33,7 @@ final readonly class EnrichContextLogDecorator implements LogServiceInterface
 {
     public function __construct(
         private LogServiceInterface $inner,
-        private AdminUrlGenerator $adminUrlGenerator,
+        private AdminUrlGeneratorInterface $adminUrlGenerator,
         private VideoRepository $videoRepository,
         private UserRepository $userRepository,
         private PresetRepository $presetRepository,

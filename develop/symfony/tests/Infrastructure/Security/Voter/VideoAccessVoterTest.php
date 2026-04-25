@@ -80,12 +80,52 @@ final class VideoAccessVoterTest extends TestCase
         $this->assertSame(VoterInterface::ACCESS_DENIED, $voter->vote($token, $video, [$attribute]));
     }
 
+    public function testAbstainForNonVideoSubject(): void
+    {
+        $token = $this->createStub(TokenInterface::class);
+        $voter = new VideoAccessVoter();
+
+        $result = $voter->vote($token, new \stdClass(), [VideoAccessVoter::CAN_VIEW_DETAILS]);
+
+        $this->assertSame(VoterInterface::ACCESS_ABSTAIN, $result);
+    }
+
+    public function testAbstainForUnsupportedAttribute(): void
+    {
+        $video = $this->createVideo(Uuid::fromString('77777777-7777-4777-8777-777777777777'));
+        $token = $this->createStub(TokenInterface::class);
+        $voter = new VideoAccessVoter();
+
+        $result = $voter->vote($token, $video, ['UNSUPPORTED_ATTRIBUTE']);
+
+        $this->assertSame(VoterInterface::ACCESS_ABSTAIN, $result);
+    }
+
+    #[DataProvider('attributeProvider')]
+    public function testDeniesAccessForUserWithNullId(string $attribute): void
+    {
+        $video = $this->createVideo(Uuid::fromString('77777777-7777-4777-8777-777777777777'));
+        $user = new UserEntity();
+        $user->id = null;
+        $user->roles = ['ROLE_USER'];
+
+        $token = $this->createStub(TokenInterface::class);
+        $token->method('getUser')->willReturn($user);
+
+        $voter = new VideoAccessVoter();
+
+        $this->assertSame(VoterInterface::ACCESS_DENIED, $voter->vote($token, $video, [$attribute]));
+    }
+
     public static function attributeProvider(): array
     {
         return [
             [VideoAccessVoter::CAN_VIEW_DETAILS],
             [VideoAccessVoter::CAN_START_TRANSCODE],
             [VideoAccessVoter::CAN_DELETE],
+            [VideoAccessVoter::CAN_EDIT],
+            [VideoAccessVoter::CAN_DOWNLOAD_TRANSCODE],
+            [VideoAccessVoter::CAN_CANCEL_TRANSCODE],
         ];
     }
 
@@ -99,5 +139,3 @@ final class VideoAccessVoterTest extends TestCase
         );
     }
 }
-
-

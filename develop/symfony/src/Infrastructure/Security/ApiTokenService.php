@@ -128,12 +128,7 @@ final readonly class ApiTokenService
             $value .= str_repeat('=', 4 - $padding);
         }
 
-        $decoded = base64_decode(strtr($value, '-_', '+/'), true);
-        if ($decoded === false) {
-            throw new InvalidArgumentException('Invalid base64 token part.');
-        }
-
-        return $decoded;
+        return (string) base64_decode(strtr($value, '-_', '+/'), true);
     }
 
     /**

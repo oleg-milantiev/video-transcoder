@@ -43,9 +43,6 @@ final class VideoAccessVoter extends Voter
         TokenInterface $token,
         ?Vote $vote = null
     ): bool {
-        if (!$subject instanceof Video) {
-            return false;
-        }
 
         $user = $token->getUser();
         if (!is_object($user)) {
