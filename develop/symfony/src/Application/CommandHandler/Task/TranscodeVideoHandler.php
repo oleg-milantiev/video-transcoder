@@ -147,6 +147,7 @@ final readonly class TranscodeVideoHandler
                         [
                             'videoId' => $video->id()?->toRfc4122(),
                             'presetId' => $task->presetId()?->toRfc4122(),
+                            'height' => $task->heightNullable(),
                             'userId' => $task->userId()?->toRfc4122(),
                         ]
                     );

@@ -44,6 +44,7 @@ readonly class TranscodeTaskPreparationService
         $this->logService->log('task', 'transcode', $task->id(), LogLevel::INFO, 'Transcoding started', [
             'videoId' => $video->id()?->toRfc4122(),
             'presetId' => $preset->id()?->toRfc4122(),
+            'height' => $task->heightNullable(),
             'userId' => $task->userId()?->toRfc4122(),
         ]);
         $this->taskRealtimeNotifier->notifyTaskUpdated($task, 'started', [

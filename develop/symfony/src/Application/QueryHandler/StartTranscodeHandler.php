@@ -204,6 +204,7 @@ final readonly class StartTranscodeHandler
                 'taskId' => $task->id()?->toRfc4122(),
                 'videoId' => $video->id()?->toRfc4122(),
                 'presetId' => $preset->id()?->toRfc4122(),
+                'height' => $task->heightNullable(),
                 'userId' => $user->id()?->toRfc4122(),
                 'isRestart' => $isRestart,
             ];

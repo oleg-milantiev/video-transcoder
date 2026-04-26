@@ -79,6 +79,7 @@ readonly class TranscodeTaskFinalizationService
         $this->logService->log('task', 'transcode', $task->id(), LogLevel::INFO, 'Transcoding finished successfully', [
             'videoId' => $task->videoId()?->toRfc4122(),
             'presetId' => $task->presetId()?->toRfc4122(),
+            'height' => $task->heightNullable(),
             'userId' => $task->userId()?->toRfc4122(),
             'time' => microtime(true) - $context->timeStart,
             'size' => $fileSize,
