@@ -35,6 +35,7 @@ use App\Tests\Domain\Entity\VideoFake;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LogLevel;
 use Symfony\Component\Cache\Adapter\ArrayAdapter;
+use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Messenger\Envelope;
 use Symfony\Component\Messenger\MessageBusInterface;
 
@@ -108,8 +109,18 @@ class TranscodeTaskFinalizationServiceTest extends TestCase
             ->willReturn(new Envelope(new \stdClass()));
         $taskRealtimeNotifier = $this->makeNotifier($commandBus);
 
-        $service = new TranscodeTaskFinalizationService($taskRepository, $logService, $taskRealtimeNotifier, new FlashNotificationFactory(), $cancellationTrigger, $this->createStub(StorageRealtimeNotifier::class));
-        $service->handleCancellation($originalTask, $report);
+        $service = new TranscodeTaskFinalizationService($taskRepository, $logService, $taskRealtimeNotifier, new FlashNotificationFactory(), $cancellationTrigger, $this->createStub(StorageRealtimeNotifier::class), new Filesystem());
+
+        $context = new TranscodeStartContextDTO(
+            task: $originalTask,
+            video: VideoFake::create(),
+            preset: new PresetFake(),
+            relativeOutputPath: 'video/output.mp4',
+            absoluteOutputPath: '/tmp/output.mp4',
+            inputPath: '/tmp/input.mp4',
+            timeStart: 0.0,
+        );
+        $service->handleCancellation($context, $report);
 
         $this->assertFalse($cancellationTrigger->isRequested($taskId));
     }
@@ -163,7 +174,7 @@ class TranscodeTaskFinalizationServiceTest extends TestCase
             timeStart: 0.0,
         );
 
-        $service = new TranscodeTaskFinalizationService($taskRepository, $logService, $taskRealtimeNotifier, new FlashNotificationFactory(), $cancellationTrigger, $this->createStub(StorageRealtimeNotifier::class));
+        $service = new TranscodeTaskFinalizationService($taskRepository, $logService, $taskRealtimeNotifier, new FlashNotificationFactory(), $cancellationTrigger, $this->createStub(StorageRealtimeNotifier::class), new Filesystem());
         $service->handleSuccess($context, $report);
 
         $this->assertFalse($cancellationTrigger->isRequested($taskId));
@@ -193,7 +204,7 @@ class TranscodeTaskFinalizationServiceTest extends TestCase
             ->willReturn(new Envelope(new \stdClass()));
         $taskRealtimeNotifier = $this->makeNotifier($commandBus);
 
-        $service = new TranscodeTaskFinalizationService($taskRepository, $logService, $taskRealtimeNotifier, new FlashNotificationFactory(), new TaskCancellationTrigger(new ArrayAdapter()), $this->createStub(StorageRealtimeNotifier::class));
+        $service = new TranscodeTaskFinalizationService($taskRepository, $logService, $taskRealtimeNotifier, new FlashNotificationFactory(), new TaskCancellationTrigger(new ArrayAdapter()), $this->createStub(StorageRealtimeNotifier::class), new Filesystem());
         $context = new TranscodeStartContextDTO(
             task: $task,
             video: VideoFake::create(),
@@ -224,7 +235,7 @@ class TranscodeTaskFinalizationServiceTest extends TestCase
         $commandBus->expects($this->never())->method('dispatch');
         $taskRealtimeNotifier = $this->makeNotifier($commandBus);
 
-        $service = new TranscodeTaskFinalizationService($taskRepository, $logService, $taskRealtimeNotifier, new FlashNotificationFactory(), new TaskCancellationTrigger(new ArrayAdapter()), $this->createStub(StorageRealtimeNotifier::class));
+        $service = new TranscodeTaskFinalizationService($taskRepository, $logService, $taskRealtimeNotifier, new FlashNotificationFactory(), new TaskCancellationTrigger(new ArrayAdapter()), $this->createStub(StorageRealtimeNotifier::class), new Filesystem());
 
         $context = new TranscodeStartContextDTO(
             task: $task,
@@ -256,7 +267,7 @@ class TranscodeTaskFinalizationServiceTest extends TestCase
         $commandBus->expects($this->once())->method('dispatch')->willReturn(new Envelope(new \stdClass()));
         $taskRealtimeNotifier = $this->makeNotifier($commandBus);
 
-        $service = new TranscodeTaskFinalizationService($taskRepository, $logService, $taskRealtimeNotifier, new FlashNotificationFactory(), new TaskCancellationTrigger(new ArrayAdapter()), $this->createStub(StorageRealtimeNotifier::class));
+        $service = new TranscodeTaskFinalizationService($taskRepository, $logService, $taskRealtimeNotifier, new FlashNotificationFactory(), new TaskCancellationTrigger(new ArrayAdapter()), $this->createStub(StorageRealtimeNotifier::class), new Filesystem());
 
         $context = new TranscodeStartContextDTO(
             task: $task,

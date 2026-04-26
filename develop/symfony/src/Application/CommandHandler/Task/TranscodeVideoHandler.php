@@ -202,12 +202,12 @@ final readonly class TranscodeVideoHandler
                 throw StorageSizeExceedsQuota::create($fileSizeMb, $storageNowMb, $storageCapacityMb);
             }
 
-            // all good. Start transcode
+            // all good. Start transcoding
             $context = $this->transcodeTaskPreparationService->prepare($task, $video, $ms);
             $transcodeReport = $this->transcodeProcessService->run($context);
 
             if ($transcodeReport->cancelled === true) {
-                $this->transcodeTaskFinalizationService->handleCancellation($context->task, $transcodeReport);
+                $this->transcodeTaskFinalizationService->handleCancellation($context, $transcodeReport);
                 $this->eventBus->dispatch(
                     new TranscodeVideoFail('Transcoding cancelled', $context->task->id()->toRfc4122())
                 );

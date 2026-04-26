@@ -471,7 +471,7 @@ class TranscodeVideoHandlerTest extends TestCase
         $transcodeProcessService->expects($this->once())->method('run')->willReturn($report);
 
         $transcodeTaskFinalizationService = $this->createMock(TranscodeTaskFinalizationService::class);
-        $transcodeTaskFinalizationService->expects($this->once())->method('handleCancellation')->with($task, $report);
+        $transcodeTaskFinalizationService->expects($this->once())->method('handleCancellation')->with($context, $report);
         $transcodeTaskFinalizationService->expects($this->never())->method('handleSuccess');
         $transcodeTaskFinalizationService->expects($this->never())->method('handleFailure');
 

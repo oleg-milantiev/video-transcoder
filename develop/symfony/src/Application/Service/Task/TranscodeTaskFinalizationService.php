@@ -8,6 +8,7 @@ use App\Application\DTO\TranscodeStartContextDTO;
 use App\Application\Factory\FlashNotificationFactory;
 use App\Application\Logging\LogServiceInterface;
 use App\Application\Service\Storage\StorageRealtimeNotifier;
+use App\Domain\Shared\ValueObject\Uuid;
 use App\Domain\Video\Entity\Task;
 use App\Domain\Video\Repository\TaskRepositoryInterface;
 use App\Domain\Video\ValueObject\Progress;
@@ -17,6 +18,7 @@ use DateTimeImmutable;
 use DateTimeInterface;
 use Psr\Log\LogLevel;
 use Throwable;
+use Symfony\Component\Filesystem\Filesystem;
 
 readonly class TranscodeTaskFinalizationService
 {
@@ -27,12 +29,13 @@ readonly class TranscodeTaskFinalizationService
         private FlashNotificationFactory $flashNotificationFactory,
         private TaskCancellationTrigger $cancellationTrigger,
         private StorageRealtimeNotifier $storageNotifier,
+        private Filesystem $filesystem,
     ) {
     }
 
-    public function handleCancellation(Task $task, TranscodeReportDTO $report): void
+    public function handleCancellation(TranscodeStartContextDTO $context, TranscodeReportDTO $report): void
     {
-        $cancelledTask = $this->taskRepository->findByIdFresh($task->id()) ?? $task;
+        $cancelledTask = $this->taskRepository->findByIdFresh($context->task->id()) ?? $context->task;
         if ($cancelledTask->status() !== TaskStatus::CANCELLED) {
             $cancelledTask->cancel();
         }
@@ -46,6 +49,7 @@ readonly class TranscodeTaskFinalizationService
         ]);
 
         $this->taskRepository->save($cancelledTask);
+        $this->removeOutputFile($context->absoluteOutputPath, $cancelledTask->id(), 'cancel');
         $this->logService->log('task', 'cancel', $cancelledTask->id(), LogLevel::INFO, 'Transcoding cancelled');
         $this->taskRealtimeNotifier->notifyTaskUpdated($cancelledTask, 'cancelled');
         $this->cancellationTrigger->clear($cancelledTask->id());
@@ -92,12 +96,26 @@ readonly class TranscodeTaskFinalizationService
             ]);
         }
 
-        if ($absoluteOutputPath && file_exists($absoluteOutputPath)) {
-            unlink($absoluteOutputPath);
-        }
+        $this->removeOutputFile($absoluteOutputPath, $task->id(), 'transcode');
 
         $this->logService->log('task', 'transcode', $task->id(), LogLevel::ERROR, 'Transcoding failed', [
             'message' => $exception->getMessage(),
         ]);
+    }
+
+    // ── Private helpers ──────────────────────────────────────────────────────
+
+    private function removeOutputFile(?string $path, ?Uuid $taskId, string $context): void
+    {
+        try {
+            if (!empty($path) && $this->filesystem->exists($path)) {
+                $this->filesystem->remove($path);
+            }
+        } catch (Throwable $e) {
+            $this->logService->log('task', $context, $taskId, LogLevel::WARNING, 'Failed to remove output file', [
+                'path' => $path,
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
 }
