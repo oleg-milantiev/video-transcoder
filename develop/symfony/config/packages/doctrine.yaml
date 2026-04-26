@@ -22,6 +22,9 @@ doctrine:
         result_cache_driver:
             type: pool
             pool: doctrine.result_cache_pool
+        dql:
+            string_functions:
+                CAST: App\Infrastructure\Doctrine\Functions\Cast
         mappings:
             Infrastructure:
                 type: attribute

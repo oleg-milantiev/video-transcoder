@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace App\Presentation\Controller\Admin;
 
 use App\Infrastructure\Persistence\Doctrine\Log\LogEntity;
+use App\Presentation\Controller\Admin\Filter\UuidFilter;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Action;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Actions;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Crud;
@@ -47,7 +48,7 @@ class LogCrudController extends AbstractCrudController
         return $filters
             ->add(TextFilter::new('name'))
             ->add(TextFilter::new('action'))
-            ->add(TextFilter::new('objectId'))
+            ->add(UuidFilter::new('objectId'))
             ->add(
                 ChoiceFilter::new('level')->setChoices([
                     LogLevel::EMERGENCY => LogLevel::EMERGENCY,
