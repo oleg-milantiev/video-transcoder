@@ -17,6 +17,7 @@ use App\Infrastructure\Persistence\Doctrine\Video\VideoEntity;
 use App\Infrastructure\Persistence\Doctrine\Video\VideoRepository;
 use EasyCorp\Bundle\EasyAdminBundle\Router\AdminUrlGeneratorInterface;
 use PHPUnit\Framework\TestCase;
+use Psr\Log\LoggerInterface;
 use Psr\Log\LogLevel;
 
 final class EnrichContextLogDecoratorTest extends TestCase
@@ -28,6 +29,7 @@ final class EnrichContextLogDecoratorTest extends TestCase
     private PresetRepository $presetRepository;
     private TaskRepository $taskRepository;
     private TariffRepository $tariffRepository;
+    private LoggerInterface $logger;
 
     protected function setUp(): void
     {
@@ -40,6 +42,7 @@ final class EnrichContextLogDecoratorTest extends TestCase
         $this->adminUrlGenerator = $urlGen;
 
         $this->inner = $this->createMock(LogServiceInterface::class);
+        $this->logger = $this->createStub(LoggerInterface::class);
 
         $this->videoRepository = $this->createStub(VideoRepository::class);
         $this->userRepository = $this->createStub(UserRepository::class);
@@ -58,6 +61,7 @@ final class EnrichContextLogDecoratorTest extends TestCase
             $this->presetRepository,
             $this->taskRepository,
             $this->tariffRepository,
+            $this->logger,
         );
     }
 
