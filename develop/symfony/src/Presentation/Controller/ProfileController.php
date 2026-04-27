@@ -13,7 +13,8 @@ class ProfileController extends SPAController
     #[Route('/profile', name: 'profile', methods: ['GET'])]
     public function profile(): Response
     {
-        return $this->render('profile/index.html.twig', [
+        return $this->render('SPA.html.twig', [
+            'title' => 'Profile - Video Transcoder - 100 percent',
             'config' => $this->getSPA(),
         ]);
     }
