@@ -17,6 +17,7 @@ use App\Presentation\Controller\Admin\UserCrudController;
 use App\Presentation\Controller\Admin\VideoCrudController;
 use EasyCorp\Bundle\EasyAdminBundle\Router\AdminUrlGeneratorInterface;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Crud;
+use Psr\Log\LoggerInterface;
 use Throwable;
 
 /**
@@ -39,6 +40,7 @@ final readonly class EnrichContextLogDecorator implements LogServiceInterface
         private PresetRepository $presetRepository,
         private TaskRepository $taskRepository,
         private TariffRepository $tariffRepository,
+        private LoggerInterface $logger,
     ) {
     }
 
@@ -83,7 +85,12 @@ final readonly class EnrichContextLogDecorator implements LogServiceInterface
                 $context['videoTitle'] = $entity->title ?? (string)$context['videoId'];
                 $context['videoAdminUrl'] = $this->buildDetailUrl(VideoCrudController::class, $context['videoId']);
             }
-        } catch (Throwable) {
+        } catch (Throwable $e) {
+            $this->logger->warning('Failed to enrich video context', [
+                'videoId' => $context['videoId'],
+                'exception' => $e::class,
+                'message' => $e->getMessage(),
+            ]);
         }
 
         return $context;
@@ -107,7 +114,12 @@ final readonly class EnrichContextLogDecorator implements LogServiceInterface
                 $context['userEmail'] = $entity->email ?? (string)$context['userId'];
                 $context['userAdminUrl'] = $this->buildDetailUrl(UserCrudController::class, $context['userId']);
             }
-        } catch (Throwable) {
+        } catch (Throwable $e) {
+            $this->logger->warning('Failed to enrich user context', [
+                'userId' => $context['userId'],
+                'exception' => $e::class,
+                'message' => $e->getMessage(),
+            ]);
         }
 
         return $context;
@@ -121,7 +133,12 @@ final readonly class EnrichContextLogDecorator implements LogServiceInterface
                 $context['presetTitle'] = $entity->title ?? (string)$context['presetId'];
                 $context['presetAdminUrl'] = $this->buildDetailUrl(PresetCrudController::class, $context['presetId']);
             }
-        } catch (Throwable) {
+        } catch (Throwable $e) {
+            $this->logger->warning('Failed to enrich preset context', [
+                'presetId' => $context['presetId'],
+                'exception' => $e::class,
+                'message' => $e->getMessage(),
+            ]);
         }
 
         return $context;
@@ -134,7 +151,12 @@ final readonly class EnrichContextLogDecorator implements LogServiceInterface
             if ($entity !== null) {
                 $context['taskAdminUrl'] = $this->buildDetailUrl(TaskCrudController::class, $context['taskId']);
             }
-        } catch (Throwable) {
+        } catch (Throwable $e) {
+            $this->logger->warning('Failed to enrich task context', [
+                'taskId' => $context['taskId'],
+                'exception' => $e::class,
+                'message' => $e->getMessage(),
+            ]);
         }
 
         return $context;
@@ -148,7 +170,12 @@ final readonly class EnrichContextLogDecorator implements LogServiceInterface
                 $context['tariffTitle'] = $entity->title ?? (string)$context['tariffId'];
                 $context['tariffAdminUrl'] = $this->buildDetailUrl(TariffCrudController::class, $context['tariffId']);
             }
-        } catch (Throwable) {
+        } catch (Throwable $e) {
+            $this->logger->warning('Failed to enrich tariff context', [
+                'tariffId' => $context['tariffId'],
+                'exception' => $e::class,
+                'message' => $e->getMessage(),
+            ]);
         }
 
         return $context;
