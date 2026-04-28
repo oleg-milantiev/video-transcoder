@@ -376,7 +376,7 @@ function renderTasksTab(vm) {
         ])
     );
 
-    return h('div', { class: 'table-responsive' }, [
+    return h('div', { id: 'transcoding-tasks-section', class: 'table-responsive' }, [
         h('table', { class: 'table table-bordered align-middle mb-0' }, [
             h('thead', { class: 'table-light' }, [
                 h('tr', [

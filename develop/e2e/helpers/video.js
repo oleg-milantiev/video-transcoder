@@ -4,6 +4,15 @@ const { shot } = require('./screenshot');
 function escapeRegExp(value) {
   return String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
+// ── Tab switching for video-details card ─────────────────────────────────────
+// Tab keys: 'info' → '📄 Details', 'transcode' → '⚙️ Transcode', 'tasks' → '📋 Tasks'
+async function switchToVideoTab(page, tabKey) {
+  const labels = { info: '📄 Details', transcode: '⚙️ Transcode', tasks: '📋 Tasks' };
+  const label = labels[tabKey] || tabKey;
+  const btn = page.locator('button.nav-link', { hasText: label }).first();
+  await expect(btn).toBeVisible({ timeout: UI_TIMEOUT });
+  await btn.click({ timeout: UI_TIMEOUT });
+}
 async function expectDetailsValue(page, label) {
   const dt = page.locator('dt', { hasText: label }).first();
   await expect(dt).toBeVisible({ timeout: UI_TIMEOUT });
@@ -60,7 +69,7 @@ function presetRow(page, presetTitle) {
 }
 // ── New UI: preset blocks in "Start new Video Transcoding Task" section ──────
 function presetBlock(page, presetTitle) {
-  // h6 shows "PresetTitle (videoCodec/audioCodec/format)"
+  // h6 shows "PresetTitle (videoCodec/audioCodec/format)" — only visible in Transcode tab
   return page.locator('h6', { hasText: presetTitle }).first().locator('xpath=./parent::div');
 }
 // ── Task row by preset title + specific height (e.g. 1080p) ─────────────────
@@ -103,12 +112,16 @@ async function readPresetTaskStateByHeight(page, presetTitle, height, { preferAc
   return { status, progress };
 }
 // ── waitForVideoDetailsVisible ───────────────────────────────────────────────
-async function waitForVideoDetailsVisible(page, { requirePresets = true } = {}) {
-  await expect(page.getByRole('heading', { name: 'Video Details' })).toBeVisible({ timeout: UI_TIMEOUT });
+async function waitForVideoDetailsVisible(page, { requirePresets = false } = {}) {
+  // The '📄 Details' nav-link button is unique to the video-details card
+  await expect(
+    page.locator('button.nav-link', { hasText: '📄 Details' }).first()
+  ).toBeVisible({ timeout: UI_TIMEOUT });
   if (!requirePresets) {
     return;
   }
-  // Wait for at least one preset h6 block to be visible (presets section loaded)
+  // Switch to Transcode tab and wait for at least one preset h6 block
+  await switchToVideoTab(page, 'transcode');
   await expect(page.locator('h6').first()).toBeVisible({ timeout: UI_TIMEOUT });
 }
 // ── Flash popup ──────────────────────────────────────────────────────────────
@@ -157,7 +170,7 @@ async function waitForPosterAndMeta(page, testInfo, prefix = '07-details-poster-
     if (attempt < maxAttempts) {
       await page.waitForTimeout(5000);
       await page.reload({ waitUntil: 'domcontentloaded', timeout: NAV_TIMEOUT });
-      await expect(page.getByRole('heading', { name: 'Video Details' })).toBeVisible({ timeout: UI_TIMEOUT });
+      await waitForVideoDetailsVisible(page, { requirePresets: false });
     }
   }
   throw new Error('Poster is not fully loaded or Meta duration is missing after 5 checks with 5-second delays');
@@ -165,8 +178,9 @@ async function waitForPosterAndMeta(page, testInfo, prefix = '07-details-poster-
 // ── Preset block helpers ─────────────────────────────────────────────────────
 async function getAllPresetTitles(page) {
   // h6 text: "PresetTitle (videoCodec/audioCodec/format)"  → extract title before '('
-  // Wait for preset blocks to appear (they only render when _width/_height are in meta)
+  // Preset blocks are only rendered in the Transcode tab — switch there first.
   try {
+    await switchToVideoTab(page, 'transcode');
     await expect(page.locator('h6').first()).toBeVisible({ timeout: UI_TIMEOUT });
   } catch {
     return [];
@@ -214,8 +228,8 @@ async function expectPresetStatusHelpIcon(page, presetTitle, { statusText, toolt
   return helpIcon;
 }
 async function expectPresetTranscodeDisabledWithHint(page, presetTitle, { expectedSizeText, tooltipText } = {}) {
-  // In new UI: verify the preset block is visible and shows expected size hint under buttons.
-  // Storage-based disabling is not yet implemented in the new UI; just verify size hints are shown.
+  // Preset blocks are in the Transcode tab
+  await switchToVideoTab(page, 'transcode');
   const block = presetBlock(page, presetTitle);
   await expect(block).toBeVisible({ timeout: UI_TIMEOUT });
   await expect(block.locator('button.btn-outline-primary').first()).toBeVisible({ timeout: UI_TIMEOUT });
@@ -232,7 +246,8 @@ async function waitForDeletedVideoDetailsWithoutPoster(page, expectedTitle, maxA
     await waitForVideoDetailsVisible(page, { requirePresets: false });
     const deletedTitle = page.locator('dd.video-title-deleted').first();
     const hasDeletedTitle = (await deletedTitle.count()) > 0;
-    const hasPoster = (await page.locator('.card-body img.img-fluid').count()) > 0;
+    // In the new UI poster img has class img-fluid and is inside col-md-5 in the Info tab card-body
+    const hasPoster = (await page.locator('.col-md-5 img.img-fluid').count()) > 0;
     if (hasDeletedTitle && !hasPoster) {
       await expect(deletedTitle).toContainText(expectedTitle, { timeout: UI_TIMEOUT });
       return;
@@ -245,7 +260,8 @@ async function waitForDeletedVideoDetailsWithoutPoster(page, expectedTitle, maxA
   throw new Error(`Video ${expectedTitle} did not become deleted without poster after ${maxAttempts} checks`);
 }
 async function clickTranscodeForPreset(page, presetTitle) {
-  // Click the first available (not disabled, not struck-through) resolution button in the preset block
+  // Preset blocks live in the Transcode tab — switch there first
+  await switchToVideoTab(page, 'transcode');
   const block = presetBlock(page, presetTitle);
   await expect(block).toBeVisible({ timeout: UI_TIMEOUT });
   const btn = block.locator('button.btn-outline-primary:not([disabled])').first();
@@ -295,6 +311,7 @@ async function waitForAllPresetsProcessingWithProgress(page, presetTitles, maxAt
   );
 }
 module.exports = {
+  switchToVideoTab,
   expectDetailsValue,
   renameVideoFromDetails,
   expectVideoDetailsTitle,

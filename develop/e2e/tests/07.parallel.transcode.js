@@ -15,6 +15,7 @@ const {
   expectRowDownloadFilename,
   logoutToPublic,
   shot,
+  switchToVideoTab,
 } = require('../helpers');
 
 test('parallel transcode: 1080p and 720p run simultaneously within Standard preset (Premium, 2 workers)', async ({ page }, testInfo) => {
@@ -29,6 +30,7 @@ test('parallel transcode: 1080p and 720p run simultaneously within Standard pres
   const heights = ['1080p', '720p'];
 
   // Helper: find task row in the transcoding tasks table by height text in column 1
+  // #transcoding-tasks-section is the id on the tasks tab wrapper div
   function taskRowByHeight(heightLabel) {
     return page.locator('#transcoding-tasks-section table tbody tr', { hasText: heightLabel });
   }
@@ -60,10 +62,13 @@ test('parallel transcode: 1080p and 720p run simultaneously within Standard pres
 
     // Step 6 — Click 1080p and 720p resolution buttons within "Standard video Quality" preset
     //          Premium tariff (delay=0) schedules them immediately
+    await switchToVideoTab(page, 'transcode');
     const block = presetBlock(page, singlePreset);
     await expect(block).toBeVisible({ timeout: UI_TIMEOUT });
     await block.getByRole('button', { name: /1080/ }).first().click({ timeout: UI_TIMEOUT });
     await shot(page, testInfo, '06-transcode-1080p-clicked.png');
+    // After clicking 1080p the UI auto-switches to Tasks tab; switch back to Transcode for 720p
+    await switchToVideoTab(page, 'transcode');
     await block.getByRole('button', { name: /720/ }).first().click({ timeout: UI_TIMEOUT });
     await shot(page, testInfo, '06-transcode-720p-clicked.png');
 

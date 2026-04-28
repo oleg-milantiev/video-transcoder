@@ -18,6 +18,7 @@ const { attachConsoleCapture } = require('../consoleCapture');
     tasksTable,
     logoutToPublic,
     shot, renameVideoFromDetails, expectVideoDetailsTitle, expectDownloadFilename,
+    switchToVideoTab,
 } = require('../helpers');
 
 test('transcode flow from video details to downloadable mp4', async ({ page }, testInfo) => {
@@ -51,6 +52,7 @@ test('transcode flow from video details to downloadable mp4', async ({ page }, t
 
     // 4) Verify preset block exists (transcoding section)
         await waitForVideoDetailsVisible(page);
+        await switchToVideoTab(page, 'transcode');
         const blockPreset = presetBlock(page, presetTitle);
         await expect(blockPreset).toBeVisible({ timeout: UI_TIMEOUT });
         await shot(page, testInfo, '03-video-details-with-presets.png');
@@ -148,6 +150,7 @@ test('transcode flow from video details to downloadable mp4', async ({ page }, t
         await expect(page.getByText('This video has been deleted')).toBeVisible({ timeout: UI_TIMEOUT });
         await expect(page.locator('dd.video-title-deleted')).toContainText(renamedBaseFileName, { timeout: UI_TIMEOUT });
 
+        await switchToVideoTab(page, 'tasks');
         const tasksBody = tasksTable(page).locator('tbody').first();
         await expect(tasksBody).toContainText('DELETED', { timeout: UI_TIMEOUT });
         await expect(tasksBody.getByRole('button')).toHaveCount(0);

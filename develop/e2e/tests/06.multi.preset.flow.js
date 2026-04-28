@@ -59,7 +59,7 @@ test('multi-preset flow: upload, trigger tasks, admin tariff + new preset, full 
     await videoRow.click({ timeout: UI_TIMEOUT });
     await waitForVideoDetailsVisible(page);
     await expectDetailsValue(page, 'Title');
-    await expectDetailsValue(page, 'Created At');
+    await expectDetailsValue(page, 'Created');
     await shot(page, testInfo, '04-video-details.png');
 
     // Step 5 — Wait for poster image and meta duration to be ready

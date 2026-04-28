@@ -39,6 +39,7 @@ const {
   expectPresetStatusHelpIcon,
   clickAndAcceptConfirm,
   buildRunContext,
+  switchToVideoTab,
 } = require('../helpers');
 
 // Single preset with multiple height buttons
@@ -267,6 +268,7 @@ test.describe('prod-safe isolated smoke', () => {
       await shot(page, testInfo, '10b-video-details-ready.png');
 
       // Verify the Standard video Quality preset block is visible
+      await switchToVideoTab(page, 'transcode');
       const blockPreset = presetBlock(page, STANDARD_PRESET);
       await expect(blockPreset).toBeVisible({ timeout: UI_TIMEOUT });
 
@@ -282,8 +284,9 @@ test.describe('prod-safe isolated smoke', () => {
       await btn1080.click({ timeout: UI_TIMEOUT });
       await shot(page, testInfo, '10c-1080p-transcode-clicked.png');
 
-      // Wait briefly then click 720p (now nth(0) of still-enabled buttons)
+      // After 1080p click the UI auto-switches to Tasks tab; switch back to Transcode for 720p
       await page.waitForTimeout(400);
+      await switchToVideoTab(page, 'transcode');
       const btn720 = blockPreset.locator('button.btn-outline-primary:not([disabled])').nth(0);
       await expect(btn720).toBeVisible({ timeout: UI_TIMEOUT });
       await btn720.click({ timeout: UI_TIMEOUT });
@@ -372,6 +375,8 @@ test.describe('prod-safe isolated smoke', () => {
       await openVideoDetailsByTitle(page, run.videoBaseName);
       await shot(page, testInfo, '25-user-video-card-reopened.png');
 
+      // Switch to Tasks tab to see the CANCELLED task rows and restart them
+      await switchToVideoTab(page, 'tasks');
       const transcodingSection = page.locator('#transcoding-tasks-section');
 
       const row1080p = transcodingSection
