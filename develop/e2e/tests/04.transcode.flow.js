@@ -111,6 +111,7 @@ test('transcode flow from video details to downloadable mp4', async ({ page }, t
 
     // Before rename - check download filename matches video title + codec + resolution
         const expectedFilenameBeforeRename = `${baseFileName}-aac-h264-720p.mp4`;
+        await switchToVideoTab(page, 'tasks');
         await expectDownloadFilename(page, expectedFilenameBeforeRename);
     // Rename video from details page
         await renameVideoFromDetails(page, renamedBaseFileName);
@@ -118,6 +119,7 @@ test('transcode flow from video details to downloadable mp4', async ({ page }, t
 
     // After rename - check download filename matches new video title with preset
         const expectedFilenameAfterRename = `${renamedBaseFileName}-aac-h264-720p.mp4`;
+        await switchToVideoTab(page, 'tasks');
         await expectDownloadFilename(page, expectedFilenameAfterRename);
 
     // 9) Go back to videos list, delete video, verify deleted state in list
@@ -148,7 +150,10 @@ test('transcode flow from video details to downloadable mp4', async ({ page }, t
         await listRow.click({ timeout: UI_TIMEOUT });
         await waitForVideoDetailsVisible(page);
         await expect(page.getByText('This video has been deleted')).toBeVisible({ timeout: UI_TIMEOUT });
-        await expect(page.locator('dd.video-title-deleted')).toContainText(renamedBaseFileName, { timeout: UI_TIMEOUT });
+        // Verify the title is shown in the Info tab title field
+        const deletedTitleSpan = page.locator('dt', { hasText: 'Title' }).first()
+            .locator('xpath=following-sibling::dd[1]//span[1]');
+        await expect(deletedTitleSpan).toContainText(renamedBaseFileName, { timeout: UI_TIMEOUT });
 
         await switchToVideoTab(page, 'tasks');
         const tasksBody = tasksTable(page).locator('tbody').first();

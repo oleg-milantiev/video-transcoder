@@ -50,7 +50,7 @@ test('upload video and verify details flow', async ({ page }, testInfo) => {
   await waitForVideoDetailsVisible(page);
 
   await expectDetailsValue(page, 'Title');
-  await expectDetailsValue(page, 'Created At');
+  await expectDetailsValue(page, 'Created');
   await waitForPosterAndMeta(page, testInfo);
   await shot(page, testInfo, '04-video-details-filled.png');
 

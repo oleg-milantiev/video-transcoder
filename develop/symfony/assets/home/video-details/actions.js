@@ -283,10 +283,18 @@ export function createVideoDetailsActions(params) {
             const video = state.dto.value.video || {};
 
             if (payload.uuid === video.uuid) {
-                state.dto.value = {
+                const nextDto = {
                     ...state.dto.value,
                     video: { ...video, ...payload },
                 };
+                // Propagate new title into tasks' videoTitle so the download filename stays correct
+                if (typeof payload.title === 'string' && Array.isArray(state.dto.value.tasks)) {
+                    nextDto.tasks = state.dto.value.tasks.map((task) => ({
+                        ...task,
+                        videoTitle: payload.title,
+                    }));
+                }
+                state.dto.value = nextDto;
             }
         }
 

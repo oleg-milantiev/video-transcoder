@@ -22,7 +22,9 @@ async function expectDetailsValue(page, label) {
   await expect(dd).toHaveText(/\S+/, { timeout: UI_TIMEOUT });
 }
 async function renameVideoFromDetails(page, newTitle) {
-  const renameButton = page.locator('button[title="Rename video"]').first();
+  // The rename button lives in the Details (Info) tab
+  await switchToVideoTab(page, 'info');
+  const renameButton = page.locator('button[title="Rename"]').first();
   await expect(renameButton).toBeVisible({ timeout: UI_TIMEOUT });
   await renameButton.click({ timeout: UI_TIMEOUT });
   const renameModalInput = page.locator('.swal2-input').first();
@@ -43,7 +45,9 @@ async function expectVideoDetailsTitle(page, expectedTitle) {
   ).toBe(expectedTitle);
 }
 async function clickBackButton(page) {
-  await page.getByRole('button', { name: 'Back' }).click({ timeout: UI_TIMEOUT });
+  // The new video-details UI has a close (✕) button with aria-label="Close"
+  // that navigates back to the Videos list
+  await page.getByRole('button', { name: 'Close' }).click({ timeout: UI_TIMEOUT });
 }
 // ── New UI: "Transcoding Tasks" table (id="transcoding-tasks-section") ──────
 function tasksTable(page) {
@@ -244,12 +248,18 @@ async function expectPresetTranscodeDisabledWithHint(page, presetTitle, { expect
 async function waitForDeletedVideoDetailsWithoutPoster(page, expectedTitle, maxAttempts = 8, delayMs = 5000) {
   for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
     await waitForVideoDetailsVisible(page, { requirePresets: false });
-    const deletedTitle = page.locator('dd.video-title-deleted').first();
-    const hasDeletedTitle = (await deletedTitle.count()) > 0;
-    // In the new UI poster img has class img-fluid and is inside col-md-5 in the Info tab card-body
+    // In the new UI, the deleted indicator is a 'Deleted' badge inside the Info tab poster area
+    const deletedBadge = page.locator('.badge', { hasText: 'Deleted' }).first();
+    const hasDeletedBadge = (await deletedBadge.count()) > 0;
+    // Poster img has class img-fluid inside the col-md-5 poster column of the Info tab
     const hasPoster = (await page.locator('.col-md-5 img.img-fluid').count()) > 0;
-    if (hasDeletedTitle && !hasPoster) {
-      await expect(deletedTitle).toContainText(expectedTitle, { timeout: UI_TIMEOUT });
+    if (hasDeletedBadge && !hasPoster) {
+      // Verify the video title is correct
+      const titleSpan = page.locator('dt', { hasText: 'Title' }).first()
+        .locator('xpath=following-sibling::dd[1]//span[1]');
+      if ((await titleSpan.count()) > 0) {
+        await expect(titleSpan).toContainText(expectedTitle, { timeout: UI_TIMEOUT });
+      }
       return;
     }
     if (attempt < maxAttempts) {
