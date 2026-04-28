@@ -9,6 +9,8 @@ use App\Application\DTO\VideoItemDTO;
 use App\Application\Exception\VideoAccessDeniedException;
 use App\Application\Exception\VideoNotFoundException;
 use App\Application\Query\GetVideoDetailsQuery;
+use App\Application\Response\VideoListResponse;
+use App\Domain\Shared\ValueObject\Uuid;
 use App\Domain\Video\Repository\PresetRepositoryInterface;
 use App\Domain\Video\Repository\TaskRepositoryInterface;
 use App\Domain\Video\Repository\VideoRepositoryInterface;
@@ -23,6 +25,9 @@ use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 #[AsMessageHandler(bus: 'messenger.bus.command')]
 final readonly class GetVideoDetailsHandler
 {
+    // todo убрать. Использовать данные из frontend. Как это делается в списке видео
+    private const int VIDEO_LIST_PAGE_LIMIT = 10;
+
     public function __construct(
         private VideoRepositoryInterface $videoRepository,
         private PresetRepositoryInterface $presetRepository,
@@ -52,6 +57,8 @@ final readonly class GetVideoDetailsHandler
             throw new RuntimeException('User without tariff');
         }
 
+        $userId = Uuid::fromString($userEntity->id->toRfc4122());
+
         $videoItemDto = VideoItemDTO::fromDomain($video, $this->storage, $this->taskRepository, $tariff);
 
         $presetDtos = array_map(
@@ -61,6 +68,17 @@ final readonly class GetVideoDetailsHandler
 
         $taskDtos = $this->taskRepository->getDetailsByVideoId($video->id());
 
-        return VideoDetailsDTO::create($videoItemDto, $presetDtos, $taskDtos);
+        $page = $this->videoRepository->findVideoPage($video->id(), $userId, self::VIDEO_LIST_PAGE_LIMIT);
+        $videoListResult = $this->videoRepository->findAllPaginated($page, self::VIDEO_LIST_PAGE_LIMIT, $userId);
+        $videoList = VideoListResponse::fromDomain(
+            $videoListResult->items,
+            $videoListResult->total,
+            $page,
+            self::VIDEO_LIST_PAGE_LIMIT,
+            $this->storage,
+            $this->taskRepository,
+        );
+
+        return VideoDetailsDTO::create($videoItemDto, $presetDtos, $taskDtos, $videoList);
     }
 }

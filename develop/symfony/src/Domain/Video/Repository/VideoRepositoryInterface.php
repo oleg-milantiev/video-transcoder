@@ -13,6 +13,12 @@ interface VideoRepositoryInterface extends PaginatedRepositoryInterface
     public function findById(Uuid $id): ?Video;
 
     /**
+     * Return the 1-based page number (for the given limit) on which the video
+     * appears when the full list is ordered by deleted ASC, createdAt DESC.
+     */
+    public function findVideoPage(Uuid $videoId, Uuid $userId, int $limit): int;
+
+    /**
      * Get active (not deleted) videos count
      * @param Uuid $userId
      * @return int

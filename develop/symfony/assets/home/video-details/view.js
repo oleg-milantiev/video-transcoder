@@ -1,4 +1,4 @@
-import { defineComponent, onBeforeUnmount, onMounted } from 'vue';
+import { defineComponent, onBeforeUnmount, onMounted, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { renderVideoDetails } from './render.js';
 import { createVideoDetailsState } from './state.js';
@@ -28,6 +28,13 @@ export function createVideoDetailsView(config) {
                 });
             });
 
+            watch(() => route.params.uuid, (newUuid, oldUuid) => {
+                if (newUuid && newUuid !== oldUuid) {
+                    state.activeTab.value = 'info';
+                    void actions.loadDetails();
+                }
+            });
+
             onBeforeUnmount(function () {
                 unbindRealtime();
             });
@@ -40,11 +47,23 @@ export function createVideoDetailsView(config) {
                 actionError: state.actionError,
                 activeActionKey: actions.taskActions.activeKey,
                 taskActions: actions.taskActions,
+                // video list (left pane)
+                videoListItems: state.videoListItems,
+                videoListMeta: state.videoListMeta,
+                videoListLoading: state.videoListLoading,
+                // tab state
+                activeTab: state.activeTab,
+                setActiveTab: (tab) => { state.activeTab.value = tab; },
+                // actions
                 startTranscode: actions.startTranscode,
                 cancelTask: actions.cancelTask,
                 taskDownloadUrl: actions.taskDownloadUrl,
                 formatMetaValue: actions.formatMetaValue,
                 goHome: actions.goHome,
+                closeDetails: actions.closeDetails,
+                navigateToTab: actions.navigateToTab,
+                openVideoDetails: actions.openVideoDetails,
+                loadVideoList: actions.loadVideoList,
                 openRenameModal: actions.openRenameModal,
             };
         },

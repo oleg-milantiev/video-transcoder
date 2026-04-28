@@ -17,11 +17,14 @@ const mockConfig = {
 
 function makeState(dto = null) {
     return {
-        dto:             { value: dto },
-        loading:         { value: false },
-        error:           { value: '' },
-        actionError:     { value: '' },
-        activeActionKey: { value: '' },
+        dto:              { value: dto },
+        loading:          { value: false },
+        error:            { value: '' },
+        actionError:      { value: '' },
+        videoListItems:   { value: [] },
+        videoListMeta:    { value: { page: 1, limit: 10, total: 0, totalPages: 1 } },
+        videoListLoading: { value: false },
+        activeTab:        { value: 'info' },
     };
 }
 

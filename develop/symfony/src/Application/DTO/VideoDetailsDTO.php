@@ -3,6 +3,8 @@ declare(strict_types=1);
 
 namespace App\Application\DTO;
 
+use App\Application\Response\VideoListResponse;
+
 readonly class VideoDetailsDTO
 {
     private function __construct(
@@ -11,6 +13,7 @@ readonly class VideoDetailsDTO
         public array $presets,
         /** @var TaskItemDTO[] */
         public array $tasks,
+        public VideoListResponse $videoList,
     ) {
     }
 
@@ -18,8 +21,8 @@ readonly class VideoDetailsDTO
      * @param PresetItemDTO[] $presets
      * @param TaskItemDTO[] $tasks
      */
-    public static function create(VideoItemDTO $video, array $presets, array $tasks): self
+    public static function create(VideoItemDTO $video, array $presets, array $tasks, VideoListResponse $videoList): self
     {
-        return new self($video, $presets, $tasks);
+        return new self($video, $presets, $tasks, $videoList);
     }
 }

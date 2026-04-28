@@ -20,6 +20,8 @@ export function createHomeTabsView(config) {
             const queryTab = typeof route.query.tab === 'string' ? route.query.tab : '';
             const initialTab = normalizeTab(queryTab);
             const activeTab = ref(initialTab);
+            const queryPage = typeof route.query.page === 'string' ? parseInt(route.query.page, 10) : 1;
+            const initialPage = queryPage > 0 ? queryPage : 1;
             let unbindRealtime = function noop() {};
             const pageLimitVideos = 10;
             const pageLimitTasks = 20;
@@ -43,33 +45,60 @@ export function createHomeTabsView(config) {
 
             function ensureTabDataLoaded(tab) {
                 if (tab === 'videos') {
-                    videosActions.ensureVideosLoaded();
+                    if (videosState.videosLoading.value) { return; }
+                    const page = videosState.videosLoaded.value ? videosState.videosMeta.value.page : initialPage;
+                    void loadVideosSync(page);
                 }
 
                 if (tab === 'tasks') {
-                    tasksActions.ensureTasksLoaded();
+                    if (tasksState.tasksLoading.value) { return; }
+                    const page = tasksState.tasksLoaded.value ? tasksState.tasksMeta.value.page : initialPage;
+                    void loadTasksSync(page);
                 }
             }
 
-            function syncTabToRoute(tab) {
+            function syncTabToRoute(tab, page) {
                 const currentTab = typeof route.query.tab === 'string' ? route.query.tab : '';
-                if (currentTab === tab) {
+                const currentPage = typeof route.query.page === 'string' ? route.query.page : '';
+                const newPage = page ? String(page) : '';
+                if (currentTab === tab && currentPage === newPage) {
                     return;
+                }
+
+                const newQuery = { ...route.query, tab };
+                if (newPage) {
+                    newQuery.page = newPage;
+                } else {
+                    delete newQuery.page;
                 }
 
                 void router.replace({
                     path: route.path,
-                    query: {
-                        ...route.query,
-                        tab,
-                    },
+                    query: newQuery,
                 });
+            }
+
+            async function loadVideosSync(page) {
+                await videosActions.loadVideos(page);
+                syncTabToRoute('videos', videosState.videosMeta.value.page);
+            }
+
+            async function loadTasksSync(page) {
+                await tasksActions.loadTasks(page);
+                syncTabToRoute('tasks', tasksState.tasksMeta.value.page);
             }
 
             onMounted(function () {
                 uploadActions.mountUploadWidgets();
                 ensureTabDataLoaded(initialTab);
-                syncTabToRoute(initialTab);
+                // Normalize tab in URL without clearing the page param
+                const currentTab = typeof route.query.tab === 'string' ? route.query.tab : '';
+                if (currentTab !== initialTab) {
+                    void router.replace({
+                        path: route.path,
+                        query: { ...route.query, tab: initialTab },
+                    });
+                }
                 unbindRealtime = bindHomeRealtime({
                     onTask: tasksActions.applyTaskRealtimeUpdate,
                     onVideo: videosActions.applyVideoRealtimeUpdate,
@@ -99,13 +128,13 @@ export function createHomeTabsView(config) {
             function setTab(tab) {
                 const normalizedTab = normalizeTab(tab);
                 if (activeTab.value === normalizedTab) {
-                    syncTabToRoute(normalizedTab);
                     return;
                 }
 
                 activeTab.value = normalizedTab;
                 ensureTabDataLoaded(normalizedTab);
-                syncTabToRoute(normalizedTab);
+                // Sync tab to URL immediately (videos/tasks will update page when data loads)
+                syncTabToRoute(normalizedTab, null);
             }
 
             watch(
@@ -135,8 +164,8 @@ export function createHomeTabsView(config) {
                 tasksMeta: tasksState.tasksMeta,
                 tasksLoading: tasksState.tasksLoading,
                 tasksError: tasksState.tasksError,
-                loadVideos: videosActions.loadVideos,
-                loadTasks: tasksActions.loadTasks,
+                loadVideos: loadVideosSync,
+                loadTasks: loadTasksSync,
                 openVideoDetails: videosActions.openVideoDetails,
                 deleteVideo: videosActions.deleteVideo,
                 videoDeletePending: videosState.videoDeletePending,

@@ -6,7 +6,11 @@ export function createVideoDetailsState() {
         loading: ref(false),
         error: ref(''),
         actionError: ref(''),
-        activeActionKey: ref(''),
+        // video list (left pane)
+        videoListItems: ref([]),
+        videoListMeta: ref({ page: 1, limit: 10, total: 0, totalPages: 1 }),
+        videoListLoading: ref(false),
+        // active tab in right pane: 'info' | 'transcode' | 'tasks'
+        activeTab: ref('info'),
     };
 }
-

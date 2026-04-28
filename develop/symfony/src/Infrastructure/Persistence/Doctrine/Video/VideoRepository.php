@@ -80,6 +80,39 @@ class VideoRepository extends ServiceEntityRepository implements VideoRepository
         return $entity ? self::mapToDomain($entity) : null;
     }
 
+    /**
+     * @throws Exception
+     */
+    public function findVideoPage(Uuid $videoId, Uuid $userId, int $limit): int
+    {
+        $conn = $this->getEntityManager()->getConnection();
+
+        $sql = <<< SQL
+        WITH ordered_videos AS (
+            SELECT
+                v.id,
+                ROW_NUMBER() OVER (ORDER BY v.deleted ASC, v.created_at DESC) AS row_num
+            FROM video v
+            WHERE v.user_id = :userId
+        )
+        SELECT CEIL(ov.row_num / :limit) AS page
+        FROM ordered_videos ov
+        WHERE ov.id = :videoId
+    SQL;
+
+        $page = $conn->executeQuery($sql, [
+            'userId' => $userId->toRfc4122(),
+            'videoId' => $videoId->toRfc4122(),
+            'limit' => $limit
+        ])->fetchOne();
+
+        if ($page === false) {
+            throw new \InvalidArgumentException('Video not found for this user');
+        }
+
+        return (int)$page + 1;
+    }
+
     protected static function mapToDomain(VideoEntity $entity): Video
     {
         return VideoMapper::toDomain($entity);

@@ -7,7 +7,7 @@ import {
 import { authFetch } from '../apiAuth.js';
 import { createTaskActions } from '../task/actions.js';
 import Swal from '../../vendor/sweetalert2/sweetalert2.index.js';
-import { apiVideoDetailsUrl, apiVideoPatchUrl } from '../routes.js';
+import { apiVideoDetailsUrl, apiVideoPatchUrl, videoDetailsPath, ROUTE_VIDEO_LIST } from '../routes.js';
 
 function formatMetaValue(value) {
     if (value === null || value === undefined) {
@@ -38,6 +38,19 @@ export function createVideoDetailsActions(params) {
         onError: (msg) => { state.actionError.value = msg; },
     });
 
+    function applyVideoListPayload(videoList) {
+        if (!videoList || !Array.isArray(videoList.items)) {
+            return;
+        }
+        state.videoListItems.value = videoList.items;
+        state.videoListMeta.value = {
+            page: Number.isInteger(videoList.page) ? videoList.page : 1,
+            limit: Number.isInteger(videoList.limit) ? videoList.limit : 10,
+            total: Number.isInteger(videoList.total) ? videoList.total : 0,
+            totalPages: Number.isInteger(videoList.totalPages) ? videoList.totalPages : 1,
+        };
+    }
+
     async function loadDetails() {
         if (!uuid.value) {
             state.error.value = 'Video UUID is missing';
@@ -65,11 +78,32 @@ export function createVideoDetailsActions(params) {
             }
 
             state.dto.value = payload;
+            applyVideoListPayload(payload.videoList);
         } catch (e) {
             state.dto.value = null;
             state.error.value = normalizeErrorMessage(e, 'Failed to load video details');
         } finally {
             state.loading.value = false;
+        }
+    }
+
+    async function loadVideoList(page) {
+        state.videoListLoading.value = true;
+        try {
+            const limit = state.videoListMeta.value.limit || 10;
+            const url = new URL(ROUTE_VIDEO_LIST, window.location.origin);
+            url.searchParams.set('page', String(page));
+            url.searchParams.set('limit', String(limit));
+            const response = await authFetch(url.toString(), { method: 'GET' });
+            const payload = await parseJsonResponse(response);
+            if (!response.ok) {
+                return;
+            }
+            applyVideoListPayload(payload);
+        } catch (_e) {
+            // silently ignore
+        } finally {
+            state.videoListLoading.value = false;
         }
     }
 
@@ -107,7 +141,6 @@ export function createVideoDetailsActions(params) {
 
         const url = apiVideoPatchUrl(uuid.value);
 
-        state.activeActionKey.value = 'rename';
         state.actionError.value = '';
 
         try {
@@ -123,24 +156,18 @@ export function createVideoDetailsActions(params) {
             if (!response.ok) {
                 const msg = extractApiErrorMessage(payload, 'Failed to rename video');
                 state.actionError.value = msg;
-                // show error inside modal
                 await Swal.fire({ title: 'Error', text: msg, icon: 'error' });
                 return;
             }
 
-            // On success simply close modal — we already awaited Swal result; update will come via SSE later
-            // Optionally show a small success toast
             await Swal.fire({ title: 'Renamed', text: 'Rename request accepted', icon: 'success', timer: 1200, showConfirmButton: false });
         } catch (e) {
             const msg = normalizeErrorMessage(e, 'Failed to rename video');
             state.actionError.value = msg;
             await Swal.fire({ title: 'Error', text: msg, icon: 'error' });
-        } finally {
-            state.activeActionKey.value = '';
         }
     }
 
-    // todo - унифицировать. startTranscode for preset buttons (current video UUID comes from route)
     function startTranscode(presetId, height) {
         void taskActions.startTranscode(uuid.value, presetId, height);
     }
@@ -158,6 +185,29 @@ export function createVideoDetailsActions(params) {
             path: '/',
             query: { tab: 'videos' },
         });
+    }
+
+    function closeDetails() {
+        const page = state.videoListMeta.value.page;
+        void router.push({
+            path: '/',
+            query: { tab: 'videos', page: String(page) },
+        });
+    }
+
+    function navigateToTab(tab) {
+        const query = { tab };
+        if (tab === 'videos') {
+            const page = state.videoListMeta.value.page;
+            if (page > 1) {
+                query.page = String(page);
+            }
+        }
+        void router.push({ path: '/', query });
+    }
+
+    function openVideoDetails(videoUuid) {
+        void router.push(videoDetailsPath(videoUuid));
     }
 
     function applyTaskRealtimeUpdate(update) {
@@ -181,7 +231,6 @@ export function createVideoDetailsActions(params) {
 
         let nextTasks;
         if (taskIndex >= 0) {
-            // Update existing task
             nextTasks = tasks.map((task, index) => {
                 if (index !== taskIndex) {
                     return task;
@@ -201,7 +250,6 @@ export function createVideoDetailsActions(params) {
                 };
             });
         } else {
-            // Add new task
             nextTasks = [
                 ...tasks,
                 {
@@ -230,34 +278,46 @@ export function createVideoDetailsActions(params) {
             return;
         }
 
-        if (!state.dto.value) {
-            return;
+        // Update the main video in dto
+        if (state.dto.value) {
+            const video = state.dto.value.video || {};
+
+            if (payload.uuid === video.uuid) {
+                state.dto.value = {
+                    ...state.dto.value,
+                    video: { ...video, ...payload },
+                };
+            }
         }
 
-        const video = state.dto.value.video || {};
+        // Also update the matching item in the video list
+        if (state.videoListItems.value.length > 0) {
+            state.videoListItems.value = state.videoListItems.value.map((item) => {
+                if (item.uuid !== payload.uuid) {
+                    return item;
+                }
 
-        if (payload.uuid !== video.uuid) {
-            return;
+                return {
+                    ...item,
+                    poster: Object.prototype.hasOwnProperty.call(payload, 'poster') ? payload.poster : item.poster,
+                    title: typeof payload.title === 'string' ? payload.title : item.title,
+                    deleted: payload.deleted === true ? true : (item.deleted === true),
+                };
+            });
         }
-
-        const updatedVideo = {
-            ...video,
-            ...payload,
-        };
-
-        state.dto.value = {
-            ...state.dto.value,
-            video: updatedVideo,
-        };
     }
 
     return {
         loadDetails,
+        loadVideoList,
         startTranscode,
         cancelTask,
         taskDownloadUrl,
         taskActions,
         goHome,
+        closeDetails,
+        navigateToTab,
+        openVideoDetails,
         formatMetaValue,
         openRenameModal,
         applyTaskRealtimeUpdate,
