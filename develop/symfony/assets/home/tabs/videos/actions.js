@@ -1,5 +1,6 @@
 import { extractApiErrorMessage, parseJsonResponse } from '../../shared.js';
 import { authFetch } from '../../apiAuth.js';
+import { ROUTE_VIDEO_LIST, apiVideoDeleteUrl, videoDetailsPath } from '../../routes.js';
 
 export function createVideosTabActions(params) {
     const { config, router, videosState, pageLimit } = params;
@@ -61,7 +62,7 @@ export function createVideosTabActions(params) {
         videosState.videosError.value = '';
 
         try {
-            const payload = await fetchList(config.route.video.list, page, pageLimit);
+            const payload = await fetchList(ROUTE_VIDEO_LIST, page, pageLimit);
             videosState.videos.value = payload.items;
             videosState.videosMeta.value = {
                 page: payload.page,
@@ -88,7 +89,7 @@ export function createVideosTabActions(params) {
     }
 
     function openVideoDetails(uuid) {
-        void router.push(config.route.videoDetails.replace('__UUID__', uuid));
+        void router.push(videoDetailsPath(uuid));
     }
 
     async function deleteVideo(video) {
@@ -107,7 +108,7 @@ export function createVideosTabActions(params) {
         };
 
         try {
-            const response = await authFetch(config.route.video.delete.replace('__UUID__', videoId), {
+            const response = await authFetch(apiVideoDeleteUrl(videoId), {
                 method: 'DELETE',
                 headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
             });

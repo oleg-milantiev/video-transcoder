@@ -12,18 +12,6 @@ import { createVideoDetailsActions } from '../home/video-details/actions.js';
 // ── helpers ───────────────────────────────────────────────────────────────────
 
 const mockConfig = {
-    route: {
-        video: {
-            details:   '/api/videos/__UUID__',
-            patch:     '/api/videos/__UUID__',
-            transcode: '/api/videos/__UUID__/transcode/__PRESET_ID__/__HEIGHT__',
-        },
-        task: {
-            cancel:   '/api/tasks/__TASK_ID__/cancel',
-            download: '/api/tasks/__TASK_ID__/download',
-        },
-        home: '/',
-    },
     videoUuid: 'test-uuid',
 };
 
@@ -69,8 +57,8 @@ function makeState(dto = null) {
         state,
     });
 
-    assert.equal(taskDownloadUrl('task-42'), '/api/tasks/task-42/download', 'task download URL');
-    assert.equal(taskDownloadUrl('99'),      '/api/tasks/99/download',      'numeric string id');
+    assert.equal(taskDownloadUrl('task-42'), '/task/task-42/download', 'task download URL');
+    assert.equal(taskDownloadUrl('99'),      '/task/99/download',      'numeric string id');
     console.log('✓ taskDownloadUrl');
 }
 

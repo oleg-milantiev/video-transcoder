@@ -1,5 +1,6 @@
 import { authFetch } from '../apiAuth.js';
 import { extractApiErrorMessage, parseJsonResponse } from '../shared.js';
+import { ROUTE_PROFILE } from '../routes.js';
 
 export function createProfileActions(params) {
     const { config, profileState } = params;
@@ -9,13 +10,7 @@ export function createProfileActions(params) {
         profileState.error.value = '';
 
         try {
-            const profileUrl = config.route?.profile;
-            if (!profileUrl) {
-                profileState.error.value = 'Profile endpoint not configured.';
-                return;
-            }
-
-            const response = await authFetch(profileUrl, {
+            const response = await authFetch(ROUTE_PROFILE, {
                 method: 'GET',
             });
 

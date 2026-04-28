@@ -3,11 +3,11 @@ import {
     extractApiErrorMessage,
     normalizeErrorMessage,
     parseJsonResponse,
-    replaceTemplateValue,
 } from '../shared.js';
 import { authFetch } from '../apiAuth.js';
 import { createTaskActions } from '../task/actions.js';
 import Swal from '../../vendor/sweetalert2/sweetalert2.index.js';
+import { apiVideoDetailsUrl, apiVideoPatchUrl } from '../routes.js';
 
 function formatMetaValue(value) {
     if (value === null || value === undefined) {
@@ -49,7 +49,7 @@ export function createVideoDetailsActions(params) {
         state.error.value = '';
         state.actionError.value = '';
 
-        const url = replaceTemplateValue(config.route.video.details, '__UUID__', uuid.value);
+        const url = apiVideoDetailsUrl(uuid.value);
 
         try {
             const response = await authFetch(url, {
@@ -105,7 +105,7 @@ export function createVideoDetailsActions(params) {
             return;
         }
 
-        const url = replaceTemplateValue(config.route.video.patch || config.route.video.details, '__UUID__', uuid.value);
+        const url = apiVideoPatchUrl(uuid.value);
 
         state.activeActionKey.value = 'rename';
         state.actionError.value = '';
@@ -154,14 +154,6 @@ export function createVideoDetailsActions(params) {
     }
 
     function goHome() {
-        if (config.route.home) {
-            void router.push({
-                path: config.route.home,
-                query: { tab: 'videos' },
-            });
-            return;
-        }
-
         void router.push({
             path: '/',
             query: { tab: 'videos' },

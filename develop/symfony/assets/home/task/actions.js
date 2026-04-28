@@ -1,12 +1,13 @@
 import { ref } from 'vue';
-import { parseJsonResponse, extractApiErrorMessage, normalizeErrorMessage, replaceTemplateValue } from '../shared.js';
+import { parseJsonResponse, extractApiErrorMessage, normalizeErrorMessage } from '../shared.js';
 import { authFetch } from '../apiAuth.js';
+import { apiTaskCancelUrl, apiVideoTranscodeUrl, taskDownloadUrl as buildTaskDownloadUrl } from '../routes.js';
 
 /**
  * Creates shared task API actions.
  *
  * @param {Object} params
- * @param {Object} params.config         - App config with route templates
+ * @param {Object} params.config         - App config (token etc.)
  * @param {Function} [params.onSuccess]  - Called after a successful action (key, payload)
  * @param {Function} [params.onError]    - Called with error message string on failure
  */
@@ -23,7 +24,7 @@ export function createTaskActions({ config, onSuccess, onError }) {
         setError('');
 
         try {
-            const url = replaceTemplateValue(config.route.task.cancel, '__TASK_ID__', String(taskId));
+            const url = apiTaskCancelUrl(taskId);
             const response = await authFetch(url, {
                 method: 'POST',
                 headers: { 'X-Requested-With': 'XMLHttpRequest' },
@@ -50,13 +51,7 @@ export function createTaskActions({ config, onSuccess, onError }) {
         setError('');
 
         try {
-            const url = replaceTemplateValue(
-                replaceTemplateValue(
-                    replaceTemplateValue(config.route.video.transcode, '__UUID__', videoId),
-                    '__PRESET_ID__', presetId,
-                ),
-                '__HEIGHT__', height,
-            );
+            const url = apiVideoTranscodeUrl(videoId, presetId, height);
             const response = await authFetch(url, {
                 method: 'POST',
                 headers: { 'X-Requested-With': 'XMLHttpRequest' },
@@ -78,7 +73,7 @@ export function createTaskActions({ config, onSuccess, onError }) {
     }
 
     function getDownloadUrl(taskId) {
-        return replaceTemplateValue(config.route.task.download, '__TASK_ID__', String(taskId));
+        return buildTaskDownloadUrl(taskId);
     }
 
     return { activeKey, cancelTask, startTranscode, getDownloadUrl };

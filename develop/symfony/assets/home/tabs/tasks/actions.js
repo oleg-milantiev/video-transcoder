@@ -1,6 +1,7 @@
 import { parseJsonResponse, extractApiErrorMessage } from '../../shared.js';
 import { authFetch } from '../../apiAuth.js';
 import { createTaskActions } from '../../task/actions.js';
+import { ROUTE_TASK_LIST } from '../../routes.js';
 
 export function isTaskActive(status) {
     return status === 'PENDING' || status === 'PROCESSING';
@@ -75,7 +76,7 @@ export function createTasksTabActions(params) {
         tasksState.tasksError.value = '';
 
         try {
-            const payload = await fetchList(config.route.task.list, page, pageLimit);
+            const payload = await fetchList(ROUTE_TASK_LIST, page, pageLimit);
             tasksState.tasks.value = payload.items;
             tasksState.tasksMeta.value = {
                 page: payload.page,

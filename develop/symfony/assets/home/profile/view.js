@@ -11,7 +11,7 @@ export function createProfileView(config) {
             const actions = createProfileActions({ config, profileState: state });
 
             function goHome() {
-                window.location.href = config.route?.home ?? '/';
+                window.location.href = '/';
             }
 
             onMounted(() => {

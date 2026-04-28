@@ -1,6 +1,7 @@
 import Swal from '../vendor/sweetalert2/sweetalert2.index.js';
 import { authFetch } from './apiAuth.js';
 import { parseJsonResponse, extractApiErrorMessage, normalizeErrorMessage } from './shared.js';
+import { ROUTE_CONTACT } from './routes.js';
 
 export async function openContactUsModal(config) {
     const { value: message } = await Swal.fire({
@@ -28,7 +29,7 @@ export async function openContactUsModal(config) {
     }
 
     try {
-        const response = await authFetch(config.route.contact, {
+        const response = await authFetch(ROUTE_CONTACT, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

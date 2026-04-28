@@ -9,7 +9,7 @@ export function createTariffView(config) {
             const router = useRouter();
 
             function goHome() {
-                window.location.href = config.route?.home ?? '/';
+                window.location.href = '/';
             }
 
             return { config, goHome };

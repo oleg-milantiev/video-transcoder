@@ -7,6 +7,7 @@ import { createProfileView } from './profile/view.js';
 import { createTariffView } from './tariff/view.js';
 import { initAuth } from './apiAuth.js';
 import { initContactUs } from './contactUs.js';
+import { ROUTE_REFRESH_TOKEN } from './routes.js';
 
 export function mountHomeSpa() {
     const rootElement = document.getElementById('home-spa') || document.getElementById('video-details-spa');
@@ -21,7 +22,7 @@ export function mountHomeSpa() {
     initAuth({
         accessToken: config.token.access || null,
         refreshToken: config.token.refresh || null,
-        refreshUrl: config.route.refreshToken || '',
+        refreshUrl: ROUTE_REFRESH_TOKEN,
     });
     connectMercure(config, rootElement);
     initContactUs(config);

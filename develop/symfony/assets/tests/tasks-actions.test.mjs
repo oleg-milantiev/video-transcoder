@@ -31,15 +31,7 @@ function makeState(tasks = []) {
     };
 }
 
-const config = {
-    route: {
-        task: {
-            list:     '/api/tasks',
-            cancel:   '/api/tasks/__TASK_ID__/cancel',
-            download: '/api/tasks/__TASK_ID__/download',
-        },
-    },
-};
+const config = {};
 
 // ── getTaskDownloadUrl ────────────────────────────────────────────────────────
 
@@ -47,9 +39,9 @@ const config = {
     const state = makeState();
     const { taskActions } = createTasksTabActions({ config, tasksState: state, pageLimit: 10 });
 
-    assert.equal(taskActions.getDownloadUrl(42),      '/api/tasks/42/download',   'numeric id');
-    assert.equal(taskActions.getDownloadUrl('99'),     '/api/tasks/99/download',   'string id');
-    assert.equal(taskActions.getDownloadUrl('abc-id'), '/api/tasks/abc-id/download', 'string UUID');
+    assert.equal(taskActions.getDownloadUrl(42),      '/task/42/download',      'numeric id');
+    assert.equal(taskActions.getDownloadUrl('99'),     '/task/99/download',      'string id');
+    assert.equal(taskActions.getDownloadUrl('abc-id'), '/task/abc-id/download',  'string UUID');
     console.log('✓ getTaskDownloadUrl');
 }
 

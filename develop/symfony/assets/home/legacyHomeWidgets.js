@@ -1,3 +1,5 @@
+import { ROUTE_UPLOAD } from './routes.js';
+
 function uuidv4() {
     return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
         const r = crypto.getRandomValues(new Uint8Array(1))[0] & 15;
@@ -48,7 +50,7 @@ export function initHomeLegacyWidgets(config) {
             proudlyDisplayPoweredByUppy: false,
         })
         .use(window.Uppy.Tus, {
-            endpoint: config.route.upload,
+            endpoint: ROUTE_UPLOAD,
             chunkSize: 5 * 1024 * 1024,
             headers: function () {
                 return authHeader;
