@@ -66,10 +66,8 @@
                         © 2026 Video Transcoder
                     </div>
                     <div class="d-flex flex-wrap gap-3">
-{#
-                        <a href="#" class="small text-secondary text-decoration-none">Terms</a>
-                        <a href="#" class="small text-secondary text-decoration-none">Privacy</a>
-#}
+                        <a href="{{ path('terms') }}" class="small text-secondary text-decoration-none">Terms</a>
+                        <a href="{{ path('privacy') }}" class="small text-secondary text-decoration-none">Privacy</a>
                         {% if app.user %}
                             <a href="#" id="footer-contact-us" class="small text-secondary text-decoration-none">Contact Us</a>
                             <a href="{{ path('profile') }}" class="small text-secondary text-decoration-none">Profile</a>
