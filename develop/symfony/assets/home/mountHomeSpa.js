@@ -6,7 +6,6 @@ import { createVideoDetailsView } from './video-details/view.js';
 import { createProfileView } from './profile/view.js';
 import { createTariffView } from './tariff/view.js';
 import { initAuth } from './apiAuth.js';
-import { initContactUs } from './contactUs.js';
 import { ROUTE_REFRESH_TOKEN } from './routes.js';
 
 export function mountHomeSpa() {
@@ -25,7 +24,6 @@ export function mountHomeSpa() {
         refreshUrl: ROUTE_REFRESH_TOKEN,
     });
     connectMercure(config, rootElement);
-    initContactUs(config);
     const HomeTabsView = createHomeTabsView(config);
     const VideoDetailsView = createVideoDetailsView(config);
     const ProfileView = createProfileView(config);

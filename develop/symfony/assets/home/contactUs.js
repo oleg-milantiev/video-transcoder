@@ -61,9 +61,10 @@ export async function openContactUsModal(config) {
 
 export function initContactUs(config) {
     const link = document.getElementById('footer-contact-us');
-    if (!link) {
+    if (!link || link.dataset.contactUsInit === '1') {
         return;
     }
+    link.dataset.contactUsInit = '1';
 
     link.addEventListener('click', function (event) {
         event.preventDefault();
