@@ -28,7 +28,6 @@ use App\Domain\Video\Repository\StorageRepositoryInterface;
 use App\Domain\Video\Repository\TaskRepositoryInterface;
 use App\Domain\Video\Repository\VideoRepositoryInterface;
 use App\Domain\Video\Service\Storage\StorageInterface;
-use Exception;
 use Psr\Log\LogLevel;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
@@ -121,6 +120,9 @@ final readonly class CreateVideoHandler
                 $videoFilename = $file->details()['metadata']['originalName'] ?? $file->getName();
             }
             $meta['size'] = $fileSize;
+            if ($command->session !== null) {
+                $meta['session'] = $command->session;
+            }
 
             // ── file-size vs tariff limit ─────────────────────────────────────
             $fileSizeMb = $fileSize / (1024 * 1024);

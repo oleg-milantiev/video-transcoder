@@ -150,4 +150,28 @@ class VideoRepository extends ServiceEntityRepository implements VideoRepository
 
         return (int)$conn->executeQuery($sql, ['userId' => $userId->toRfc4122()])->fetchOne();
     }
+
+    /**
+     * @throws Exception
+     */
+    public function findIdBySession(string $session, Uuid $userId): ?Uuid
+    {
+        $conn = $this->getEntityManager()->getConnection();
+
+        $sql = <<< SQL
+            SELECT id
+            FROM video
+            WHERE user_id = :userId
+              AND deleted = false
+              AND meta::jsonb ->> 'session' = :session
+            LIMIT 1
+        SQL;
+
+        $id = $conn->executeQuery($sql, [
+            'userId' => $userId->toRfc4122(),
+            'session' => $session,
+        ])->fetchOne();
+
+        return $id === false ? null : Uuid::fromString($id);
+    }
 }

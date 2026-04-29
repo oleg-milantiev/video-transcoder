@@ -12,6 +12,7 @@ final readonly class CreateVideo
         private ?File $file,
         private Uuid $userId,
         private ?string $url = null,
+        public ?string $session = null,
     ) {
     }
 

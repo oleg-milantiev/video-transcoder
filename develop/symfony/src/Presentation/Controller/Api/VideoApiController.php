@@ -25,6 +25,7 @@ use App\Domain\Shared\ValueObject\Uuid;
 use App\Domain\User\Exception\TariffNotFound;
 use App\Domain\Video\Exception\VideoAlreadyDeleted;
 use App\Domain\Video\Exception\VideoHasTranscodingTasks;
+use App\Domain\Video\Repository\VideoRepositoryInterface;
 use DomainException;
 use Psr\Log\LogLevel;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -45,6 +46,7 @@ class VideoApiController extends AbstractController
     public function __construct(
         private readonly QueryBus $queryBus,
         private readonly LogServiceInterface $logService,
+        private readonly VideoRepositoryInterface $videoRepository,
         #[Autowire(service: 'messenger.bus.command')]
         private readonly MessageBusInterface $commandBus,
     ) {
@@ -59,9 +61,9 @@ class VideoApiController extends AbstractController
      * The controller only validates the URL is present and well-formed, then
      * enqueues a CreateVideo command.  All downloading, size checks and
      * quota enforcement happen asynchronously inside CreateVideoHandler.
-     * Use Mercure SSE or GET /api/video/ to track progress.
-     * todo надо какой-то uuid передавать для проверки статуса. Не video.id, но какой-то временный
+     * Use returned session id for video.id find via GET /api/video/session/{uuid}
      */
+    #[IsGranted('ROLE_API')]
     #[Route('/upload', name: 'api_video_upload', methods: ['POST'])]
     public function upload(Request $request): Response
     {
@@ -77,13 +79,11 @@ class VideoApiController extends AbstractController
 
         try {
             $userId = Uuid::fromString($this->getUser()->id->toRfc4122());
+            $session = Uuid::generate()->toRfc4122();
 
-            $this->commandBus->dispatch(new CreateVideo(null, $userId, $url));
+            $this->commandBus->dispatch(new CreateVideo(null, $userId, $url, $session));
 
-            return $this->apiSuccess([
-                'message' => 'Upload accepted. The video will be downloaded and processed.',
-                'url' => $url,
-            ], 202);
+            return $this->apiSuccess(['session' => $session], 202);
         } catch (InvalidUploadUrlException $e) {
             return $this->apiError('INVALID_URL', $e->getMessage(), 422);
         } catch (Throwable $e) {
@@ -93,6 +93,29 @@ class VideoApiController extends AbstractController
             ]);
 
             return $this->apiError('INTERNAL_ERROR', 'Failed to accept upload from URL.', 500);
+        }
+    }
+
+    #[IsGranted('ROLE_API')]
+    #[Route('/session/{session}', name: 'api_video_session', requirements: ['session' => '[0-9a-fA-F-]{36}'], methods: ['GET'])]
+    public function session(string $session): Response
+    {
+        try {
+            $userId = Uuid::fromString($this->getUser()->id->toRfc4122());
+            $videoId = $this->videoRepository->findIdBySession($session, $userId);
+
+            if ($videoId === null) {
+                return $this->apiSuccess(null, Response::HTTP_NO_CONTENT);
+            }
+
+            return $this->apiSuccess(['id' => $videoId->toRfc4122()]);
+        } catch (Throwable $e) {
+            $this->logService->log('video', 'session', null, LogLevel::ERROR, 'Session lookup failed', [
+                'session' => $session,
+                'message' => $e->getMessage(),
+            ]);
+
+            return $this->apiError('INTERNAL_ERROR', 'Failed to look up session.', 500);
         }
     }
 

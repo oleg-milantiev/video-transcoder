@@ -36,4 +36,10 @@ interface VideoRepositoryInterface extends PaginatedRepositoryInterface
      * @return array<int, Video>
      */
     public function findDeletedVideoForCleanup(): array;
+
+    /**
+     * Find an active (not deleted) video id by the session UUID stored in meta,
+     * scoped to the given user.
+     */
+    public function findIdBySession(string $session, Uuid $userId): ?Uuid;
 }
