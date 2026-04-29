@@ -3,30 +3,6 @@ import { initHomeLegacyWidgets } from '../../legacyHomeWidgets.js';
 const UPPY_POLL_INTERVAL_MS  = 100;
 const UPPY_POLL_MAX_ATTEMPTS = 100; // wait at most 10 seconds
 
-// Uppy CDN coordinates — must match home/index.html.twig
-const UPPY_VERSION  = 'v3.21.0';
-const UPPY_BASE_URL = `https://releases.transloadit.com/uppy/${UPPY_VERSION}`;
-const UPPY_CSS_HREF = `${UPPY_BASE_URL}/uppy.min.css`;
-const UPPY_JS_SRC   = `${UPPY_BASE_URL}/uppy.min.js`;
-
-/**
- * Idempotently inject Uppy CSS + JS into <head> when they were not pre-loaded
- * (e.g. the SPA was bootstrapped from /video/:uuid, not from the home page).
- */
-function ensureUppyAssets() {
-    if (!document.querySelector(`link[href="${UPPY_CSS_HREF}"]`)) {
-        const link = document.createElement('link');
-        link.rel  = 'stylesheet';
-        link.href = UPPY_CSS_HREF;
-        document.head.appendChild(link);
-    }
-    if (!document.querySelector(`script[src="${UPPY_JS_SRC}"]`)) {
-        const script = document.createElement('script');
-        script.src = UPPY_JS_SRC;
-        document.head.appendChild(script);
-    }
-}
-
 export function createUploadTabActions(config, uploadState) {
     let pollTimer = null;
 
@@ -52,10 +28,6 @@ export function createUploadTabActions(config, uploadState) {
                 doInit();
                 return;
             }
-
-            // Uppy scripts were not pre-loaded (e.g. navigation from /video/:uuid).
-            // Inject them dynamically so the poll below can pick them up.
-            ensureUppyAssets();
 
             // Poll every 100 ms until Uppy appears or we time out.
             let attempts = 0;

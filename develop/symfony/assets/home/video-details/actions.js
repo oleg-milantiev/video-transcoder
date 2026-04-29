@@ -181,10 +181,7 @@ export function createVideoDetailsActions(params) {
     }
 
     function goHome() {
-        void router.push({
-            path: '/',
-            query: { tab: 'videos' },
-        });
+        window.location.href = '/';
     }
 
     function closeDetails() {
@@ -196,6 +193,10 @@ export function createVideoDetailsActions(params) {
     }
 
     function navigateToTab(tab) {
+        if (tab === 'upload') {
+            window.location.href = '/?tab=upload';
+            return;
+        }
         const query = { tab };
         if (tab === 'videos') {
             const page = state.videoListMeta.value.page;
