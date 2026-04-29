@@ -58,7 +58,7 @@ class TranscodeTaskPreparationServiceTest extends TestCase
         $storage = $this->createMock(StorageInterface::class);
         $storage->expects($this->once())
             ->method('taskOutputKey')
-            ->with($video, $preset)
+            ->with($video, $preset, 1080)
             ->willReturn(sprintf('%s/%s.mp4', $video->id()->toRfc4122(), '123e4567-e89b-42d3-a456-426614174005'));
         $storage->expects($this->once())
             ->method('localPathForWrite')
@@ -164,6 +164,7 @@ class TranscodeTaskPreparationServiceTest extends TestCase
             progress: new Progress(0),
             dates: TaskDates::create(),
             id: Uuid::fromString('123e4567-e89b-42d3-a456-426614174013'),
+            meta: ['height' => 1080],
         );
 
         return $task;
