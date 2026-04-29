@@ -36,13 +36,13 @@ final class FilesystemStorage implements StorageInterface
         return $video->id()->toRfc4122().'.jpg';
     }
 
-    public function taskOutputKey(Video $video, Preset $preset): string
+    public function taskOutputKey(Video $video, Preset $preset, int $height): string
     {
         if ($video->id() === null) {
             throw new DomainException('Video id is not set, cannot build task output key.');
         }
 
-        return sprintf('%s/%s.mp4', $video->id()->toRfc4122(), $preset->id()->toRfc4122());
+        return sprintf('%s/%s.%d.%s', $video->id()->toRfc4122(), $preset->id()->toRfc4122(), $height, $preset->format()->value());
     }
 
     public function putFromPath(string $sourcePath, string $key): string

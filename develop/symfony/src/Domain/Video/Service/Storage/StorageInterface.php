@@ -12,7 +12,7 @@ interface StorageInterface
 
     public function previewKey(Video $video): string;
 
-    public function taskOutputKey(Video $video, Preset $preset): string;
+    public function taskOutputKey(Video $video, Preset $preset, int $height): string;
 
     public function putFromPath(string $sourcePath, string $key): string;
 

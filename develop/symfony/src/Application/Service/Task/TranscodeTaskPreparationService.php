@@ -36,7 +36,13 @@ readonly class TranscodeTaskPreparationService
             throw new RuntimeException('Preset not found for task');
         }
 
-        $relativeOutputPath = $this->storage->taskOutputKey($video, $preset);
+        $height = $task->heightNullable();
+        if ($height === null) {
+            $this->logService->log('task', 'transcode', $task->id(), LogLevel::ERROR, 'Task height is not set');
+            throw new RuntimeException('Task height is not set');
+        }
+
+        $relativeOutputPath = $this->storage->taskOutputKey($video, $preset, $height);
         $absoluteOutputPath = $this->storage->localPathForWrite($relativeOutputPath);
 
         $task->start($video->duration());
@@ -44,7 +50,7 @@ readonly class TranscodeTaskPreparationService
         $this->logService->log('task', 'transcode', $task->id(), LogLevel::INFO, 'Transcoding started', [
             'videoId' => $video->id()?->toRfc4122(),
             'presetId' => $preset->id()?->toRfc4122(),
-            'height' => $task->heightNullable(),
+            'height' => $height,
             'userId' => $task->userId()?->toRfc4122(),
         ]);
         $this->taskRealtimeNotifier->notifyTaskUpdated($task, 'started', [
