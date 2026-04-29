@@ -33,6 +33,56 @@ const config = {
 
 const router = { push: async () => {} };
 
+// ── applyVideoUploaded: ignores when not yet loaded ───────────────────────────
+
+{
+    const state = makeState([]);
+    state.videosLoaded.value = false;
+    const { applyVideoUploaded } = createVideosTabActions({ config, router, videosState: state, pageLimit: 10 });
+
+    await applyVideoUploaded({ uuid: 'new-1', title: 'New' });
+
+    assert.equal(state.videos.value.length, 0, 'not loaded: list unchanged');
+    console.log('✓ applyVideoUploaded: ignores when not yet loaded');
+}
+
+// ── applyVideoUploaded: prepends on page 1 ────────────────────────────────────
+
+{
+    const state = makeState([
+        { uuid: 'old-1', title: 'Old Video' },
+    ]);
+    state.videosLoaded.value = true;
+    state.videosMeta.value = { page: 1, limit: 10, total: 1, totalPages: 1 };
+    const { applyVideoUploaded } = createVideosTabActions({ config, router, videosState: state, pageLimit: 10 });
+
+    await applyVideoUploaded({ uuid: 'new-1', title: 'Uploaded Video' });
+
+    assert.equal(state.videos.value.length, 2,              'list grows by one');
+    assert.equal(state.videos.value[0].uuid,  'new-1',      'new video is first');
+    assert.equal(state.videos.value[1].uuid,  'old-1',      'old video is second');
+    assert.equal(state.videosMeta.value.total, 2,           'total incremented');
+    console.log('✓ applyVideoUploaded: prepends on page 1');
+}
+
+// ── applyVideoUploaded: does not prepend on non-first page ───────────────────
+
+{
+    const state = makeState([
+        { uuid: 'old-1', title: 'Old Video' },
+    ]);
+    state.videosLoaded.value = true;
+    state.videosMeta.value = { page: 3, limit: 10, total: 25, totalPages: 3 };
+    const { applyVideoUploaded } = createVideosTabActions({ config, router, videosState: state, pageLimit: 10 });
+
+    // On page 3:  should NOT prepend — triggers a re-fetch instead (may fail in test env, that's fine)
+    await applyVideoUploaded({ uuid: 'new-1', title: 'Uploaded Video' }).catch(() => {});
+
+    const firstUuid = state.videos.value.length > 0 ? state.videos.value[0].uuid : null;
+    assert.notEqual(firstUuid, 'new-1', 'not page 1: new video not prepended');
+    console.log('✓ applyVideoUploaded: does not prepend on non-first page');
+}
+
 // ── applyVideoRealtimeUpdate: updates matching video ──────────────────────────
 
 {
@@ -94,6 +144,23 @@ const router = { push: async () => {} };
     console.log('✓ applyVideoRealtimeUpdate: ignores unknown videoId');
 }
 
+// ── applyVideoRealtimeUpdate: updates via uuid (Mercure DTO payload) ──────────
+
+{
+    const state = makeState([
+        { id: 'uuid-1', uuid: 'uuid-1', title: 'Old', poster: null, deleted: false, updatedAt: null, canBeDeleted: false },
+        { id: 'uuid-2', uuid: 'uuid-2', title: 'Other', poster: null, deleted: false, updatedAt: null, canBeDeleted: false },
+    ]);
+    const { applyVideoRealtimeUpdate } = createVideosTabActions({ config, router, videosState: state, pageLimit: 10 });
+
+    // Mercure meta/preview events use { uuid, poster, ... } — not videoId
+    applyVideoRealtimeUpdate({ uuid: 'uuid-1', poster: '/preview.jpg', title: 'Old', updatedAt: '2024-01-01T00:00:00Z' });
+
+    assert.equal(state.videos.value[0].poster, '/preview.jpg', 'poster updated via uuid');
+    assert.equal(state.videos.value[1].poster, null,           'other video unchanged');
+    console.log('✓ applyVideoRealtimeUpdate: updates via uuid (Mercure DTO payload)');
+}
+
 // ── applyVideoRealtimeUpdate: ignores empty / missing videoId ─────────────────
 
 {
@@ -105,6 +172,8 @@ const router = { push: async () => {} };
     applyVideoRealtimeUpdate({ videoId: '',   title: 'Nope' });
     applyVideoRealtimeUpdate({ videoId: null, title: 'Nope' });
     applyVideoRealtimeUpdate({               title: 'Nope' }); // no key
+    applyVideoRealtimeUpdate({ uuid: '',     title: 'Nope' });
+    applyVideoRealtimeUpdate({ uuid: null,   title: 'Nope' });
 
     assert.equal(state.videos.value[0].title, 'V1', 'empty/missing videoId: no change');
     console.log('✓ applyVideoRealtimeUpdate: ignores empty/missing videoId');

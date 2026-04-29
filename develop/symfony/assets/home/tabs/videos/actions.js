@@ -132,8 +132,29 @@ export function createVideosTabActions(params) {
         }
     }
 
+    async function applyVideoUploaded(videoDto) {
+        if (!videosState.videosLoaded.value) {
+            return;
+        }
+
+        if (videosState.videosMeta.value.page === 1) {
+            videosState.videos.value = [videoDto, ...videosState.videos.value];
+            videosState.videosMeta.value = {
+                ...videosState.videosMeta.value,
+                total: videosState.videosMeta.value.total + 1,
+            };
+        } else {
+            await loadVideos(videosState.videosMeta.value.page);
+        }
+    }
+
     function applyVideoRealtimeUpdate(payload) {
-        const videoId = typeof payload.videoId === 'string' ? payload.videoId : '';
+        // Support internal calls (videoId) and Mercure DTO payloads (uuid)
+        const videoId = typeof payload.videoId === 'string' && payload.videoId
+            ? payload.videoId
+            : typeof payload.uuid === 'string' && payload.uuid
+                ? payload.uuid
+                : '';
         if (!videoId) {
             return;
         }
@@ -160,6 +181,7 @@ export function createVideosTabActions(params) {
         ensureVideosLoaded,
         openVideoDetails,
         deleteVideo,
+        applyVideoUploaded,
         applyVideoRealtimeUpdate,
     };
 }

@@ -101,7 +101,13 @@ export function createHomeTabsView(config) {
                 }
                 unbindRealtime = bindHomeRealtime({
                     onTask: tasksActions.applyTaskRealtimeUpdate,
-                    onVideo: videosActions.applyVideoRealtimeUpdate,
+                    onVideo: function (msg) {
+                        if (msg.action === 'uploaded') {
+                            void videosActions.applyVideoUploaded(msg.payload);
+                        } else {
+                            videosActions.applyVideoRealtimeUpdate(msg.payload);
+                        }
+                    },
                     onStorage: function (payload) {
                         // update uppy restriction
                         uploadState.updateStorage(payload.storageNow, payload.storageMax);

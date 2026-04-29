@@ -274,6 +274,18 @@ export function createVideoDetailsActions(params) {
         };
     }
 
+    async function applyVideoUploadedToList(videoDto) {
+        if (state.videoListMeta.value.page === 1) {
+            state.videoListItems.value = [videoDto, ...state.videoListItems.value];
+            state.videoListMeta.value = {
+                ...state.videoListMeta.value,
+                total: state.videoListMeta.value.total + 1,
+            };
+        } else {
+            await loadVideoList(state.videoListMeta.value.page);
+        }
+    }
+
     function applyVideoRealtimeUpdate(payload) {
         if (typeof payload.uuid !== 'string' || !payload.uuid) {
             return;
@@ -330,6 +342,7 @@ export function createVideoDetailsActions(params) {
         formatMetaValue,
         openRenameModal,
         applyTaskRealtimeUpdate,
+        applyVideoUploadedToList,
         applyVideoRealtimeUpdate,
     };
 }

@@ -11,6 +11,9 @@ export function parseAppVideoMessage(message) {
         return null;
     }
 
-    return message.payload;
+    return {
+        action: typeof message.action === 'string' ? message.action : 'updated',
+        payload: message.payload,
+    };
 }
 

@@ -42,7 +42,12 @@ assert.equal(parseAppVideoMessage({ entity: 'video', payload: 'str' }), null, 's
 const videoPayload = { videoId: 'uuid-123', title: 'My Video', poster: '/img.jpg' };
 assert.deepEqual(
     parseAppVideoMessage({ entity: 'video', payload: videoPayload }),
-    videoPayload,
-    'valid video message returns payload'
+    { action: 'updated', payload: videoPayload },
+    'valid video message (no action) returns { action: "updated", payload }'
+);
+assert.deepEqual(
+    parseAppVideoMessage({ entity: 'video', action: 'uploaded', payload: videoPayload }),
+    { action: 'uploaded', payload: videoPayload },
+    'valid video message with action returns { action, payload }'
 );
 console.log('✓ parseAppVideoMessage');

@@ -24,7 +24,13 @@ export function createVideoDetailsView(config) {
                 void actions.loadDetails();
                 unbindRealtime = bindVideoDetailsRealtime({
                     onTask: actions.applyTaskRealtimeUpdate,
-                    onVideo: actions.applyVideoRealtimeUpdate,
+                    onVideo: function (msg) {
+                        if (msg.action === 'uploaded') {
+                            void actions.applyVideoUploadedToList(msg.payload);
+                        } else {
+                            actions.applyVideoRealtimeUpdate(msg.payload);
+                        }
+                    },
                 });
             });
 
