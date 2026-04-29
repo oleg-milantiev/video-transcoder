@@ -89,12 +89,6 @@ export function renderPlanCard(plan, colClass = 'col-12 col-md-4', config = null
 
     const isCurrent = plan.name === config.tariff.title;
 
-    if (isCurrent) {
-        headerChildren.push(
-            h('span', { class: 'badge bg-success' }, 'Your current plan')
-        );
-    }
-
     const enterpriseBtnAttrs = {
         class: `btn w-100 btn-outline-primary`,
         type: 'button',
@@ -121,7 +115,24 @@ export function renderPlanCard(plan, colClass = 'col-12 col-md-4', config = null
     return h('div', { class: colClass }, [
         h('div', {
             class: `card h-100 shadow-sm ${plan.key === 'premium' ? 'border-primary' : ''}`,
+            style: isCurrent ? 'position: relative; overflow: hidden;' : '',
         }, [
+            // Corner ribbon for current plan — green triangle in top-right with a ✓ icon
+            isCurrent
+                ? h('div', {
+                    'aria-label': 'Your current plan',
+                    style: 'position: absolute; top: 0; right: 0; width: 72px; height: 72px;'
+                         + ' background: #198754;'
+                         + ' clip-path: polygon(0 0, 100% 0, 100% 100%);'
+                         + ' z-index: 2; pointer-events: none;',
+                }, [
+                    h('span', {
+                        'aria-hidden': 'true',
+                        style: 'position: absolute; top: 11px; right: 9px;'
+                             + ' color: #fff; font-size: 1.25rem; line-height: 1; font-weight: 700;',
+                    }, '✓'),
+                ])
+                : null,
             h('div', {
                 class: `card-header text-center py-4 ${plan.key === 'premium' ? 'bg-primary text-white' : 'bg-light'}`,
             }, headerChildren),
