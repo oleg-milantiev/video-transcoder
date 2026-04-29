@@ -11,9 +11,10 @@ use App\Application\Event\CreateVideoFail;
 use App\Application\Factory\FlashNotificationFactory;
 use App\Application\Factory\VideoFactory;
 use App\Application\Logging\LogServiceInterface;
-use App\Application\Service\Mercure\FlashRealtimeNotifier;
+use App\Application\Service\Storage\StorageRealtimeNotifier;
 use App\Application\Service\Video\UrlVideoDownloader;
 use App\Application\Service\Video\VideoRealtimeNotifier;
+use App\Application\Service\Mercure\FlashRealtimeNotifier;
 use App\Domain\Shared\ValueObject\Uuid;
 use App\Domain\User\Entity\Tariff;
 use App\Domain\User\Entity\User;
@@ -139,6 +140,7 @@ class CreateVideoHandlerTest extends TestCase
             new FlashNotificationFactory(),
             $taskRepository,
             $this->createStub(UrlVideoDownloader::class),
+            $this->createStub(StorageRealtimeNotifier::class),
         );
 
         $handler->__invoke($command);
@@ -232,6 +234,7 @@ class CreateVideoHandlerTest extends TestCase
             $flashFactory,
             $this->createStub(TaskRepositoryInterface::class),
             $this->createStub(UrlVideoDownloader::class),
+            $this->createStub(StorageRealtimeNotifier::class),
         );
 
         // Invoke handler - should catch exception and dispatch CreateVideoFail
@@ -323,6 +326,7 @@ class CreateVideoHandlerTest extends TestCase
             new FlashNotificationFactory(),
             $taskRepository,
             $this->createStub(UrlVideoDownloader::class),
+            $this->createStub(StorageRealtimeNotifier::class),
         );
 
         $handler->__invoke($command);
@@ -365,11 +369,21 @@ class CreateVideoHandlerTest extends TestCase
         };
 
         $videoRepository = $this->createStub(VideoRepositoryInterface::class);
-        $userRepository = $this->createStub(UserRepositoryInterface::class);
         $storage = $this->createStub(StorageInterface::class);
         $notifier = new VideoRealtimeNotifier($commandBus, $storage, $this->createStub(TaskRepositoryInterface::class));
         $flashRealtimeNotifier = new FlashRealtimeNotifier($commandBus);
         $logService = $this->createStub(LogServiceInterface::class);
+
+        // Provide a valid user+tariff so the handler reaches the file-existence check
+        $userWithTariff = $this->createStub(User::class);
+        $tariff = $this->createStub(Tariff::class);
+        $tariff->method('videoSize')->willReturn(new TariffVideoSize(1000.0));
+        $tariff->method('storageGb')->willReturn(new TariffStorageGb(5));
+        $userWithTariff->method('id')->willReturn($userId);
+        $userWithTariff->method('tariff')->willReturn($tariff);
+
+        $userRepository = $this->createStub(UserRepositoryInterface::class);
+        $userRepository->method('findById')->willReturn($userWithTariff);
 
         $handler = new CreateVideoHandler(
             $commandBus,
@@ -385,6 +399,7 @@ class CreateVideoHandlerTest extends TestCase
             new FlashNotificationFactory(),
             $this->createStub(TaskRepositoryInterface::class),
             $this->createStub(UrlVideoDownloader::class),
+            $this->createStub(StorageRealtimeNotifier::class),
         );
 
         $handler->__invoke($command);
@@ -450,6 +465,7 @@ class CreateVideoHandlerTest extends TestCase
             new FlashNotificationFactory(),
             $this->createStub(TaskRepositoryInterface::class),
             $this->createStub(UrlVideoDownloader::class),
+            $this->createStub(StorageRealtimeNotifier::class),
         );
 
         $handler->__invoke($command);
@@ -523,6 +539,7 @@ class CreateVideoHandlerTest extends TestCase
             new FlashNotificationFactory(),
             $this->createStub(TaskRepositoryInterface::class),
             $this->createStub(UrlVideoDownloader::class),
+            $this->createStub(StorageRealtimeNotifier::class),
         );
 
         $handler->__invoke($command);
@@ -549,6 +566,89 @@ class CreateVideoHandlerTest extends TestCase
         }
 
         unlink($tempFile);
+    }
+
+    public function testSuccessfulUploadNotifiesStorage(): void
+    {
+        $userId = Uuid::generate();
+
+        $tempFile = tempnam(sys_get_temp_dir(), 'test_');
+        file_put_contents($tempFile, 'test video content');
+
+        $file = $this->createStub(TusFile::class);
+        $file->method('getName')->willReturn('video.mp4');
+        $file->method('getFilePath')->willReturn($tempFile);
+        $file->method('details')->willReturn(['metadata' => ['originalName' => 'video.mp4']]);
+
+        $command = new CreateVideo($file, $userId);
+
+        $savedVideo = Video::reconstitute(
+            new VideoTitle('video.mp4'),
+            new FileExtension('mp4'),
+            $userId,
+            [],
+            VideoDates::create(),
+            Uuid::generate(),
+        );
+
+        $commandBus = $this->createStub(MessageBusInterface::class);
+        $commandBus->method('dispatch')->willReturnCallback(static fn ($m) => new Envelope($m));
+
+        $eventBus = $this->createStub(MessageBusInterface::class);
+        $eventBus->method('dispatch')->willReturnCallback(static fn ($m) => new Envelope($m));
+
+        $videoRepository = $this->createStub(VideoRepositoryInterface::class);
+        $videoRepository->method('save')->willReturn($savedVideo);
+
+        $storage = $this->createStub(StorageInterface::class);
+        $storage->method('putFromPath')->willReturn('source/key.mp4');
+        $storage->method('sourceKey')->willReturn('source/key.mp4');
+
+        $taskRepository = $this->createStub(TaskRepositoryInterface::class);
+
+        $userWithTariff = $this->createStub(User::class);
+        $tariff = $this->createStub(Tariff::class);
+        $tariff->method('videoSize')->willReturn(new TariffVideoSize(1000.0));
+        $tariff->method('storageGb')->willReturn(new TariffStorageGb(5));
+        $tariff->method('storageHour')->willReturn(new TariffStorageHour(24));
+        $userWithTariff->method('id')->willReturn($userId);
+        $userWithTariff->method('tariff')->willReturn($tariff);
+
+        $userRepository = $this->createStub(UserRepositoryInterface::class);
+        $userRepository->method('findById')->willReturn($userWithTariff);
+
+        $storageRepository = $this->createStub(StorageRepositoryInterface::class);
+        $storageRepository->method('getUsedStorageSize')->willReturn(0);
+
+        $notifier = new VideoRealtimeNotifier($commandBus, $storage, $taskRepository);
+        $flashRealtimeNotifier = new FlashRealtimeNotifier($commandBus);
+        $logService = $this->createStub(LogServiceInterface::class);
+
+        $storageNotifier = $this->createMock(StorageRealtimeNotifier::class);
+        $storageNotifier->expects($this->once())
+            ->method('notifyStorageUpdated')
+            ->with($userId);
+
+        $handler = new CreateVideoHandler(
+            $commandBus,
+            $eventBus,
+            $videoRepository,
+            $storageRepository,
+            $userRepository,
+            $notifier,
+            $flashRealtimeNotifier,
+            $logService,
+            $storage,
+            new VideoFactory(),
+            new FlashNotificationFactory(),
+            $taskRepository,
+            $this->createStub(UrlVideoDownloader::class),
+            $storageNotifier,
+        );
+
+        $handler->__invoke($command);
+
+        $this->cleanupTempFile($tempFile);
     }
 
     public function testStorageQuotaExceededDispatchesCreateVideoFail(): void
@@ -619,6 +719,7 @@ class CreateVideoHandlerTest extends TestCase
             new FlashNotificationFactory(),
             $taskRepository,
             $this->createStub(UrlVideoDownloader::class),
+            $this->createStub(StorageRealtimeNotifier::class),
         );
 
         $handler->__invoke($command);

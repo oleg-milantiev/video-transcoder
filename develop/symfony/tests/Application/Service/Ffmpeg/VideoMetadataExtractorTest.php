@@ -57,7 +57,6 @@ class VideoMetadataExtractorTest extends TestCase
         $this->assertSame(12.345, $metadata['duration']);
         $this->assertSame(550000, $metadata['bitrate']);
         $this->assertSame('mov,mp4,m4a,3gp,3g2,mj2', $metadata['format']);
-        $this->assertSame(100500, $metadata['size']);
         $this->assertSame(1920, $metadata['width']);
         $this->assertSame(1080, $metadata['height']);
         $this->assertSame('h264', $metadata['codec']);

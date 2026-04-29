@@ -10,7 +10,6 @@ use App\Application\Event\ExtractVideoMetadataFail;
 use App\Application\Event\ExtractVideoMetadataStart;
 use App\Application\Factory\FlashNotificationFactory;
 use App\Application\Logging\LogServiceInterface;
-use App\Application\Service\Storage\StorageRealtimeNotifier;
 use App\Application\Service\Video\VideoRealtimeNotifier;
 use App\Domain\Shared\ValueObject\Uuid;
 use App\Domain\User\Entity\Tariff;
@@ -112,8 +111,7 @@ class ExtractVideoMetadataHandlerTest extends TestCase
         ?StorageInterface $storage = null,
         ?LogServiceInterface $logService = null,
         ?LoggerInterface $logger = null,
-        ?TaskRepositoryInterface $taskRepository = null,
-        ?StorageRealtimeNotifier $storageNotifier = null
+        ?TaskRepositoryInterface $taskRepository = null
     ): ExtractVideoMetadataHandler {
         $storage ??= $this->createStub(StorageInterface::class);
         $storage->method('sourceKey')->willReturn('source.mp4');
@@ -142,7 +140,6 @@ class ExtractVideoMetadataHandlerTest extends TestCase
                 $storage,
                 $this->createStub(TaskRepositoryInterface::class)
             ),
-            $storageNotifier ?? $this->createStub(StorageRealtimeNotifier::class),
         );
     }
 
@@ -194,7 +191,6 @@ class ExtractVideoMetadataHandlerTest extends TestCase
                  $storage,
                  $this->createStub(TaskRepositoryInterface::class)
              ),
-             $this->createStub(StorageRealtimeNotifier::class),
          );
 
          $handler(new ExtractVideoMetadata($video));
@@ -203,8 +199,10 @@ class ExtractVideoMetadataHandlerTest extends TestCase
          $this->assertTrue(true);
      }
 
-     public function testSuccessfulMetadataExtractionNotifiesStorage(): void
+     public function testSuccessfulMetadataExtractionDoesNotNotifyStorage(): void
      {
+         // Storage notification was moved to CreateVideoHandler.
+         // ExtractVideoMetadataHandler must complete successfully without calling storageNotifier.
          $video = $this->createVideoStub();
          $user = $this->createUserWithTariff();
 
@@ -214,52 +212,24 @@ class ExtractVideoMetadataHandlerTest extends TestCase
          $videoRepository = $this->createStub(VideoRepositoryInterface::class);
          $videoRepository->method('save')->willReturnCallback(static fn (Video $v) => $v);
 
-         $logService = $this->createStub(LogServiceInterface::class);
+         $eventBus = new class implements MessageBusInterface {
+             public function dispatch($message, array $stamps = []): Envelope
+             {
+                 return new Envelope($message);
+             }
+         };
 
-         $storage = $this->createStub(StorageInterface::class);
-         $storage->method('sourceKey')->willReturn('source.mp4');
-         $storage->method('localPathForRead')->willReturn('/tmp/source.mp4');
+         $commandBus = new class implements MessageBusInterface {
+             public function dispatch($message, array $stamps = []): Envelope
+             {
+                 return new Envelope($message);
+             }
+         };
 
-         $eventBus = $this->createStub(MessageBusInterface::class);
-         $eventBus->method('dispatch')->willReturnCallback(static fn () => new Envelope(new \stdClass()));
-
-         $commandBus = $this->createStub(MessageBusInterface::class);
-         $commandBus->method('dispatch')->willReturnCallback(static fn () => new Envelope(new \stdClass()));
-
-         $notifierBus = $this->createStub(MessageBusInterface::class);
-         $notifierBus->method('dispatch')->willReturnCallback(static fn () => new Envelope(new \stdClass()));
-
-         $storageNotifier = $this->createMock(StorageRealtimeNotifier::class);
-         $storageNotifier->expects($this->once())
-             ->method('notifyStorageUpdated')
-             ->with($user->id());
-
-         $handler = new ExtractVideoMetadataHandler(
-             $videoRepository,
-             $userRepository,
-             $this->createStub(TaskRepositoryInterface::class),
-             $storage,
-             $commandBus,
-             $eventBus,
-             $this->createMetadataExtractor(),
-             new VideoRealtimeNotifier(
-                 $notifierBus,
-                 $storage,
-                 $this->createStub(TaskRepositoryInterface::class)
-             ),
-             $logService,
-             new FlashNotificationFactory(),
-             new VideoRealtimeNotifier(
-                 $notifierBus,
-                 $storage,
-                 $this->createStub(TaskRepositoryInterface::class)
-             ),
-             $storageNotifier,
-         );
-
+         $handler = $this->createHandler($video, $userRepository, $videoRepository, null, $eventBus, $commandBus);
          $handler(new ExtractVideoMetadata($video));
 
-         // Verify notifyStorageUpdated was called
+         // Verify it completes without throwing (storageNotifier is not in the handler)
          $this->assertTrue(true);
      }
 
@@ -654,7 +624,6 @@ class ExtractVideoMetadataHandlerTest extends TestCase
             $logService,
             new FlashNotificationFactory(),
             new VideoRealtimeNotifier($notifierBus, $storage, $this->createStub(TaskRepositoryInterface::class)),
-            $this->createStub(StorageRealtimeNotifier::class),
         );
 
         $handler(new ExtractVideoMetadata($video));

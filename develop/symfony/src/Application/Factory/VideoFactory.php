@@ -3,7 +3,6 @@ declare(strict_types=1);
 
 namespace App\Application\Factory;
 
-use App\Application\Command\Video\CreateVideo;
 use App\Domain\Shared\ValueObject\Uuid;
 use App\Domain\Video\Entity\Video;
 use App\Domain\Video\ValueObject\FileExtension;
