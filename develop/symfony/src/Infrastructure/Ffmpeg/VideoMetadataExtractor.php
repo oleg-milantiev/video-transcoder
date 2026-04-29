@@ -60,7 +60,6 @@ final readonly class VideoMetadataExtractor
             'duration' => (float)($decoded['format']['duration'] ?? 0.0),
             'bitrate' => (int)($decoded['format']['bit_rate'] ?? 0),
             'format' => $decoded['format']['format_name'] ?? 'unknown',
-            'size' => (int)($decoded['format']['size'] ?? 0),
         ];
 
         if ($videoStream) {

@@ -10,28 +10,29 @@ use App\Application\CommandHandler\Video\CreateVideoHandler;
 use App\Application\Event\CreateVideoFail;
 use App\Application\Factory\FlashNotificationFactory;
 use App\Application\Factory\VideoFactory;
-use App\Application\Service\Video\VideoRealtimeNotifier;
+use App\Application\Logging\LogServiceInterface;
 use App\Application\Service\Mercure\FlashRealtimeNotifier;
+use App\Application\Service\Video\UrlVideoDownloader;
+use App\Application\Service\Video\VideoRealtimeNotifier;
+use App\Domain\Shared\ValueObject\Uuid;
 use App\Domain\User\Entity\Tariff;
 use App\Domain\User\Entity\User;
-use App\Domain\User\ValueObject\TariffStorageGb;
-use App\Domain\User\ValueObject\TariffVideoSize;
-use App\Domain\User\ValueObject\TariffStorageHour;
-use App\Domain\Video\Entity\Video;
-use App\Domain\Video\ValueObject\FileExtension;
-use App\Domain\Video\ValueObject\VideoTitle;
-use App\Domain\Video\ValueObject\VideoDates;
-use App\Domain\Video\Repository\StorageRepositoryInterface;
-use App\Domain\Video\Repository\VideoRepositoryInterface;
-use App\Domain\Video\Repository\TaskRepositoryInterface;
-use App\Domain\Video\Service\Storage\StorageInterface;
 use App\Domain\User\Repository\UserRepositoryInterface;
-use App\Application\Logging\LogServiceInterface;
+use App\Domain\User\ValueObject\TariffStorageGb;
+use App\Domain\User\ValueObject\TariffStorageHour;
+use App\Domain\User\ValueObject\TariffVideoSize;
+use App\Domain\Video\Entity\Video;
+use App\Domain\Video\Repository\StorageRepositoryInterface;
+use App\Domain\Video\Repository\TaskRepositoryInterface;
+use App\Domain\Video\Repository\VideoRepositoryInterface;
+use App\Domain\Video\Service\Storage\StorageInterface;
+use App\Domain\Video\ValueObject\FileExtension;
+use App\Domain\Video\ValueObject\VideoDates;
+use App\Domain\Video\ValueObject\VideoTitle;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Messenger\Envelope;
 use Symfony\Component\Messenger\MessageBusInterface;
 use TusPhp\File as TusFile;
-use App\Domain\Shared\ValueObject\Uuid;
 
 class CreateVideoHandlerTest extends TestCase
 {
@@ -137,6 +138,7 @@ class CreateVideoHandlerTest extends TestCase
             new VideoFactory(),
             new FlashNotificationFactory(),
             $taskRepository,
+            $this->createStub(UrlVideoDownloader::class),
         );
 
         $handler->__invoke($command);
@@ -229,6 +231,7 @@ class CreateVideoHandlerTest extends TestCase
             $videoFactory,
             $flashFactory,
             $this->createStub(TaskRepositoryInterface::class),
+            $this->createStub(UrlVideoDownloader::class),
         );
 
         // Invoke handler - should catch exception and dispatch CreateVideoFail
@@ -319,6 +322,7 @@ class CreateVideoHandlerTest extends TestCase
             new VideoFactory(),
             new FlashNotificationFactory(),
             $taskRepository,
+            $this->createStub(UrlVideoDownloader::class),
         );
 
         $handler->__invoke($command);
@@ -380,6 +384,7 @@ class CreateVideoHandlerTest extends TestCase
             new VideoFactory(),
             new FlashNotificationFactory(),
             $this->createStub(TaskRepositoryInterface::class),
+            $this->createStub(UrlVideoDownloader::class),
         );
 
         $handler->__invoke($command);
@@ -444,6 +449,7 @@ class CreateVideoHandlerTest extends TestCase
             new VideoFactory(),
             new FlashNotificationFactory(),
             $this->createStub(TaskRepositoryInterface::class),
+            $this->createStub(UrlVideoDownloader::class),
         );
 
         $handler->__invoke($command);
@@ -516,6 +522,7 @@ class CreateVideoHandlerTest extends TestCase
             new VideoFactory(),
             new FlashNotificationFactory(),
             $this->createStub(TaskRepositoryInterface::class),
+            $this->createStub(UrlVideoDownloader::class),
         );
 
         $handler->__invoke($command);
@@ -611,6 +618,7 @@ class CreateVideoHandlerTest extends TestCase
             new VideoFactory(),
             new FlashNotificationFactory(),
             $taskRepository,
+            $this->createStub(UrlVideoDownloader::class),
         );
 
         $handler->__invoke($command);

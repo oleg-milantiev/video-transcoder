@@ -41,6 +41,11 @@ services:
             $storagePath: '%kernel.project_dir%/public/uploads'
             $publicPath: '/uploads'
 
+    # todo dry with tus
+    App\Application\Service\Video\UrlVideoDownloader:
+        arguments:
+            $urlUploadDir: '%kernel.project_dir%/var/cache/uploads'
+
     TusPhp\Cache\RedisStore:
         class: TusPhp\Cache\RedisStore
         arguments:

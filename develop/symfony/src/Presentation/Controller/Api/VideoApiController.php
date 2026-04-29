@@ -3,7 +3,9 @@ declare(strict_types=1);
 
 namespace App\Presentation\Controller\Api;
 
+use App\Application\Command\Video\CreateVideo;
 use App\Application\Exception\HeightExceedsTariffException;
+use App\Application\Exception\InvalidUploadUrlException;
 use App\Application\Exception\InvalidUuidException;
 use App\Application\Exception\PresetHeightNotAvailableException;
 use App\Application\Exception\PresetNotFoundException;
@@ -26,8 +28,10 @@ use App\Domain\Video\Exception\VideoHasTranscodingTasks;
 use DomainException;
 use Psr\Log\LogLevel;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Throwable;
@@ -41,7 +45,55 @@ class VideoApiController extends AbstractController
     public function __construct(
         private readonly QueryBus $queryBus,
         private readonly LogServiceInterface $logService,
+        #[Autowire(service: 'messenger.bus.command')]
+        private readonly MessageBusInterface $commandBus,
     ) {
+    }
+
+    /**
+     * Accept a remote video URL for download-and-transcode.
+     *
+     * POST /api/video/upload
+     * Body: { "url": "https://example.com/video.mp4" }
+     *
+     * The controller only validates the URL is present and well-formed, then
+     * enqueues a CreateVideo command.  All downloading, size checks and
+     * quota enforcement happen asynchronously inside CreateVideoHandler.
+     * Use Mercure SSE or GET /api/video/ to track progress.
+     * todo надо какой-то uuid передавать для проверки статуса. Не video.id, но какой-то временный
+     */
+    #[Route('/upload', name: 'api_video_upload', methods: ['POST'])]
+    public function upload(Request $request): Response
+    {
+        $url = trim((string)($request->request->get('url') ?? $request->toArray()['url'] ?? ''));
+
+        if ($url === '') {
+            return $this->apiError('MISSING_URL', 'Parameter "url" is required.', 400);
+        }
+
+        if (!filter_var($url, FILTER_VALIDATE_URL)) {
+            return $this->apiError('INVALID_URL', 'The provided URL is not valid.', 422);
+        }
+
+        try {
+            $userId = Uuid::fromString($this->getUser()->id->toRfc4122());
+
+            $this->commandBus->dispatch(new CreateVideo(null, $userId, $url));
+
+            return $this->apiSuccess([
+                'message' => 'Upload accepted. The video will be downloaded and processed.',
+                'url' => $url,
+            ], 202);
+        } catch (InvalidUploadUrlException $e) {
+            return $this->apiError('INVALID_URL', $e->getMessage(), 422);
+        } catch (Throwable $e) {
+            $this->logService->log('video', 'upload', null, LogLevel::ERROR, 'URL upload dispatch failed', [
+                'url' => $url,
+                'message' => $e->getMessage(),
+            ]);
+
+            return $this->apiError('INTERNAL_ERROR', 'Failed to accept upload from URL.', 500);
+        }
     }
 
     #[Route('/', name: 'api_video_list', methods: ['GET'])]
@@ -132,7 +184,7 @@ class VideoApiController extends AbstractController
         }
     }
 
-    #[Route('/{id}', name: 'api_video_patch', methods: ['PATCH'])]
+    #[Route('/{id}', name: 'api_video_patch', requirements: ['id' => '[0-9a-fA-F-]{36}'], methods: ['PATCH'])]
     public function patch(string $id, Request $request): Response
     {
         try {
@@ -158,7 +210,7 @@ class VideoApiController extends AbstractController
         }
     }
 
-    #[Route('/{id}', name: 'api_video_delete', methods: ['DELETE'])]
+    #[Route('/{id}', name: 'api_video_delete', requirements: ['id' => '[0-9a-fA-F-]{36}'], methods: ['DELETE'])]
     public function delete(string $id): Response
     {
         try {

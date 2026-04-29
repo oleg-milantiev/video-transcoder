@@ -11,7 +11,6 @@ use App\Application\Event\ExtractVideoMetadataStart;
 use App\Application\Event\ExtractVideoMetadataSuccess;
 use App\Application\Factory\FlashNotificationFactory;
 use App\Application\Logging\LogServiceInterface;
-use App\Application\Service\Storage\StorageRealtimeNotifier;
 use App\Application\Service\Video\VideoRealtimeNotifier;
 use App\Domain\User\Exception\TariffNotFound;
 use App\Domain\User\Exception\UserNotFound;
@@ -45,7 +44,6 @@ final readonly class ExtractVideoMetadataHandler
         private LogServiceInterface $logService,
         private FlashNotificationFactory $flashNotificationFactory,
         private VideoRealtimeNotifier $videoRealtimeNotifier,
-        private StorageRealtimeNotifier $storageNotifier,
     ) {
     }
 
@@ -101,8 +99,6 @@ final readonly class ExtractVideoMetadataHandler
             }
 
             $this->notifier->notifyVideoUpdated($video, 'meta');
-            // todo перенести в createVideoHandler, прописав там meta.size
-            $this->storageNotifier->notifyStorageUpdated($video->userId());
             $this->logService->log('video', 'meta', $video->id(), LogLevel::INFO, 'Metadata extracted and saved', [
                 'time' => microtime(true) - $ms,
             ]);

@@ -8,7 +8,6 @@ use App\Application\Exception\QueryException;
 use App\Application\Exception\TranscodeAccessDeniedException;
 use App\Application\Exception\VideoAccessDeniedException;
 use App\Application\Exception\VideoNotFoundException;
-use App\Application\Query\DeleteVideoQuery;
 use App\Application\Query\GetVideoDetailsQuery;
 use App\Application\Query\GetVideoListQuery;
 use App\Application\Query\StartTranscodeQuery;
@@ -517,9 +516,22 @@ final class VideoApiControllerTest extends ApiWebTestCase
     {
         $client = $this->createBearerAuthenticatedClient();
 
-        // Route has no UUID requirement on {id}, so 'not-a-uuid' reaches the controller.
-        // PatchVideoQuery constructor calls Uuid::fromString('not-a-uuid') which throws InvalidUuidException.
-        $client->request('PATCH', '/api/video/not-a-uuid', [], [], ['CONTENT_TYPE' => 'application/json'], json_encode(['title' => 'New']));
+        // The PATCH route has a UUID format requirement, so we pass a valid-format UUID
+        // and have the QueryBus throw InvalidUuidException (simulating internal rejection).
+        $queryBus = $this->createMock(QueryBus::class);
+        $queryBus->expects($this->once())
+            ->method('query')
+            ->willThrowException(new \App\Application\Exception\InvalidUuidException('Invalid UUID'));
+        $this->replaceService(QueryBus::class, $queryBus);
+
+        $client->request(
+            'PATCH',
+            '/api/video/11111111-1111-4111-8111-111111111111',
+            [],
+            [],
+            ['CONTENT_TYPE' => 'application/json'],
+            json_encode(['title' => 'New'])
+        );
 
         self::assertResponseStatusCodeSame(400);
         self::assertSame([

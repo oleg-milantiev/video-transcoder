@@ -43,6 +43,7 @@ framework:
             App\Application\Command\Message\TelegramMessage: async
             App\Application\Command\Video\ExtractVideoMetadata: async
             App\Application\Command\Video\CreateVideoPreview: async
+            App\Application\Command\Video\CreateVideo: async
             App\Application\Command\Video\CleanupDeletedVideoMedia: async
 
             Symfony\Component\Mailer\Messenger\SendEmailMessage: async
