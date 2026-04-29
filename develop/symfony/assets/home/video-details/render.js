@@ -198,58 +198,75 @@ function renderInfoTab(vm) {
     const expiredAt = humanReadableDateTime(video.expiredAt);
     const expiredAtLabel = expiredAt === '-' ? '-' : `${expiredAt} (${video.expiredInterval || ''})`;
 
-    return h('div', { class: 'row g-3' }, [
-        // Poster
-        h('div', { class: 'col-md-5' }, [
-            video.poster
-                ? h('img', {
-                    src: video.poster,
-                    class: 'img-fluid rounded-3',
-                    style: 'width: 100%;' + (video.deleted ? ' filter: saturate(0); opacity: 0.6;' : ''),
-                    alt: video.title || '',
-                })
-                : h('div', {
-                    style: 'width:100%; aspect-ratio: 16/9; background:#eee; display:flex; align-items:center; justify-content:center; color:#aaa; border-radius: 12px;',
-                }, 'No poster'),
-            video.deleted
-                ? h('div', { class: 'mt-2' }, [
-                    h('span', { class: 'badge bg-warning text-dark me-1' }, 'Deleted'),
-                    h('span', { class: 'text-muted small' }, 'This video has been deleted'),
-                ])
-                : null,
-        ]),
-        // Metadata
-        h('div', { class: 'col-md-7' }, [
-            h('dl', { class: 'row mb-2' }, [
-                h('dt', { class: 'col-sm-4 small' }, 'Title'),
-                h('dd', { class: 'col-sm-8 fw-semibold small' }, [
-                    h('span', {}, video.title || '-'),
-                    !video.deleted
-                        ? h('button', {
-                            type: 'button',
-                            class: 'btn btn-link btn-sm p-0 ms-1',
-                            title: 'Rename',
-                            onClick: vm.openRenameModal,
-                        }, '✏️')
-                        : null,
-                ]),
-                h('dt', { class: 'col-sm-4 small' }, 'Created'),
-                h('dd', { class: 'col-sm-8 small' }, createdAt),
-                h('dt', { class: 'col-sm-4 small' }, 'Updated'),
-                h('dd', { class: 'col-sm-8 small' }, updatedAt),
-                h('dt', { class: 'col-sm-4 small' }, 'Expires'),
-                h('dd', { class: 'col-sm-8 small' }, expiredAtLabel),
+    const originWidth = Number((video.meta || {})._width) || 0;
+    const originHeight = Number((video.meta || {})._height) || 0;
+    const isLandscape = originWidth > 0 && originHeight > 0 && originWidth > originHeight;
+
+    // Title heading (above poster + data in all layouts)
+    const titleRow = h('div', { class: 'd-flex align-items-center gap-2 mb-3' }, [
+        h('h6', { class: 'mb-0 fw-semibold' + (video.deleted ? ' text-decoration-line-through text-muted' : '') }, video.title || '-'),
+        !video.deleted
+            ? h('button', {
+                type: 'button',
+                class: 'btn btn-link btn-sm p-0',
+                title: 'Rename',
+                onClick: vm.openRenameModal,
+            }, '✏️')
+            : null,
+        video.deleted
+            ? h('span', { class: 'badge bg-warning text-dark' }, 'Deleted')
+            : null,
+    ]);
+
+    const posterNode = video.poster
+        ? h('img', {
+            src: video.poster,
+            class: 'img-fluid rounded-3',
+            style: 'width: 100%;' + (video.deleted ? ' filter: saturate(0); opacity: 0.6;' : ''),
+            alt: video.title || '',
+        })
+        : h('div', {
+            style: 'width:100%; aspect-ratio: 16/9; background:#eee; display:flex; align-items:center; justify-content:center; color:#aaa; border-radius: 12px;',
+        }, 'No poster');
+
+    const dlNode = h('dl', { class: 'row mb-2' }, [
+        h('dt', { class: 'col-sm-4 small' }, 'Created'),
+        h('dd', { class: 'col-sm-8 small' }, createdAt),
+        h('dt', { class: 'col-sm-4 small' }, 'Updated'),
+        h('dd', { class: 'col-sm-8 small' }, updatedAt),
+        h('dt', { class: 'col-sm-4 small' }, 'Expires'),
+        h('dd', { class: 'col-sm-8 small' }, expiredAtLabel),
+    ]);
+
+    const metaNode = metaEntries.length > 0
+        ? h('div', {}, [
+            h('h6', { class: 'mb-1' }, 'Meta'),
+            h('ul', { class: 'small text-secondary ps-3 mb-0' },
+                metaEntries
+                    .filter(([k]) => !k.startsWith('_'))
+                    .map(([k, v]) => h('li', {}, [h('strong', {}, k + ': '), vm.formatMetaValue(v)]))
+            ),
+        ])
+        : null;
+
+    if (isLandscape) {
+        // Horizontal poster: full-width poster on top, two columns below
+        return h('div', {}, [
+            titleRow,
+            h('div', { class: 'mb-3' }, [posterNode]),
+            h('div', { class: 'row g-3' }, [
+                h('div', { class: 'col-md-6' }, [dlNode]),
+                h('div', { class: 'col-md-6' }, [metaNode]),
             ]),
-            metaEntries.length > 0
-                ? h('div', {}, [
-                    h('h6', { class: 'mb-1' }, 'Meta'),
-                    h('ul', { class: 'small text-secondary ps-3 mb-0' },
-                        metaEntries
-                            .filter(([k]) => !k.startsWith('_'))
-                            .map(([k, v]) => h('li', {}, [h('strong', {}, k + ': '), vm.formatMetaValue(v)]))
-                    ),
-                ])
-                : null,
+        ]);
+    }
+
+    // Vertical / unknown: poster left, data right
+    return h('div', {}, [
+        titleRow,
+        h('div', { class: 'row g-3' }, [
+            h('div', { class: 'col-md-5' }, [posterNode]),
+            h('div', { class: 'col-md-7' }, [dlNode, metaNode]),
         ]),
     ]);
 }
@@ -328,19 +345,21 @@ function renderTranscodeTab(vm, taskExists) {
     const video = vm.dto?.video || {};
     const meta = video.meta || {};
 
+    const heading = h('h5', { class: 'mb-3' }, 'Transcode Video');
+
     if (presets.length === 0) {
-        return h('p', { class: 'text-muted' }, 'No presets available');
+        return h('div', {}, [heading, h('p', { class: 'text-muted' }, 'No presets available')]);
     }
 
     if (typeof meta._width === 'undefined' || typeof meta._height === 'undefined') {
-        return h('p', { class: 'text-muted' }, 'Video metadata not yet available');
+        return h('div', {}, [heading, h('p', { class: 'text-muted' }, 'Video metadata not yet available')]);
     }
 
     const blocks = presets
         .map(preset => renderPresetBlock(vm, preset, taskExists))
         .filter(Boolean);
 
-    return h('div', {}, blocks);
+    return h('div', {}, [heading, ...blocks]);
 }
 
 // ── Tasks tab ─────────────────────────────────────────────────────────────────
@@ -361,8 +380,11 @@ function renderTaskStatus(vm, task) {
 
 function renderTasksTab(vm) {
     const tasks = vm.dto?.tasks || [];
+
+    const heading = h('h5', { class: 'mb-3' }, 'Transcoding Tasks');
+
     if (tasks.length === 0) {
-        return h('p', { class: 'text-muted' }, 'No tasks yet');
+        return h('div', {}, [heading, h('p', { class: 'text-muted' }, 'No tasks yet')]);
     }
 
     const rows = tasks.map((task) =>
@@ -376,7 +398,9 @@ function renderTasksTab(vm) {
         ])
     );
 
-    return h('div', { id: 'transcoding-tasks-section', class: 'table-responsive' }, [
+    return h('div', {}, [
+        heading,
+        h('div', { id: 'transcoding-tasks-section', class: 'table-responsive' }, [
         h('table', { class: 'table table-bordered align-middle mb-0' }, [
             h('thead', { class: 'table-light' }, [
                 h('tr', [
@@ -390,7 +414,8 @@ function renderTasksTab(vm) {
             ]),
             h('tbody', rows),
         ]),
-    ]);
+    ]),
+]);
 }
 
 // ── right detail column ───────────────────────────────────────────────────────

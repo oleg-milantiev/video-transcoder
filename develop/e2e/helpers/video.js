@@ -35,12 +35,11 @@ async function renameVideoFromDetails(page, newTitle) {
   await confirmButton.click({ timeout: UI_TIMEOUT });
 }
 async function expectVideoDetailsTitle(page, expectedTitle) {
-  const titleLabel = page.locator('dt', { hasText: 'Title' }).first();
-  await expect(titleLabel).toBeVisible({ timeout: UI_TIMEOUT });
-  const titleValue = titleLabel.locator('xpath=following-sibling::dd[1]//span[1]').first();
-  await expect(titleValue).toBeVisible({ timeout: UI_TIMEOUT });
+  // Title is now rendered as h6 in the Info tab title row (above poster/data)
+  const titleH6 = page.locator('.card-body h6').first();
+  await expect(titleH6).toBeVisible({ timeout: UI_TIMEOUT });
   await expect.poll(
-    async () => ((await titleValue.textContent()) || '').trim(),
+    async () => ((await titleH6.textContent()) || '').trim(),
     { timeout: 30000 }
   ).toBe(expectedTitle);
 }
@@ -248,17 +247,16 @@ async function expectPresetTranscodeDisabledWithHint(page, presetTitle, { expect
 async function waitForDeletedVideoDetailsWithoutPoster(page, expectedTitle, maxAttempts = 8, delayMs = 5000) {
   for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
     await waitForVideoDetailsVisible(page, { requirePresets: false });
-    // In the new UI, the deleted indicator is a 'Deleted' badge inside the Info tab poster area
+    // In the new UI, the deleted indicator is a 'Deleted' badge inside the title row (Info tab)
     const deletedBadge = page.locator('.badge', { hasText: 'Deleted' }).first();
     const hasDeletedBadge = (await deletedBadge.count()) > 0;
-    // Poster img has class img-fluid inside the col-md-5 poster column of the Info tab
-    const hasPoster = (await page.locator('.col-md-5 img.img-fluid').count()) > 0;
+    // Poster img can be in col-md-5 (vertical) or div.mb-3 (landscape layout)
+    const hasPoster = (await page.locator('.card-body img.img-fluid').count()) > 0;
     if (hasDeletedBadge && !hasPoster) {
-      // Verify the video title is correct
-      const titleSpan = page.locator('dt', { hasText: 'Title' }).first()
-        .locator('xpath=following-sibling::dd[1]//span[1]');
-      if ((await titleSpan.count()) > 0) {
-        await expect(titleSpan).toContainText(expectedTitle, { timeout: UI_TIMEOUT });
+      // Verify the video title is correct — now shown as h6 in the title row
+      const titleH6 = page.locator('.card-body h6').first();
+      if ((await titleH6.count()) > 0) {
+        await expect(titleH6).toContainText(expectedTitle, { timeout: UI_TIMEOUT });
       }
       return;
     }
