@@ -3,7 +3,7 @@ services:
         restart: always
         image: olegmilantiev/yc-nginx:${PROJECT_VERSION}
 #        ports:
-#            - 80:80
+#            - 81:80
         expose:
             - 80
             - 443
@@ -31,6 +31,7 @@ services:
             - 9000
         volumes:
             - uploads:/var/www/yc/public/uploads
+            - tus_uploads:/var/www/yc/var/cache/uploads
 
     ffmpeg:
         restart: always
@@ -56,6 +57,7 @@ services:
 #                    memory: 256M
         volumes:
             - uploads:/var/www/yc/public/uploads
+            - tus_uploads:/var/www/yc/var/cache/uploads
 
     ffmpeg-transcode:
         restart: always
@@ -83,6 +85,7 @@ services:
 #                    memory: 512M
         volumes:
             - uploads:/var/www/yc/public/uploads
+            - tus_uploads:/var/www/yc/var/cache/uploads
 
     redis:
         restart: always
@@ -144,3 +147,4 @@ networks:
 
 volumes:
     uploads:
+    tus_uploads:
