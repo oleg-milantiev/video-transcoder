@@ -14,6 +14,15 @@ async function switchToVideoTab(page, tabKey) {
   await btn.click({ timeout: UI_TIMEOUT });
 }
 async function expectDetailsValue(page, label) {
+  if (label === 'Title') {
+    // Title is now an h6 in the Info tab (not a dt/dd anymore)
+    await switchToVideoTab(page, 'info');
+    const titleH6 = page.locator('.card-body h6').first();
+    await expect(titleH6).toBeVisible({ timeout: UI_TIMEOUT });
+    await expect(titleH6).not.toHaveText('-', { timeout: UI_TIMEOUT });
+    await expect(titleH6).toHaveText(/\S+/, { timeout: UI_TIMEOUT });
+    return;
+  }
   const dt = page.locator('dt', { hasText: label }).first();
   await expect(dt).toBeVisible({ timeout: UI_TIMEOUT });
   const dd = dt.locator('xpath=following-sibling::dd[1]');

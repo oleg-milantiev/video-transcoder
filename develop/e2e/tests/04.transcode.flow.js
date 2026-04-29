@@ -149,11 +149,11 @@ test('transcode flow from video details to downloadable mp4', async ({ page }, t
     // 10) Open deleted video details and verify deleted UI state
         await listRow.click({ timeout: UI_TIMEOUT });
         await waitForVideoDetailsVisible(page);
-        await expect(page.getByText('This video has been deleted')).toBeVisible({ timeout: UI_TIMEOUT });
-        // Verify the title is shown in the Info tab title field
-        const deletedTitleSpan = page.locator('dt', { hasText: 'Title' }).first()
-            .locator('xpath=following-sibling::dd[1]//span[1]');
-        await expect(deletedTitleSpan).toContainText(renamedBaseFileName, { timeout: UI_TIMEOUT });
+        // Deleted state is shown as a 'Deleted' badge next to the title h6
+        await expect(page.locator('.badge', { hasText: 'Deleted' }).first()).toBeVisible({ timeout: UI_TIMEOUT });
+        // Verify the title h6 in the Info tab contains the renamed title
+        const titleH6 = page.locator('.card-body h6').first();
+        await expect(titleH6).toContainText(renamedBaseFileName, { timeout: UI_TIMEOUT });
 
         await switchToVideoTab(page, 'tasks');
         const tasksBody = tasksTable(page).locator('tbody').first();
