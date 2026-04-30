@@ -27,6 +27,9 @@ final class ProfileApiController extends AbstractController
     ) {
     }
 
+    /**
+     * Returns the current user's profile data including tariff limits and storage usage.
+     */
     #[Route('', name: 'api_profile', methods: ['GET'])]
     public function profile(): Response
     {

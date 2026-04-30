@@ -36,6 +36,12 @@ class GoogleController extends AbstractController
     ) {
     }
 
+    /**
+     * Initiates Google OAuth flow.
+     * Redirects already-authenticated users to the home page.
+     * Saves the originally requested path in the session so it can be
+     * restored after a successful login.
+     */
     #[Route('/connect/google', name: 'connect_google_start')]
     public function connect(Request $request): Response
     {
@@ -65,6 +71,14 @@ class GoogleController extends AbstractController
         }
     }
 
+    /**
+     * Google OAuth callback.
+     * Exchanges the authorization code for user data, auto-registers the user
+     * if they do not exist yet (assigning the Free tariff), records the login,
+     * and establishes a Symfony session.
+     * Redirects to the saved target path or to the home page on success,
+     * or back to the login page on failure.
+     */
     #[Route('/connect/google/check', name: 'connect_google_check')]
     public function check(
         Request $request,

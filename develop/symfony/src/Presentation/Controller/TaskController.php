@@ -31,6 +31,17 @@ class TaskController extends AbstractController
     ) {
     }
 
+    /**
+     * Generates a signed redirect URL for downloading a completed transcode task output.
+     * Resolves the task and video, verifies download access via the voter,
+     * and redirects to the time-limited S3/storage URL.
+     * todo и правда, вынести storage из public и давать TTL симлинк на скачивание
+     *
+     * @throws BadRequestHttpException  When the task ID is not a valid UUID.
+     * @throws NotFoundHttpException    When the task or its parent video is not found.
+     * @throws AccessDeniedHttpException When the user does not own the task.
+     * @throws HttpException            On unexpected internal errors (HTTP 500).
+     */
     #[Route('/task/{id}/download', name: 'task_download', requirements: ['id' => '[0-9a-fA-F-]{36}'])]
     public function download(string $id): Response
     {

@@ -23,6 +23,11 @@ class ContactApiController extends AbstractController
     ) {
     }
 
+    /**
+     * Submits a contact-us message from the authenticated user.
+     * Validates that the message is non-empty and does not exceed 1000 characters,
+     * then records it via the log service (routed to Telegram/Loki/DB depending on config).
+     */
     public function __invoke(Request $request): Response
     {
         /** @var UserEntity $user */

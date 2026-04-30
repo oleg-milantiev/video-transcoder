@@ -20,6 +20,14 @@ class SPAController extends AbstractController
     ) {
     }
 
+    /**
+     * Builds the SPA config array that is serialized as JSON and injected into the Twig template.
+     * Contains the authenticated user's profile, short-lived Bearer access token,
+     * refresh token, Mercure hub URL and subscriber token, and tariff/storage quota data.
+     * Returns an empty array for unauthenticated users.
+     *
+     * @return array<string, mixed>
+     */
     protected function getSPA(): array
     {
         /** @var UserEntity $user */

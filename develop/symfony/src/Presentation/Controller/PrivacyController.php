@@ -8,6 +8,9 @@ use Symfony\Component\Routing\Attribute\Route;
 
 class PrivacyController extends SPAController
 {
+    /**
+     * Renders the privacy policy page.
+     */
     #[Route('/privacy', name: 'privacy', methods: ['GET'])]
     public function index(): Response
     {

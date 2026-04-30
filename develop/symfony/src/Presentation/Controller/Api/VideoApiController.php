@@ -62,6 +62,8 @@ class VideoApiController extends AbstractController
      * enqueues a CreateVideo command.  All downloading, size checks and
      * quota enforcement happen asynchronously inside CreateVideoHandler.
      * Use returned session id for video.id find via GET /api/video/session/{uuid}
+     * todo добавить статус видео. Создавать видео со статусом uploading, возвращать его id
+     * todo убрать термин session. Обновлять прогресс загрузки видео, возвращать его в details и списке (в мета)
      */
     #[IsGranted('ROLE_API')]
     #[Route('/upload', name: 'api_video_upload', methods: ['POST'])]
@@ -96,6 +98,13 @@ class VideoApiController extends AbstractController
         }
     }
 
+    /**
+     * Looks up a video by the session UUID returned at upload time.
+     * Returns the video's persistent ID once the async CreateVideoHandler completes,
+     * or 204 No Content while the video is still being processed.
+     * The search is scoped to active (non-deleted) videos of the current user.
+     * todo убрать метод, создавать видео в статусе uploading, пусть его читают через видео API
+     */
     #[IsGranted('ROLE_API')]
     #[Route('/session/{session}', name: 'api_video_session', requirements: ['session' => '[0-9a-fA-F-]{36}'], methods: ['GET'])]
     public function session(string $session): Response
@@ -119,6 +128,11 @@ class VideoApiController extends AbstractController
         }
     }
 
+    /**
+     * Returns a paginated list of videos for the current user.
+     * Pagination parameters (`page`, `limit`) are read from the request query string.
+     * Each item includes title, poster URL, metadata, and status flags.
+     */
     #[Route('/', name: 'api_video_list', methods: ['GET'])]
     public function index(Request $request): Response
     {
@@ -138,6 +152,11 @@ class VideoApiController extends AbstractController
         }
     }
 
+    /**
+     * Returns the full details DTO for a single video including metadata, presets,
+     * task list, and the user's paginated video list (for the left sidebar).
+     * Access is enforced via VideoAccessVoter::CAN_VIEW_DETAILS.
+     */
     #[Route('/{id}', name: 'api_video_details', requirements: ['id' => '[0-9a-fA-F-]{36}'], methods: ['GET'])]
     public function details(string $id): Response
     {
@@ -166,6 +185,11 @@ class VideoApiController extends AbstractController
         }
     }
 
+    /**
+     * Creates a new transcoding task for the specified video, preset, and output height.
+     * Enforces tariff height limits and checks that the preset supports the requested height.
+     * The task is persisted and dispatched asynchronously to the ffmpeg worker queue.
+     */
     #[Route('/{id}/transcode/{presetId}/{height}', name: 'api_video_transcode', requirements: [
         'id' => '[0-9a-fA-F-]{36}',
         'presetId' => '[0-9a-fA-F-]{36}',
@@ -207,6 +231,11 @@ class VideoApiController extends AbstractController
         }
     }
 
+    /**
+     * Partially updates a video. Currently supports renaming (title field).
+     * After a successful update the new title is broadcast via Mercure so all
+     * open browser tabs update in real time.
+     */
     #[Route('/{id}', name: 'api_video_patch', requirements: ['id' => '[0-9a-fA-F-]{36}'], methods: ['PATCH'])]
     public function patch(string $id, Request $request): Response
     {
@@ -233,6 +262,11 @@ class VideoApiController extends AbstractController
         }
     }
 
+    /**
+     * Soft-deletes a video and its associated tasks.
+     * Blocked while any transcoding tasks are still running.
+     * The deletion is recorded and real-time subscribers are notified via Mercure.
+     */
     #[Route('/{id}', name: 'api_video_delete', requirements: ['id' => '[0-9a-fA-F-]{36}'], methods: ['DELETE'])]
     public function delete(string $id): Response
     {

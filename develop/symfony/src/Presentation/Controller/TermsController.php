@@ -8,6 +8,9 @@ use Symfony\Component\Routing\Attribute\Route;
 
 class TermsController extends SPAController
 {
+    /**
+     * Renders the terms of service page.
+     */
     #[Route('/terms', name: 'terms', methods: ['GET'])]
     public function index(): Response
     {

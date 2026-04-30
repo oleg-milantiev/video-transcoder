@@ -33,6 +33,10 @@ final class AuthApiController extends AbstractController
     }
 
     /**
+     * Issues a new Bearer access token and refresh token in exchange for valid credentials.
+     * Validates the JSON body for `email` and `password`, checks against the user provider
+     * and password hasher, then returns a token pair valid for the configured TTL.
+     *
      * @throws JsonException
      */
     #[Route('/token', name: 'api_auth_token', methods: ['POST'])]
@@ -92,6 +96,10 @@ final class AuthApiController extends AbstractController
     }
 
     /**
+     * Exchanges a valid refresh token for a new access token and refresh token pair.
+     * Parses and validates the `refreshToken` claim from the JSON body, reloads the user,
+     * and issues a fresh token pair without requiring credentials again.
+     *
      * @throws JsonException
      */
     #[Route('/refresh', name: 'api_auth_refresh', methods: ['POST'])]

@@ -10,6 +10,10 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 #[IsGranted('IS_AUTHENTICATED_FULLY')]
 class TariffController extends SPAController
 {
+    /**
+     * Renders the tariff/pricing SPA page.
+     * The Vue frontend reads the tariff data from the injected config object.
+     */
     #[Route('/tariffs', name: 'tariffs', methods: ['GET'])]
     public function tariffs(): Response
     {

@@ -13,6 +13,12 @@ use TusPhp\Tus\Server as TusServer;
 #[IsGranted('IS_AUTHENTICATED_FULLY')]
 class UploadController extends AbstractController
 {
+    /**
+     * Handles all TUS resumable upload protocol requests (HEAD, POST, PATCH, DELETE).
+     * The route captures the optional TUS upload token in the URL so that continuation
+     * requests reach the same server instance. Ensures the upload directory exists
+     * before delegating to the TUS server.
+     */
     #[Route('/api/upload/{token?}', name: 'api_tus', defaults: ['token' => ''])]
     public function uploadHandler(
         TusServer $server,

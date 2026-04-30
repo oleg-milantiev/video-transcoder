@@ -11,21 +11,24 @@ use Symfony\Component\Security\Http\Authentication\AuthenticationUtils;
 
 class SecurityController extends AbstractController
 {
+    /**
+     * Renders the login form and passes any previous authentication error
+     * and the last entered username back into the template.
+     */
     #[Route(path: '/login', name: 'app_login')]
     public function login(AuthenticationUtils $authenticationUtils): Response
     {
-        // if ($this->getUser()) {
-        //     return $this->redirectToRoute('target_path');
-        // }
-
-        // get the login error if there is one
         $error = $authenticationUtils->getLastAuthenticationError();
-        // last username entered by the user
         $lastUsername = $authenticationUtils->getLastUsername();
 
         return $this->render('security/login.html.twig', ['last_username' => $lastUsername, 'error' => $error]);
     }
 
+    /**
+     * Logout endpoint — this method body is never executed.
+     * Symfony's firewall intercepts the request before it reaches the controller
+     * and handles session invalidation and redirect.
+     */
     #[Route(path: '/logout', name: 'app_logout')]
     public function logout(): void
     {

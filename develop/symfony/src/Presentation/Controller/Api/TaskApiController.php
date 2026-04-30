@@ -39,6 +39,10 @@ class TaskApiController extends AbstractController
     ) {
     }
 
+    /**
+     * Returns a paginated list of transcoding tasks for the current user.
+     * Pagination parameters (`page`, `limit`) are read from the request query string.
+     */
     #[Route('/', name: 'api_task_list', methods: ['GET'])]
     public function index(Request $request): Response
     {
@@ -59,6 +63,10 @@ class TaskApiController extends AbstractController
     }
 
     /**
+     * Cancels an active transcoding task owned by the current user.
+     * Sets a Redis cancellation flag; the running ffmpeg worker will detect it
+     * and abort processing on its next polling cycle.
+     *
      * @throws InvalidArgumentException
      */
     #[Route('/{id}/cancel', name: 'api_task_cancel', requirements: ['id' => '[0-9a-fA-F-]{36}'], methods: ['POST'])]
