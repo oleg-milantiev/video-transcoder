@@ -194,7 +194,8 @@ class TaskRepository extends ServiceEntityRepository implements TaskRepositoryIn
                 t.deleted,
                 pst.waiting_tariff_instance,
                 pst.waiting_tariff_delay,
-                to_char(pst.will_start_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"+00:00"') AS will_start_at
+                to_char(pst.will_start_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"+00:00"') AS will_start_at,
+                (t.meta->>'size')::bigint AS size
             FROM task t
                      JOIN preset p ON p.id = t.preset_id
                      JOIN video v ON v.id = t.video_id
@@ -223,6 +224,7 @@ class TaskRepository extends ServiceEntityRepository implements TaskRepositoryIn
                 waitingTariffInstance: (bool)$row['waiting_tariff_instance'],
                 waitingTariffDelay: (bool)$row['waiting_tariff_delay'],
                 willStartAt: $row['will_start_at'],
+                size: $row['size'] !== null ? (int)$row['size'] : null,
             ),
             $stmt->fetchAllAssociative(),
         );

@@ -29,6 +29,7 @@ readonly class TaskItemDTO
         public ?bool $waitingTariffInstance = null,
         public ?bool $waitingTariffDelay = null,
         public ?string $willStartAt = null,
+        public ?int $size = null,
     ) {
     }
 
@@ -53,6 +54,7 @@ readonly class TaskItemDTO
             createdAt: $task->createdAt()->format(DateTimeInterface::ATOM),
             updatedAt: $task->updatedAt()?->format(DateTimeInterface::ATOM),
             deleted: $task->isDeleted(),
+            size: isset($task->meta()['size']) ? (int)$task->meta()['size'] : null,
         );
     }
 
@@ -76,6 +78,7 @@ readonly class TaskItemDTO
             'waitingTariffInstance' => $this->waitingTariffInstance,
             'waitingTariffDelay' => $this->waitingTariffDelay,
             'willStartAt' => $this->willStartAt,
+            'size' => $this->size,
         ];
     }
 }

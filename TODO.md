@@ -13,7 +13,6 @@
   - эту тучу пресетов в премиуме, конечно же, убрать! https://chatgpt.com/share/69eb930f-17ec-832e-affc-0c80681cc3bd
 - дизайн
   - чуть(!) улучшить вид с мобилы
-- раздельные ffmpeg-transcode consumer для Free / Premium. У первых ограничения на проц
 
 ## Sprint 0.1.4 (Тарифы, Оплата)
 
@@ -29,7 +28,6 @@
   - terms, privacy
 - обновление основного README.md, включая картинки, видимые на гитхабе. Английская версия первой
 - у меня мало неавторизованных тестов. И кросс-юзерных тестов. Можно загружать файл без авторизации, подменив форму?
-- swagger в рамках API Doc
 - ab (нагрузочное), PMM, анализ и оптимизация тупых запросов
 
 ## Sprint 0.2.0 (Public)
@@ -58,24 +56,9 @@
 - ? security THINK ? начиная одну загрузку, надо блокировать место в Storage и не допускать новые загрузки, не влезающие
   в него. То есть несколько одновременно можно, но не больше Storage.
 - в проде все протестировать новым автотестом: создаёт тест тариф, набирает туда все пресеты, загружает видео верт и гориз, кодирует во все пресеты, проверяет скачивание
-- уведомления в телегу. То ссылки есть, то их нет
-  - [22.04.2026 23:52] Oleg Milantiev: Transcoding started (4f15708e-d1dc-4d13-9046-891e70d6c695)
-    video: prod-20260422 (https://yc.milantiev.com/admin/video/8abd8eab-1540-432f-8549-b2b6c8ce0a3d)
-    preset: Standard video Quality (https://yc.milantiev.com/admin/preset/8646d1a5-3f87-4382-8abe-7341e18ed0f0)
-    user: prod-20260422@example.test (https://yc.milantiev.com/admin/user/7b9a3f5a-8ec9-4d49-9396-67cb5a646c2f)
-    [22.04.2026 23:52] Oleg Milantiev: Transcode requested (16a45aba-946e-4eb3-a22f-b763f8a6e24c)
-    video: prod-20260422
-    preset: Standard video Quality
-    user: prod-20260422@example.test
-  - [22.04.2026 23:52] Oleg Milantiev: ? Video created: 2022_10_04_Two_Maxes (https://yc.milantiev.com/video/92e43d68-29cd-478b-ac80-55c3db2c5be8)
-    By oleg@milantiev.com
-    [22.04.2026 23:52] Oleg Milantiev: ? Video created: prod-20260422
-    By prod-20260422@example.test
 - реклама перехода на Premium
-  - загружаешь видео и не влезаешь в тариф? Рекламу перехода на премиум
   - висит Pending? Рекламу перехода на премиум
   - на странице кодирования серым другие пресеты с рекламой перехода на премиум
-- под кнопкой download показать размер файла, аналогично expected size под кнопкой Transcode
 - uppy widget
   - uuid в uppy widget беда. Должно быть имя таки
   - загрузка второго видео неудобно сделана

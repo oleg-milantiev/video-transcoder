@@ -1,9 +1,10 @@
 import { h } from 'vue';
+import { bytesToHuman } from '../shared.js';
 
 /**
  * Renders the action button(s) for a single task row.
  *
- * @param {Object} task        - Task DTO (id, status, presetId, height, videoId, videoTitle, presetTitle)
+ * @param {Object} task        - Task DTO (id, status, presetId, height, videoId, videoTitle, presetTitle, size)
  * @param {Object} taskActions - Result of createTaskActions(): { activeKey, cancelTask, startTranscode, getDownloadUrl }
  */
 export function renderTaskAction(task, taskActions) {
@@ -16,15 +17,20 @@ export function renderTaskAction(task, taskActions) {
 
     // COMPLETED — Download
     if (task.status === 'COMPLETED') {
-        return h(
-            'a',
-            {
-                href: getDownloadUrl(task.id),
-                class: 'btn btn-outline-primary btn-sm',
-                download: `${task.videoTitle}-${task.presetAudioCodec}-${task.presetVideoCodec}-${task.height}p.${task.presetFormat}`,
-            },
-            'Download',
-        );
+        return h('div', {}, [
+            h(
+                'a',
+                {
+                    href: getDownloadUrl(task.id),
+                    class: 'btn btn-outline-primary btn-sm',
+                    download: `${task.videoTitle}-${task.presetAudioCodec}-${task.presetVideoCodec}-${task.height}p.${task.presetFormat}`,
+                },
+                'Download',
+            ),
+            typeof task.size === 'number' && task.size > 0
+                ? h('div', { class: 'small text-center text-muted mt-1', style: 'font-size: 0.7rem;' }, `${bytesToHuman(task.size)}`)
+                : null,
+        ]);
     }
 
     // PENDING / STARTING / PROCESSING — Cancel
