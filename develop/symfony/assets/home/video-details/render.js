@@ -368,15 +368,15 @@ const TRANSCODE_GOALS = [
     { key: 'social',  icon: '📱', label: 'Social media',   sub: 'TikTok, Reels, Shorts' },
     { key: 'quality', icon: '⭐', label: 'Max quality',    sub: 'Best video quality' },
     { key: 'compact', icon: '⚡', label: 'Fast & compact', sub: 'Minimum file size' },
-    { key: 'pc',      icon: '🖥',  label: 'For PC',         sub: 'Universal format' },
+    { key: 'pc',      icon: '🖥', label: 'For PC',         sub: 'Universal format' },
     { key: 'archive', icon: '🗄️', label: 'Archive',        sub: 'Long-term storage' },
     { key: 'custom',  icon: '⚙️', label: 'Custom',         sub: 'Full control' },
 ];
 
 const TRANSCODE_QUALITY_OPTIONS = [
-    { key: 'super',  label: 'Super',  hint: 'Super quality — very slow encoding with best results.' },
-    { key: 'good',   label: 'Good',   hint: 'Good quality — good balance between encoding speed and file size.' },
-    { key: 'normal', label: 'Normal', hint: 'Normal quality — quick encoding, clever compromise of quality. Maximum compatibility with devices.' },
+    { key: 'super',  label: 'Super',  hint: 'Super quality — very slow encoding with best results (AV1).' },
+    { key: 'good',   label: 'Good',   hint: 'Good quality — good balance between encoding speed and file size (HEVC, VP9).' },
+    { key: 'normal', label: 'Normal', hint: 'Normal quality — quick encoding, clever compromise of quality. Maximum compatibility with devices (H264).' },
 ];
 
 const TRANSCODE_FORMAT_OPTIONS = [
@@ -392,7 +392,51 @@ const GOAL_DEFAULTS = {
     archive: { quality: 'good',   resolution: 'auto', format: 'mp4'  },
 };
 
-const BUILDER_RESOLUTIONS = ['auto', '1080', '720', '480'];
+const BUILDER_RESOLUTIONS = ['2160', '1440', '1080', '720', '480'];
+
+// Maps (quality, format) → expected videoCodec value in preset
+const QUALITY_CODEC_MAP = {
+    super:  { mp4: 'av1',  webm: 'av1'  },
+    good:   { mp4: 'h265', webm: 'vp9'  },
+    normal: { mp4: 'h264', webm: 'h264' },
+};
+
+function resolveBuilderPreset(presets, quality, format) {
+    const codecByFormat = QUALITY_CODEC_MAP[quality] || QUALITY_CODEC_MAP.normal;
+    const targetCodec   = codecByFormat[format] || codecByFormat.mp4;
+
+    // 1. Exact match: codec + format
+    let found = presets.find(p => p.videoCodec === targetCodec && p.format === format);
+    // 2. Codec only
+    if (!found) { found = presets.find(p => p.videoCodec === targetCodec); }
+    // 3. Format only
+    if (!found) { found = presets.find(p => p.format === format); }
+    // 4. First available
+    return found || presets[0] || null;
+}
+
+/**
+ * Resolves 'auto' to the closest available resolution string.
+ * The short side (min of width/height) is used for matching.
+ */
+function resolveEffectiveResolution(transcodeResolution, originWidth, originHeight, availableResolutions) {
+    if (transcodeResolution !== 'auto') {
+        return transcodeResolution;
+    }
+    const shortSide = (originWidth > 0 && originHeight > 0)
+        ? Math.min(originWidth, originHeight)
+        : 1080;
+    let closest = availableResolutions[0] || '1080';
+    let minDiff = Infinity;
+    for (const r of availableResolutions) {
+        const diff = Math.abs(parseInt(r, 10) - shortSide);
+        if (diff < minDiff) {
+            minDiff = diff;
+            closest = r;
+        }
+    }
+    return closest;
+}
 
 // ── Transcode Builder UI ──────────────────────────────────────────────────────
 
@@ -448,28 +492,44 @@ function renderTranscodeBuilder(vm, taskExists) {
 
     // ── Resolution ─────────────────────────────────────────────────────────────
     const tariffMaxHeight = Number(vm.config?.tariff?.height) || 0;
-    const resolutionButtons = BUILDER_RESOLUTIONS.map(r => {
-        const h_val = r === 'auto' ? originHeight : parseInt(r, 10);
-        if (tariffMaxHeight > 0 && h_val > 0 && h_val > tariffMaxHeight) return null;
-        const isActive = vm.transcodeResolution === r;
+    const isLandscape = originWidth > 0 && originHeight > 0 ? originWidth >= originHeight : true;
+
+    // Filter available resolutions by tariff
+    const filteredResolutions = BUILDER_RESOLUTIONS.filter(r =>
+        !(tariffMaxHeight > 0 && parseInt(r, 10) > tariffMaxHeight)
+    );
+
+    // Resolve 'auto' to closest available button
+    const effectiveResolution = resolveEffectiveResolution(
+        vm.transcodeResolution, originWidth, originHeight, filteredResolutions
+    );
+
+    const resolutionButtons = filteredResolutions.map(r => {
+        const shortSide = parseInt(r, 10);
         let subLabel;
-        if (r === 'auto') {
-            subLabel = originWidth && originHeight ? `${originWidth}×${originHeight}` : 'original';
+        if (isLandscape) {
+            const longSide = originWidth && originHeight
+                ? Math.round(shortSide * originWidth / originHeight)
+                : Math.round(shortSide * 16 / 9);
+            subLabel = `${longSide}×${shortSide}`;
         } else {
-            const approxW = Math.round(parseInt(r, 10) * (originWidth && originHeight ? originWidth / originHeight : 16 / 9));
-            subLabel = `${approxW}×${r}`;
+            const longSide = originWidth && originHeight
+                ? Math.round(shortSide * originHeight / originWidth)
+                : Math.round(shortSide * 16 / 9);
+            subLabel = `${shortSide}×${longSide}`;
         }
+        const isActive = r === effectiveResolution;
         return h('button', {
             type: 'button',
             class: 'btn btn-sm ' + (isActive ? 'btn-primary' : 'btn-outline-secondary'),
             style: 'border-radius:8px',
             onClick: () => vm.setTranscodeResolution(r),
         }, [
-            h('span', {}, r === 'auto' ? 'Auto' : r + 'p'),
+            h('span', {}, r + 'p'),
             h('br'),
             h('small', { class: isActive ? 'text-white opacity-75' : 'text-muted' }, subLabel),
         ]);
-    }).filter(Boolean);
+    });
 
     // ── Format ─────────────────────────────────────────────────────────────────
     const formatHint = TRANSCODE_FORMAT_OPTIONS.find(f => f.key === vm.transcodeFormat)?.hint || '';
@@ -489,11 +549,8 @@ function renderTranscodeBuilder(vm, taskExists) {
 
     // ── Result / CTA ───────────────────────────────────────────────────────────
     const presets = vm.dto?.presets || [];
-    const targetFormat = vm.transcodeFormat;
-    const preset = presets.find(p => p.format === targetFormat) || presets[0] || null;
-    const selectedHeight = vm.transcodeResolution === 'auto'
-        ? originHeight
-        : parseInt(vm.transcodeResolution, 10);
+    const preset = resolveBuilderPreset(presets, vm.transcodeQuality, vm.transcodeFormat);
+    const selectedHeight = parseInt(effectiveResolution, 10);
     const expectedSize = preset && selectedHeight > 0
         ? calculateExpectedFileSize(preset.bitrate, selectedHeight, duration)
         : null;
