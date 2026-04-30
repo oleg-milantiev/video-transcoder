@@ -67,6 +67,11 @@ readonly class VideoItemDTO
         unset($meta['preview']);
         unset($meta['sourceKey']);
 
+        if (isset($meta['downloadSpeed'], $meta['downloadDurationSec'])) {
+            $meta['downloadSpeed'] = HumanReadableHelper::formatBitrate((int)$meta['downloadSpeed']);
+            $meta['downloadDuration'] = HumanReadableHelper::formatDuration($meta['downloadDurationSec']);
+            unset($meta['downloadDurationSec']);
+        }
         if (isset($meta['width'], $meta['height'])) {
             $meta['_width'] = $meta['width'];
             $meta['_height'] = $meta['height'];
