@@ -345,21 +345,63 @@ function renderTranscodePresets(vm, taskExists) {
     const video = vm.dto?.video || {};
     const meta = video.meta || {};
 
-    const heading = h('h5', { class: 'mb-3' }, 'Transcode Video');
-
     if (presets.length === 0) {
-        return h('div', {}, [heading, h('p', { class: 'text-muted' }, 'No presets available')]);
+        return h('div', {}, [h('p', { class: 'text-muted' }, 'No presets available')]);
     }
 
     if (typeof meta._width === 'undefined' || typeof meta._height === 'undefined') {
-        return h('div', {}, [heading, h('p', { class: 'text-muted' }, 'Video metadata not yet available')]);
+        return h('div', {}, [h('p', { class: 'text-muted' }, 'Video metadata not yet available')]);
     }
 
-    const blocks = presets
+    // ── filter values ─────────────────────────────────────────────────────────
+    const filterFormat     = vm.customFilterFormat     || 'all';
+    const filterVideoCodec = vm.customFilterVideoCodec || 'all';
+    const filterAudioCodec = vm.customFilterAudioCodec || 'all';
+
+    // ── filter UI helpers ─────────────────────────────────────────────────────
+    function filterGroup(label, options, current, setter) {
+        return h('div', { class: 'd-flex align-items-center gap-1 flex-wrap' }, [
+            h('span', { class: 'text-muted small me-1', style: 'white-space:nowrap' }, label + ':'),
+            ...options.map(opt =>
+                h('button', {
+                    type: 'button',
+                    class: 'btn btn-sm py-0 px-2 ' + (current === opt.key ? 'btn-primary' : 'btn-outline-secondary'),
+                    style: 'font-size:0.78rem;border-radius:6px',
+                    onClick: () => setter(opt.key),
+                }, opt.label)
+            ),
+        ]);
+    }
+
+    const formatOptions     = [{ key:'all', label:'All' }, { key:'mp4', label:'MP4' }, { key:'webm', label:'WebM' }];
+    const videoCodecOptions = [{ key:'all', label:'All' }, { key:'h264', label:'H264' }, { key:'h265', label:'H265' }, { key:'vp8', label:'VP8' }, { key:'vp9', label:'VP9' }, { key:'av1', label:'AV1' }];
+    const audioCodecOptions = [{ key:'all', label:'All' }, { key:'aac', label:'AAC' }, { key:'opus', label:'Opus' }];
+
+    const filtersRow = h('div', { class: 'd-flex flex-wrap gap-3 mb-3 p-3 bg-white rounded-3 border' }, [
+        filterGroup('Format',      formatOptions,     filterFormat,     vm.setCustomFilterFormat),
+        filterGroup('Video Codec', videoCodecOptions, filterVideoCodec, vm.setCustomFilterVideoCodec),
+        filterGroup('Audio Codec', audioCodecOptions, filterAudioCodec, vm.setCustomFilterAudioCodec),
+    ]);
+
+    // ── filtered presets ──────────────────────────────────────────────────────
+    const filtered = presets.filter(p =>
+        (filterFormat     === 'all' || p.format     === filterFormat) &&
+        (filterVideoCodec === 'all' || p.videoCodec === filterVideoCodec) &&
+        (filterAudioCodec === 'all' || p.audioCodec === filterAudioCodec)
+    );
+
+    const blocks = filtered
         .map(preset => renderPresetBlock(vm, preset, taskExists))
         .filter(Boolean);
 
-    return h('div', {}, [heading, ...blocks]);
+    const content = blocks.length > 0
+        ? blocks
+        : [h('p', { class: 'text-muted small mt-2' }, [
+            'No presets match the selected filters. ',
+            h('a', { href: '/tariffs', class: 'text-primary' }, 'Upgrade your Tariff')
+        ])];
+
+    return h('div', {}, [filtersRow, ...content]);
 }
 
 // ── Transcode Builder constants ───────────────────────────────────────────────
@@ -374,9 +416,9 @@ const TRANSCODE_GOALS = [
 ];
 
 const TRANSCODE_QUALITY_OPTIONS = [
-    { key: 'super',  label: 'Super',  hint: 'Super quality — very slow encoding with best results (AV1).' },
-    { key: 'good',   label: 'Good',   hint: 'Good quality — good balance between encoding speed and file size (HEVC, VP9).' },
-    { key: 'normal', label: 'Normal', hint: 'Normal quality — quick encoding, clever compromise of quality. Maximum compatibility with devices (H264).' },
+    { key: 'super',  label: 'Super',  hint: 'Super quality — very slow encoding with best results.' },
+    { key: 'good',   label: 'Good',   hint: 'Good quality — good balance between encoding speed and file size.' },
+    { key: 'normal', label: 'Normal', hint: 'Normal quality — quick encoding, clever compromise of quality. Maximum compatibility with devices.' },
 ];
 
 const TRANSCODE_FORMAT_OPTIONS = [
@@ -570,7 +612,10 @@ function renderTranscodeBuilder(vm, taskExists) {
         h('div', { class: 'row align-items-center' }, [
             h('div', { class: 'col-md-8' }, [
                 noPresetAvailable
-                    ? h('div', { class: 'text-danger small mb-2' }, `⚠️ No ${vm.transcodeFormat.toUpperCase()} preset available for the selected quality. Please choose a different format or quality.`)
+                    ? h('div', { class: 'text-danger small mb-2' }, [
+                        `⚠️ No preset available for the selected quality and format. `,
+                        h('a', { href: '/tariffs', class: 'text-primary' }, 'Upgrade your Tariff')
+                    ])
                     : null,
                 !noPresetAvailable && preset
                     ? h('span', { class: 'badge bg-primary me-1 mb-2' }, preset.title)

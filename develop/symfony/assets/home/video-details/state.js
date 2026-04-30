@@ -17,5 +17,9 @@ export function createVideoDetailsState() {
         transcodeQuality: ref(config.tariff.title === 'Free' ? 'normal' : 'good'),
         transcodeResolution: ref('auto'),
         transcodeFormat: ref('mp4'),
+        // custom tab filters
+        customFilterFormat: ref('all'),
+        customFilterVideoCodec: ref('all'),
+        customFilterAudioCodec: ref('all'),
     };
 }

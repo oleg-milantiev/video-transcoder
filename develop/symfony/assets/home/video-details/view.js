@@ -69,6 +69,13 @@ export function createVideoDetailsView(config) {
                 setTranscodeQuality: (v) => { state.transcodeQuality.value = v; },
                 setTranscodeResolution: (v) => { state.transcodeResolution.value = v; },
                 setTranscodeFormat: (v) => { state.transcodeFormat.value = v; },
+                // custom tab filters
+                customFilterFormat: state.customFilterFormat,
+                customFilterVideoCodec: state.customFilterVideoCodec,
+                customFilterAudioCodec: state.customFilterAudioCodec,
+                setCustomFilterFormat: (v) => { state.customFilterFormat.value = v; },
+                setCustomFilterVideoCodec: (v) => { state.customFilterVideoCodec.value = v; },
+                setCustomFilterAudioCodec: (v) => { state.customFilterAudioCodec.value = v; },
                 // actions
                 startTranscode: actions.startTranscode,
                 cancelTask: actions.cancelTask,
