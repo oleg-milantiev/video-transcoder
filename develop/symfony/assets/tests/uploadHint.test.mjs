@@ -1,5 +1,5 @@
 /**
- * Tests for assets/home/tabs/TariffHint.js
+ * Tests for assets/home/tabs/TariffHint.js and tabs/upload/render.js
  * Run: node assets/tests/uploadHint.test.mjs
  */
 import assert from 'node:assert/strict';
@@ -11,6 +11,7 @@ import {
     isStorageLow,
     renderTariffHint,
 } from '../home/tabs/TariffHint.js';
+import { renderUploadPane } from '../home/tabs/upload/render.js';
 
 // ── formatBytes ──────────────────────────────────────────────────────────────
 
@@ -203,5 +204,43 @@ console.log('✓ renderTariffHint: null / missing tariff');
     assert.ok(resultStr.includes('10 GB'), `should show 10 GB max: ${resultStr}`);
     assert.ok(resultStr.includes('500 MB'), `should show 500 MB videoSize: ${resultStr}`);
     console.log('✓ renderTariffHint: large storage');
+}
+
+// ── renderUploadPane: storage full → overlay ─────────────────────────────────
+
+{
+    const fullTariff = {
+        videoSize: 100,
+        width: 1920,
+        height: 1080,
+        storage: { now: 1073741824, max: 1073741824 }, // 1 GB / 1 GB (full)
+    };
+    const result = renderUploadPane('tab-pane', true, fullTariff);
+    const resultStr = JSON.stringify(result);
+    assert.ok(resultStr.includes('storage-full-overlay'), 'storage full overlay key must be present');
+    assert.ok(resultStr.includes('Storage Full'), 'must show "Storage Full" heading');
+    assert.ok(resultStr.includes('/tariffs'), 'must link to tariffs page');
+    assert.ok(resultStr.includes('upgrade your plan'), 'must mention upgrading plan');
+    console.log('✓ renderUploadPane: storage full shows overlay');
+}
+
+{
+    const normalTariff = {
+        videoSize: 100,
+        width: 1920,
+        height: 1080,
+        storage: { now: 0, max: 1073741824 }, // empty storage
+    };
+    const result = renderUploadPane('tab-pane', true, normalTariff);
+    const resultStr = JSON.stringify(result);
+    assert.ok(!resultStr.includes('storage-full-overlay'), 'no overlay when storage has space');
+    console.log('✓ renderUploadPane: normal storage → no overlay');
+}
+
+{
+    const result = renderUploadPane('tab-pane', true, null);
+    const resultStr = JSON.stringify(result);
+    assert.ok(!resultStr.includes('storage-full-overlay'), 'no overlay when tariff is null');
+    console.log('✓ renderUploadPane: null tariff → no overlay');
 }
 
