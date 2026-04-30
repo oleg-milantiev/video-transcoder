@@ -12,5 +12,10 @@ export function createVideoDetailsState() {
         videoListLoading: ref(false),
         // active tab in right pane: 'info' | 'transcode' | 'tasks'
         activeTab: ref('info'),
+        // transcode builder state
+        transcodeGoal: ref('social'),
+        transcodeQuality: ref('good'),
+        transcodeResolution: ref('auto'),
+        transcodeFormat: ref('mp4'),
     };
 }

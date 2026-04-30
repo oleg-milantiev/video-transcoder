@@ -60,6 +60,15 @@ export function createVideoDetailsView(config) {
                 // tab state
                 activeTab: state.activeTab,
                 setActiveTab: (tab) => { state.activeTab.value = tab; },
+                // transcode builder
+                transcodeGoal: state.transcodeGoal,
+                transcodeQuality: state.transcodeQuality,
+                transcodeResolution: state.transcodeResolution,
+                transcodeFormat: state.transcodeFormat,
+                setTranscodeGoal: (v) => { state.transcodeGoal.value = v; },
+                setTranscodeQuality: (v) => { state.transcodeQuality.value = v; },
+                setTranscodeResolution: (v) => { state.transcodeResolution.value = v; },
+                setTranscodeFormat: (v) => { state.transcodeFormat.value = v; },
                 // actions
                 startTranscode: actions.startTranscode,
                 cancelTask: actions.cancelTask,

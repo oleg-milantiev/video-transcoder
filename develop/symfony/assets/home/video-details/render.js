@@ -340,7 +340,7 @@ function renderPresetBlock(vm, preset, taskExists) {
     ]);
 }
 
-function renderTranscodeTab(vm, taskExists) {
+function renderTranscodePresets(vm, taskExists) {
     const presets = vm.dto?.presets || [];
     const video = vm.dto?.video || {};
     const meta = video.meta || {};
@@ -360,6 +360,222 @@ function renderTranscodeTab(vm, taskExists) {
         .filter(Boolean);
 
     return h('div', {}, [heading, ...blocks]);
+}
+
+// ── Transcode Builder constants ───────────────────────────────────────────────
+
+const TRANSCODE_GOALS = [
+    { key: 'social',  icon: '📱', label: 'Social media',   sub: 'TikTok, Reels, Shorts' },
+    { key: 'quality', icon: '⭐', label: 'Max quality',    sub: 'Best video quality' },
+    { key: 'compact', icon: '⚡', label: 'Fast & compact', sub: 'Minimum file size' },
+    { key: 'pc',      icon: '🖥',  label: 'For PC',         sub: 'Universal format' },
+    { key: 'archive', icon: '🗄️', label: 'Archive',        sub: 'Long-term storage' },
+    { key: 'custom',  icon: '⚙️', label: 'Custom',         sub: 'Full control' },
+];
+
+const TRANSCODE_QUALITY_OPTIONS = [
+    { key: 'super',  label: 'Super',  hint: 'Super quality — very slow encoding with best results.' },
+    { key: 'good',   label: 'Good',   hint: 'Good quality — good balance between encoding speed and file size.' },
+    { key: 'normal', label: 'Normal', hint: 'Normal quality — quick encoding, clever compromise of quality. Maximum compatibility with devices.' },
+];
+
+const TRANSCODE_FORMAT_OPTIONS = [
+    { key: 'mp4',  label: 'MP4',  sub: 'Recommended', hint: 'MP4 — widest compatibility with devices and platforms.' },
+    { key: 'webm', label: 'WebM', sub: 'Smaller size', hint: 'WebM — smaller files, ideal for modern browsers and web delivery.' },
+];
+
+const GOAL_DEFAULTS = {
+    social:  { quality: 'good',   resolution: 'auto', format: 'mp4'  },
+    quality: { quality: 'super',  resolution: 'auto', format: 'webm'  },
+    compact: { quality: 'normal', resolution: '480',  format: 'webm' },
+    pc:      { quality: 'good',   resolution: '1080', format: 'mp4'  },
+    archive: { quality: 'good',   resolution: 'auto', format: 'mp4'  },
+};
+
+const BUILDER_RESOLUTIONS = ['auto', '1080', '720', '480'];
+
+// ── Transcode Builder UI ──────────────────────────────────────────────────────
+
+function renderGoalCards(vm) {
+    const cardStyle = (active) =>
+        'border:' + (active ? '2px solid #0d6efd;background:#f0f6ff' : '1px solid #dee2e6;background:#fff')
+        + ';border-radius:12px;padding:12px 8px;text-align:center;cursor:pointer;height:100%;transition:border-color .15s';
+
+    return h('div', { class: 'row g-2 mb-3' }, [
+        h('div', { class: 'col-12 mb-1' }, [
+            h('h6', { class: 'fw-bold mb-0' }, 'Goals'),
+        ]),
+        ...TRANSCODE_GOALS.map(g =>
+            h('div', { class: 'col-4 col-sm-4 col-lg-2' }, [
+                h('div', {
+                    style: cardStyle(vm.transcodeGoal === g.key),
+                    onClick: () => {
+                        vm.setTranscodeGoal(g.key);
+                        const def = GOAL_DEFAULTS[g.key];
+                        if (def) {
+                            vm.setTranscodeQuality(def.quality);
+                            vm.setTranscodeResolution(def.resolution);
+                            vm.setTranscodeFormat(def.format);
+                        }
+                    },
+                }, [
+                    h('div', { style: 'font-size:1.6rem;line-height:1;margin-bottom:6px' }, g.icon),
+                    h('div', { class: 'fw-semibold', style: 'font-size:0.82rem' }, g.label),
+                    h('div', { class: 'text-muted', style: 'font-size:0.7rem' }, g.sub),
+                ]),
+            ])
+        ),
+    ]);
+}
+
+function renderTranscodeBuilder(vm, taskExists) {
+    const video = vm.dto?.video || {};
+    const meta = video.meta || {};
+    const originWidth  = Number(meta._width)    || 0;
+    const originHeight = Number(meta._height)   || 0;
+    const duration     = Number(meta._duration) || 0;
+
+    // ── Quality ────────────────────────────────────────────────────────────────
+    const qualityHint = TRANSCODE_QUALITY_OPTIONS.find(q => q.key === vm.transcodeQuality)?.hint || '';
+    const qualityButtons = TRANSCODE_QUALITY_OPTIONS.map(q =>
+        h('button', {
+            type: 'button',
+            class: 'btn btn-sm ' + (vm.transcodeQuality === q.key ? 'btn-primary' : 'btn-outline-secondary'),
+            style: 'border-radius:8px',
+            onClick: () => vm.setTranscodeQuality(q.key),
+        }, q.label)
+    );
+
+    // ── Resolution ─────────────────────────────────────────────────────────────
+    const tariffMaxHeight = Number(vm.config?.tariff?.height) || 0;
+    const resolutionButtons = BUILDER_RESOLUTIONS.map(r => {
+        const h_val = r === 'auto' ? originHeight : parseInt(r, 10);
+        if (tariffMaxHeight > 0 && h_val > 0 && h_val > tariffMaxHeight) return null;
+        const isActive = vm.transcodeResolution === r;
+        let subLabel;
+        if (r === 'auto') {
+            subLabel = originWidth && originHeight ? `${originWidth}×${originHeight}` : 'original';
+        } else {
+            const approxW = Math.round(parseInt(r, 10) * (originWidth && originHeight ? originWidth / originHeight : 16 / 9));
+            subLabel = `${approxW}×${r}`;
+        }
+        return h('button', {
+            type: 'button',
+            class: 'btn btn-sm ' + (isActive ? 'btn-primary' : 'btn-outline-secondary'),
+            style: 'border-radius:8px',
+            onClick: () => vm.setTranscodeResolution(r),
+        }, [
+            h('span', {}, r === 'auto' ? 'Auto' : r + 'p'),
+            h('br'),
+            h('small', { class: isActive ? 'text-white opacity-75' : 'text-muted' }, subLabel),
+        ]);
+    }).filter(Boolean);
+
+    // ── Format ─────────────────────────────────────────────────────────────────
+    const formatHint = TRANSCODE_FORMAT_OPTIONS.find(f => f.key === vm.transcodeFormat)?.hint || '';
+    const formatButtons = TRANSCODE_FORMAT_OPTIONS.map(fmt => {
+        const isActive = vm.transcodeFormat === fmt.key;
+        return h('button', {
+            type: 'button',
+            class: 'btn btn-sm ' + (isActive ? 'btn-primary' : 'btn-outline-secondary'),
+            style: 'border-radius:8px',
+            onClick: () => vm.setTranscodeFormat(fmt.key),
+        }, [
+            h('span', {}, fmt.label),
+            h('br'),
+            h('small', { class: isActive ? 'text-white opacity-75' : 'text-muted' }, fmt.sub),
+        ]);
+    });
+
+    // ── Result / CTA ───────────────────────────────────────────────────────────
+    const presets = vm.dto?.presets || [];
+    const targetFormat = vm.transcodeFormat;
+    const preset = presets.find(p => p.format === targetFormat) || presets[0] || null;
+    const selectedHeight = vm.transcodeResolution === 'auto'
+        ? originHeight
+        : parseInt(vm.transcodeResolution, 10);
+    const expectedSize = preset && selectedHeight > 0
+        ? calculateExpectedFileSize(preset.bitrate, selectedHeight, duration)
+        : null;
+    const alreadyExists = !!(preset && taskExists[preset.id]?.[selectedHeight]);
+    const actionKey = preset ? 'transcode-' + preset.id + '-' + selectedHeight : null;
+    const isRunning = !!(actionKey && vm.activeActionKey === actionKey);
+    const canStart = !!(preset && selectedHeight > 0 && !video.deleted && !alreadyExists && !isRunning);
+
+    const resultSection = h('div', {
+        class: 'rounded-3 p-3',
+        style: 'background:#eef2f7',
+    }, [
+        h('div', { class: 'row align-items-center' }, [
+            h('div', { class: 'col-md-8' }, [
+                preset
+                    ? h('span', { class: 'badge bg-primary me-1 mb-2' }, preset.title)
+                    : null,
+                alreadyExists
+                    ? h('span', { class: 'badge bg-secondary mb-2' }, 'Already transcoded')
+                    : null,
+                h('h5', { class: 'mb-1 mt-1' }, [
+                    vm.transcodeResolution === 'auto' ? 'Original' : vm.transcodeResolution + 'p',
+                    ' · ',
+                    vm.transcodeFormat.toUpperCase(),
+                ]),
+                h('div', { class: 'd-flex flex-wrap gap-3 small text-muted' }, [
+                    expectedSize !== null
+                        ? h('div', {}, '📦 ~' + bytesToHuman(expectedSize))
+                        : null,
+                ]),
+            ]),
+            h('div', { class: 'col-md-4 text-md-end mt-3 mt-md-0' }, [
+                h('button', {
+                    type: 'button',
+                    class: 'btn btn-primary px-4',
+                    disabled: !canStart,
+                    onClick: () => {
+                        if (canStart) {
+                            vm.startTranscode(preset.id, selectedHeight);
+                            vm.setActiveTab('tasks');
+                        }
+                    },
+                }, isRunning ? '...' : 'Start transcoding'),
+            ]),
+        ]),
+    ]);
+
+    const sectionCard = (children) =>
+        h('div', { class: 'bg-white rounded-3 p-3 border h-100' }, children);
+
+    return h('div', {}, [
+        renderGoalCards(vm),
+        h('div', { class: 'row g-3 mb-3' }, [
+            h('div', { class: 'col-md-4' }, [sectionCard([
+                h('h6', { class: 'fw-bold mb-2' }, 'Quality'),
+                h('div', { class: 'd-flex gap-2 mb-2' }, qualityButtons),
+                h('div', { class: 'text-muted', style: 'font-size:0.78rem' }, qualityHint),
+            ])]),
+            h('div', { class: 'col-md-4' }, [sectionCard([
+                h('h6', { class: 'fw-bold mb-2' }, 'Resolution'),
+                h('div', { class: 'd-flex flex-wrap gap-2' }, resolutionButtons),
+            ])]),
+            h('div', { class: 'col-md-4' }, [sectionCard([
+                h('h6', { class: 'fw-bold mb-2' }, 'Format'),
+                h('div', { class: 'd-flex gap-2 mb-2' }, formatButtons),
+                h('div', { class: 'text-muted', style: 'font-size:0.78rem' }, formatHint),
+            ])]),
+        ]),
+        resultSection,
+    ]);
+}
+
+// ── Transcode tab dispatcher ──────────────────────────────────────────────────
+
+function renderTranscodeTab(vm, taskExists) {
+    if (vm.transcodeGoal === 'custom') {
+        return h('div', {}, [
+            renderGoalCards(vm),
+            renderTranscodePresets(vm, taskExists),
+        ]);
+    }
+    return renderTranscodeBuilder(vm, taskExists);
 }
 
 // ── Tasks tab ─────────────────────────────────────────────────────────────────
@@ -437,7 +653,7 @@ function renderDetailColumn(vm, taskExists) {
             h('div', { class: 'card border-0 shadow-sm', style: 'border-radius: 12px; overflow: hidden;' }, [
                 // Tab header (right-aligned)
                 h('div', { class: 'card-header bg-white border-0 pt-2 pb-0' }, [
-                    h('ul', { class: 'nav nav-tabs border-0 justify-content-end' }, [
+                    h('ul', { class: 'nav nav-tabs justify-content-end' }, [
                         renderTabButton(vm, 'info', '📄 Details'),
                         renderTabButton(vm, 'transcode', '⚙️ Transcode'),
                         renderTabButton(vm, 'tasks', '📋 Tasks'),
