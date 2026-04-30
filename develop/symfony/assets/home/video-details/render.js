@@ -398,7 +398,7 @@ const BUILDER_RESOLUTIONS = ['2160', '1440', '1080', '720', '480'];
 const QUALITY_CODEC_MAP = {
     super:  { mp4: 'av1',  webm: 'av1'  },
     good:   { mp4: 'h265', webm: 'vp9'  },
-    normal: { mp4: 'h264', webm: 'h264' },
+    normal: { mp4: 'h264', webm: 'vp8' },
 };
 
 function resolveBuilderPreset(presets, quality, format) {
@@ -407,12 +407,11 @@ function resolveBuilderPreset(presets, quality, format) {
 
     // 1. Exact match: codec + format
     let found = presets.find(p => p.videoCodec === targetCodec && p.format === format);
-    // 2. Codec only
-    if (!found) { found = presets.find(p => p.videoCodec === targetCodec); }
-    // 3. Format only
+    // 2. Format only — same format, any codec
     if (!found) { found = presets.find(p => p.format === format); }
-    // 4. First available
-    return found || presets[0] || null;
+    // Never fall back to a preset with a different format — that would silently transcode
+    // into the wrong container. Return null so the UI can signal "no preset available".
+    return found || null;
 }
 
 /**
@@ -475,9 +474,10 @@ function renderGoalCards(vm) {
 function renderTranscodeBuilder(vm, taskExists) {
     const video = vm.dto?.video || {};
     const meta = video.meta || {};
-    const originWidth  = Number(meta._width)    || 0;
+    const originWidth = Number(meta._width)    || 0;
     const originHeight = Number(meta._height)   || 0;
-    const duration     = Number(meta._duration) || 0;
+    const duration = Number(meta._duration) || 0;
+    const presets = vm.dto?.presets || [];
 
     // ── Quality ────────────────────────────────────────────────────────────────
     const qualityHint = TRANSCODE_QUALITY_OPTIONS.find(q => q.key === vm.transcodeQuality)?.hint || '';
@@ -535,21 +535,25 @@ function renderTranscodeBuilder(vm, taskExists) {
     const formatHint = TRANSCODE_FORMAT_OPTIONS.find(f => f.key === vm.transcodeFormat)?.hint || '';
     const formatButtons = TRANSCODE_FORMAT_OPTIONS.map(fmt => {
         const isActive = vm.transcodeFormat === fmt.key;
+        const fmtPreset = resolveBuilderPreset(presets, vm.transcodeQuality, fmt.key);
+        const available = fmtPreset !== null;
         return h('button', {
             type: 'button',
-            class: 'btn btn-sm ' + (isActive ? 'btn-primary' : 'btn-outline-secondary'),
+            class: 'btn btn-sm ' + (isActive ? 'btn-primary' : 'btn-outline-secondary') + (!available ? ' opacity-50' : ''),
             style: 'border-radius:8px',
-            onClick: () => vm.setTranscodeFormat(fmt.key),
+            disabled: !available,
+            title: !available ? 'No preset available for this format' : undefined,
+            onClick: () => available && vm.setTranscodeFormat(fmt.key),
         }, [
             h('span', {}, fmt.label),
             h('br'),
-            h('small', { class: isActive ? 'text-white opacity-75' : 'text-muted' }, fmt.sub),
+            h('small', { class: isActive ? 'text-white opacity-75' : 'text-muted' }, available ? fmt.sub : 'Not available'),
         ]);
     });
 
     // ── Result / CTA ───────────────────────────────────────────────────────────
-    const presets = vm.dto?.presets || [];
     const preset = resolveBuilderPreset(presets, vm.transcodeQuality, vm.transcodeFormat);
+    const noPresetAvailable = preset === null;
     const selectedHeight = parseInt(effectiveResolution, 10);
     const expectedSize = preset && selectedHeight > 0
         ? calculateExpectedFileSize(preset.bitrate, selectedHeight, duration)
@@ -557,7 +561,7 @@ function renderTranscodeBuilder(vm, taskExists) {
     const alreadyExists = !!(preset && taskExists[preset.id]?.[selectedHeight]);
     const actionKey = preset ? 'transcode-' + preset.id + '-' + selectedHeight : null;
     const isRunning = !!(actionKey && vm.activeActionKey === actionKey);
-    const canStart = !!(preset && selectedHeight > 0 && !video.deleted && !alreadyExists && !isRunning);
+    const canStart = !noPresetAvailable && !!(preset && selectedHeight > 0 && !video.deleted && !alreadyExists && !isRunning);
 
     const resultSection = h('div', {
         class: 'rounded-3 p-3',
@@ -565,7 +569,10 @@ function renderTranscodeBuilder(vm, taskExists) {
     }, [
         h('div', { class: 'row align-items-center' }, [
             h('div', { class: 'col-md-8' }, [
-                preset
+                noPresetAvailable
+                    ? h('div', { class: 'text-danger small mb-2' }, `⚠️ No ${vm.transcodeFormat.toUpperCase()} preset available for the selected quality. Please choose a different format or quality.`)
+                    : null,
+                !noPresetAvailable && preset
                     ? h('span', { class: 'badge bg-primary me-1 mb-2' }, preset.title)
                     : null,
                 alreadyExists
