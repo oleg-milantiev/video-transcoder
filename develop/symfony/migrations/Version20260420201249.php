@@ -54,6 +54,7 @@ final class Version20260420201249 extends AbstractMigration
         $this->addSql("INSERT INTO public.preset (id, video_codec, audio_codec, format, title, bitrate) VALUES ('d136829d-c1af-4fca-b670-7236e64fdced', 'vp9', 'opus', 'webm', 'High video Quality+, High Efficiency Audio', '{\"144\": 0.06, \"240\": 0.25, \"360\": 0.6, \"480\": 1.5, \"720\": 3, \"1080\": 5, \"1440\": 10, \"2160\": 20, \"4320\": 50}')");
         $this->addSql("INSERT INTO public.preset (id, video_codec, audio_codec, format, title, bitrate) VALUES ('ec070af7-ab40-440c-af9c-760b320025f4', 'av1', 'opus', 'webm', 'Ultra video Quality, High Efficiency Audio', '{\"144\": 0.04, \"240\": 0.15, \"360\": 0.4, \"480\": 1.0, \"720\": 2, \"1080\": 3.5, \"1440\": 7, \"2160\": 15, \"4320\": 35}')");
         $this->addSql("INSERT INTO public.preset (id, video_codec, audio_codec, format, title, bitrate) VALUES ('3ecc3746-530e-46c9-9755-573a552f3990', 'av1', 'opus', 'mp4', 'Ultra video Quality, High Efficiency Audio', '{\"144\": 0.04, \"240\": 0.15, \"360\": 0.4, \"480\": 1.0, \"720\": 2, \"1080\": 3.5, \"1440\": 7, \"2160\": 15, \"4320\": 35}')");
+        $this->addSql("INSERT INTO public.preset (id, video_codec, audio_codec, format, title, bitrate) VALUES ('0475e62a-9b56-4c95-b79b-c2be133cea99', 'vp8', 'opus', 'webm', 'Standard video Quality (WebM)', '{\"144\": 0.2, \"240\": 0.4, \"360\": 1, \"480\": 2.5, \"720\": 5, \"1080\": 8, \"1440\": 16, \"2160\": 35, \"4320\": 85}')");
 
         $this->addSql("INSERT INTO public.tariff (id, title, delay, instance, video_duration, video_size, max_width, max_height, storage_gb, storage_hour) VALUES ('21ce3067-53c0-4400-8921-8d3b22c9bd30', 'Premium', 0, 2, 3600, 100, 3840, 2160, 1, 24)");
         $this->addSql("INSERT INTO public.tariff (id, title, delay, instance, video_duration, video_size, max_width, max_height, storage_gb, storage_hour) VALUES ('905048e3-fd0f-408d-bffd-a596e896a92c', 'Free', 3600, 1, 3600, 100, 1920, 1280, 1, 24)");
@@ -65,6 +66,7 @@ final class Version20260420201249 extends AbstractMigration
         $this->addSql("INSERT INTO public.tariff_preset (tariff_entity_id, preset_entity_id) VALUES ('21ce3067-53c0-4400-8921-8d3b22c9bd30', '889a2546-a2bc-44d5-bc03-231f307ae3d7')");
         $this->addSql("INSERT INTO public.tariff_preset (tariff_entity_id, preset_entity_id) VALUES ('21ce3067-53c0-4400-8921-8d3b22c9bd30', '13390296-44de-48f2-afcf-05af02006a9d')");
         $this->addSql("INSERT INTO public.tariff_preset (tariff_entity_id, preset_entity_id) VALUES ('21ce3067-53c0-4400-8921-8d3b22c9bd30', 'd136829d-c1af-4fca-b670-7236e64fdced')");
+        $this->addSql("INSERT INTO public.tariff_preset (tariff_entity_id, preset_entity_id) VALUES ('21ce3067-53c0-4400-8921-8d3b22c9bd30', '0475e62a-9b56-4c95-b79b-c2be133cea99')");
 
          // Admin user: oleg@milantiev.com / admin
          $this->addSql('INSERT INTO "user" (id, email, roles, password, created_at, tariff_id) VALUES (\'123e4567-e89b-42d3-a456-426614174000\', \'oleg@milantiev.com\', \'["ROLE_ADMIN", "ROLE_USER"]\', \'$2y$13$aMbt0.agYrHEOjmVLRu0tOa94hWeIErYcW6JPUo0EOFX2PoCzus5m\', NOW(), \'21ce3067-53c0-4400-8921-8d3b22c9bd30\')');

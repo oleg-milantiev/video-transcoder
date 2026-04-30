@@ -53,6 +53,7 @@ readonly class Transcode
     {
         return match ($codec->value()) {
             'h265' => 'libx265',
+            'vp8' => 'libvpx',
             'vp9' => 'libvpx-vp9',
             'av1' => 'libaom-av1',
             default => 'libx264',

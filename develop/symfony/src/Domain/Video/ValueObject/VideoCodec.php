@@ -7,7 +7,7 @@ use App\Domain\Video\Exception\UnsupportedCodec;
 
 final class VideoCodec
 {
-    private const array ALLOWED = ['h264', 'h265', 'vp9', 'av1'];
+    private const array ALLOWED = ['h264', 'h265', 'vp8', 'vp9', 'av1'];
 
     public function __construct(
         private string $value,

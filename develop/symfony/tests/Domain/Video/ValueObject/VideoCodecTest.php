@@ -55,8 +55,16 @@ final class VideoCodecTest extends TestCase
     /** Все допустимые значения принимаются. */
     public function testAllAllowedValues(): void
     {
-        foreach (['h264', 'h265', 'vp9', 'av1'] as $value) {
+        foreach (['h264', 'h265', 'vp8', 'vp9', 'av1'] as $value) {
             $this->assertSame($value, new VideoCodec($value)->value());
         }
+    }
+
+    /** vp8 принимается и нормализуется. */
+    public function testVp8IsAllowed(): void
+    {
+        $codec = new VideoCodec(' VP8 ');
+        $this->assertSame('vp8', $codec->value());
+        $this->assertFalse($codec->isAv1());
     }
 }
