@@ -15,4 +15,12 @@ interface PresetRepositoryInterface
      * @return Preset[]
      */
     public function findByTariff(Tariff $tariff): array;
+
+    /**
+     * Returns all presets linked to the tariff of the given user.
+     * Results are ordered by title ascending.
+     *
+     * @return Preset[]
+     */
+    public function findForUser(Uuid $userId): array;
 }
