@@ -66,8 +66,6 @@ class TaskApiController extends AbstractController
      * Cancels an active transcoding task owned by the current user.
      * Sets a Redis cancellation flag; the running ffmpeg worker will detect it
      * and abort processing on its next polling cycle.
-     *
-     * @throws InvalidArgumentException
      */
     #[Route('/{id}/cancel', name: 'api_task_cancel', requirements: ['id' => '[0-9a-fA-F-]{36}'], methods: ['POST'])]
     public function cancel(string $id): Response
