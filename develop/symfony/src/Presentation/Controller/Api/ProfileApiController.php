@@ -48,7 +48,7 @@ final class ProfileApiController extends AbstractController
                 'message' => $e->getMessage(),
             ]);
 
-            return $this->apiError('INTERNAL_ERROR', 'Failed to load profile data', 500);
+            return $this->apiError('INTERNAL_ERROR', 'Failed to load profile data', Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 }

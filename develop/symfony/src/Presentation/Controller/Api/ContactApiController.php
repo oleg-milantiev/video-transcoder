@@ -37,11 +37,11 @@ class ContactApiController extends AbstractController
         $message = isset($data['message']) ? trim((string)$data['message']) : '';
 
         if ($message === '') {
-            return $this->apiError('VALIDATION_ERROR', 'Message must not be empty', 400);
+            return $this->apiError('VALIDATION_ERROR', 'Message must not be empty', Response::HTTP_BAD_REQUEST);
         }
 
         if (mb_strlen($message) > 1000) {
-            return $this->apiError('VALIDATION_ERROR', 'Message must not exceed 1000 characters', 400);
+            return $this->apiError('VALIDATION_ERROR', 'Message must not exceed 1000 characters', Response::HTTP_BAD_REQUEST);
         }
 
         $this->logService->log(

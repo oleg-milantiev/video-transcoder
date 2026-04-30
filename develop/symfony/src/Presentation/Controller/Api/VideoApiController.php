@@ -72,11 +72,11 @@ class VideoApiController extends AbstractController
         $url = trim((string)($request->request->get('url') ?? $request->toArray()['url'] ?? ''));
 
         if ($url === '') {
-            return $this->apiError('MISSING_URL', 'Parameter "url" is required.', 400);
+            return $this->apiError('MISSING_URL', 'Parameter "url" is required.', Response::HTTP_BAD_REQUEST);
         }
 
         if (!filter_var($url, FILTER_VALIDATE_URL)) {
-            return $this->apiError('INVALID_URL', 'The provided URL is not valid.', 422);
+            return $this->apiError('INVALID_URL', 'The provided URL is not valid.', Response::HTTP_UNPROCESSABLE_ENTITY);
         }
 
         try {
@@ -85,16 +85,16 @@ class VideoApiController extends AbstractController
 
             $this->commandBus->dispatch(new CreateVideo(null, $userId, $url, $session));
 
-            return $this->apiSuccess(['session' => $session], 202);
+            return $this->apiSuccess(['session' => $session], Response::HTTP_ACCEPTED);
         } catch (InvalidUploadUrlException $e) {
-            return $this->apiError('INVALID_URL', $e->getMessage(), 422);
+            return $this->apiError('INVALID_URL', $e->getMessage(), Response::HTTP_UNPROCESSABLE_ENTITY);
         } catch (Throwable $e) {
             $this->logService->log('video', 'upload', null, LogLevel::ERROR, 'URL upload dispatch failed', [
                 'url' => $url,
                 'message' => $e->getMessage(),
             ]);
 
-            return $this->apiError('INTERNAL_ERROR', 'Failed to accept upload from URL.', 500);
+            return $this->apiError('INTERNAL_ERROR', 'Failed to accept upload from URL.', Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -124,7 +124,7 @@ class VideoApiController extends AbstractController
                 'message' => $e->getMessage(),
             ]);
 
-            return $this->apiError('INTERNAL_ERROR', 'Failed to look up session.', 500);
+            return $this->apiError('INTERNAL_ERROR', 'Failed to look up session.', Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -148,7 +148,7 @@ class VideoApiController extends AbstractController
                 'message' => $e->getMessage(),
             ]);
 
-            return $this->apiError('INTERNAL_ERROR', 'Failed to list videos', 500);
+            return $this->apiError('INTERNAL_ERROR', 'Failed to list videos', Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -168,20 +168,20 @@ class VideoApiController extends AbstractController
                 )
             );
         } catch (InvalidUuidException $e) {
-            return $this->apiError('INVALID_UUID', $e->getMessage(), 400);
+            return $this->apiError('INVALID_UUID', $e->getMessage(), Response::HTTP_BAD_REQUEST);
         } catch (VideoNotFoundException $e) {
-            return $this->apiError('VIDEO_NOT_FOUND', $e->getMessage(), 404);
+            return $this->apiError('VIDEO_NOT_FOUND', $e->getMessage(), Response::HTTP_NOT_FOUND);
         } catch (TariffNotFound $e) {
-            return $this->apiError('TARIFF_NOT_FOUND', $e->getMessage(), 404);
+            return $this->apiError('TARIFF_NOT_FOUND', $e->getMessage(), Response::HTTP_NOT_FOUND);
         } catch (VideoAccessDeniedException $e) {
-            return $this->apiError('ACCESS_DENIED', $e->getMessage(), 403);
+            return $this->apiError('ACCESS_DENIED', $e->getMessage(), Response::HTTP_FORBIDDEN);
         } catch (Throwable $e) {
             $this->logService->log('video', 'details', Uuid::fromStringNullable($id), LogLevel::CRITICAL, 'Fail', [
                 'id' => $id,
                 'message' => $e->getMessage(),
             ]);
 
-            return $this->apiError('INTERNAL_ERROR', 'Failed to get video details', 500);
+            return $this->apiError('INTERNAL_ERROR', 'Failed to get video details', Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -205,21 +205,21 @@ class VideoApiController extends AbstractController
                 )
             );
         } catch (InvalidUuidException $e) {
-            return $this->apiError('INVALID_UUID', $e->getMessage(), 400);
+            return $this->apiError('INVALID_UUID', $e->getMessage(), Response::HTTP_BAD_REQUEST);
         } catch (VideoNotFoundException $e) {
-            return $this->apiError('VIDEO_NOT_FOUND', $e->getMessage(), 404);
+            return $this->apiError('VIDEO_NOT_FOUND', $e->getMessage(), Response::HTTP_NOT_FOUND);
         } catch (PresetNotFoundException $e) {
-            return $this->apiError('PRESET_NOT_FOUND', $e->getMessage(), 404);
+            return $this->apiError('PRESET_NOT_FOUND', $e->getMessage(), Response::HTTP_NOT_FOUND);
         } catch (UserNotFoundException $e) {
-            return $this->apiError('USER_NOT_FOUND', $e->getMessage(), 404);
+            return $this->apiError('USER_NOT_FOUND', $e->getMessage(), Response::HTTP_NOT_FOUND);
         } catch (VideoAccessDeniedException $e) {
-            return $this->apiError('ACCESS_DENIED', $e->getMessage(), 403);
+            return $this->apiError('ACCESS_DENIED', $e->getMessage(), Response::HTTP_FORBIDDEN);
         } catch (HeightExceedsTariffException $e) {
-            return $this->apiError('HEIGHT_EXCEEDS_TARIFF', $e->getMessage(), 403);
+            return $this->apiError('HEIGHT_EXCEEDS_TARIFF', $e->getMessage(), Response::HTTP_FORBIDDEN);
         } catch (PresetHeightNotAvailableException $e) {
-            return $this->apiError('HEIGHT_NOT_IN_PRESET', $e->getMessage(), 422);
+            return $this->apiError('HEIGHT_NOT_IN_PRESET', $e->getMessage(), Response::HTTP_UNPROCESSABLE_ENTITY);
         } catch (TaskCreationFailedException $e) {
-            return $this->apiError('TASK_CREATION_FAILED', $e->getMessage(), 500);
+            return $this->apiError('TASK_CREATION_FAILED', $e->getMessage(), Response::HTTP_INTERNAL_SERVER_ERROR);
         } catch (Throwable $e) {
             $this->logService->log('video', 'transcode', Uuid::fromStringNullable($id), LogLevel::CRITICAL, 'Fail', [
                 'id' => $id,
@@ -227,7 +227,7 @@ class VideoApiController extends AbstractController
                 'message' => $e->getMessage(),
             ]);
 
-            return $this->apiError('INTERNAL_ERROR', 'Failed to start transcode', 500);
+            return $this->apiError('INTERNAL_ERROR', 'Failed to start transcode', Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -247,18 +247,18 @@ class VideoApiController extends AbstractController
                 )
             );
         } catch (InvalidUuidException $e) {
-            return $this->apiError('INVALID_VIDEO_ID', $e->getMessage(), 400);
+            return $this->apiError('INVALID_VIDEO_ID', $e->getMessage(), Response::HTTP_BAD_REQUEST);
         } catch (VideoNotFoundException $e) {
-            return $this->apiError('VIDEO_NOT_FOUND', $e->getMessage(), 404);
+            return $this->apiError('VIDEO_NOT_FOUND', $e->getMessage(), Response::HTTP_NOT_FOUND);
         } catch (DomainException $e) {
-            return $this->apiError('ACCESS_DENIED', $e->getMessage(), 403);
+            return $this->apiError('ACCESS_DENIED', $e->getMessage(), Response::HTTP_FORBIDDEN);
         } catch (Throwable $e) {
             $this->logService->log('video', 'patch', Uuid::fromStringNullable($id), LogLevel::CRITICAL, 'Fail', [
                 'id' => $id,
                 'message' => $e->getMessage(),
             ]);
 
-            return $this->apiError('INTERNAL_ERROR', 'Failed to patch video', 500);
+            return $this->apiError('INTERNAL_ERROR', 'Failed to patch video', Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -275,26 +275,26 @@ class VideoApiController extends AbstractController
                 new DeleteVideoQuery($id, $this->getUser()->id->toRfc4122())
             );
 
-            return $this->apiSuccess(null, 204);
+            return $this->apiSuccess(null, Response::HTTP_NO_CONTENT);
         } catch (InvalidUuidException $e) {
-            return $this->apiError('INVALID_VIDEO_ID', $e->getMessage(), 400);
+            return $this->apiError('INVALID_VIDEO_ID', $e->getMessage(), Response::HTTP_BAD_REQUEST);
         } catch (TranscodeAccessDeniedException $e) {
-            return $this->apiError('ACCESS_DENIED', $e->getMessage(), 403);
+            return $this->apiError('ACCESS_DENIED', $e->getMessage(), Response::HTTP_FORBIDDEN);
         } catch (VideoNotFoundException $e) {
-            return $this->apiError('VIDEO_NOT_FOUND', $e->getMessage(), 404);
+            return $this->apiError('VIDEO_NOT_FOUND', $e->getMessage(), Response::HTTP_NOT_FOUND);
         } catch (VideoAlreadyDeleted $e) {
-            return $this->apiError('VIDEO_ALREADY_DELETED', $e->getMessage(), 409);
+            return $this->apiError('VIDEO_ALREADY_DELETED', $e->getMessage(), Response::HTTP_CONFLICT);
         } catch (VideoHasTranscodingTasks $e) {
-            return $this->apiError('VIDEO_HAS_TRANSCODING_TASKS', $e->getMessage(), 409);
+            return $this->apiError('VIDEO_HAS_TRANSCODING_TASKS', $e->getMessage(), Response::HTTP_CONFLICT);
         } catch (DomainException $e) {
-            return $this->apiError('DELETE_NOT_ALLOWED', $e->getMessage(), 409);
+            return $this->apiError('DELETE_NOT_ALLOWED', $e->getMessage(), Response::HTTP_CONFLICT);
         } catch (Throwable $e) {
             $this->logService->log('video', 'delete', Uuid::fromStringNullable($id), LogLevel::CRITICAL, 'Fail', [
                 'id' => $id,
                 'message' => $e->getMessage(),
             ]);
 
-            return $this->apiError('INTERNAL_ERROR', 'Failed to delete video', 500);
+            return $this->apiError('INTERNAL_ERROR', 'Failed to delete video', Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 }

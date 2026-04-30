@@ -58,7 +58,7 @@ class TaskApiController extends AbstractController
                 'message' => $e->getMessage(),
             ]);
 
-            return $this->apiError('INTERNAL_ERROR', 'Failed to list tasks', 500);
+            return $this->apiError('INTERNAL_ERROR', 'Failed to list tasks', Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -75,22 +75,22 @@ class TaskApiController extends AbstractController
         try {
             $this->queryBus->query(new TaskCancelQuery($id, $this->getUser()->id->toRfc4122()));
 
-            return $this->apiSuccess(null, 204);
+            return $this->apiSuccess(null, Response::HTTP_NO_CONTENT);
         } catch (InvalidUuidException $e) {
-            return $this->apiError('INVALID_TASK_ID', $e->getMessage(), 400);
+            return $this->apiError('INVALID_TASK_ID', $e->getMessage(), Response::HTTP_BAD_REQUEST);
         } catch (TaskNotFoundException $e) {
-            return $this->apiError('TASK_NOT_FOUND', $e->getMessage(), 404);
+            return $this->apiError('TASK_NOT_FOUND', $e->getMessage(), Response::HTTP_NOT_FOUND);
         } catch (VideoNotFoundException $e) {
-            return $this->apiError('VIDEO_NOT_FOUND', $e->getMessage(), 404);
+            return $this->apiError('VIDEO_NOT_FOUND', $e->getMessage(), Response::HTTP_NOT_FOUND);
         } catch (TaskCancelAccessDeniedException $e) {
-            return $this->apiError('ACCESS_DENIED', $e->getMessage(), 403);
+            return $this->apiError('ACCESS_DENIED', $e->getMessage(), Response::HTTP_FORBIDDEN);
         } catch (Throwable $e) {
             $this->logService->log('task', 'cancel', Uuid::fromStringNullable($id), LogLevel::CRITICAL, 'Fail', [
                 'id' => $id,
                 'message' => $e->getMessage(),
             ]);
 
-            return $this->apiError('INTERNAL_ERROR', 'Failed to cancel task', 500);
+            return $this->apiError('INTERNAL_ERROR', 'Failed to cancel task', Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 }
