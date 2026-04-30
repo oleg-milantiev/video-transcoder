@@ -385,10 +385,10 @@ const TRANSCODE_FORMAT_OPTIONS = [
 ];
 
 const GOAL_DEFAULTS = {
-    social:  { quality: 'good',   resolution: 'auto', format: 'mp4'  },
+    social:  { quality: config.tariff.title === 'Free' ? 'normal' : 'good', resolution: 'auto', format: 'mp4'  },
     quality: { quality: 'super',  resolution: 'auto', format: 'webm'  },
     compact: { quality: 'normal', resolution: '480',  format: 'webm' },
-    pc:      { quality: 'good',   resolution: '1080', format: 'mp4'  },
+    pc:      { quality: 'good',   resolution: '1080', format: 'webm'  },
     archive: { quality: 'good',   resolution: 'auto', format: 'mp4'  },
 };
 
@@ -405,12 +405,8 @@ function resolveBuilderPreset(presets, quality, format) {
     const codecByFormat = QUALITY_CODEC_MAP[quality] || QUALITY_CODEC_MAP.normal;
     const targetCodec   = codecByFormat[format] || codecByFormat.mp4;
 
-    // 1. Exact match: codec + format
     let found = presets.find(p => p.videoCodec === targetCodec && p.format === format);
-    // 2. Format only — same format, any codec
-    if (!found) { found = presets.find(p => p.format === format); }
-    // Never fall back to a preset with a different format — that would silently transcode
-    // into the wrong container. Return null so the UI can signal "no preset available".
+
     return found || null;
 }
 
@@ -481,14 +477,18 @@ function renderTranscodeBuilder(vm, taskExists) {
 
     // ── Quality ────────────────────────────────────────────────────────────────
     const qualityHint = TRANSCODE_QUALITY_OPTIONS.find(q => q.key === vm.transcodeQuality)?.hint || '';
-    const qualityButtons = TRANSCODE_QUALITY_OPTIONS.map(q =>
-        h('button', {
+    const qualityButtons = TRANSCODE_QUALITY_OPTIONS.map(q => {
+        const isActive = vm.transcodeQuality === q.key;
+        const available = resolveBuilderPreset(presets, q.key, vm.transcodeFormat) !== null;
+        return h('button', {
             type: 'button',
-            class: 'btn btn-sm ' + (vm.transcodeQuality === q.key ? 'btn-primary' : 'btn-outline-secondary'),
+            class: 'btn btn-sm ' + (isActive ? 'btn-primary' : 'btn-outline-secondary') + (!available ? ' opacity-50' : ''),
             style: 'border-radius:8px',
-            onClick: () => vm.setTranscodeQuality(q.key),
-        }, q.label)
-    );
+            disabled: !available,
+            title: !available ? 'No preset available for this quality' : undefined,
+            onClick: () => available && vm.setTranscodeQuality(q.key),
+        }, q.label);
+    });
 
     // ── Resolution ─────────────────────────────────────────────────────────────
     const tariffMaxHeight = Number(vm.config?.tariff?.height) || 0;
