@@ -17,8 +17,8 @@ use App\Infrastructure\Task\TaskCancellationTrigger;
 use DateTimeImmutable;
 use DateTimeInterface;
 use Psr\Log\LogLevel;
-use Throwable;
 use Symfony\Component\Filesystem\Filesystem;
+use Throwable;
 
 readonly class TranscodeTaskFinalizationService
 {
@@ -54,6 +54,20 @@ readonly class TranscodeTaskFinalizationService
         $this->taskRealtimeNotifier->notifyTaskUpdated($cancelledTask, 'cancelled');
         $this->cancellationTrigger->clear($cancelledTask->id());
         $this->storageNotifier->notifyStorageUpdated($cancelledTask->userId());
+    }
+
+    private function removeOutputFile(?string $path, ?Uuid $taskId, string $context): void
+    {
+        try {
+            if (!empty($path) && $this->filesystem->exists($path)) {
+                $this->filesystem->remove($path);
+            }
+        } catch (Throwable $e) {
+            $this->logService->log('task', $context, $taskId, LogLevel::WARNING, 'Failed to remove output file', [
+                'path' => $path,
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
 
     public function handleSuccess(TranscodeStartContextDTO $context, TranscodeReportDTO $report): void
@@ -102,21 +116,5 @@ readonly class TranscodeTaskFinalizationService
         $this->logService->log('task', 'transcode', $task->id(), LogLevel::ERROR, 'Transcoding failed', [
             'message' => $exception->getMessage(),
         ]);
-    }
-
-    // ── Private helpers ──────────────────────────────────────────────────────
-
-    private function removeOutputFile(?string $path, ?Uuid $taskId, string $context): void
-    {
-        try {
-            if (!empty($path) && $this->filesystem->exists($path)) {
-                $this->filesystem->remove($path);
-            }
-        } catch (Throwable $e) {
-            $this->logService->log('task', $context, $taskId, LogLevel::WARNING, 'Failed to remove output file', [
-                'path' => $path,
-                'error' => $e->getMessage(),
-            ]);
-        }
     }
 }

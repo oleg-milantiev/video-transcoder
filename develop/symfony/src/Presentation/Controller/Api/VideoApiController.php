@@ -76,7 +76,11 @@ class VideoApiController extends AbstractController
         }
 
         if (!filter_var($url, FILTER_VALIDATE_URL)) {
-            return $this->apiError('INVALID_URL', 'The provided URL is not valid.', Response::HTTP_UNPROCESSABLE_ENTITY);
+            return $this->apiError(
+                'INVALID_URL',
+                'The provided URL is not valid.',
+                Response::HTTP_UNPROCESSABLE_ENTITY
+            );
         }
 
         try {
@@ -94,7 +98,11 @@ class VideoApiController extends AbstractController
                 'message' => $e->getMessage(),
             ]);
 
-            return $this->apiError('INTERNAL_ERROR', 'Failed to accept upload from URL.', Response::HTTP_INTERNAL_SERVER_ERROR);
+            return $this->apiError(
+                'INTERNAL_ERROR',
+                'Failed to accept upload from URL.',
+                Response::HTTP_INTERNAL_SERVER_ERROR
+            );
         }
     }
 
@@ -124,7 +132,11 @@ class VideoApiController extends AbstractController
                 'message' => $e->getMessage(),
             ]);
 
-            return $this->apiError('INTERNAL_ERROR', 'Failed to look up session.', Response::HTTP_INTERNAL_SERVER_ERROR);
+            return $this->apiError(
+                'INTERNAL_ERROR',
+                'Failed to look up session.',
+                Response::HTTP_INTERNAL_SERVER_ERROR
+            );
         }
     }
 
@@ -181,7 +193,11 @@ class VideoApiController extends AbstractController
                 'message' => $e->getMessage(),
             ]);
 
-            return $this->apiError('INTERNAL_ERROR', 'Failed to get video details', Response::HTTP_INTERNAL_SERVER_ERROR);
+            return $this->apiError(
+                'INTERNAL_ERROR',
+                'Failed to get video details',
+                Response::HTTP_INTERNAL_SERVER_ERROR
+            );
         }
     }
 

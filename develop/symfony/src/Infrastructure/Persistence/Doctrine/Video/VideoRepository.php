@@ -80,6 +80,11 @@ class VideoRepository extends ServiceEntityRepository implements VideoRepository
         return $entity ? self::mapToDomain($entity) : null;
     }
 
+    protected static function mapToDomain(VideoEntity $entity): Video
+    {
+        return VideoMapper::toDomain($entity);
+    }
+
     /**
      * @throws Exception
      */
@@ -103,7 +108,7 @@ class VideoRepository extends ServiceEntityRepository implements VideoRepository
         $page = $conn->executeQuery($sql, [
             'userId' => $userId->toRfc4122(),
             'videoId' => $videoId->toRfc4122(),
-            'limit' => $limit
+            'limit' => $limit,
         ])->fetchOne();
 
         if ($page === false) {
@@ -111,11 +116,6 @@ class VideoRepository extends ServiceEntityRepository implements VideoRepository
         }
 
         return (int)$page + 1;
-    }
-
-    protected static function mapToDomain(VideoEntity $entity): Video
-    {
-        return VideoMapper::toDomain($entity);
     }
 
     /**

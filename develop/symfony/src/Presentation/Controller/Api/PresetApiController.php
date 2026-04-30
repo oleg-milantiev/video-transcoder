@@ -6,12 +6,12 @@ namespace App\Presentation\Controller\Api;
 use App\Application\DTO\PresetItemDTO;
 use App\Application\Logging\LogServiceInterface;
 use App\Domain\Shared\ValueObject\Uuid;
+use App\Domain\Video\Repository\PresetRepositoryInterface;
 use Psr\Log\LogLevel;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
-use App\Domain\Video\Repository\PresetRepositoryInterface;
 use Throwable;
 
 #[Route('/api/preset')]

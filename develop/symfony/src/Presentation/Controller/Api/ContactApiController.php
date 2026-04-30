@@ -41,7 +41,11 @@ class ContactApiController extends AbstractController
         }
 
         if (mb_strlen($message) > 1000) {
-            return $this->apiError('VALIDATION_ERROR', 'Message must not exceed 1000 characters', Response::HTTP_BAD_REQUEST);
+            return $this->apiError(
+                'VALIDATION_ERROR',
+                'Message must not exceed 1000 characters',
+                Response::HTTP_BAD_REQUEST
+            );
         }
 
         $this->logService->log(

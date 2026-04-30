@@ -35,7 +35,13 @@ final class S3Storage implements StorageInterface
             throw new DomainException('Video id is not set, cannot build task output key.');
         }
 
-        return sprintf('%s/%s.%d.%s', $video->id()->toRfc4122(), $preset->id()->toRfc4122(), $height, $preset->format()->value());
+        return sprintf(
+            '%s/%s.%d.%s',
+            $video->id()->toRfc4122(),
+            $preset->id()->toRfc4122(),
+            $height,
+            $preset->format()->value()
+        );
     }
 
     public function putFromPath(string $sourcePath, string $key): string

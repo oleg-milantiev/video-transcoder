@@ -15,8 +15,8 @@ use App\Presentation\Controller\Admin\TariffCrudController;
 use App\Presentation\Controller\Admin\TaskCrudController;
 use App\Presentation\Controller\Admin\UserCrudController;
 use App\Presentation\Controller\Admin\VideoCrudController;
-use EasyCorp\Bundle\EasyAdminBundle\Router\AdminUrlGeneratorInterface;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Crud;
+use EasyCorp\Bundle\EasyAdminBundle\Router\AdminUrlGeneratorInterface;
 use Psr\Log\LoggerInterface;
 use Throwable;
 

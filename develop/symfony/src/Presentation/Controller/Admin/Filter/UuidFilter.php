@@ -33,14 +33,18 @@ final class UuidFilter implements FilterInterface
             ->setFormTypeOption('translation_domain', 'EasyAdminBundle');
     }
 
-    public function apply(QueryBuilder $queryBuilder, FilterDataDto $filterDataDto, ?FieldDto $fieldDto, EntityDto $entityDto): void
-    {
+    public function apply(
+        QueryBuilder $queryBuilder,
+        FilterDataDto $filterDataDto,
+        ?FieldDto $fieldDto,
+        EntityDto $entityDto
+    ): void {
         $alias = $filterDataDto->getEntityAlias();
         $property = $filterDataDto->getProperty();
         $parameterName = $filterDataDto->getParameterName();
         $value = $filterDataDto->getValue();
 
         $queryBuilder->andWhere(sprintf('CAST(%s.%s AS text) LIKE :%s', $alias, $property, $parameterName))
-            ->setParameter($parameterName, '%' . $value . '%');
+            ->setParameter($parameterName, '%'.$value.'%');
     }
 }

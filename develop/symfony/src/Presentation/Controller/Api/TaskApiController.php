@@ -14,7 +14,6 @@ use App\Application\QueryHandler\QueryBus;
 use App\Domain\Shared\ValueObject\Uuid;
 use App\Domain\Video\Repository\TaskRepositoryInterface;
 use App\Domain\Video\Repository\VideoRepositoryInterface;
-use Psr\Cache\InvalidArgumentException;
 use Psr\Log\LogLevel;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Bundle\SecurityBundle\Security;

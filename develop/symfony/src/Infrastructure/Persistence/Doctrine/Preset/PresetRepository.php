@@ -35,13 +35,6 @@ class PresetRepository extends ServiceEntityRepository implements PresetReposito
         );
     }
 
-    public function findById(Uuid $id): ?Preset
-    {
-        $entity = $this->find(SymfonyUuid::fromString($id->toRfc4122()));
-
-        return $entity ? PresetMapper::toDomain($entity) : null;
-    }
-
     /**
      * @throws Exception
      */
@@ -60,9 +53,20 @@ class PresetRepository extends ServiceEntityRepository implements PresetReposito
 
         $rows = $conn->executeQuery($sql, ['userId' => $userId->toRfc4122()])->fetchAllAssociative();
 
-        return array_values(array_filter(array_map(
-            fn(array $row): ?Preset => $this->findById(Uuid::fromString((string)$row['id'])),
-            $rows,
-        )));
+        return array_values(
+            array_filter(
+                array_map(
+                    fn(array $row): ?Preset => $this->findById(Uuid::fromString((string)$row['id'])),
+                    $rows,
+                )
+            )
+        );
+    }
+
+    public function findById(Uuid $id): ?Preset
+    {
+        $entity = $this->find(SymfonyUuid::fromString($id->toRfc4122()));
+
+        return $entity ? PresetMapper::toDomain($entity) : null;
     }
 }

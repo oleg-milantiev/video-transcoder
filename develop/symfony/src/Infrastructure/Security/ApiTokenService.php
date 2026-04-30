@@ -128,7 +128,7 @@ final readonly class ApiTokenService
             $value .= str_repeat('=', 4 - $padding);
         }
 
-        return (string) base64_decode(strtr($value, '-_', '+/'), true);
+        return (string)base64_decode(strtr($value, '-_', '+/'), true);
     }
 
     /**
