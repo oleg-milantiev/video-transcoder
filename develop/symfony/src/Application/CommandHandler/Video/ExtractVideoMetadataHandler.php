@@ -118,6 +118,7 @@ final readonly class ExtractVideoMetadataHandler
         $videoId = $video->id()?->toRfc4122();
 
         try {
+            $video->updateMeta(['deleteReason' => $e->getMessage()]);
             $tasks = $this->taskRepository->findByVideoId($video->id());
             $video->markDeleted($tasks);
             $this->videoRepository->save($video);
