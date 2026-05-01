@@ -19,6 +19,7 @@ const { attachConsoleCapture } = require('../consoleCapture');
     logoutToPublic,
     shot, renameVideoFromDetails, expectVideoDetailsTitle, expectDownloadFilename,
     switchToVideoTab,
+    switchToCustomGoal,
 } = require('../helpers');
 
 test('transcode flow from video details to downloadable mp4', async ({ page }, testInfo) => {
@@ -53,6 +54,7 @@ test('transcode flow from video details to downloadable mp4', async ({ page }, t
     // 4) Verify preset block exists (transcoding section)
         await waitForVideoDetailsVisible(page);
         await switchToVideoTab(page, 'transcode');
+        await switchToCustomGoal(page);
         const blockPreset = presetBlock(page, presetTitle);
         await expect(blockPreset).toBeVisible({ timeout: UI_TIMEOUT });
         await shot(page, testInfo, '03-video-details-with-presets.png');

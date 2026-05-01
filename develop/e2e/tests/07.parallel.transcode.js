@@ -16,6 +16,7 @@ const {
   logoutToPublic,
   shot,
   switchToVideoTab,
+  switchToCustomGoal,
 } = require('../helpers');
 
 test('parallel transcode: 1080p and 720p run simultaneously within Standard preset (Premium, 2 workers)', async ({ page }, testInfo) => {
@@ -63,6 +64,7 @@ test('parallel transcode: 1080p and 720p run simultaneously within Standard pres
     // Step 6 — Click 1080p and 720p resolution buttons within "Standard video Quality" preset
     //          Premium tariff (delay=0) schedules them immediately
     await switchToVideoTab(page, 'transcode');
+    await switchToCustomGoal(page);
     const block = presetBlock(page, singlePreset);
     await expect(block).toBeVisible({ timeout: UI_TIMEOUT });
     await block.getByRole('button', { name: /1080/ }).first().click({ timeout: UI_TIMEOUT });

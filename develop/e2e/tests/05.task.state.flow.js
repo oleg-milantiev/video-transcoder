@@ -21,6 +21,7 @@ const {
   logoutToPublic,
   shot,
   switchToVideoTab,
+  switchToCustomGoal,
 } = require('../helpers');
 
 test('task state flow with FHD preset: progress, cancel, restart, complete', async ({ page }, testInfo) => {
@@ -76,6 +77,7 @@ test('task state flow with FHD preset: progress, cancel, restart, complete', asy
     // Step 7 — Open video details and verify the FHD preset block is present
     await waitForVideoDetailsVisible(page);
     await switchToVideoTab(page, 'transcode');
+    await switchToCustomGoal(page);
     await expect(presetBlock(page, presetTitle)).toBeVisible({ timeout: UI_TIMEOUT });
     await shot(page, testInfo, '02-video-details-with-fhd-preset.png');
 

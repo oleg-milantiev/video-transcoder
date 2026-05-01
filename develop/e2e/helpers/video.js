@@ -13,9 +13,17 @@ async function switchToVideoTab(page, tabKey) {
   await expect(btn).toBeVisible({ timeout: UI_TIMEOUT });
   await btn.click({ timeout: UI_TIMEOUT });
 }
+// ── Switch to "Custom" goal to see the full preset list ───────────────────────
+// Must be called after switchToVideoTab(page, 'transcode').
+// The Goals section is always rendered in the Transcode tab; clicking "Custom"
+// switches the view from the smart Builder to the raw preset list with filters.
+async function switchToCustomGoal(page) {
+  const goalCard = page.locator('div.fw-semibold', { hasText: 'Custom' }).first();
+  await expect(goalCard).toBeVisible({ timeout: UI_TIMEOUT });
+  await goalCard.click({ timeout: UI_TIMEOUT });
+}
 async function expectDetailsValue(page, label) {
   if (label === 'Title') {
-    // Title is now an h6 in the Info tab (not a dt/dd anymore)
     await switchToVideoTab(page, 'info');
     const titleH6 = page.locator('.card-body h6').first();
     await expect(titleH6).toBeVisible({ timeout: UI_TIMEOUT });
@@ -132,9 +140,11 @@ async function waitForVideoDetailsVisible(page, { requirePresets = false } = {})
   if (!requirePresets) {
     return;
   }
-  // Switch to Transcode tab and wait for at least one preset h6 block
+  // Switch to Transcode tab → Custom goal to see preset h6 blocks
   await switchToVideoTab(page, 'transcode');
-  await expect(page.locator('h6').first()).toBeVisible({ timeout: UI_TIMEOUT });
+  await switchToCustomGoal(page);
+  // Preset h6s contain '(' (format: "Preset Title (codec/codec/format)")
+  await expect(page.locator('h6', { hasText: '(' }).first()).toBeVisible({ timeout: UI_TIMEOUT });
 }
 // ── Flash popup ──────────────────────────────────────────────────────────────
 async function expectFlashPopupTitle(page, titleText, timeout = 30000) {
@@ -190,14 +200,16 @@ async function waitForPosterAndMeta(page, testInfo, prefix = '07-details-poster-
 // ── Preset block helpers ─────────────────────────────────────────────────────
 async function getAllPresetTitles(page) {
   // h6 text: "PresetTitle (videoCodec/audioCodec/format)"  → extract title before '('
-  // Preset blocks are only rendered in the Transcode tab — switch there first.
+  // Preset blocks are only rendered in the Transcode tab, Custom goal — switch there first.
   try {
     await switchToVideoTab(page, 'transcode');
-    await expect(page.locator('h6').first()).toBeVisible({ timeout: UI_TIMEOUT });
+    await switchToCustomGoal(page);
+    await expect(page.locator('h6', { hasText: '(' }).first()).toBeVisible({ timeout: UI_TIMEOUT });
   } catch {
     return [];
   }
-  const headings = await page.locator('h6').all();
+  // Only pick h6s that match the preset title pattern (contain "(")
+  const headings = await page.locator('h6', { hasText: '(' }).all();
   const titles = [];
   for (const h of headings) {
     const text = ((await h.textContent()) || '').trim();
@@ -240,15 +252,15 @@ async function expectPresetStatusHelpIcon(page, presetTitle, { statusText, toolt
   return helpIcon;
 }
 async function expectPresetTranscodeDisabledWithHint(page, presetTitle, { expectedSizeText, tooltipText } = {}) {
-  // Preset blocks are in the Transcode tab
+  // Preset blocks are in the Transcode tab, Custom goal
   await switchToVideoTab(page, 'transcode');
+  await switchToCustomGoal(page);
   const block = presetBlock(page, presetTitle);
   await expect(block).toBeVisible({ timeout: UI_TIMEOUT });
   await expect(block.locator('button.btn-outline-primary').first()).toBeVisible({ timeout: UI_TIMEOUT });
   const sizeHint = block.locator('.text-muted').first();
   await expect(sizeHint).toBeVisible({ timeout: UI_TIMEOUT });
   if (expectedSizeText) {
-    // Match approximate size (e.g. "~4.7 MB" for "Expected size: 4.7 MB")
     const sizeMatch = expectedSizeText.replace(/Expected size:\s*/i, '').trim();
     await expect(sizeHint).toContainText(sizeMatch, { timeout: UI_TIMEOUT });
   }
@@ -277,8 +289,9 @@ async function waitForDeletedVideoDetailsWithoutPoster(page, expectedTitle, maxA
   throw new Error(`Video ${expectedTitle} did not become deleted without poster after ${maxAttempts} checks`);
 }
 async function clickTranscodeForPreset(page, presetTitle) {
-  // Preset blocks live in the Transcode tab — switch there first
+  // Preset blocks live in the Transcode tab, Custom goal — switch there first
   await switchToVideoTab(page, 'transcode');
+  await switchToCustomGoal(page);
   const block = presetBlock(page, presetTitle);
   await expect(block).toBeVisible({ timeout: UI_TIMEOUT });
   const btn = block.locator('button.btn-outline-primary:not([disabled])').first();
@@ -329,6 +342,7 @@ async function waitForAllPresetsProcessingWithProgress(page, presetTitles, maxAt
 }
 module.exports = {
   switchToVideoTab,
+  switchToCustomGoal,
   expectDetailsValue,
   renameVideoFromDetails,
   expectVideoDetailsTitle,
