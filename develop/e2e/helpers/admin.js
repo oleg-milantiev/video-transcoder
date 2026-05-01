@@ -183,7 +183,7 @@ async function fillTariffFields(page, tariff) {
       } else {
         const presetsInput = page.getByLabel('Presets').first();
         await presetsInput.click({ timeout: UI_TIMEOUT });
-        await page.locator('div.item:has-text("'+ presetTitle +'"), div.option:has-text("'+ presetTitle +'")').click({ timeout: UI_TIMEOUT });
+        await page.locator('div.item:text-is("'+ presetTitle +'"), div.option:text-is("'+ presetTitle +'")').click({ timeout: UI_TIMEOUT });
       }
     }
   }
