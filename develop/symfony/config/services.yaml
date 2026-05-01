@@ -41,7 +41,6 @@ services:
             $storagePath: '%kernel.project_dir%/public/uploads'
             $publicPath: '/uploads'
 
-    # todo dry with tus
     App\Application\Service\Video\UrlVideoDownloader:
         arguments:
             $urlUploadDir: '%kernel.project_dir%/var/cache/uploads'
@@ -84,10 +83,6 @@ services:
 
     App\Infrastructure\Logging\DoctrineLogService:
         tags: ['app.logger']
-
-    # todo а это зачем?
-    App\Infrastructure\Logging\TelegramLogService:
-        autowire: true
 
     App\Infrastructure\Logging\EnrichContextLogDecorator:
         arguments:

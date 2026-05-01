@@ -45,8 +45,7 @@ final class MinuteCommandTest extends TestCase
         $exitCode = $tester->execute([]);
 
         $this->assertSame(Command::SUCCESS, $exitCode);
-        // TODO заблокировано StorageInterface
-//        $this->assertStringContainsString('Cleanup done: video candidates=0, task candidates=0, video files deleted=0, task files deleted=0.', $tester->getDisplay());
+        $this->assertStringContainsString('Cleanup done: video candidates=0, task candidates=0, video files deleted=0, task files deleted=0.', $tester->getDisplay());
     }
 
     public function testExecuteReturnsSuccessWhenLockNotAcquired(): void

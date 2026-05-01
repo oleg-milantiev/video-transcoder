@@ -30,7 +30,6 @@ class UploadController extends AbstractController
 
         $server->setDispatcher($symfonyDispatcher);
 
-        // TODO rename file to random uniq (by tus uuid?)
         return $server->serve();
     }
 }
