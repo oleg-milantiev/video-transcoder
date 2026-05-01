@@ -427,10 +427,10 @@ const TRANSCODE_FORMAT_OPTIONS = [
 ];
 
 const GOAL_DEFAULTS = {
-    social:  { quality: config.tariff.title === 'Free' ? 'normal' : 'good', resolution: 'auto', format: 'mp4'  },
-    quality: { quality: 'super',  resolution: 'auto', format: 'webm'  },
+    social:  { quality: config.tariff.title === 'Free' ? 'normal' : 'good', resolution: 'auto', format: 'mp4' },
+    quality: { quality: 'super',  resolution: 'auto', format: 'webm' },
     compact: { quality: 'normal', resolution: '480',  format: 'webm' },
-    pc:      { quality: 'good',   resolution: '1080', format: 'webm'  },
+    pc:      { quality: 'good',   resolution: '1080', format: 'webm' },
     archive: { quality: 'good',   resolution: 'auto', format: 'mp4'  },
 };
 
@@ -438,8 +438,8 @@ const BUILDER_RESOLUTIONS = ['2160', '1440', '1080', '720', '480'];
 
 // Maps (quality, format) → expected videoCodec value in preset
 const QUALITY_CODEC_MAP = {
-    super:  { mp4: 'av1',  webm: 'av1'  },
-    good:   { mp4: 'h265', webm: 'vp9'  },
+    super:  { mp4: 'av1',  webm: 'av1' },
+    good:   { mp4: 'h265', webm: 'vp9' },
     normal: { mp4: 'h264', webm: 'vp8' },
 };
 
