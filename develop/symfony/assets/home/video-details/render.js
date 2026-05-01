@@ -427,7 +427,7 @@ const TRANSCODE_FORMAT_OPTIONS = [
 ];
 
 const GOAL_DEFAULTS = {
-    social:  { quality: config.tariff.title === 'Free' ? 'normal' : 'good', resolution: 'auto', format: 'mp4' },
+    social:  { quality: config?.tariff?.title === 'Free' ? 'normal' : 'good', resolution: 'auto', format: 'mp4' },
     quality: { quality: 'super',  resolution: 'auto', format: 'webm' },
     compact: { quality: 'normal', resolution: '480',  format: 'webm' },
     pc:      { quality: 'good',   resolution: '1080', format: 'webm' },
