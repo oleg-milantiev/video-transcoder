@@ -124,7 +124,7 @@ final class VideoAccessVoterTest extends TestCase
             [VideoAccessVoter::CAN_START_TRANSCODE],
             [VideoAccessVoter::CAN_DELETE],
             [VideoAccessVoter::CAN_EDIT],
-            [VideoAccessVoter::CAN_DOWNLOAD_TRANSCODE],
+            [VideoAccessVoter::CAN_DOWNLOAD],
             [VideoAccessVoter::CAN_CANCEL_TRANSCODE],
         ];
     }

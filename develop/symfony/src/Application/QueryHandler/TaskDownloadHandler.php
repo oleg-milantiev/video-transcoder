@@ -41,7 +41,7 @@ final readonly class TaskDownloadHandler
             throw new VideoNotFoundException('Video not found');
         }
 
-        if (!$this->security->isGranted(VideoAccessVoter::CAN_DOWNLOAD_TRANSCODE, $video)) {
+        if (!$this->security->isGranted(VideoAccessVoter::CAN_DOWNLOAD, $video)) {
             throw new TaskDownloadAccessDeniedException('Access denied');
         }
 

@@ -95,7 +95,7 @@ final class TaskDownloadHandlerTest extends TestCase
         $security = $this->createMock(Security::class);
         $security->expects($this->once())
             ->method('isGranted')
-            ->with(VideoAccessVoter::CAN_DOWNLOAD_TRANSCODE, $video)
+            ->with(VideoAccessVoter::CAN_DOWNLOAD, $video)
             ->willReturn(false);
 
         $handler = new TaskDownloadHandler(
@@ -258,7 +258,7 @@ final class TaskDownloadHandlerTest extends TestCase
         $security = $this->createMock(Security::class);
         $security->expects($this->once())
             ->method('isGranted')
-            ->with(VideoAccessVoter::CAN_DOWNLOAD_TRANSCODE, $video)
+            ->with(VideoAccessVoter::CAN_DOWNLOAD, $video)
             ->willReturn(true);
 
         $logService = $this->createMock(LogServiceInterface::class);

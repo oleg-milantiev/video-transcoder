@@ -7,14 +7,17 @@ use App\Domain\Video\Entity\Preset;
 use App\Domain\Video\Entity\Video;
 use App\Domain\Video\Service\Storage\StorageInterface;
 use DomainException;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Filesystem\Filesystem;
 
-final class FilesystemStorage implements StorageInterface
+final readonly class FilesystemStorage implements StorageInterface
 {
     public function __construct(
-        private readonly string $storagePath,
-        private readonly string $publicPath,
-        private readonly Filesystem $filesystem
+        #[Autowire('%storage_path%')]
+        private string $storagePath,
+        #[Autowire('%storage_public%')]
+        private string $publicPath,
+        private Filesystem $filesystem
     ) {
     }
 
