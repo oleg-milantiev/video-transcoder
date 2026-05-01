@@ -7,8 +7,8 @@ use App\Application\Query\GetStorageQuery;
 use App\Domain\Shared\ValueObject\Uuid;
 use App\Domain\Video\Repository\VideoRepositoryInterface;
 use App\Infrastructure\Security\Voter\VideoAccessVoter;
+use Psr\Cache\CacheItemPoolInterface;
 use Symfony\Bundle\SecurityBundle\Security;
-use Symfony\Component\Cache\Adapter\AdapterInterface;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 use Symfony\Component\Mime\MimeTypes;
@@ -19,7 +19,7 @@ final readonly class GetStorageHandler
     public function __construct(
         private VideoRepositoryInterface $videoRepository,
         private Security $security,
-        private AdapterInterface $cache,
+        private CacheItemPoolInterface $cache,
     ) {
     }
 
@@ -34,7 +34,12 @@ final readonly class GetStorageHandler
             return new Response('Access denied', Response::HTTP_FORBIDDEN);
         }
 
-        $userUuid = $this->security->getUser()->id->toRfc4122();
+        $user = $this->security->getUser();
+        if ($user === null) {
+            return new Response('Access denied', Response::HTTP_FORBIDDEN);
+        }
+
+        $userUuid = $user->id->toRfc4122();
         $cacheKey = 'storage_access_'.(string)$videoUuid.'_'.$userUuid;
 
         // Check cache first
