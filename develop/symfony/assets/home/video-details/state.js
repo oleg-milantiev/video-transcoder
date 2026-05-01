@@ -14,7 +14,7 @@ export function createVideoDetailsState() {
         activeTab: ref('info'),
         // transcode builder state
         transcodeGoal: ref('social'),
-        transcodeQuality: ref(config?.tariff?.title === 'Free' ? 'normal' : 'good'),
+        transcodeQuality: ref(typeof config !== 'undefined' && config?.tariff?.title === 'Free' ? 'normal' : 'good'),
         transcodeResolution: ref('auto'),
         transcodeFormat: ref('mp4'),
         // custom tab filters
