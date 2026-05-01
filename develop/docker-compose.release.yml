@@ -10,7 +10,7 @@ services:
         depends_on:
             - php
         volumes:
-            - uploads:/var/www/yc/public/uploads:ro
+            - storage:/storage
 
     php:
         restart: always
@@ -30,8 +30,8 @@ services:
         expose:
             - 9000
         volumes:
-            - uploads:/var/www/yc/public/uploads
             - tus_uploads:/var/www/yc/var/cache/uploads
+            - storage:/storage
 
     ffmpeg:
         restart: always
@@ -56,8 +56,8 @@ services:
 #                limits:
 #                    memory: 256M
         volumes:
-            - uploads:/var/www/yc/public/uploads
             - tus_uploads:/var/www/yc/var/cache/uploads
+            - storage:/storage
 
     ffmpeg-transcode:
         restart: always
@@ -84,8 +84,8 @@ services:
 #                limits:
 #                    memory: 512M
         volumes:
-            - uploads:/var/www/yc/public/uploads
             - tus_uploads:/var/www/yc/var/cache/uploads
+            - storage:/storage
 
     redis:
         restart: always
@@ -148,3 +148,4 @@ networks:
 volumes:
     uploads:
     tus_uploads:
+    storage:
