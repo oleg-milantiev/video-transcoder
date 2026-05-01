@@ -44,7 +44,9 @@ final readonly class GetStorageHandler
 
         return new Response(null, Response::HTTP_OK, [
             'X-Accel-Redirect' => '/storage/internal/'.$query->key,
-            'Content-Type' => new MimeTypes()->getMimeTypes(pathinfo($query->key, PATHINFO_EXTENSION)) ?? 'application/octet-stream',
+            'Content-Type' => new MimeTypes()->getMimeTypes(
+                    pathinfo($query->key, PATHINFO_EXTENSION)
+                ) ?? 'application/octet-stream',
         ]);
     }
 }
