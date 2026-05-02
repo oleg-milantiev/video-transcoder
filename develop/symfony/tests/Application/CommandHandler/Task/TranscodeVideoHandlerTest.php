@@ -401,6 +401,7 @@ class TranscodeVideoHandlerTest extends TestCase
     public function testSuccessfulTranscoding(): void
     {
         $task = TaskFake::create();
+        $task->updateMeta(['sizeExpected' => 10 * 1024 * 1024]);
         $video = $this->makeVideoWithDuration(size: 10 * 1024 * 1024);
         $report = $this->makeSuccessReport();
         $context = new TranscodeStartContextDTO($task, $video, new PresetFake(), 'output/path.mp4', '/abs/output/path.mp4', '/input/path.mp4', 0.0);
@@ -454,6 +455,7 @@ class TranscodeVideoHandlerTest extends TestCase
     public function testTranscodingCancelledDuringProcess(): void
     {
         $task = TaskFake::create();
+        $task->updateMeta(['sizeExpected' => 10 * 1024 * 1024]);
         $video = $this->makeVideoWithDuration(size: 10 * 1024 * 1024);
         $report = $this->makeCancelledReport();
         $context = new TranscodeStartContextDTO($task, $video, new PresetFake(), 'output/path.mp4', '/abs/output/path.mp4', '/input/path.mp4', 0.0);
@@ -507,6 +509,7 @@ class TranscodeVideoHandlerTest extends TestCase
     public function testLockReleaseExceptionIsLoggedAndSwallowed(): void
     {
         $task = TaskFake::create();
+        $task->updateMeta(['sizeExpected' => 10 * 1024 * 1024]);
         $video = $this->makeVideoWithDuration(size: 10 * 1024 * 1024);
         $report = $this->makeSuccessReport();
         $context = new TranscodeStartContextDTO($task, $video, new PresetFake(), 'output/path.mp4', '/abs/output/path.mp4', '/input/path.mp4', 0.0);
@@ -577,6 +580,7 @@ class TranscodeVideoHandlerTest extends TestCase
     public function testTranscodingExceptionDispatchesFailAndRethrows(): void
     {
         $task = TaskFake::create();
+        $task->updateMeta(['sizeExpected' => 10 * 1024 * 1024]);
         $video = $this->makeVideoWithDuration(size: 10 * 1024 * 1024);
         $context = new TranscodeStartContextDTO($task, $video, new PresetFake(), 'output/path.mp4', '/abs/output/path.mp4', '/input/path.mp4', 0.0);
 
@@ -702,6 +706,7 @@ class TranscodeVideoHandlerTest extends TestCase
     public function testThrowsStorageSizeExceedsQuotaBeforePreparingTranscode(): void
     {
         $task = TaskFake::create();
+        $task->updateMeta(['sizeExpected' => 2 * 1024 * 1024]);
         $video = $this->makeVideoWithDuration(size: 2 * 1024 * 1024);
 
         $taskRepository = $this->createStub(TaskRepositoryInterface::class);

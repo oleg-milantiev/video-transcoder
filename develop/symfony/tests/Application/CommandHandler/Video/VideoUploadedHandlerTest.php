@@ -154,7 +154,12 @@ class VideoUploadedHandlerTest extends TestCase
         $video = $this->makeVideo($userId);
         $command = new VideoUploaded($video, $tempFile, 'video.mp4');
 
-        $commandBus = $this->createStub(MessageBusInterface::class);
+        $commandBus = new class implements MessageBusInterface {
+            public function dispatch($message, array $stamps = []): Envelope
+            {
+                return new Envelope($message);
+            }
+        };
         $eventBus = new class implements MessageBusInterface {
             public array $dispatched = [];
             public function dispatch($message, array $stamps = []): Envelope
@@ -202,7 +207,12 @@ class VideoUploadedHandlerTest extends TestCase
         $video = $this->makeVideo($userId);
         $command = new VideoUploaded($video, $tempFile, 'video.mp4');
 
-        $commandBus = $this->createStub(MessageBusInterface::class);
+        $commandBus = new class implements MessageBusInterface {
+            public function dispatch($message, array $stamps = []): Envelope
+            {
+                return new Envelope($message);
+            }
+        };
         $eventBus = new class implements MessageBusInterface {
             public array $dispatched = [];
             public function dispatch($message, array $stamps = []): Envelope
@@ -248,7 +258,12 @@ class VideoUploadedHandlerTest extends TestCase
         $video = $this->makeVideo($userId);
         $command = new VideoUploaded($video, '/nonexistent/path/video.mp4', 'video.mp4');
 
-        $commandBus = $this->createStub(MessageBusInterface::class);
+        $commandBus = new class implements MessageBusInterface {
+            public function dispatch($message, array $stamps = []): Envelope
+            {
+                return new Envelope($message);
+            }
+        };
         $eventBus = new class implements MessageBusInterface {
             public array $dispatched = [];
             public function dispatch($message, array $stamps = []): Envelope

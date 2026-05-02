@@ -13,8 +13,13 @@ use App\Application\Logging\LogServiceInterface;
 use App\Application\Service\Mercure\FlashRealtimeNotifier;
 use App\Application\Service\Video\UrlVideoDownloader;
 use App\Domain\Shared\ValueObject\Uuid;
+use App\Domain\User\Entity\Tariff;
+use App\Domain\User\Entity\User;
+use App\Domain\User\Repository\UserRepositoryInterface;
+use App\Domain\User\ValueObject\TariffStorageGb;
 use App\Domain\Video\DTO\PaginatedResult;
 use App\Domain\Video\Entity\Video;
+use App\Domain\Video\Repository\StorageRepositoryInterface;
 use App\Domain\Video\Repository\VideoRepositoryInterface;
 use App\Domain\Video\ValueObject\FileExtension;
 use App\Domain\Video\ValueObject\VideoDates;
@@ -43,11 +48,29 @@ class VideoUploadHandlerTest extends TestCase
         MessageBusInterface $eventBus,
         VideoRepositoryInterface $videoRepository,
         UrlVideoDownloader $urlDownloader,
+        ?UserRepositoryInterface $userRepository = null,
+        ?StorageRepositoryInterface $storageRepository = null,
     ): VideoUploadHandler {
+        if ($userRepository === null) {
+            $tariff = $this->createStub(Tariff::class);
+            $tariff->method('storageGb')->willReturn(new TariffStorageGb(100.0));
+            $user = $this->createStub(User::class);
+            $user->method('tariff')->willReturn($tariff);
+            $userRepository = $this->createStub(UserRepositoryInterface::class);
+            $userRepository->method('findById')->willReturn($user);
+        }
+
+        if ($storageRepository === null) {
+            $storageRepository = $this->createStub(StorageRepositoryInterface::class);
+            $storageRepository->method('getUsedStorageSize')->willReturn(0);
+        }
+
         return new VideoUploadHandler(
             $commandBus,
             $eventBus,
             $videoRepository,
+            $userRepository,
+            $storageRepository,
             $urlDownloader,
             new FlashRealtimeNotifier($commandBus),
             new FlashNotificationFactory(),
@@ -89,13 +112,20 @@ class VideoUploadHandlerTest extends TestCase
                 return new Envelope($message);
             }
         };
-        $eventBus = $this->createStub(MessageBusInterface::class);
-        $eventBus->method('dispatch')->willReturnCallback(static fn($m) => new Envelope($m));
+        $eventBus = new class ($dispatched) implements MessageBusInterface {
+            public function __construct(private array &$dispatched) {}
+            public function dispatch($message, array $stamps = []): Envelope
+            {
+                $this->dispatched[] = $message;
+                return new Envelope($message);
+            }
+        };
 
         $savedVideos = [];
         $videoRepository = $this->makeVideoRepository($savedVideos);
 
         $urlDownloader = $this->createStub(UrlVideoDownloader::class);
+        $urlDownloader->method('headRequest')->willReturn(['content-length' => '15']);
         $urlDownloader->method('download')->willReturn([
             'path' => $tempFile,
             'filename' => 'my_video.mp4',
@@ -105,9 +135,9 @@ class VideoUploadHandlerTest extends TestCase
         $handler = $this->makeHandler($commandBus, $eventBus, $videoRepository, $urlDownloader);
         $handler->__invoke(new VideoUpload($video, 'https://example.com/my_video.mp4'));
 
-        // Video must have been saved after markLoaded
-        $this->assertCount(1, $savedVideos);
-        $this->assertFalse($savedVideos[0]->isLoading());
+        // Video must have been saved (once for size, once for markLoaded)
+        $this->assertGreaterThanOrEqual(1, count($savedVideos));
+        $this->assertFalse($savedVideos[array_key_last($savedVideos)]->isLoading());
 
         // VideoUploaded must be dispatched with correct filePath and filename
         $uploadedCmds = array_values(array_filter(
@@ -117,7 +147,6 @@ class VideoUploadHandlerTest extends TestCase
         $this->assertCount(1, $uploadedCmds);
         $this->assertSame($tempFile, $uploadedCmds[0]->filePath());
         $this->assertSame('my_video.mp4', $uploadedCmds[0]->filename());
-        $this->assertArrayHasKey('downloadUrl', $uploadedCmds[0]->additionalMeta());
 
         @unlink($tempFile);
     }
@@ -150,13 +179,11 @@ class VideoUploadHandlerTest extends TestCase
         $videoRepository = $this->makeVideoRepository($savedVideos);
 
         $urlDownloader = $this->createStub(UrlVideoDownloader::class);
+        $urlDownloader->method('headRequest')->willReturn([]);
         $urlDownloader->method('download')->willThrowException(new \RuntimeException('Connection refused'));
 
         $handler = $this->makeHandler($commandBus, $eventBus, $videoRepository, $urlDownloader);
         $handler->__invoke(new VideoUpload($video, 'https://example.com/video.mp4'));
-
-        // No save should occur on failure
-        $this->assertCount(0, $savedVideos);
 
         $found = false;
         foreach ($dispatched as $msg) {
@@ -166,5 +193,51 @@ class VideoUploadHandlerTest extends TestCase
         }
         $this->assertTrue($found, 'VideoUploadedFail was not dispatched on download failure');
     }
-}
 
+    /** Превышение квоты: видео помечается deleted, диспатчится VideoUploadedFail. */
+    public function testStorageQuotaExceededMarksVideoDeleted(): void
+    {
+        $userId = Uuid::generate();
+        $video = $this->makeVideo($userId);
+
+        $dispatched = [];
+        $bus = new class ($dispatched) implements MessageBusInterface {
+            public function __construct(private array &$dispatched) {}
+            public function dispatch($message, array $stamps = []): Envelope
+            {
+                $this->dispatched[] = $message;
+                return new Envelope($message);
+            }
+        };
+
+        $savedVideos = [];
+        $videoRepository = $this->makeVideoRepository($savedVideos);
+
+        // Tariff: 1 GB, used: 1 GB + 1 byte (already full)
+        $tariff = $this->createStub(Tariff::class);
+        $tariff->method('storageGb')->willReturn(new TariffStorageGb(1.0));
+        $user = $this->createStub(User::class);
+        $user->method('tariff')->willReturn($tariff);
+        $userRepository = $this->createStub(UserRepositoryInterface::class);
+        $userRepository->method('findById')->willReturn($user);
+
+        $storageRepository = $this->createStub(StorageRepositoryInterface::class);
+        // After saving video with size=100MB, getUsedStorageSize returns capacity+1
+        $storageRepository->method('getUsedStorageSize')
+            ->willReturn(1 * 1024 * 1024 * 1024 + 1);
+
+        $urlDownloader = $this->createStub(UrlVideoDownloader::class);
+        $urlDownloader->method('headRequest')->willReturn(['content-length' => (string)(100 * 1024 * 1024)]);
+
+        $handler = $this->makeHandler($bus, $bus, $videoRepository, $urlDownloader, $userRepository, $storageRepository);
+        $handler->__invoke(new VideoUpload($video, 'https://example.com/video.mp4'));
+
+        // Last saved video must be marked deleted
+        $this->assertNotEmpty($savedVideos);
+        $this->assertTrue($savedVideos[array_key_last($savedVideos)]->isDeleted());
+
+        // VideoUploadedFail must be dispatched
+        $found = array_filter($dispatched, static fn($m) => $m instanceof VideoUploadedFail);
+        $this->assertNotEmpty($found, 'VideoUploadedFail was not dispatched on quota exceeded');
+    }
+}

@@ -31,11 +31,12 @@ use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Messenger\Envelope;
 use Symfony\Component\Messenger\MessageBusInterface;
+use TusPhp\Tus\Server;
 
 class ExtractVideoMetadataHandlerTest extends TestCase
 {
-    private const VIDEO_ID = '123e4567-e89b-42d3-a456-426614174152';
-    private const USER_ID = '123e4567-e89b-42d3-a456-426614174105';
+    private const string VIDEO_ID = '123e4567-e89b-42d3-a456-426614174152';
+    private const string USER_ID = '123e4567-e89b-42d3-a456-426614174105';
 
     // ===== Helper Methods =====
 
@@ -140,6 +141,7 @@ class ExtractVideoMetadataHandlerTest extends TestCase
                 $storage,
                 $this->createStub(TaskRepositoryInterface::class)
             ),
+            $this->createStub(Server::class),
         );
     }
 
@@ -191,6 +193,7 @@ class ExtractVideoMetadataHandlerTest extends TestCase
                  $storage,
                  $this->createStub(TaskRepositoryInterface::class)
              ),
+             $this->createStub(Server::class),
          );
 
          $handler(new ExtractVideoMetadata($video));
@@ -624,6 +627,7 @@ class ExtractVideoMetadataHandlerTest extends TestCase
             $logService,
             new FlashNotificationFactory(),
             new VideoRealtimeNotifier($notifierBus, $storage, $this->createStub(TaskRepositoryInterface::class)),
+            $this->createStub(Server::class),
         );
 
         $handler(new ExtractVideoMetadata($video));
