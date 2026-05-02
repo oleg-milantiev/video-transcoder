@@ -4,10 +4,8 @@ declare(strict_types=1);
 namespace App\Infrastructure\Upload\EventListener;
 
 use App\Application\Command\Video\VideoUploaded;
-use App\Application\Factory\VideoFactory;
 use App\Domain\Shared\ValueObject\Uuid;
 use App\Domain\Video\Repository\VideoRepositoryInterface;
-use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\EventDispatcher\Attribute\AsEventListener;
 use Symfony\Component\Messenger\Exception\ExceptionInterface;
@@ -27,9 +25,7 @@ readonly class TusPostFinishListener
     public function __construct(
         #[Autowire(service: 'messenger.bus.command')]
         private MessageBusInterface $commandBus,
-        private Security $security,
         private VideoRepositoryInterface $videoRepository,
-        private VideoFactory $videoFactory,
         private TusServer $server,
     ) {
     }
