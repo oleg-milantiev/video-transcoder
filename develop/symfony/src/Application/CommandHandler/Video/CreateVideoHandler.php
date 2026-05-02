@@ -32,6 +32,7 @@ use Psr\Log\LogLevel;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 use Symfony\Component\Messenger\MessageBusInterface;
+use TusPhp\Tus\Server as TusServer;
 
 #[AsMessageHandler(bus: 'messenger.bus.command')]
 final readonly class CreateVideoHandler
@@ -53,6 +54,7 @@ final readonly class CreateVideoHandler
         private TaskRepositoryInterface $taskRepository,
         private UrlVideoDownloader $urlDownloader,
         private StorageRealtimeNotifier $storageNotifier,
+        private TusServer $server,
     ) {
     }
 
@@ -99,6 +101,9 @@ final readonly class CreateVideoHandler
                 if ($file === null) {
                     throw VideoFileNotFound::cannotDetermineSize('unknown');
                 }
+
+                // allow multiple upload of the same file
+                $this->server->getCache()->delete($file->getKey());
 
                 $filePath = $file->getFilePath();
 
