@@ -32,6 +32,7 @@ const {
   getAllPresetTitles,
   presetRow,
   presetBlock,
+  switchToCustomGoal,
   tasksTable,
   taskRowByPresetAndHeight,
   activeTaskRowByPresetAndHeight,
@@ -269,6 +270,7 @@ test.describe('prod-safe isolated smoke', () => {
 
       // Verify the Standard video Quality preset block is visible
       await switchToVideoTab(page, 'transcode');
+      await switchToCustomGoal(page);
       const blockPreset = presetBlock(page, STANDARD_PRESET);
       await expect(blockPreset).toBeVisible({ timeout: UI_TIMEOUT });
 
@@ -287,6 +289,7 @@ test.describe('prod-safe isolated smoke', () => {
       // After 1080p click the UI auto-switches to Tasks tab; switch back to Transcode for 720p
       await page.waitForTimeout(400);
       await switchToVideoTab(page, 'transcode');
+      await switchToCustomGoal(page);
       const btn720 = blockPreset.locator('button.btn-outline-primary:not([disabled])').nth(0);
       await expect(btn720).toBeVisible({ timeout: UI_TIMEOUT });
       await btn720.click({ timeout: UI_TIMEOUT });
