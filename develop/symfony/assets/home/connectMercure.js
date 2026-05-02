@@ -104,6 +104,10 @@ export function connectMercure(config, rootElement) {
                     window.dispatchEvent(new CustomEvent('app:storage', { detail: payload }));
                 }
 
+                if (payload.entity === 'flash') {
+                    window.dispatchEvent(new CustomEvent('app:flash', { detail: payload.payload }));
+                }
+
                 if (payload.payload && payload.payload.notification) {
                     window.dispatchEvent(new CustomEvent('app:flash', { detail: payload.payload.notification }));
                 }
