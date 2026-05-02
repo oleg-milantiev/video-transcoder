@@ -48,6 +48,7 @@ class VideoItemDTOTest extends TestCase
         $this->assertSame('/uploads/' . $uuid->toRfc4122() . '.jpg', $dto->poster);
         $this->assertIsString($dto->expiredAt);
         $this->assertIsString($dto->expiredInterval);
+        $this->assertFalse($dto->loading);
     }
 
     public function testFromDomainMapsDeletedVideo(): void

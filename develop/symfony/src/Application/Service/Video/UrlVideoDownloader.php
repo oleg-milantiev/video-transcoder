@@ -14,12 +14,12 @@ use App\Application\Exception\InvalidUploadUrlException;
 readonly class UrlVideoDownloader
 {
     /** Absolute upper bound regardless of tariff — guards against abuse. */
-    private const HARD_CAP_BYTES = 4 * 1024 * 1024 * 1024; // 4 GB
+    private const int|float HARD_CAP_BYTES = 4 * 1024 * 1024 * 1024; // 4 GB
 
-    private const CONNECT_TIMEOUT_S = 30;
-    private const DOWNLOAD_TIMEOUT_S = 600; // 10 minutes
-    private const READ_CHUNK_BYTES = 65536; // 64 KB
-    private const USER_AGENT = 'VideoTranscoder/1.0 (+https://github.com/oleg-milantiev/video-transcoder)';
+    private const int CONNECT_TIMEOUT_S = 30;
+    private const int DOWNLOAD_TIMEOUT_S = 600; // 10 minutes
+    private const int READ_CHUNK_BYTES = 65536; // 64 KB
+    private const string USER_AGENT = 'VideoTranscoder/1.0 (+https://github.com/oleg-milantiev/video-transcoder)';
 
     public function __construct(
         private string $urlUploadDir,
@@ -28,12 +28,13 @@ readonly class UrlVideoDownloader
 
     /**
      * Downloads the file at $url, stopping at min($maxBytes, HARD_CAP_BYTES).
+     * When $maxBytes is omitted only the built-in HARD_CAP_BYTES limit applies.
      *
-     * @return array{path: string, filename: string, sizeMb: float}
+     * @return array{path: string, filename: string, size: int}
      *
      * @throws InvalidUploadUrlException on bad URL, blocked host, or size exceeded
      */
-    public function download(string $url, int $maxBytes): array
+    public function download(string $url, int $maxBytes = PHP_INT_MAX): array
     {
         $this->validateUrl($url);
 
@@ -157,9 +158,7 @@ readonly class UrlVideoDownloader
 
         // Fall back to the URL path basename.
         $path = parse_url($url, PHP_URL_PATH) ?? '';
-        $basename = pathinfo($path, PATHINFO_BASENAME);
-
-        return $basename !== '' ? urldecode($basename) : 'video.mp4';
+        return urldecode(pathinfo($path, PATHINFO_BASENAME));
     }
 
     private function streamDownload(string $url, string $destPath, int $maxBytes): void

@@ -6,9 +6,9 @@ namespace App\Tests\Application\Event;
 
 use App\Application\Event\ApplicationEvent;
 use App\Application\Event\ApplicationEventLoggerHandler;
-use App\Application\Event\CreateVideoFail;
-use App\Application\Event\CreateVideoStart;
-use App\Application\Event\CreateVideoSuccess;
+use App\Application\Event\VideoUploadedFail;
+use App\Application\Event\VideoUploadedStart;
+use App\Application\Event\VideoUploadedSuccess;
 use App\Application\Event\TranscodeVideoFail;
 use App\Application\Event\TranscodeVideoStart;
 use App\Application\Event\TranscodeVideoSuccess;
@@ -24,7 +24,7 @@ final class ApplicationEventLoggerHandlerTest extends TestCase
         $logger->expects($this->once())->method('error')->with('Application event dispatched', $this->isArray());
 
         $handler = new ApplicationEventLoggerHandler($logger);
-        $handler(new CreateVideoFail('something went wrong', 'user-1', 'file.mp4'));
+        $handler(new VideoUploadedFail('something went wrong', 'vid-1', 'user-1'));
     }
 
     public function testLogsInfoForStartEvents(): void
@@ -33,7 +33,7 @@ final class ApplicationEventLoggerHandlerTest extends TestCase
         $logger->expects($this->once())->method('info')->with('Application event dispatched', $this->isArray());
 
         $handler = new ApplicationEventLoggerHandler($logger);
-        $handler(new CreateVideoStart('user-1', 'file.mp4'));
+        $handler(new VideoUploadedStart('vid-1', 'user-1'));
     }
 
     public function testLogsInfoForSuccessEvents(): void
@@ -42,7 +42,7 @@ final class ApplicationEventLoggerHandlerTest extends TestCase
         $logger->expects($this->once())->method('info')->with('Application event dispatched', $this->isArray());
 
         $handler = new ApplicationEventLoggerHandler($logger);
-        $handler(new CreateVideoSuccess('vid-1', 'user-1'));
+        $handler(new VideoUploadedSuccess('vid-1', 'user-1'));
     }
 
     public function testLogsInfoForTranscodeVideoFailEvents(): void

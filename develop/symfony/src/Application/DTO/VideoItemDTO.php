@@ -23,7 +23,8 @@ readonly class VideoItemDTO
         public bool $deleted,
         public bool $canBeDeleted,
         public array $meta,
-        public ?string $poster = null,
+        public ?string $poster,
+        public bool $loading,
     ) {
     }
 
@@ -59,6 +60,7 @@ readonly class VideoItemDTO
             canBeDeleted: $canBeDeleted,
             meta: self::decorateMeta($video->meta()),
             poster: $poster,
+            loading: $video->isLoading(),
         );
     }
 
@@ -108,6 +110,7 @@ readonly class VideoItemDTO
             'canBeDeleted' => $this->canBeDeleted,
             'meta' => $this->meta,
             'poster' => $this->poster,
+            'loading' => $this->loading,
         ];
     }
 }

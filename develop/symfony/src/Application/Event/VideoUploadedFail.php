@@ -3,11 +3,12 @@ declare(strict_types=1);
 
 namespace App\Application\Event;
 
-final readonly class CreateVideoStart extends ApplicationEvent
+final readonly class VideoUploadedFail extends ApplicationEvent
 {
     public function __construct(
+        public string $error,
+        public string $videoId,
         public string $userId,
-        public string $filename,
     ) {
     }
 }

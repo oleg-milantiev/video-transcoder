@@ -15,7 +15,7 @@ Authorization: Bearer <accessToken>
 Obtain tokens with `POST /api/auth/token` or `POST /api/auth/refresh`.
 TUS file uploads additionally require an active browser session (cookie).
 Please use upload via URL pipeline.
-`POST /api/video/upload` and `GET /api/video/session/{uuid}` require `ROLE_API`.
+`POST /api/video/upload` requires `ROLE_API`.
 
 ---
 
@@ -195,42 +195,31 @@ Access is enforced via `CAN_VIEW_DETAILS` voter.
 
 ### `POST /api/video/upload` 🔒 `ROLE_API`
 
-Accepts a remote video URL for async download-and-transcode.
-Validates the URL, generates a session UUID, enqueues a `CreateVideo` command,
-and returns immediately. All downloading, size checks, and quota enforcement
-happen asynchronously inside `CreateVideoHandler`.
-Poll `GET /api/video/session/{session}` to learn the resulting video ID.
+Accepts a remote video URL for async download.
+Creates the `Video` entity immediately (`loading=true`) so the client can start tracking it.
 
 **Body** `application/json`
 ```json
 { "url": "https://example.com/source.mp4" }
 ```
-
-**202 Accepted**
+**201 Created** — video record created, download in progress
 ```json
-{ "session": "xxxxxxxx-xxxx-4xxx-xxxx-xxxxxxxxxxxx" }
+{
+  "uuid": "xxxxxxxx-xxxx-4xxx-xxxx-xxxxxxxxxxxx",
+  "title": "source",
+  "createdAt": "2026-05-02T10:00:00+00:00",
+  "updatedAt": "2026-05-02T10:00:00+00:00",
+  "expiredAt": null,
+  "expiredInterval": null,
+  "deleted": false,
+  "canBeDeleted": false,
+  "meta": {},
+  "poster": null,
+  "loading": true
+}
+
 ```
-
-**400** `MISSING_URL` · **422** `INVALID_URL` · **500** `INTERNAL_ERROR`
-
----
-
-### `GET /api/video/session/{session}` 🔒 `ROLE_API`
-
-Looks up a video by the session UUID returned at upload time.
-Returns the video's persistent ID once the async `CreateVideoHandler` completes,
-or 204 No Content while the video is still being processed.
-The search is scoped to active (non-deleted) videos of the current user.
-
-**204 No Content** — video not yet created (still processing)
-
-**200 OK** — video is ready
-```json
-{ "id": "xxxxxxxx-xxxx-4xxx-xxxx-xxxxxxxxxxxx" }
-```
-
-**500** `INTERNAL_ERROR`
-
+**400** `MISSING_URL`  **422** `INVALID_URL`, `INVALID_FORMAT`  **500** `INTERNAL_ERROR`
 ---
 
 ### `POST /api/video/{id}/transcode/{presetId}/{height}` 🔒
@@ -355,7 +344,7 @@ The route captures the optional TUS upload token in the URL so that continuation
 requests reach the same server instance.
 
 Used by the Uppy JS client on the frontend — not intended for direct API use.
-On upload completion, a `CreateVideo` command is dispatched automatically.
+On upload completion, a `VideoUploaded` command is dispatched automatically.
 
 ---
 
@@ -412,12 +401,12 @@ and downloading a transcoded output.
   2b.  │ POST /api/video/upload│                       │                   │
        │ { "url": "https://…" }│                       │                   │
        │──────────────────────►│                       │                   │
-       │ 202 { session: uuid } │                       │                   │
+       │ 201 { uuid, loading } │                       │                   │
        │◄──────────────────────│                       │                   │
        │                       │ CreateVideo command   │                   │
        │                       │   queued (Redis)      │                   │
        │                       │                       │                   │
-  3b.  │ GET /api/video/session/{uuid}  (poll)         │                   │
+  3b.  │ (video appears via Mercure app:video event)   │                   │
        │──────────────────────►│                       │                   │
        │ 204 (not ready yet)   │                       │                   │
        │◄──────────────────────│                       │                   │
@@ -496,7 +485,7 @@ and downloading a transcoded output.
 | 2a | Start TUS resumable upload | `POST /api/upload` |
 | 3a | Upload file in chunks | `PATCH /api/upload/{token}` |
 | 2b | Submit remote URL for download | `POST /api/video/upload` |
-| 3b | Poll until video is created | `GET /api/video/session/{uuid}` |
+| 3b | Receive video via Mercure realtime event | `app:video` SSE |
 | 4 | Worker processes file asynchronously | *(internal)* |
 | 5 | Receive video-ready notification | Mercure SSE `app:video` action=`uploaded` |
 | 6 | Receive poster & metadata | Mercure SSE `app:video` action=`meta` |

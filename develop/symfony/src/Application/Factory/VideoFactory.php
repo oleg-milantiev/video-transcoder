@@ -16,6 +16,7 @@ final readonly class VideoFactory
             title: new VideoTitle(pathinfo($filename, PATHINFO_FILENAME)),
             extension: new FileExtension(pathinfo($filename, PATHINFO_EXTENSION)),
             userId: $userId,
+            loading: true,
         );
     }
 }
