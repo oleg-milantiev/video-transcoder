@@ -10,6 +10,7 @@ services:
         volumes:
             - ./symfony:/var/www/yc
             - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
+            # todo chown -R www-data:www-data и воркеры от www-data
             - storage:/storage
 
     cron:

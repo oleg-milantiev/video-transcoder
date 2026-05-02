@@ -37,17 +37,13 @@ readonly class TusPostFinishListener
     public function __invoke(UploadComplete $event): void
     {
         $file = $event->getFile();
-        $details = $file->details();
+        $cache = $this->server->getCache()->get($file->getKey());
 
-        // Allow re-upload of the same file
-        $this->server->getCache()->delete($file->getKey());
-
-        $videoIdStr = $details['videoId'] ?? null;
-        if ($videoIdStr === null) {
+        if (!isset($cache['videoId'])) {
             throw new \RuntimeException('Video ID not found');
         }
 
-        $video = $this->videoRepository->findById(Uuid::fromString($videoIdStr));
+        $video = $this->videoRepository->findById(Uuid::fromString($cache['videoId']));
         if ($video === null) {
             throw new \RuntimeException('Video not found');
         }
@@ -55,7 +51,7 @@ readonly class TusPostFinishListener
         $this->commandBus->dispatch(new VideoUploaded(
             video: $video,
             filePath: $file->getFilePath(),
-            filename: $details['metadata']['originalName'] ?? $file->getName(),
+            filename: $file->getName(),
         ));
     }
 }

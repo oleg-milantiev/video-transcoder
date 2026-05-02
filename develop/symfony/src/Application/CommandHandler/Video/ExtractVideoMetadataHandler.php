@@ -26,6 +26,7 @@ use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 use Symfony\Component\Messenger\Exception\ExceptionInterface;
 use Symfony\Component\Messenger\MessageBusInterface;
+use TusPhp\Tus\Server as TusServer;
 
 #[AsMessageHandler(bus: 'messenger.bus.command')]
 final readonly class ExtractVideoMetadataHandler
@@ -44,6 +45,7 @@ final readonly class ExtractVideoMetadataHandler
         private LogServiceInterface $logService,
         private FlashNotificationFactory $flashNotificationFactory,
         private VideoRealtimeNotifier $videoRealtimeNotifier,
+        private TusServer $server,
     ) {
     }
 
@@ -58,6 +60,13 @@ final readonly class ExtractVideoMetadataHandler
 
         try {
             $this->eventBus->dispatch(new ExtractVideoMetadataStart($videoId));
+
+            // todo не нравится мне это здесь. Но если удалить кеш в цикле tus->serve, тот в HTTP_410 Gone уходит
+            $meta = $video->meta();
+            if (isset($meta['tus'])) {
+                // Allow upload of the same filename again
+                $this->server->getCache()->delete($meta['tus']);
+            }
 
             $user = $this->userRepository->findById($video->userId());
             if ($user === null) {

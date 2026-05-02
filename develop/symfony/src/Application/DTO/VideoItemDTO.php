@@ -68,6 +68,7 @@ readonly class VideoItemDTO
     {
         unset($meta['preview']);
         unset($meta['sourceKey']);
+        unset($meta['tus']);
 
         if (isset($meta['downloadSpeed'], $meta['downloadDurationSec'])) {
             $meta['downloadSpeed'] = HumanReadableHelper::formatBitrate((int)$meta['downloadSpeed']);

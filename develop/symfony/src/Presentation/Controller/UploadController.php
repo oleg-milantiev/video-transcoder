@@ -73,13 +73,13 @@ class UploadController extends AbstractController
         }
 
         try {
-            // todo проверить где имя передаётся, только его использовать
-            $filename = $fileData['metadata']['originalName']
-                ?? $fileData['metadata']['filename']
-                ?? $fileData['name'];
-
+            // todo тут добавить проверку, влезет ли видео по его size в storage
             $userId = Uuid::fromString($user->id->toRfc4122());
-            $video = $this->videoFactory->fromFilename($filename, $userId);
+            $video = $this->videoFactory->fromFilename($fileData['name'], $userId);
+            $video->updateMeta([
+                'size' => $fileData['size'],
+                'tus' => $tusKey,
+            ]);
             $video = $this->videoRepository->save($video);
 
             $fileData['videoId'] = $video->id()->toRfc4122();

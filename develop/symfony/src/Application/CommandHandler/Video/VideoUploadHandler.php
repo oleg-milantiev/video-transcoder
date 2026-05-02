@@ -45,6 +45,9 @@ final readonly class VideoUploadHandler
         $video = $command->video();
 
         try {
+            // todo надо тут уже знать size. А лучше даже выше, в VideoApiController::upload
+            // todo надо блокировать Storage на этот size через updateMeta[size] и проверку на свободное место
+
             // Download the remote file
             $startTime = microtime(true);
             $downloaded = $this->urlDownloader->download($command->url());
