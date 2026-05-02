@@ -102,7 +102,6 @@ class TaskRepository extends ServiceEntityRepository implements TaskRepositoryIn
     {
         $conn = $this->getEntityManager()->getConnection();
 
-        // todo а не вынести ли высоту в отдельное поле?
         $sql = <<<'SQL'
             SELECT id
             FROM task
