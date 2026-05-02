@@ -23,6 +23,7 @@ class VideoMapper
             dates: VideoDates::fromPersistence($entity->createdAt, $entity->updatedAt),
             id: Uuid::fromString($entity->id->toRfc4122()),
             deleted: $entity->deleted,
+            loading: $entity->loading,
         );
     }
 
@@ -45,6 +46,7 @@ class VideoMapper
         $entity->user = $user;
         $entity->meta = $video->meta();
         $entity->deleted = $video->isDeleted();
+        $entity->loading = $video->isLoading();
         $entity->updatedAt = $video->updatedAt();
     }
 }

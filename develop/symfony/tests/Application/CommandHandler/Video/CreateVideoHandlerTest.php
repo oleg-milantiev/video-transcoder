@@ -34,6 +34,7 @@ use PHPUnit\Framework\TestCase;
 use Symfony\Component\Messenger\Envelope;
 use Symfony\Component\Messenger\MessageBusInterface;
 use TusPhp\File as TusFile;
+use TusPhp\Tus\Server as TusServer;
 
 class CreateVideoHandlerTest extends TestCase
 {
@@ -141,6 +142,7 @@ class CreateVideoHandlerTest extends TestCase
             $taskRepository,
             $this->createStub(UrlVideoDownloader::class),
             $this->createStub(StorageRealtimeNotifier::class),
+            $this->createStub(TusServer::class),
         );
 
         $handler->__invoke($command);
@@ -235,6 +237,7 @@ class CreateVideoHandlerTest extends TestCase
             $this->createStub(TaskRepositoryInterface::class),
             $this->createStub(UrlVideoDownloader::class),
             $this->createStub(StorageRealtimeNotifier::class),
+            $this->createStub(TusServer::class),
         );
 
         // Invoke handler - should catch exception and dispatch CreateVideoFail
@@ -327,6 +330,7 @@ class CreateVideoHandlerTest extends TestCase
             $taskRepository,
             $this->createStub(UrlVideoDownloader::class),
             $this->createStub(StorageRealtimeNotifier::class),
+            $this->createStub(TusServer::class),
         );
 
         $handler->__invoke($command);
@@ -400,6 +404,7 @@ class CreateVideoHandlerTest extends TestCase
             $this->createStub(TaskRepositoryInterface::class),
             $this->createStub(UrlVideoDownloader::class),
             $this->createStub(StorageRealtimeNotifier::class),
+            $this->createStub(TusServer::class),
         );
 
         $handler->__invoke($command);
@@ -466,6 +471,7 @@ class CreateVideoHandlerTest extends TestCase
             $this->createStub(TaskRepositoryInterface::class),
             $this->createStub(UrlVideoDownloader::class),
             $this->createStub(StorageRealtimeNotifier::class),
+            $this->createStub(TusServer::class),
         );
 
         $handler->__invoke($command);
@@ -540,6 +546,7 @@ class CreateVideoHandlerTest extends TestCase
             $this->createStub(TaskRepositoryInterface::class),
             $this->createStub(UrlVideoDownloader::class),
             $this->createStub(StorageRealtimeNotifier::class),
+            $this->createStub(TusServer::class),
         );
 
         $handler->__invoke($command);
@@ -644,6 +651,7 @@ class CreateVideoHandlerTest extends TestCase
             $taskRepository,
             $this->createStub(UrlVideoDownloader::class),
             $storageNotifier,
+            $this->createStub(TusServer::class),
         );
 
         $handler->__invoke($command);
@@ -720,6 +728,7 @@ class CreateVideoHandlerTest extends TestCase
             $taskRepository,
             $this->createStub(UrlVideoDownloader::class),
             $this->createStub(StorageRealtimeNotifier::class),
+            $this->createStub(TusServer::class),
         );
 
         $handler->__invoke($command);

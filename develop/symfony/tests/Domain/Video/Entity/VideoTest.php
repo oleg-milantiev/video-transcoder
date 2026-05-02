@@ -306,4 +306,118 @@ final class VideoTest extends TestCase
 
         $this->assertTrue($video->isDeleted());
     }
+
+    /** create() по умолчанию устанавливает loading = true (видео создаётся в процессе загрузки). */
+    public function testCreateDefaultsLoadingToTrue(): void
+    {
+        $video = Video::create(
+            new VideoTitle('Loading default'),
+            new FileExtension('mp4'),
+            Uuid::fromString('55555555-5555-4555-8555-555555555551'),
+        );
+
+        $this->assertTrue($video->isLoading());
+    }
+
+    /** create() с явным loading = false сохраняет флаг. */
+    public function testCreateWithLoadingFalse(): void
+    {
+        $video = Video::create(
+            new VideoTitle('Loading false'),
+            new FileExtension('mp4'),
+            Uuid::fromString('55555555-5555-4555-8555-555555555552'),
+            loading: false,
+        );
+
+        $this->assertFalse($video->isLoading());
+    }
+
+    /** reconstitute() передаёт loading = true корректно. */
+    public function testReconstituteWithLoadingTrue(): void
+    {
+        $video = Video::reconstitute(
+            new VideoTitle('Reconstitute loading'),
+            new FileExtension('mp4'),
+            Uuid::fromString('55555555-5555-4555-8555-555555555553'),
+            [],
+            VideoDates::create(),
+            Uuid::fromString('55555555-5555-4555-8555-555555555554'),
+            false,
+            true,
+        );
+
+        $this->assertTrue($video->isLoading());
+    }
+
+    /** markLoading() устанавливает loading = true и обновляет updatedAt. */
+    public function testMarkLoadingSetsLoadingAndUpdatesDate(): void
+    {
+        $video = Video::reconstitute(
+            new VideoTitle('Mark loading'),
+            new FileExtension('mp4'),
+            Uuid::fromString('55555555-5555-4555-8555-555555555555'),
+            [],
+            VideoDates::create(),
+            Uuid::fromString('55555555-5555-4555-8555-555555555555'),
+            false,
+            false,
+        );
+
+        $this->assertFalse($video->isLoading());
+        $video->markLoading();
+
+        $this->assertTrue($video->isLoading());
+        $this->assertNotNull($video->updatedAt());
+    }
+
+    /** markLoaded() устанавливает loading = false и обновляет updatedAt. */
+    public function testMarkLoadedClearsLoadingAndUpdatesDate(): void
+    {
+        $video = Video::create(
+            new VideoTitle('Mark loaded'),
+            new FileExtension('mp4'),
+            Uuid::fromString('55555555-5555-4555-8555-555555555556'),
+            loading: true,
+        );
+
+        $this->assertTrue($video->isLoading());
+        $video->markLoaded();
+
+        $this->assertFalse($video->isLoading());
+        $this->assertNotNull($video->updatedAt());
+    }
+
+    /** markLoading() на удалённом видео бросает VideoAlreadyDeleted. */
+    public function testMarkLoadingOnDeletedVideoThrows(): void
+    {
+        $video = Video::reconstitute(
+            new VideoTitle('Deleted loading'),
+            new FileExtension('mp4'),
+            Uuid::fromString('55555555-5555-4555-8555-555555555557'),
+            [],
+            VideoDates::create(),
+            Uuid::fromString('55555555-5555-4555-8555-555555555558'),
+            true,
+        );
+
+        $this->expectException(VideoAlreadyDeleted::class);
+        $video->markLoading();
+    }
+
+    /** markLoaded() на удалённом видео бросает VideoAlreadyDeleted. */
+    public function testMarkLoadedOnDeletedVideoThrows(): void
+    {
+        $video = Video::reconstitute(
+            new VideoTitle('Deleted loaded'),
+            new FileExtension('mp4'),
+            Uuid::fromString('55555555-5555-4555-8555-555555555559'),
+            [],
+            VideoDates::create(),
+            Uuid::fromString('55555555-5555-4555-8555-55555555555a'),
+            true,
+        );
+
+        $this->expectException(VideoAlreadyDeleted::class);
+        $video->markLoaded();
+    }
 }

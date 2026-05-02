@@ -20,6 +20,7 @@ class Video
     private Uuid $userId;
     private array $meta;
     private bool $deleted;
+    private bool $loading;
 
     private function __construct(
         VideoTitle $title,
@@ -27,6 +28,7 @@ class Video
         Uuid $userId,
         array $meta,
         bool $deleted,
+        bool $loading,
         VideoDates $dates,
         ?Uuid $id,
     ) {
@@ -37,6 +39,7 @@ class Video
         $this->userId = $userId;
         $this->meta = $meta;
         $this->deleted = $deleted;
+        $this->loading = $loading;
     }
 
     public static function create(
@@ -44,8 +47,9 @@ class Video
         FileExtension $extension,
         Uuid $userId,
         array $meta = [],
+        bool $loading = true,
     ): self {
-        return new self($title, $extension, $userId, $meta, false, VideoDates::create(), null);
+        return new self($title, $extension, $userId, $meta, false, $loading, VideoDates::create(), null);
     }
 
     public static function reconstitute(
@@ -56,8 +60,9 @@ class Video
         VideoDates $dates,
         Uuid $id,
         bool $deleted = false,
+        bool $loading = false,
     ): self {
-        return new self($title, $extension, $userId, $meta, $deleted, $dates, $id);
+        return new self($title, $extension, $userId, $meta, $deleted, $loading, $dates, $id);
     }
 
     public function id(): ?Uuid
@@ -131,6 +136,25 @@ class Video
     public function isDeleted(): bool
     {
         return $this->deleted;
+    }
+
+    public function isLoading(): bool
+    {
+        return $this->loading;
+    }
+
+    public function markLoading(): void
+    {
+        $this->assertNotDeleted();
+        $this->loading = true;
+        $this->dates = $this->dates->touch();
+    }
+
+    public function markLoaded(): void
+    {
+        $this->assertNotDeleted();
+        $this->loading = false;
+        $this->dates = $this->dates->touch();
     }
 
     public function duration(): ?float

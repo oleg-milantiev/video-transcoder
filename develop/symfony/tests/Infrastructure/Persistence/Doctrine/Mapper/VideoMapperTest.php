@@ -31,6 +31,7 @@ final class VideoMapperTest extends TestCase
         $this->videoEntity->createdAt = new DateTimeImmutable('2024-01-01 10:00:00');
         $this->videoEntity->updatedAt = new DateTimeImmutable('2024-01-02 12:00:00');
         $this->videoEntity->deleted = false;
+        $this->videoEntity->loading = false;
     }
 
     public function testToDomainMapsAllFields(): void
@@ -44,6 +45,23 @@ final class VideoMapperTest extends TestCase
         self::assertSame('11111111-1111-4111-8111-111111111111', $video->userId()->toRfc4122());
         self::assertSame(['size' => 1024], $video->meta());
         self::assertFalse($video->isDeleted());
+        self::assertFalse($video->isLoading());
+    }
+
+    public function testToDomainWithLoadingTrue(): void
+    {
+        $this->videoEntity->loading = true;
+        $video = VideoMapper::toDomain($this->videoEntity);
+
+        self::assertTrue($video->isLoading());
+    }
+
+    public function testToDomainWithLoadingFalse(): void
+    {
+        $this->videoEntity->loading = false;
+        $video = VideoMapper::toDomain($this->videoEntity);
+
+        self::assertFalse($video->isLoading());
     }
 
     public function testToDomainWithDeletedFlag(): void
@@ -68,6 +86,15 @@ final class VideoMapperTest extends TestCase
         self::assertFalse($entity->deleted);
     }
 
+    public function testToDoctrinePreservesLoadingFlag(): void
+    {
+        $this->videoEntity->loading = true;
+        $video = VideoMapper::toDomain($this->videoEntity);
+        $entity = VideoMapper::toDoctrine($video, $this->userEntity);
+
+        self::assertTrue($entity->loading);
+    }
+
     public function testHydrateUpdatesExistingEntity(): void
     {
         $video = VideoMapper::toDomain($this->videoEntity);
@@ -77,5 +104,6 @@ final class VideoMapperTest extends TestCase
         self::assertSame('Test Video', $target->title);
         self::assertSame('mp4', $target->extension);
         self::assertSame($this->userEntity, $target->user);
+        self::assertFalse($target->loading);
     }
 }

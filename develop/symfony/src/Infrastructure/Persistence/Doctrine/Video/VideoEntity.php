@@ -47,6 +47,9 @@ class VideoEntity
     #[ORM\Column(options: ['default' => false])]
     public bool $deleted = false;
 
+    #[ORM\Column(options: ['default' => true])]
+    public bool $loading = true;
+
     /**
      * @var Collection<int, TaskEntity>
      */
