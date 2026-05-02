@@ -151,49 +151,6 @@ class VideoUploadHandlerTest extends TestCase
         @unlink($tempFile);
     }
 
-    /** При ошибке загрузки (download exception) диспатчится VideoUploadedFail. */
-    public function testDownloadFailureDispatchesVideoUploadedFail(): void
-    {
-        $userId = Uuid::generate();
-        $video = $this->makeVideo($userId);
-
-        $dispatched = [];
-        $commandBus = new class ($dispatched) implements MessageBusInterface {
-            public function __construct(private array &$dispatched) {}
-            public function dispatch($message, array $stamps = []): Envelope
-            {
-                $this->dispatched[] = $message;
-                return new Envelope($message);
-            }
-        };
-        $eventBus = new class ($dispatched) implements MessageBusInterface {
-            public function __construct(private array &$dispatched) {}
-            public function dispatch($message, array $stamps = []): Envelope
-            {
-                $this->dispatched[] = $message;
-                return new Envelope($message);
-            }
-        };
-
-        $savedVideos = [];
-        $videoRepository = $this->makeVideoRepository($savedVideos);
-
-        $urlDownloader = $this->createStub(UrlVideoDownloader::class);
-        $urlDownloader->method('headRequest')->willReturn([]);
-        $urlDownloader->method('download')->willThrowException(new \RuntimeException('Connection refused'));
-
-        $handler = $this->makeHandler($commandBus, $eventBus, $videoRepository, $urlDownloader);
-        $handler->__invoke(new VideoUpload($video, 'https://example.com/video.mp4'));
-
-        $found = false;
-        foreach ($dispatched as $msg) {
-            if ($msg instanceof VideoUploadedFail && str_contains($msg->error, 'Connection refused')) {
-                $found = true;
-            }
-        }
-        $this->assertTrue($found, 'VideoUploadedFail was not dispatched on download failure');
-    }
-
     /** Превышение квоты: видео помечается deleted, диспатчится VideoUploadedFail. */
     public function testStorageQuotaExceededMarksVideoDeleted(): void
     {

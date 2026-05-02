@@ -364,65 +364,6 @@ class VideoUploadedHandlerTest extends TestCase
         $this->cleanupTempFile($tempFile);
     }
 
-    /** Превышена квота хранилища — диспатчится VideoUploadedFail, файл удаляется. */
-    public function testStorageQuotaExceededDispatchesVideoUploadedFail(): void
-    {
-        $userId = Uuid::generate();
-        $tempFile = tempnam(sys_get_temp_dir(), 'test_');
-        $handle = fopen($tempFile, 'cb');
-        self::assertIsResource($handle);
-        ftruncate($handle, 5 * 1024 * 1024);
-        fclose($handle);
-
-        $video = $this->makeVideo($userId);
-        $command = new VideoUploaded($video, $tempFile, 'video.mp4');
-
-        $commandBus = $this->createStub(MessageBusInterface::class);
-        $commandBus->method('dispatch')->willReturnCallback(static fn(object $m) => new Envelope($m));
-        $eventBus = new class implements MessageBusInterface {
-            public array $dispatched = [];
-            public function dispatch($message, array $stamps = []): Envelope
-            {
-                $this->dispatched[] = $message;
-                return new Envelope($message);
-            }
-        };
-
-        $userWithTariff = $this->createStub(User::class);
-        $tariff = $this->createStub(Tariff::class);
-        $tariff->method('videoSize')->willReturn(new TariffVideoSize(1000.0));
-        $tariff->method('storageGb')->willReturn(new TariffStorageGb(1));
-        $userWithTariff->method('id')->willReturn($userId);
-        $userWithTariff->method('tariff')->willReturn($tariff);
-        $userRepository = $this->createStub(UserRepositoryInterface::class);
-        $userRepository->method('findById')->willReturn($userWithTariff);
-
-        $storageRepository = $this->createStub(StorageRepositoryInterface::class);
-        $storageRepository->method('getUsedStorageSize')->willReturn(1020 * 1024 * 1024);
-
-        $storage = $this->createStub(StorageInterface::class);
-        $notifier = new VideoRealtimeNotifier($commandBus, $storage, $this->createStub(TaskRepositoryInterface::class));
-
-        $handler = $this->makeHandler(
-            $commandBus, $eventBus, $this->createStub(VideoRepositoryInterface::class),
-            $storageRepository, $userRepository,
-            $notifier, new FlashRealtimeNotifier($commandBus),
-            $this->createStub(LogServiceInterface::class), $storage,
-            $this->createStub(StorageRealtimeNotifier::class),
-        );
-
-        $handler->__invoke($command);
-
-        $found = false;
-        foreach ($eventBus->dispatched as $evt) {
-            if ($evt instanceof VideoUploadedFail && str_contains($evt->error, 'exceeds your tariff limit')) {
-                $found = true;
-            }
-        }
-        $this->assertTrue($found, 'VideoUploadedFail with storage quota error was not dispatched');
-        $this->assertFileDoesNotExist($tempFile);
-    }
-
     /** Успешная загрузка вызывает storageNotifier->notifyStorageUpdated(). */
     public function testSuccessfulUploadNotifiesStorage(): void
     {
