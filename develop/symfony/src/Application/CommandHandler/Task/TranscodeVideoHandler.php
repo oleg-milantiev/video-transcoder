@@ -196,7 +196,11 @@ final readonly class TranscodeVideoHandler
                 throw TariffNotFound::forUser($user->id()?->toRfc4122() ?? $scheduledTask->userId->toRfc4122());
             }
 
-            $fileSizeMb = ($video->size() ?? 0) / 1024 / 1024;
+            $meta = $task->meta();
+            if (!isset($meta['sizeExpected'])) {
+                throw new RuntimeException('No task size');
+            }
+            $fileSizeMb = $meta['sizeExpected'] / 1024 / 1024;
             $storageNowMb = $this->storageRepository->getUsedStorageSize($user->id()) / 1024 / 1024;
             $storageCapacityMb = $tariff->storageGb()->value() * 1024;
             if ($fileSizeMb + $storageNowMb > $storageCapacityMb) {
