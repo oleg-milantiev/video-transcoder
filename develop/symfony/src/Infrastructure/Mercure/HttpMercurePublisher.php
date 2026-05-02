@@ -27,7 +27,7 @@ final readonly class HttpMercurePublisher implements MercurePublisherInterface
         $data = [
             'action' => $message->action,
             'entity' => $message->entity,
-            'id' => $message->id->toRfc4122(),
+            'id' => $message->id?->toRfc4122(),
             'payload' => $message->payload,
         ];
 
@@ -53,4 +53,3 @@ final readonly class HttpMercurePublisher implements MercurePublisherInterface
         }
     }
 }
-
