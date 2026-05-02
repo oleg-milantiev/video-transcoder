@@ -90,22 +90,14 @@ final readonly class VideoUploadedHandler
             $fileSizeMb = $fileSize / (1024 * 1024);
             if ($fileSizeMb > $maxSizeMb) {
                 @unlink($filePath);
-                $this->flashRealtimeNotifier->notify(
-                    $video->userId(),
-                    $this->flashNotificationFactory->uploadFailed(null, 'File size exceeds '.$maxSizeMb.' MB')
-                );
                 throw VideoSizeExceedsQuota::fromSize($fileSizeMb, $maxSizeMb);
             }
 
             // ── storage-quota check ───────────────────────────────────────────
             $storageNowMb = $this->storageRepository->getUsedStorageSize($user->id()) / 1024 / 1024;
             $storageCapacityMb = $tariff->storageGb()->value() * 1024;
-            if ($fileSizeMb + $storageNowMb > $storageCapacityMb) {
+            if ($storageNowMb > $storageCapacityMb) {
                 @unlink($filePath);
-                $this->flashRealtimeNotifier->notify(
-                    $video->userId(),
-                    $this->flashNotificationFactory->uploadFailed(null, 'The video doesn\'t fit in the storage')
-                );
                 throw StorageSizeExceedsQuota::create($fileSizeMb, $storageNowMb, $storageCapacityMb);
             }
 
@@ -145,6 +137,20 @@ final readonly class VideoUploadedHandler
             );
             $this->commandBus->dispatch(new ExtractVideoMetadata($video));
         } catch (\Throwable $e) {
+            $this->logService->log('video', 'upload', $video->id(), LogLevel::ERROR, 'Video upload error', [
+                'filename' => $command->filename(),
+            ]);
+
+            $video->updateMeta([
+                'deleteReason' => $e->getMessage(),
+            ]);
+            $video->markDeleted([]);
+            $this->videoRepository->save($video);
+
+            $this->videoRealtimeNotifier->notifyVideoUpdated($video, 'uploaded', [
+                'notification' => $this->flashNotificationFactory->uploadFailed($video, $e->getMessage())->toArray(),
+            ]);
+
             $this->eventBus->dispatch(
                 new VideoUploadedFail(
                     error: $e->getMessage(),

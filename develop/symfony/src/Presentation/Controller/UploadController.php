@@ -3,12 +3,16 @@ declare(strict_types=1);
 
 namespace App\Presentation\Controller;
 
+use App\Application\Factory\FlashNotificationFactory;
 use App\Application\Factory\VideoFactory;
-use App\Domain\Shared\ValueObject\Uuid;
+use App\Application\Service\Mercure\FlashRealtimeNotifier;
+use App\Domain\Video\Repository\StorageRepositoryInterface;
 use App\Domain\Video\Repository\VideoRepositoryInterface;
+use App\Infrastructure\Persistence\Doctrine\User\UserEntity;
+use App\Infrastructure\Persistence\Doctrine\User\UserMapper;
+use RuntimeException;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
-use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
@@ -18,8 +22,11 @@ use TusPhp\Tus\Server as TusServer;
 class UploadController extends AbstractController
 {
     public function __construct(
+        private readonly FlashRealtimeNotifier $flashRealtimeNotifier,
+        private readonly FlashNotificationFactory $flashNotificationFactory,
         private readonly VideoFactory $videoFactory,
         private readonly VideoRepositoryInterface $videoRepository,
+        private readonly StorageRepositoryInterface $storageRepository,
     ) {
     }
 
@@ -28,6 +35,7 @@ class UploadController extends AbstractController
      * On a new upload (POST, 201 Created) a Video entity with loading=true is created
      * immediately and its id is stored inside the TUS file cache so that
      * TusPostFinishListener can find it when the upload completes.
+     * Returns 422 if the file would exceed the user's storage quota.
      */
     #[Route('/api/upload/{token?}', name: 'api_tus', defaults: ['token' => ''])]
     public function uploadHandler(
@@ -44,49 +52,75 @@ class UploadController extends AbstractController
 
         // When TUS creates a new upload resource (201) we attach a Video entity to it
         if ($response->getStatusCode() === Response::HTTP_CREATED) {
-            $this->createVideoForTusUpload($server, $response);
+            if (!$this->createVideoForTusUpload($server, $response)) {
+                return new Response(null, Response::HTTP_UNPROCESSABLE_ENTITY);
+            }
         }
 
         return $response;
     }
 
     /**
-     * Creates a Video(loading=true) and stores its id in the TUS file cache entry
+     * Creates a Video(loading=true) with meta['size'] from TUS upload-length,
+     * checks storage quota, and stores the video id in the TUS file cache entry
      * so that TusPostFinishListener can retrieve it later.
      */
-    private function createVideoForTusUpload(TusServer $server, Response $response): void
+    private function createVideoForTusUpload(TusServer $server, Response $response): bool
     {
         $location = $response->headers->get('location', '');
         $tusKey = basename($location);
         if ($tusKey === '') {
-            return;
+            // todo logger?
+            return false;
         }
 
         $fileData = $server->getCache()->get($tusKey);
         if (!is_array($fileData)) {
-            return;
+            // todo logger?
+            return false;
         }
 
-        $user = $this->getUser();
-        if ($user === null) {
-            return;
+        /** @var UserEntity $userEntity */
+        $userEntity = $this->getUser();
+        $user = UserMapper::toDomain($userEntity);
+
+        $tariff = $user->tariff();
+        if ($tariff === null) {
+            // todo logger?
+            throw new RuntimeException('User has no tariff');
         }
 
-        try {
-            // todo тут добавить проверку, влезет ли видео по его size в storage
-            $userId = Uuid::fromString($user->id->toRfc4122());
-            $video = $this->videoFactory->fromFilename($fileData['name'], $userId);
-            $video->updateMeta([
-                'size' => $fileData['size'],
-                'tus' => $tusKey,
-            ]);
-            $video = $this->videoRepository->save($video);
+        $maxFileSize = $tariff->videoSize()->value() * 1024 * 1024;
+        if ($fileData['size'] > $maxFileSize) {
+            $this->flashRealtimeNotifier->notify(
+                $user->id(),
+                $this->flashNotificationFactory->uploadFailed(null, 'File size exceeds '.$tariff->videoSize()->value().' MB')
+            );
 
-            $fileData['videoId'] = $video->id()->toRfc4122();
-            $server->getCache()->set($tusKey, $fileData);
-        } catch (\Throwable) {
-            // If video creation fails the upload still proceeds;
-            // TusPostFinishListener will fall back to creating a new Video.
+            return false;
         }
+
+        $storageCapacityBytes = (int)($tariff->storageGb()->value() * 1024 * 1024 * 1024);
+        $usedBytes = $this->storageRepository->getUsedStorageSize($user->id());
+        if ($usedBytes > $storageCapacityBytes) {
+            $this->flashRealtimeNotifier->notify(
+                $user->id(),
+                $this->flashNotificationFactory->uploadFailed(null, 'Storage is full.')
+            );
+
+            return false;
+        }
+
+        $video = $this->videoFactory->fromFilename($fileData['name'], $user->id());
+        $video->updateMeta([
+            'size' => $fileData['size'],
+            'tus' => $tusKey,
+        ]);
+        $video = $this->videoRepository->save($video);
+
+        $fileData['videoId'] = $video->id()->toRfc4122();
+        $server->getCache()->set($tusKey, $fileData);
+
+        return true;
     }
 }

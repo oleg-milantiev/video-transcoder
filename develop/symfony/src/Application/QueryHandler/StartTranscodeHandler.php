@@ -192,10 +192,12 @@ final readonly class StartTranscodeHandler
             } else {
                 $isRestart = false;
                 $task = Task::create($video->id(), $preset->id(), $user->id());
-                $task->updateMeta(['height' => $query->height]);
-                $task->updateMeta(['width' => $outputWidth]);
-                $task->updateMeta(['bitrate' => $bitrate]);
-                $task->updateMeta(['sizeExpected' => (int)($video->duration() * $bitrate / 8 * 1024 * 1024)]);
+                $task->updateMeta([
+                    'height' => $query->height,
+                    'width' => $outputWidth,
+                    'bitrate' => $bitrate,
+                    'sizeExpected' => (int)($video->duration() * $bitrate / 8 * 1024 * 1024),
+                ]);
             }
 
             $this->taskRepository->save($task);
@@ -221,7 +223,7 @@ final readonly class StartTranscodeHandler
                 'transcode',
                 $video->id(),
                 LogLevel::INFO,
-                'Transcode started for video',
+                'Transcode requested',
                 array_diff_key($context, ['videoId' => 1])
             );
         } catch (Throwable $e) {

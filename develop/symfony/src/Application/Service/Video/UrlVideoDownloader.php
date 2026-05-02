@@ -34,23 +34,13 @@ readonly class UrlVideoDownloader
      *
      * @throws InvalidUploadUrlException on bad URL, blocked host, or size exceeded
      */
-    public function download(string $url, int $maxBytes = PHP_INT_MAX): array
+    public function download(string $url, array $headers, int $maxBytes = PHP_INT_MAX): array
     {
         $this->validateUrl($url);
 
         $effectiveMax = min($maxBytes, self::HARD_CAP_BYTES);
 
-        // ── fast rejection via HEAD ──────────────────────────────────────────
-        $headHeaders = $this->headRequest($url);
-        if (isset($headHeaders['content-length'])) {
-            $contentLength = (int)$headHeaders['content-length'];
-            if ($contentLength > $effectiveMax) {
-                throw InvalidUploadUrlException::tooLarge($contentLength, $effectiveMax);
-            }
-        }
-
-        // ── stream download ──────────────────────────────────────────────────
-        $filename = $this->extractFilename($url, $headHeaders);
+        $filename = $this->extractFilename($url, $headers);
         $ext = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
         $tmpPath = rtrim($this->urlUploadDir, '/')
             .'/'.uniqid('url_upload_', true)
@@ -103,9 +93,12 @@ readonly class UrlVideoDownloader
     }
 
     /**
+     * Sends a HEAD request to $url and returns a map of lowercased response headers.
+     * Returns an empty array on any network or protocol error.
+     *
      * @return array<string, string>
      */
-    private function headRequest(string $url): array
+    public function headRequest(string $url): array
     {
         $context = stream_context_create([
             'http' => [
