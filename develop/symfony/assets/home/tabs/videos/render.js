@@ -43,6 +43,20 @@ function renderDeleteButton(vm, video) {
     );
 }
 
+function renderLoadingBadge(video) {
+    if (video.loading && !video.deleted) {
+        return h(
+            'span',
+            {
+                class: 'badge bg-warning text-dark',
+                style: 'margin-left: 8px;',
+            },
+            'Loading'
+        );
+    }
+    return null;
+}
+
 export function renderVideosPane(vm, paneClass) {
     return h('div', { class: paneClass }, [
         vm.videosError ? h('div', { class: 'alert alert-danger' }, vm.videosError) : null,
@@ -64,8 +78,11 @@ export function renderVideosPane(vm, paneClass) {
                               },
                               [
                                   h('td', [renderPoster(video)]),
-                                  h('td', { class: video.deleted === true ? 'video-title-deleted' : '' }, video.title || '-'),
-                                   h('td', humanReadableDateTime(video.createdAt)),
+                                  h('td', { class: video.deleted === true ? 'video-title-deleted' : '' }, [
+                                      video.title || '-',
+                                      renderLoadingBadge(video),
+                                  ]),
+                                  h('td', humanReadableDateTime(video.createdAt)),
                                   h('td', [renderDeleteButton(vm, video)]),
                               ]
                           )
