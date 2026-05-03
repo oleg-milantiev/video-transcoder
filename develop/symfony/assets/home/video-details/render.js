@@ -216,6 +216,9 @@ function renderInfoTab(vm) {
         video.deleted
             ? h('span', { class: 'badge bg-warning text-dark' }, 'Deleted')
             : null,
+        !video.deleted && video.loading
+            ? h('span', { class: 'badge bg-warning text-dark' }, 'Loading')
+            : null,
     ]);
 
     const posterNode = video.poster
