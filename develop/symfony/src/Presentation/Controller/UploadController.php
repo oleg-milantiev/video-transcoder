@@ -5,11 +5,13 @@ namespace App\Presentation\Controller;
 
 use App\Application\Factory\FlashNotificationFactory;
 use App\Application\Factory\VideoFactory;
+use App\Application\Logging\LogServiceInterface;
 use App\Application\Service\Mercure\FlashRealtimeNotifier;
 use App\Domain\Video\Repository\StorageRepositoryInterface;
 use App\Domain\Video\Repository\VideoRepositoryInterface;
 use App\Infrastructure\Persistence\Doctrine\User\UserEntity;
 use App\Infrastructure\Persistence\Doctrine\User\UserMapper;
+use Psr\Log\LogLevel;
 use RuntimeException;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
@@ -24,6 +26,7 @@ class UploadController extends AbstractController
     public function __construct(
         private readonly FlashRealtimeNotifier $flashRealtimeNotifier,
         private readonly FlashNotificationFactory $flashNotificationFactory,
+        private readonly LogServiceInterface $logService,
         private readonly VideoFactory $videoFactory,
         private readonly VideoRepositoryInterface $videoRepository,
         private readonly StorageRepositoryInterface $storageRepository,
@@ -70,13 +73,29 @@ class UploadController extends AbstractController
         $location = $response->headers->get('location', '');
         $tusKey = basename($location);
         if ($tusKey === '') {
-            // todo logger?
+            $this->logService->log(
+                'upload',
+                'create',
+                null,
+                LogLevel::ERROR,
+                'Failed to get TUS key',
+                ['location' => $location]
+            );
+
             return false;
         }
 
         $fileData = $server->getCache()->get($tusKey);
         if (!is_array($fileData)) {
-            // todo logger?
+            $this->logService->log(
+                'upload',
+                'create',
+                null,
+                LogLevel::ERROR,
+                'No file data found in TUS cache',
+                ['tus' => $tusKey]
+            );
+
             return false;
         }
 
@@ -86,7 +105,15 @@ class UploadController extends AbstractController
 
         $tariff = $user->tariff();
         if ($tariff === null) {
-            // todo logger?
+            $this->logService->log(
+                'upload',
+                'create',
+                null,
+                LogLevel::ERROR,
+                'User without tariff',
+                ['tus' => $tusKey]
+            );
+
             throw new RuntimeException('User has no tariff');
         }
 
