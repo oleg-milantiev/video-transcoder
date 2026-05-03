@@ -196,10 +196,12 @@ final readonly class StartTranscodeHandler
                     'height' => $query->height,
                     'width' => $outputWidth,
                     'bitrate' => $bitrate,
-                    'sizeExpected' => (int)($video->duration() * $bitrate / 8 * 1024 * 1024),
                 ]);
             }
 
+            $task->updateMeta([
+                'sizeExpected' => (int)($video->duration() * $bitrate / 8 * 1024 * 1024),
+            ]);
             $this->taskRepository->save($task);
 
             $context = [
