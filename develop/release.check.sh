@@ -27,7 +27,7 @@ PROJECT_VERSION=$PROJECT_VERSION docker compose \
 
 # change uploads permission
 docker compose -p "$PROJECT_NAME" -f docker-compose.release.yml exec -T php \
-  chown -R www-data:www-data /var/www/yc/public
+  chown -R www-data:www-data /storage
 docker compose -p "$PROJECT_NAME" -f docker-compose.release.yml exec -T php \
   chown -R www-data:www-data /var/www/yc/var/cache/uploads
 
