@@ -49,14 +49,20 @@ class StorageRepository implements StorageRepositoryInterface
     {
         $conn = $this->em->getConnection();
 
+        // todo я удаляю v.loading and in 24h. Надо указать это в expired поле
         $sql = <<<SQL
             WITH deleted_videos_list AS (
-                SELECT v.id, v.deleted
+                SELECT v.id
                 FROM video v
                          JOIN "user" u ON v.user_id = u.id
                          JOIN tariff t ON u.tariff_id = t.id
-                WHERE t.storage_hour = 0
-                   OR v.created_at <= NOW() - (t.storage_hour || ' hours')::interval
+                WHERE
+                   v.deleted = false AND
+                   (
+                        t.storage_hour = 0
+                        OR v.created_at <= NOW() - (t.storage_hour || ' hours')::interval
+                        OR (v.loading AND v.created_at <= NOW() - '24 hours'::interval)
+                   )
             ),
                  update_videos AS (
                      UPDATE video
@@ -70,7 +76,6 @@ class StorageRepository implements StorageRepositoryInterface
                  )
             SELECT count(*) as updated_videos_count
             FROM deleted_videos_list
-            WHERE deleted = false
         SQL;
 
         return (int)$conn->executeQuery($sql)->fetchOne();
