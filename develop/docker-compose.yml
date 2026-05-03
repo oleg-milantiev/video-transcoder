@@ -19,6 +19,7 @@ services:
             context: .
             dockerfile: ./docker/yc-php/Dockerfile
             target: dev
+        user: "82:82"
         command: crond -f -l 2 -c /etc/crontabs
         env_file:
             - .env
@@ -57,6 +58,7 @@ services:
             context: ./docker/yc-ffmpeg
             dockerfile: ./Dockerfile
             target: dev
+        user: "82:82"
         env_file:
             - .env
         environment:
@@ -77,6 +79,7 @@ services:
             context: ./docker/yc-ffmpeg
             dockerfile: ./Dockerfile
             target: dev
+        user: "82:82"
         env_file:
             - .env
         environment:

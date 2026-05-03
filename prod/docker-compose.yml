@@ -3,6 +3,7 @@ services:
         restart: always
         image: olegmilantiev/yc-php:${PROJECT_VERSION}
         command: crond -f -l 2 -c /etc/crontabs
+        user: "82:82"
         env_file:
             - .env
         depends_on:
@@ -44,6 +45,7 @@ services:
     ffmpeg:
         restart: always
         image: olegmilantiev/yc-ffmpeg:${PROJECT_VERSION}
+        user: "82:82"
         env_file:
             - .env
         depends_on:
@@ -67,6 +69,7 @@ services:
     ffmpeg-transcode:
         restart: always
         image: olegmilantiev/yc-ffmpeg:${PROJECT_VERSION}
+        user: "82:82"
         env_file:
             - .env
         depends_on:

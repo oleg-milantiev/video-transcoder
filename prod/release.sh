@@ -136,6 +136,8 @@ case "$RESULT" in
         ;;
 esac
 
+#todo chown -R 82:82
+
 trap - EXIT
 
 echo "Disabling maintenance mode..."
