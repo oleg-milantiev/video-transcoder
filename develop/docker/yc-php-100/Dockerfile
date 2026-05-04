@@ -34,6 +34,6 @@ ENV APP_ENV=prod
 RUN composer install --no-interaction --prefer-dist --no-progress --optimize-autoloader --no-dev
 RUN php bin/console asset-map:compile
 
-RUN chown -R www-data:www-data /var/www/yc
+RUN chown -R www-data:www-data /var/www/100
 EXPOSE 9000
 CMD ["php-fpm"]
