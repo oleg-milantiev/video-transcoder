@@ -1,0 +1,69 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}100 Percent Apps — Cloud Tools for Video & Audio{% endblock %}
+
+{% block body %}
+    <div class="row g-4 my-2">
+
+        {# Video Transcoding #}
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="feature-card h-100 d-flex flex-column">
+                <div class="feature-icon mb-3">🎬</div>
+                <h5 class="fw-semibold mb-2">Video Transcoding</h5>
+                <p class="text-secondary small flex-grow-1 mb-3">
+                    Convert your videos to any format and resolution. Fast cloud-based transcoding
+                    with preset profiles and real-time progress tracking.
+                </p>
+                <a href="https://video.100percents.com" target="_blank" rel="noopener noreferrer"
+                   class="btn btn-primary btn-sm mt-auto align-self-start">→ Open App</a>
+            </div>
+        </div>
+
+        {# Video Cut & Edit #}
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="feature-card h-100 d-flex flex-column">
+                <div class="feature-icon mb-3">✂️</div>
+                <h5 class="fw-semibold mb-2">Video Cut &amp; Edit</h5>
+                <p class="text-secondary small flex-grow-1 mb-3">
+                    Trim, cut, merge and edit your videos right in the browser.
+                    No software installation required.
+                </p>
+                <span class="badge bg-warning text-dark mt-auto py-2 px-3 fs-6">🚧 Under Construction</span>
+            </div>
+        </div>
+
+        {# Audio & Video Transcriber #}
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="feature-card h-100 d-flex flex-column">
+                <div class="feature-icon mb-3">🎤</div>
+                <h5 class="fw-semibold mb-2">Audio &amp; Video Transcriber</h5>
+                <p class="text-secondary small flex-grow-1 mb-3">
+                    Automatic speech-to-text transcription for audio and video files.
+                    Powered by AI for accurate results.
+                </p>
+                <span class="badge bg-warning text-dark mt-auto py-2 px-3 fs-6">🚧 Under Construction</span>
+            </div>
+        </div>
+
+        {# AI Video Editor #}
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="feature-card h-100 d-flex flex-column">
+                <div class="feature-icon mb-3">🤖</div>
+                <h5 class="fw-semibold mb-2">AI Video Editor</h5>
+                <p class="text-secondary small flex-grow-1 mb-3">
+                    Let AI handle your video editing — smart cuts, auto captions,
+                    highlight reels and more.
+                </p>
+                <span class="badge bg-warning text-dark mt-auto py-2 px-3 fs-6">🚧 Under Construction</span>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="text-center mt-5 mb-3">
+        <button type="button" id="page-contact-us"
+                class="btn btn-outline-primary btn-lg px-5">
+            ✉️ Contact Us
+        </button>
+    </div>
+{% endblock %}

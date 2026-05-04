@@ -1,0 +1,52 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Privacy Policy — 100 Percent Apps{% endblock %}
+
+{% block body %}
+{% if config is defined and config is not empty %}
+<script>var config = {{ config|json_encode|raw }};</script>
+{% endif %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <h1 class="fw-bold mb-1">Privacy Policy</h1>
+        <p class="text-secondary small mb-4">Effective date: April 28, 2026</p>
+
+        <h5 class="fw-semibold mt-4">1. What We Collect</h5>
+        <p>When you register or sign in via Google OAuth we receive your email address and Google account ID. We store them along with your account settings (tariff, preferences). We log standard server-side data such as IP addresses, request timestamps, and error traces for security and debugging purposes.</p>
+
+        <h5 class="fw-semibold mt-4">2. Video Files</h5>
+        <p>Uploaded video files and transcoding outputs are stored in cloud object storage associated with your account. Files are automatically deleted according to the retention schedule defined by your tariff plan. We do not analyse the content of your videos beyond what is technically necessary for transcoding (e.g. probing codec and resolution metadata).</p>
+
+        <h5 class="fw-semibold mt-4">3. How We Use Your Data</h5>
+        <ul>
+            <li>To operate, authenticate, and secure your account.</li>
+            <li>To process transcoding jobs and deliver output files.</li>
+            <li>To calculate and enforce storage and usage quotas.</li>
+            <li>To send transactional messages (e.g. job completion notifications) if enabled.</li>
+            <li>To diagnose technical problems and improve the Service.</li>
+        </ul>
+        <p>We do not sell, rent, or share your personal data with third parties for marketing.</p>
+
+        <h5 class="fw-semibold mt-4">4. Third-Party Services</h5>
+        <p>The Service uses the following third-party infrastructure: Google OAuth (authentication), S3-compatible object storage (file storage). Each provider operates under its own privacy policy.</p>
+
+        <h5 class="fw-semibold mt-4">5. Data Retention</h5>
+        <p>Video files are retained for the duration defined by your tariff plan and deleted automatically afterwards. Account data is retained for as long as your account is active. You may request deletion of your account and associated data at any time via the Contact Us form.</p>
+
+        <h5 class="fw-semibold mt-4">6. Security</h5>
+        <p>Access to your files is protected by session and Bearer-token authentication. Transcoding outputs are accessible only to the authenticated owner. We apply industry-standard practices to secure data in transit (TLS) and at rest. No system is perfectly secure; you use the Service at your own risk.</p>
+
+        <h5 class="fw-semibold mt-4">7. Your Rights</h5>
+        <p>You may access, correct, export, or delete your personal data by contacting us via the <strong>Contact Us</strong> link in the footer. We will respond within a reasonable time.</p>
+
+        <h5 class="fw-semibold mt-4">8. Cookies</h5>
+        <p>We use a session cookie solely to keep you logged in. We do not use tracking or advertising cookies.</p>
+
+        <h5 class="fw-semibold mt-4">9. Changes</h5>
+        <p>We may update this Policy from time to time. The effective date at the top of this page will reflect the latest revision. Continued use of the Service after changes are posted constitutes acceptance.</p>
+
+        <h5 class="fw-semibold mt-4">10. Contact</h5>
+        <p>For privacy requests or questions, please use the <strong>Contact Us</strong> link in the footer.</p>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,26 @@
+monolog:
+    handlers:
+        loki_json:
+            type: stream
+            path: "php://stderr"
+            level: info
+            formatter: monolog.formatter.json
+            channels: ["!event", "!doctrine"]
+
+when@dev:
+    monolog:
+        handlers:
+            console:
+                type: stream
+                path: "php://stderr"
+                level: debug
+                channels: ["!event"]
+
+when@test:
+    monolog:
+        handlers:
+            console:
+                type: stream
+                path: "php://stderr"
+                level: info
+                channels: ["!event", "!doctrine"]

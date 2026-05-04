@@ -9,6 +9,7 @@ services:
             - php
         volumes:
             - ./symfony:/var/www/yc
+            - ./100percents:/var/www/100
             - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
             # todo chown -R www-data:www-data и воркеры от www-data
             - storage:/storage
@@ -51,6 +52,23 @@ services:
         volumes:
             - ./symfony:/var/www/yc
             - storage:/storage
+
+    php-100:
+        restart: always
+        build:
+            context: .
+            dockerfile: ./docker/yc-php-100/Dockerfile
+            target: dev
+        env_file:
+            - .env
+        environment:
+            - PHP_IDE_CONFIG=serverName=100.local
+        expose:
+            - 9000
+        extra_hosts:
+            - "host.docker.internal:host-gateway"
+        volumes:
+            - ./100percents:/var/www/100
 
     ffmpeg:
         restart: always
