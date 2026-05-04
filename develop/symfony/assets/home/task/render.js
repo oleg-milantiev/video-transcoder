@@ -49,8 +49,8 @@ export function renderTaskAction(task, taskActions) {
         );
     }
 
-    // CANCELLED — Transcode (restart); requires task.videoId
-    if (task.status === 'CANCELLED' && task.presetId && task.height && task.videoId) {
+    // CANCELLED|FAILED — Transcode (restart); requires task.videoId
+    if ((task.status === 'CANCELLED' || task.status === 'FAILED') && task.presetId && task.height && task.videoId) {
         const key = 'transcode-' + String(task.presetId) + '-' + String(task.height);
         const isActive = currentKey === key;
         return h(
