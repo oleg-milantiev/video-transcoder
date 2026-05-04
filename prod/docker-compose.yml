@@ -42,6 +42,14 @@ services:
             # todo chown -R 82:82 public/uploads/
             - uploads:/var/www/yc/public/uploads
 
+    php-100:
+        restart: always
+        image: olegmilantiev/yc-php-100:${PROJECT_VERSION}
+        env_file:
+            - .env
+        expose:
+            - 9000
+
     ffmpeg:
         restart: always
         image: olegmilantiev/yc-ffmpeg:${PROJECT_VERSION}
