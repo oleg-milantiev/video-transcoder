@@ -10,7 +10,7 @@ services:
             - redis
             - postgres
         volumes:
-            - uploads:/var/www/yc/public/uploads
+            - storage:/storage
             - ./crontabs:/etc/crontabs/root # alpine
 
     nginx:
@@ -21,7 +21,7 @@ services:
         depends_on:
             - php
         volumes:
-            - uploads:/var/www/yc/public/uploads:ro
+            - storage:/storage
             - ./maintenance:/var/www/yc/public/maintenance:ro
 
     php:
@@ -39,8 +39,7 @@ services:
         expose:
             - 9000
         volumes:
-            # todo chown -R 82:82 public/uploads/
-            - uploads:/var/www/yc/public/uploads
+            - storage:/storage
 
     php-100:
         restart: always
@@ -72,7 +71,7 @@ services:
                 limits:
                     memory: 256M
         volumes:
-            - uploads:/var/www/yc/public/uploads
+            - storage:/storage
 
     ffmpeg-transcode:
         restart: always
@@ -97,7 +96,7 @@ services:
                 limits:
                     memory: 512M
         volumes:
-            - uploads:/var/www/yc/public/uploads
+            - storage:/storage
 
     redis:
         restart: always
@@ -238,7 +237,7 @@ networks:
         driver: bridge
 
 volumes:
-    uploads:
+    storage:
     db-data:
     loki-data:
     prometheus-data:
