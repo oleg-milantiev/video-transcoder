@@ -7,9 +7,6 @@
 - phpUnit (+stan)
 - e2e
 
-## Sprint 0.1.4 (безопасность)
-
-
 ## Sprint 0.1.5 (Тарифы, Оплата)
 
 - оплата paypal
