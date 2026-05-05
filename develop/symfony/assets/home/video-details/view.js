@@ -11,7 +11,7 @@ export function createVideoDetailsView(config) {
         setup() {
             const route = useRoute();
             const router = useRouter();
-            const state = createVideoDetailsState();
+            const state = createVideoDetailsState(config.tariff);
             const actions = createVideoDetailsActions({
                 config,
                 route,
@@ -29,6 +29,18 @@ export function createVideoDetailsView(config) {
                             void actions.applyVideoUploadedToList(msg.payload);
                         } else {
                             actions.applyVideoRealtimeUpdate(msg.payload);
+                        }
+                    },
+                    onStorage: function (payload) {
+                        if (state.tariff.value) {
+                            state.tariff.value = {
+                                ...state.tariff.value,
+                                storage: {
+                                    ...state.tariff.value.storage,
+                                    now: payload.storageNow,
+                                    max: payload.storageMax,
+                                },
+                            };
                         }
                     },
                 });
@@ -51,6 +63,7 @@ export function createVideoDetailsView(config) {
                 loading: state.loading,
                 error: state.error,
                 actionError: state.actionError,
+                tariff: state.tariff,
                 activeActionKey: actions.taskActions.activeKey,
                 taskActions: actions.taskActions,
                 // video list (left pane)

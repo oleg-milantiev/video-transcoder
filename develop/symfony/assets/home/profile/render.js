@@ -1,7 +1,7 @@
 import { h } from 'vue';
 import {bytesToHuman, humanReadableDateTime} from '../shared.js';
 import { PLANS, renderFeature } from '../tariff/planCard.js';
-import { formatBytes } from '../tabs/TariffHint.js';
+import { formatBytes } from '../shared/StorageBadge.js';
 
 // ─── helpers ──────────────────────────────────────────────────────────────────
 

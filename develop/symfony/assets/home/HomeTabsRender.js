@@ -2,7 +2,7 @@ import { h } from 'vue';
 import { renderUploadPane } from './tabs/upload/render.js';
 import { renderVideosPane } from './tabs/videos/render.js';
 import { renderTasksPane } from './tabs/tasks/render.js';
-import { renderTariffHint } from './tabs/TariffHint.js';
+import { renderStorageBadge } from './shared/StorageBadge.js';
 
 function renderTabButton(vm, id, label) {
     return h('li', { class: 'nav-item', role: 'presentation' }, [
@@ -34,6 +34,6 @@ export function renderHomeTabs(vm) {
             renderVideosPane(vm, paneClass(vm, 'videos')),
             renderTasksPane(vm, paneClass(vm, 'tasks')),
         ]),
-        renderTariffHint(vm.tariff),
+        renderStorageBadge(vm.tariff),
     ]);
 }

@@ -41,7 +41,7 @@ export function isStorageLow(tariff) {
     return remainingMB < tariff.videoSize;
 }
 
-export function renderTariffHint(tariff) {
+export function renderStorageBadge(tariff) {
     if (!tariff || !tariff.storage) {
         return null;
     }
@@ -109,4 +109,3 @@ export function renderTariffHint(tariff) {
             : null,
     ]);
 }
-

@@ -1,11 +1,12 @@
 import { ref } from 'vue';
 
-export function createVideoDetailsState() {
+export function createVideoDetailsState(initialTariff) {
     return {
         dto: ref(null),
         loading: ref(false),
         error: ref(''),
         actionError: ref(''),
+        tariff: ref(initialTariff || null),
         // video list (left pane)
         videoListItems: ref([]),
         videoListMeta: ref({ page: 1, limit: 10, total: 0, totalPages: 1 }),

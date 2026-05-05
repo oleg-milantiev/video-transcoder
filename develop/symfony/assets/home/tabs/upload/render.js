@@ -1,5 +1,5 @@
 import { h } from 'vue';
-import { computeEffectiveVideoSize } from '../TariffHint.js';
+import { computeEffectiveVideoSize } from '../../shared/StorageBadge.js';
 
 export function renderUploadPane(paneClass, uppyReady, tariff) {
     const children = [h('div', { key: 'uppy-target', id: 'drag-drop-area' })];

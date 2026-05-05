@@ -1,6 +1,7 @@
 import { h } from 'vue';
 import { bytesToHuman, humanReadableDateTime } from '../shared.js';
 import { renderTaskAction } from '../task/render.js';
+import { renderStorageBadge } from '../shared/StorageBadge.js';
 
 // ── helpers ───────────────────────────────────────────────────────────────────
 
@@ -819,5 +820,6 @@ export function renderVideoDetails(vm) {
             renderVideoListColumn(vm),
             renderDetailColumn(vm, taskExists),
         ]),
+        renderStorageBadge(vm.tariff),
     ]);
 }

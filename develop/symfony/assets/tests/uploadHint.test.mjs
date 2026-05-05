@@ -1,5 +1,5 @@
 /**
- * Tests for assets/home/tabs/TariffHint.js and tabs/upload/render.js
+ * Tests for assets/home/shared/StorageBadge.js and tabs/upload/render.js
  * Run: node assets/tests/uploadHint.test.mjs
  */
 import assert from 'node:assert/strict';
@@ -9,8 +9,8 @@ import {
     computeStorageFreeBytes,
     computeEffectiveVideoSize,
     isStorageLow,
-    renderTariffHint,
-} from '../home/tabs/TariffHint.js';
+    renderStorageBadge as renderTariffHint,
+} from '../home/shared/StorageBadge.js';
 import { renderUploadPane } from '../home/tabs/upload/render.js';
 
 // ── formatBytes ──────────────────────────────────────────────────────────────
