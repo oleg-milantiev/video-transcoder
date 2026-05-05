@@ -33,6 +33,14 @@ services:
             - tus_uploads:/var/www/yc/var/cache/uploads
             - storage:/storage
 
+    php-100:
+        restart: always
+        image: olegmilantiev/yc-php-100:${PROJECT_VERSION}
+        env_file:
+            - .env
+        expose:
+            - 9000
+
     ffmpeg:
         restart: always
         image: olegmilantiev/yc-ffmpeg:${PROJECT_VERSION}
