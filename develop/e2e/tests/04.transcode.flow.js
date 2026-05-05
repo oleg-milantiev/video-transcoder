@@ -20,6 +20,8 @@ const { attachConsoleCapture } = require('../consoleCapture');
     shot, renameVideoFromDetails, expectVideoDetailsTitle, expectDownloadFilename,
     switchToVideoTab,
     switchToCustomGoal,
+    pollUntilCompletedWithProgressTracking,
+    attachSseMessages,
 } = require('../helpers');
 
 test('transcode flow from video details to downloadable mp4', async ({ page }, testInfo) => {
@@ -78,27 +80,9 @@ test('transcode flow from video details to downloadable mp4', async ({ page }, t
             .toMatch(/PENDING|PROCESSING|COMPLETED/);
 
     // 7) Poll every 1s, validate progress increase, wait until COMPLETED
-        let prevProgress = -1;
-        let sawProgressIncrease = false;
-        let completed = false;
-
-        for (let attempt = 1; attempt <= 10; attempt += 1) {
-            const state = await readPresetTaskState(page, presetTitle);
-
-            if (prevProgress >= 0 && state.progress > prevProgress) {
-                sawProgressIncrease = true;
-            }
-            if (state.progress > prevProgress) {
-                prevProgress = state.progress;
-            }
-
-            if (state.status === 'COMPLETED') {
-                completed = true;
-                break;
-            }
-
-            await page.waitForTimeout(1000);
-        }
+        const { completed, sawProgressIncrease } = await pollUntilCompletedWithProgressTracking(
+            page, presetTitle, { maxAttempts: 10, pollMs: 1000 }
+        );
 
         expect(completed).toBe(true);
         expect(sawProgressIncrease).toBe(true);
@@ -176,18 +160,7 @@ test('transcode flow from video details to downloadable mp4', async ({ page }, t
         await logoutToPublic(page);
         await shot(page, testInfo, '09-sign-out.png');
     } finally {
-        // collect SSE messages captured by probe and attach them
-        try {
-            const sseMessages = await page.evaluate(() => (window.__mercure_messages || []));
-            await testInfo.attach('mercure-sse.json', {
-                body: Buffer.from(JSON.stringify(sseMessages, null, 2), 'utf-8'),
-                contentType: 'application/json'
-            });
-        } catch (e) {
-            // ignore
-        }
-
-        // flush and attach console log even when the test fails early
+        await attachSseMessages(page, testInfo);
         await capture.flushAndAttach();
     }
 });

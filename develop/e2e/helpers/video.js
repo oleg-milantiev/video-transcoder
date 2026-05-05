@@ -1,6 +1,7 @@
 const { expect } = require('@playwright/test');
 const { UI_TIMEOUT, NAV_TIMEOUT } = require('./constants');
 const { shot } = require('./screenshot');
+const { openVideosTab, expectVideosTableVisible, videoRowByTitle } = require('./mainApp');
 function escapeRegExp(value) {
   return String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
@@ -340,6 +341,93 @@ async function waitForAllPresetsProcessingWithProgress(page, presetTitles, maxAt
     `Not all presets [${presetTitles.join(', ')}] reached PROCESSING with progress > 0 after ${maxAttempts}s`,
   );
 }
+// ── task row by height label only (e.g. '1080p') ─────────────────────────────
+// Searches the transcoding-tasks-section table; no preset filter is applied.
+function taskRowByHeight(page, heightLabel) {
+  return page.locator('#transcoding-tasks-section table tbody tr', { hasText: heightLabel });
+}
+// ── Wait for a single preset to reach an exact status ────────────────────────
+// Throws after maxAttempts × pollMs if target status is not reached.
+async function waitForPresetTaskStatus(page, presetTitle, targetStatus, {
+  maxAttempts = 60,
+  pollMs = 6000,
+  preferActive = false,
+} = {}) {
+  for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+    const { status } = await readPresetTaskState(page, presetTitle, { preferActive });
+    if (status === targetStatus) return;
+    if (attempt < maxAttempts) await page.waitForTimeout(pollMs);
+  }
+  throw new Error(
+    `Preset "${presetTitle}" did not reach status "${targetStatus}" after ${maxAttempts} attempts (${(maxAttempts * pollMs) / 1000}s)`,
+  );
+}
+// ── Poll until COMPLETED while tracking that progress increases at least once ─
+// Returns { completed, sawProgressIncrease }.
+// Does NOT throw — callers should assert the returned fields with expect().
+async function pollUntilCompletedWithProgressTracking(page, presetTitle, {
+  maxAttempts = 10,
+  pollMs = 1000,
+  preferActive = false,
+} = {}) {
+  let prevProgress = -1;
+  let sawProgressIncrease = false;
+  for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+    const state = await readPresetTaskState(page, presetTitle, { preferActive });
+    if (prevProgress >= 0 && state.progress > prevProgress) {
+      sawProgressIncrease = true;
+    }
+    if (state.progress > prevProgress) {
+      prevProgress = state.progress;
+    }
+    if (state.status === 'COMPLETED') {
+      return { completed: true, sawProgressIncrease };
+    }
+    if (attempt < maxAttempts) await page.waitForTimeout(pollMs);
+  }
+  return { completed: false, sawProgressIncrease };
+}
+// ── Verify a video is deleted (no poster) in both Videos list and Details ─────
+// Polls the Videos list until the row shows `td.video-title-deleted` + "No poster",
+// then opens Details and waits for the deleted state without a poster image.
+// Safe to call after an upload that triggers an auto-deletion due to tariff restrictions.
+async function verifyDeletedVideoInListAndDetails(page, testInfo, uploadedFileName, screenshotPrefix, {
+  maxAttempts = 12,
+  pollMs = 5000,
+} = {}) {
+  const uploadedBaseName = uploadedFileName.substring(0, uploadedFileName.lastIndexOf('.'));
+
+  let row;
+  for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+    await openVideosTab(page);
+    await expectVideosTableVisible(page);
+
+    row = videoRowByTitle(page, uploadedBaseName);
+    await expect(row).toBeVisible({ timeout: NAV_TIMEOUT });
+
+    const isDeleted = (await row.locator('td.video-title-deleted').count()) > 0;
+    const hasNoPoster = (((await row.textContent()) || '').includes('No poster'));
+
+    if (isDeleted && hasNoPoster) {
+      break;
+    }
+
+    if (attempt === maxAttempts) {
+      throw new Error(
+        `Video ${uploadedBaseName} did not reach deleted + no-poster state in Videos list after ${maxAttempts} checks`,
+      );
+    }
+
+    await page.waitForTimeout(pollMs);
+    await page.reload({ waitUntil: 'domcontentloaded', timeout: NAV_TIMEOUT });
+  }
+
+  await shot(page, testInfo, `${screenshotPrefix}-list.png`);
+
+  await row.click({ timeout: UI_TIMEOUT });
+  await waitForDeletedVideoDetailsWithoutPoster(page, uploadedBaseName, maxAttempts, pollMs);
+  await shot(page, testInfo, `${screenshotPrefix}-details.png`);
+}
 module.exports = {
   switchToVideoTab,
   switchToCustomGoal,
@@ -352,6 +440,7 @@ module.exports = {
   activeTaskRowByPreset,
   taskRowByPresetAndHeight,
   activeTaskRowByPresetAndHeight,
+  taskRowByHeight,
   presetsTable,
   presetRow,
   presetBlock,
@@ -369,4 +458,7 @@ module.exports = {
   expectPresetStatus,
   waitForAllPresetsToComplete,
   waitForAllPresetsProcessingWithProgress,
+  waitForPresetTaskStatus,
+  pollUntilCompletedWithProgressTracking,
+  verifyDeletedVideoInListAndDetails,
 };

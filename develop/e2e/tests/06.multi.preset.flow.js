@@ -24,6 +24,7 @@ const {
   clickDownloadAndVerifyMp4,
   expectRowDownloadFilename,
   shot,
+  attachSseMessages,
 } = require('../helpers');
 
 test('multi-preset flow: upload, trigger tasks, admin tariff + new preset, full transcode to download', async ({ page }, testInfo) => {
@@ -155,15 +156,7 @@ test('multi-preset flow: upload, trigger tasks, admin tariff + new preset, full 
     await logoutToPublic(page);
     await shot(page, testInfo, '20-sign-out-final.png');
   } finally {
-    try {
-      const sseMessages = await page.evaluate(() => (window.__mercure_messages || []));
-      await testInfo.attach('mercure-sse.json', {
-        body: Buffer.from(JSON.stringify(sseMessages, null, 2), 'utf-8'),
-        contentType: 'application/json',
-      });
-    } catch (e) {
-      // ignore
-    }
+    await attachSseMessages(page, testInfo);
     await capture.flushAndAttach();
   }
 });

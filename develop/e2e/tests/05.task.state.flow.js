@@ -4,10 +4,7 @@ const {
   UI_TIMEOUT,
   NAV_TIMEOUT,
   getAdminCredentials,
-  openHome,
-  openSignIn,
-  fillSignInCredentials,
-  submitSignIn,
+  loginAsAdmin,
   openAdminDashboardFromHome,
   assignTariffToUser,
   uploadFixtureAsName,
@@ -18,24 +15,26 @@ const {
   presetBlock,
   presetRow,
   readPresetTaskState,
+  waitForPresetTaskStatus,
+  pollUntilCompletedWithProgressTracking,
   logoutToPublic,
   shot,
   switchToVideoTab,
   switchToCustomGoal,
+  attachSseMessages,
 } = require('../helpers');
 
 test('task state flow with FHD preset: progress, cancel, restart, complete', async ({ page }, testInfo) => {
-  // Step 1 — Configure local timeouts for this long-flow test and admin credentials
-  // Local timeouts for this long-flow test only.
+  // Step 1 — Configure local timeouts for this long-flow test
   page.setDefaultTimeout(UI_TIMEOUT);
   page.setDefaultNavigationTimeout(NAV_TIMEOUT);
 
-  const { email, password } = getAdminCredentials();
+  const { email } = getAdminCredentials();
   const sourceVideoFileName = '2022_10_04_Two_Maxes.mp4';
   const uploadedVideoName = '2022_10_04_Two_Maxes-05.mp4';
   const baseFileName = uploadedVideoName.substring(0, uploadedVideoName.lastIndexOf('.'));
-    const presetTitle = 'High video Quality, High Efficiency Audio';
-    // h265/opus/mp4 — slower codec ensures we can catch PROCESSING state before COMPLETED
+  const presetTitle = 'High video Quality, High Efficiency Audio';
+  // h265/opus/mp4 — slower codec ensures we can catch PROCESSING state before COMPLETED
 
   // Step 2 — start console capture for this test
   const capture = attachConsoleCapture(page, testInfo, { maxBodyChars: 4000 });
@@ -43,11 +42,7 @@ test('task state flow with FHD preset: progress, cancel, restart, complete', asy
 
   try {
     // Step 3 — Login as admin
-    await openHome(page);
-    await openSignIn(page);
-    await fillSignInCredentials(page, email, password);
-    await submitSignIn(page);
-    await expect(page.getByRole('button', { name: 'Videos' })).toBeVisible({ timeout: UI_TIMEOUT });
+    await loginAsAdmin(page);
     await shot(page, testInfo, '01-login-success.png');
 
     // Step 4 — Ensure two quick transcodes are allowed in this scenario (assign Premium tariff)
@@ -57,10 +52,7 @@ test('task state flow with FHD preset: progress, cancel, restart, complete', asy
 
     // Step 5 — Re-login to refresh security token context after tariff update
     await page.goto('/logout', { waitUntil: 'domcontentloaded', timeout: NAV_TIMEOUT });
-    await openSignIn(page);
-    await fillSignInCredentials(page, email, password);
-    await submitSignIn(page);
-    await expect(page.getByRole('button', { name: 'Videos' })).toBeVisible({ timeout: UI_TIMEOUT });
+    await loginAsAdmin(page);
     await page.goto('/?tab=videos', { waitUntil: 'domcontentloaded', timeout: NAV_TIMEOUT });
 
     // Step 6 — Upload the test video with a custom name
@@ -81,7 +73,7 @@ test('task state flow with FHD preset: progress, cancel, restart, complete', asy
     await expect(presetBlock(page, presetTitle)).toBeVisible({ timeout: UI_TIMEOUT });
     await shot(page, testInfo, '02-video-details-with-fhd-preset.png');
 
-    // 3th = 1280x720
+    // 4th button = 1280×720
     const startButton = presetBlock(page, presetTitle).locator('button.btn-outline-primary:not([disabled])').nth(3);
     await expect(startButton).toBeVisible({ timeout: UI_TIMEOUT });
     // Step 8 — Start FHD transcode
@@ -96,22 +88,18 @@ test('task state flow with FHD preset: progress, cancel, restart, complete', asy
     await shot(page, testInfo, '03-transcode-started.png');
 
     let prevProgress = -1;
-    let sawProgressIncrease = false;
     let cancellationSent = false;
 
     // Step 9 — Monitor progress; when PROCESSING appears, send Cancel to test cancel-in-processing flow
     for (let attempt = 1; attempt <= 10; attempt += 1) {
       const state = await readPresetTaskState(page, presetTitle);
 
-      if (prevProgress >= 0 && state.progress > prevProgress) {
-        sawProgressIncrease = true;
-      }
       if (state.progress > prevProgress) {
         prevProgress = state.progress;
       }
 
       if (state.status === 'COMPLETED') {
-        throw new Error('4k task completed before cancellation was sent; flow cannot validate cancel-in-processing.');
+        throw new Error('Task completed before cancellation was sent; flow cannot validate cancel-in-processing.');
       }
 
       if (state.status === 'PROCESSING') {
@@ -129,20 +117,9 @@ test('task state flow with FHD preset: progress, cancel, restart, complete', asy
     expect(cancellationSent).toBe(true);
     await shot(page, testInfo, '04-cancel-request-sent-after-progress-growth.png');
 
-    let cancelled = false;
     // Step 10 — Wait for CANCELLED state to be reached and verify UI shows cancelled status
-    for (let attempt = 1; attempt <= 60; attempt += 1) {
-      const state = await readPresetTaskState(page, presetTitle);
-      if (state.status === 'CANCELLED') {
-        cancelled = true;
-        break;
-      }
+    await waitForPresetTaskStatus(page, presetTitle, 'CANCELLED', { maxAttempts: 60, pollMs: 6000 });
 
-      // wait for realtime update (worker emits every ~5s)
-      await page.waitForTimeout(6000);
-    }
-
-    expect(cancelled).toBe(true);
     const cancelledRow = presetRow(page, presetTitle);
     await expect(cancelledRow.getByRole('link', { name: 'Download' })).toHaveCount(0, { timeout: UI_TIMEOUT });
     await expect(cancelledRow.getByRole('button', { name: 'Transcode' })).toBeVisible({ timeout: UI_TIMEOUT });
@@ -158,32 +135,13 @@ test('task state flow with FHD preset: progress, cancel, restart, complete', asy
       })
       .toMatch(/PENDING|PROCESSING|COMPLETED/);
 
-    let prevRestartProgress = -1;
-    let sawRestartProgressIncrease = false;
-    let completed = false;
-
     // Step 12 — Wait for completion of restarted task and verify progress increased during run
-        for (let attempt = 1; attempt <= 10; attempt += 1) {
-      const state = await readPresetTaskState(page, presetTitle, { preferActive: true });
-
-      if (prevRestartProgress >= 0 && state.progress > prevRestartProgress) {
-        sawRestartProgressIncrease = true;
-      }
-      if (state.progress > prevRestartProgress) {
-        prevRestartProgress = state.progress;
-      }
-
-      if (state.status === 'COMPLETED') {
-        completed = true;
-        break;
-      }
-
-      // wait for realtime update (worker emits every ~5s)
-      await page.waitForTimeout(5000);
-    }
+    const { completed, sawProgressIncrease } = await pollUntilCompletedWithProgressTracking(
+      page, presetTitle, { maxAttempts: 10, pollMs: 5000, preferActive: true }
+    );
 
     expect(completed).toBe(true);
-    expect(sawRestartProgressIncrease).toBe(true);
+    expect(sawProgressIncrease).toBe(true);
 
     const completedRow = presetRow(page, presetTitle);
     await expect(completedRow.getByRole('link', { name: 'Download' })).toBeVisible({ timeout: UI_TIMEOUT });
@@ -193,18 +151,7 @@ test('task state flow with FHD preset: progress, cancel, restart, complete', asy
     await logoutToPublic(page);
     await shot(page, testInfo, '07-sign-out.png');
   } finally {
-    // collect SSE messages captured by probe and attach them
-    try {
-      const sseMessages = await page.evaluate(() => (window.__mercure_messages || []));
-      await testInfo.attach('mercure-sse.json', {
-        body: Buffer.from(JSON.stringify(sseMessages, null, 2), 'utf-8'),
-        contentType: 'application/json'
-      });
-    } catch (e) {
-      // ignore
-    }
-
-    // flush and attach console log even when the test fails early
+    await attachSseMessages(page, testInfo);
     await capture.flushAndAttach();
   }
 });

@@ -7,51 +7,67 @@ This directory contains release smoke tests running against the release Docker C
 - Shared UI interactions and selectors are centralized in `helpers/`.
 - Tests in `tests/` should read like scenario steps and avoid low-level locators.
 - Prefer helper calls such as:
+  - `loginAsAdmin(page)` / `loginAsTest(page)` instead of manual sign-in steps
   - `createOrUpdateTariffByTitle(page, 'Free', { delay: 3600, instance: 1, ... }, testInfo, 'screenshot.png')`
   - `openAdminSection(page, 'Users', '/admin/user')`
   - `assignTariffToUser(page, adminEmail, 'Free', testInfo)`
 
 ### Helper modules
 
-- `helpers/auth.js` — login/logout helpers: `loginAsAdmin`, `loginAsTest`, `logoutToPublic`, `getAdminCredentials`, `getTestCredentials`
-- `helpers/mainApp.js` — Upload/Videos/Tasks tab navigation: `openVideosTab`, `openTasksTab`, `openUploadTab`, `expectTabsVisible`, `expectEmptyVideos`, `expectEmptyTasks`, `videoRowByTitle`, `activeVideoRowByTitle`, `expectVideoRowHasCoreValues`
-- `helpers/upload.js` — Uppy upload actions: `uploadFixture`, `uploadFixtureAsName`, `uploadFixtureAsNameExpectingFailure`, `expectUploadHintText`
+- `helpers/auth.js` — login/logout helpers: `loginAsAdmin`, `loginAsTest`, `loginAs`, `logoutToPublic`, `getAdminCredentials`, `getTestCredentials`
+- `helpers/mainApp.js` — Upload/Videos/Tasks tab navigation: `openUploadTab`, `openVideosTab`, `openTasksTab`, `expectTabsVisible`, `expectUploadDashboardVisible`, `expectVideosTableVisible`, `expectTasksTableVisible`, `expectEmptyVideos`, `expectEmptyTasks`, `videoRowByTitle`, `activeVideoRowByTitle`, `expectVideoRowHasCoreValues`
+- `helpers/upload.js` — Uppy upload actions:
+  - `uploadFixture(page, fileName)` — opens Upload tab and uploads by filename
+  - `uploadFixtureAs(page, sourceFileName, uploadAsName, { expectedErrorText })` — unified helper: reads file, opens Upload tab, triggers upload; if `expectedErrorText` is set the upload is expected to fail and Videos tab is NOT opened; otherwise navigates to Videos tab after completion
+  - `uploadFixtureAsName(page, sourceFileName, uploadAsName)` — wraps `uploadFixtureAs` (success path)
+  - `uploadFixtureAsNameExpectingFailure(page, sourceFileName, uploadAsName, expectedErrorText)` — wraps `uploadFixtureAs` (failure path)
+  - `expectUploadHintText(page, expectedText)` — checks the TariffHint text
 - `helpers/video.js` — Video Details page, preset blocks, task-row helpers:
-  - `waitForVideoDetailsVisible` — waits for `Video Details` heading + first `h6` preset block
-  - `expectDetailsValue` — checks a `<dt>/<dd>` pair is non-empty
-  - `renameVideoFromDetails` — opens SweetAlert2 rename modal and submits
-  - `expectVideoDetailsTitle` — polls `<dd>` span until it matches expected title
-  - `clickBackButton` — clicks the `Back` button in video details
+  - `waitForVideoDetailsVisible(page, { requirePresets })` — waits for `📄 Details` nav-link + optional preset h6 blocks
+  - `expectDetailsValue(page, label)` — checks a `<dt>/<dd>` pair is non-empty
+  - `renameVideoFromDetails(page, newTitle)` — opens SweetAlert2 rename modal and submits
+  - `expectVideoDetailsTitle(page, expectedTitle)` — polls `<h6>` until it matches expected title
+  - `clickBackButton(page)` — clicks the `Close` button (✕) in video details
   - `presetBlock(page, presetTitle)` — locates the `<h6>`-parent `div` for a preset
   - `tasksTable(page)` — locates `#transcoding-tasks-section table`
   - `taskRowByPreset(page, presetTitle)` — first task row matching presetTitle (any status)
   - `activeTaskRowByPreset(page, presetTitle)` — first non-CANCELLED row for preset
   - `taskRowByPresetAndHeight(page, presetTitle, height)` — row matching preset AND `{height}p`
   - `activeTaskRowByPresetAndHeight(page, presetTitle, height)` — non-CANCELLED row for preset+height
+  - `taskRowByHeight(page, heightLabel)` — task row by height label only (e.g. `'1080p'`), no preset filter; useful for parallel tests where only height is known
   - `presetRow` — alias for `taskRowByPreset`
-  - `readPresetTaskState(page, presetTitle, opts)` — reads `{ status, progress }` from task row (strips `?` icon suffix from status text)
+  - `readPresetTaskState(page, presetTitle, opts)` — reads `{ status, progress }` from task row (strips `?` icon suffix)
   - `readPresetTaskStateByHeight(page, presetTitle, height, opts)` — same but height-specific
-  - `waitForPosterAndMeta` — polls until poster `<img>` is fully loaded and `duration` meta is present
+  - `waitForPresetTaskStatus(page, presetTitle, targetStatus, { maxAttempts, pollMs, preferActive })` — polls until a single preset's task reaches `targetStatus` (throws on timeout)
+  - `pollUntilCompletedWithProgressTracking(page, presetTitle, { maxAttempts, pollMs, preferActive })` — polls until `COMPLETED` while tracking that progress increases at least once; returns `{ completed, sawProgressIncrease }` — callers `expect()` these values
+  - `waitForPosterAndMeta(page, testInfo, prefix)` — polls until poster `<img>` is fully loaded and `duration` meta is present (up to 5 retries × 5 s + page reload)
   - `getAllPresetTitles(page)` — returns all visible preset titles from `h6` blocks
-  - `expectAllPresetsToShowTranscodeWithExpectedSize` — checks each preset block shows buttons with `~X MB` size hints
-  - `expectPresetStatusHelpIcon` — checks `?` help icon is visible in status cell with expected tooltip
+  - `expectAllPresetsToShowTranscodeWithExpectedSize(page)` — checks each preset block shows buttons with `~X MB` size hints
+  - `expectPresetStatusHelpIcon(page, presetTitle, { statusText, tooltipText })` — checks `?` help icon is visible in status cell with expected tooltip
   - `clickTranscodeForPreset(page, presetTitle)` — clicks the first enabled resolution button in a preset block
   - `expectPresetStatus(page, presetTitle, status)` — asserts task row has expected status
-  - `waitForAllPresetsToComplete` — polls until all preset titles reach COMPLETED
-  - `waitForAllPresetsProcessingWithProgress` — polls until all presets are PROCESSING with progress > 0
-  - `waitForDeletedVideoDetailsWithoutPoster` — polls for deleted title + absent poster in details
-  - `expectFlashPopupTitle(page, titleText)` — waits for `.app-flash-toast .app-flash-title`
-- `helpers/admin.js` — EasyAdmin CRUD helpers: `openAdminSection`, `openAdminDashboardFromHome`, `ensureAdminMenuSectionsVisible`, `createOrUpdatePreset`, `createOrUpdateTariffByTitle`, `assignTariffToUser`, `createUserWithTariff`, `mainTableBodyForHeading`, `dismissAllVisibleModals`
-- `helpers/dialogs.js` — `clickAndAcceptConfirm` (handles both native `dialog` events and Bootstrap confirm buttons)
-- `helpers/download.js` — `clickDownloadAndVerifyMp4` (clicks Download, verifies `< 400` status and `.mp4` URL), `expectDownloadFilename`, `expectRowDownloadFilename`
-- `helpers/screenshot.js` — consistent screenshot capture via `shot(page, testInfo, name)`
+  - `waitForAllPresetsToComplete(page, presetTitles, maxAttempts, delayMs)` — polls until all preset titles reach COMPLETED
+  - `waitForAllPresetsProcessingWithProgress(page, presetTitles, maxAttempts, pollMs)` — polls until all presets are PROCESSING with progress > 0
+  - `waitForDeletedVideoDetailsWithoutPoster(page, expectedTitle, maxAttempts, delayMs)` — polls for deleted badge + absent poster in details
+  - `verifyDeletedVideoInListAndDetails(page, testInfo, uploadedFileName, screenshotPrefix, { maxAttempts, pollMs })` — end-to-end deleted state check: polls the Videos list until the row shows `td.video-title-deleted` + "No poster", then opens Details and waits for deleted state without poster; takes screenshots `{screenshotPrefix}-list.png` and `{screenshotPrefix}-details.png`
+  - `expectFlashPopupTitle(page, titleText, timeout)` — waits for `.app-flash-toast .app-flash-title`
+- `helpers/admin.js` — EasyAdmin CRUD helpers: `openAdminSection`, `openAdminDashboardFromHome`, `ensureAdminMenuSectionsVisible`, `createOrUpdatePreset`, `createOrUpdateTariffByTitle`, `assignTariffToUser`, `createUserWithTariff`, `mainTableBodyForHeading`, `dismissVisibleAdminModal`, `dismissAllVisibleModals`
+- `helpers/dialogs.js` — `clickAndAcceptConfirm(page, clickableLocator, expectedNativeMessagePart)` — handles both native `dialog` events and Bootstrap confirm buttons
+- `helpers/download.js` — `clickDownloadAndVerifyMp4(page, row)` (clicks Download, verifies `< 400` status and `.mp4` URL), `expectDownloadFilename(page, filename)`, `expectRowDownloadFilename(row, filename)`
+- `helpers/screenshot.js` — `shot(page, testInfo, name)` — consistent screenshot capture
 - `helpers/constants.js` — `UI_TIMEOUT=8000`, `NAV_TIMEOUT=15000`, `UPLOAD_TIMEOUT=30000`
+- `helpers/capture.js` — diagnostic helpers:
+  - `attachConsoleCapture(page, testInfo, opts)` — re-exported from `consoleCapture.js`; starts browser console + Mercure probe capture; returns `{ start, flushAndAttach }`
+  - `attachSseMessages(page, testInfo)` — attaches `mercure-sse.json` from `window.__mercure_messages`; safe to call in `finally` (swallows all errors)
 
 ### Prod-only helpers (`prod/helpers/`)
 
 - `prod/helpers/index.js` — re-exports all shared helpers + `loginAsCredentials`, `buildRunContext`
 - `prod/helpers/admin.js` — `filterUsersByEmail`, `setTariffForFilteredUser`, `deleteUserByEmail`, `deleteFilteredUser` (isolated user management with filter panel)
 - `prod/helpers/runContext.js` — `buildRunContext()` generates a per-run isolated user context (date-based email, random password, video name from env or defaults)
+
+> **All `helpers/` exports are available from a single import**: `const { ... } = require('../helpers');`
+> This includes `attachConsoleCapture` and `attachSseMessages` from `helpers/capture.js` — no need to import from `../consoleCapture` directly.
 
 ---
 
@@ -128,7 +144,7 @@ Tests run sequentially (`workers: 1`) and build on data from previous specs.
 7. **Videos**: verify uploaded video (`2022_10_04_Two_Maxes-02`) is listed, no `New` action. Mark it deleted via `Mark deleted` button + confirm dialog; verify row gets `data-deleted-row="1"` and `Mark deleted` action disappears.
 8. **Tasks**: verify no `New`, `Edit`, or `Delete` actions in the admin task list.
 9. **Logs**: verify read-only (no New/Edit), filter control visible, at least one log row present.
-10. Return to site → verify Upload button and Sign out link → sign out.
+10. Sign out via `logoutToPublic`.
 - Screenshots: `01` → `11`
 
 > **Note**: The TODO sections (Tasks mark-deleted flow) are commented out — tasks don't exist yet at this step in the flow.

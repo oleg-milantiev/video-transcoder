@@ -2,11 +2,8 @@ const { test, expect } = require('@playwright/test');
 const {
   UI_TIMEOUT,
   NAV_TIMEOUT,
-  getAdminCredentials,
-  openHome,
-  openSignIn,
-  fillSignInCredentials,
-  submitSignIn,
+  loginAsAdmin,
+  logoutToPublic,
   openAdminDashboardFromHome,
   openAdminSection,
   ensureAdminMenuSectionsVisible,
@@ -21,14 +18,10 @@ const {
 
 test('admin area full smoke with CRUD checks', async ({ page }, testInfo) => {
   // Configure admin credentials used in this test and target uploaded video name
-  const { email, password } = getAdminCredentials();
   const uploadedVideoName = '2022_10_04_Two_Maxes-02';
 
   // Step 1 — Navigate to home and sign in as admin
-  await openHome(page);
-  await openSignIn(page);
-  await fillSignInCredentials(page, email, password);
-  await submitSignIn(page);
+  await loginAsAdmin(page);
 
   await expect(page.getByRole('link', { name: 'Admin', exact: true })).toBeVisible({ timeout: UI_TIMEOUT });
   await shot(page, testInfo, '01-home-admin-link.png');
@@ -195,10 +188,6 @@ test('admin area full smoke with CRUD checks', async ({ page }, testInfo) => {
   await shot(page, testInfo, '10-admin-logs-readonly-with-filters.png');
 
   // Step 11 — Return to the site home, verify UI and sign out
-  await page.goto('/', { waitUntil: 'domcontentloaded', timeout: NAV_TIMEOUT });
-  await expect(page.getByRole('button', { name: 'Upload' })).toBeVisible({ timeout: UI_TIMEOUT });
-  await expect(page.getByRole('link', { name: 'Sign out' })).toBeVisible({ timeout: UI_TIMEOUT });
-  await page.getByRole('link', { name: 'Sign out' }).click({ timeout: UI_TIMEOUT });
-  await expect(page.getByRole('link', { name: 'Sign in' })).toHaveCount(2, { timeout: UI_TIMEOUT });
+  await logoutToPublic(page);
   await shot(page, testInfo, '11-sign-out-after-admin-flow.png');
 });

@@ -22,9 +22,9 @@ const {
   expectVideoDetailsTitle,
   waitForPosterAndMeta,
   expectAllPresetsToShowTranscodeWithExpectedSize,
-  expectPresetTranscodeDisabledWithHint,
-  waitForDeletedVideoDetailsWithoutPoster,
-  shot, createUserWithTariff, clickAndAcceptConfirm,
+  verifyDeletedVideoInListAndDetails,
+  shot, clickAndAcceptConfirm,
+  attachSseMessages,
 } = require('../helpers');
 
 function baseName(fileName) {
@@ -88,38 +88,6 @@ test('tariff restrictions: upload limits, invalid metadata deletion and transcod
     await loginAsAdmin(page);
   };
 
-  const verifyDeletedVideoFromListAndDetails = async (uploadedFileName, screenshotPrefix) => {
-    const uploadedBaseName = baseName(uploadedFileName);
-
-    let row;
-    for (let attempt = 1; attempt <= 12; attempt += 1) {
-      await openVideosTab(page);
-      await expectVideosTableVisible(page);
-
-      row = videoRowByTitle(page, uploadedBaseName);
-      await expect(row).toBeVisible({ timeout: NAV_TIMEOUT });
-
-      const isDeleted = (await row.locator('td.video-title-deleted').count()) > 0;
-      const hasNoPoster = (((await row.textContent()) || '').includes('No poster'));
-
-      if (isDeleted && hasNoPoster) {
-        break;
-      }
-
-      if (attempt === 12) {
-        throw new Error(`Video ${uploadedBaseName} did not reach deleted + no-poster state in Videos list after 12 checks`);
-      }
-
-      await page.waitForTimeout(5000);
-      await page.reload({ waitUntil: 'domcontentloaded', timeout: NAV_TIMEOUT });
-    }
-
-    await shot(page, testInfo, `${screenshotPrefix}-list.png`);
-
-    await row.click({ timeout: UI_TIMEOUT });
-    await waitForDeletedVideoDetailsWithoutPoster(page, uploadedBaseName, 12, 5000);
-    await shot(page, testInfo, `${screenshotPrefix}-details.png`);
-  };
 
   try {
     // Phase 1 — Admin starts on Free tariff, uploads a valid source video and verifies presets UI.
@@ -191,7 +159,7 @@ test('tariff restrictions: upload limits, invalid metadata deletion and transcod
 
       await uploadFixtureAsName(page, sourceVideoFileName, tariffCase.uploadName);
       await shot(page, testInfo, `07-${index + 1}-${tariffCase.title}-uploaded.png`);
-      await verifyDeletedVideoFromListAndDetails(tariffCase.uploadName, `07-${index + 1}-${tariffCase.title}-deleted`);
+      await verifyDeletedVideoInListAndDetails(page, testInfo, tariffCase.uploadName, `07-${index + 1}-${tariffCase.title}-deleted`);
     }
 
     // Phase 4 — Low-storage tariff disables large transcodes for the valid video.
@@ -208,16 +176,7 @@ test('tariff restrictions: upload limits, invalid metadata deletion and transcod
     await logoutToPublic(page);
     await shot(page, testInfo, '10-sign-out.png');
   } finally {
-    try {
-      const sseMessages = await page.evaluate(() => (window.__mercure_messages || []));
-      await testInfo.attach('mercure-sse.json', {
-        body: Buffer.from(JSON.stringify(sseMessages, null, 2), 'utf-8'),
-        contentType: 'application/json',
-      });
-    } catch (e) {
-      // ignore
-    }
-
+    await attachSseMessages(page, testInfo);
     await capture.flushAndAttach();
   }
 });

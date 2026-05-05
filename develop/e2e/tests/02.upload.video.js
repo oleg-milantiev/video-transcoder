@@ -1,11 +1,7 @@
 const { test } = require('@playwright/test');
 const {
   UI_TIMEOUT,
-  getAdminCredentials,
-  openHome,
-  openSignIn,
-  fillSignInCredentials,
-  submitSignIn,
+  loginAsAdmin,
   expectUploadDashboardVisible,
   openVideosTab,
   expectVideosTableVisible,
@@ -23,15 +19,11 @@ const {
 } = require('../helpers');
 
 test('upload video and verify details flow', async ({ page }, testInfo) => {
-  const { email, password } = getAdminCredentials();
   const fileName = '2022_10_04_Two_Maxes.mp4';
   const baseFileName = fileName.substring(0, fileName.lastIndexOf('.'));
   const renamedBaseFileName = `${baseFileName}-02`;
 
-  await openHome(page);
-  await openSignIn(page);
-  await fillSignInCredentials(page, email, password);
-  await submitSignIn(page);
+  await loginAsAdmin(page);
 
   await expectUploadDashboardVisible(page);
   await shot(page, testInfo, '01-upload-tab-ready.png');

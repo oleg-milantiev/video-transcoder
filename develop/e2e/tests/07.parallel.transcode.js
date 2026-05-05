@@ -11,12 +11,14 @@ const {
   waitForVideoDetailsVisible,
   waitForPosterAndMeta,
   presetBlock,
+  taskRowByHeight,
   clickDownloadAndVerifyMp4,
   expectRowDownloadFilename,
   logoutToPublic,
   shot,
   switchToVideoTab,
   switchToCustomGoal,
+  attachSseMessages,
 } = require('../helpers');
 
 test('parallel transcode: 1080p and 720p run simultaneously within Standard preset (Premium, 2 workers)', async ({ page }, testInfo) => {
@@ -30,11 +32,6 @@ test('parallel transcode: 1080p and 720p run simultaneously within Standard pres
   // Both heights run simultaneously on Premium tariff (instance=2, two workers)
   const heights = ['1080p', '720p'];
 
-  // Helper: find task row in the transcoding tasks table by height text in column 1
-  // #transcoding-tasks-section is the id on the tasks tab wrapper div
-  function taskRowByHeight(heightLabel) {
-    return page.locator('#transcoding-tasks-section table tbody tr', { hasText: heightLabel });
-  }
 
   try {
     // Step 1 — Login as test user (has Premium tariff after test 06)
@@ -79,7 +76,7 @@ test('parallel transcode: 1080p and 720p run simultaneously within Standard pres
     await expect.poll(async () => {
       let processingCount = 0;
       for (const h of heights) {
-        const row = taskRowByHeight(h).first();
+        const row = taskRowByHeight(page, h).first();
         if (await row.count() === 0) return false;
         const statusRaw = (await row.locator('td').nth(2).innerText()).trim();
         const status = statusRaw.replace(/\s+\?\s*$/, '').trim();
@@ -96,7 +93,7 @@ test('parallel transcode: 1080p and 720p run simultaneously within Standard pres
     await expect.poll(async () => {
       let completedCount = 0;
       for (const h of heights) {
-        const row = taskRowByHeight(h).first();
+        const row = taskRowByHeight(page, h).first();
         if (await row.count() === 0) return false;
         const status = (await row.locator('td').nth(2).innerText()).trim();
         if (status === 'COMPLETED') completedCount++;
@@ -108,7 +105,7 @@ test('parallel transcode: 1080p and 720p run simultaneously within Standard pres
     // Step 9 — Verify Download button is visible for each height task row
     for (const h of heights) {
       await expect(
-        taskRowByHeight(h).first().getByRole('link', { name: 'Download' })
+        taskRowByHeight(page, h).first().getByRole('link', { name: 'Download' })
       ).toBeVisible({ timeout: UI_TIMEOUT });
     }
     await shot(page, testInfo, '09-download-buttons-visible.png');
@@ -119,7 +116,7 @@ test('parallel transcode: 1080p and 720p run simultaneously within Standard pres
       '720p':  'aac-h264-720p.mp4',
     };
     for (const h of heights) {
-      const row = taskRowByHeight(h).first();
+      const row = taskRowByHeight(page, h).first();
       await expectRowDownloadFilename(row, `${baseName}-${heightSuffix[h]}`);
       await clickDownloadAndVerifyMp4(page, row);
       await shot(page, testInfo, `10-download-verified-${h}.png`);
@@ -129,15 +126,7 @@ test('parallel transcode: 1080p and 720p run simultaneously within Standard pres
     await logoutToPublic(page);
     await shot(page, testInfo, '11-sign-out.png');
   } finally {
-    try {
-      const sseMessages = await page.evaluate(() => (window.__mercure_messages || []));
-      await testInfo.attach('mercure-sse.json', {
-        body: Buffer.from(JSON.stringify(sseMessages, null, 2), 'utf-8'),
-        contentType: 'application/json',
-      });
-    } catch (e) {
-      // ignore
-    }
+    await attachSseMessages(page, testInfo);
     await capture.flushAndAttach();
   }
 });

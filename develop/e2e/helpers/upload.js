@@ -50,22 +50,14 @@ async function uploadFixture(page, sourceFileName) {
   await chooseAndUpload(page, fixturePath(sourceFileName));
 }
 
-async function uploadFixtureAsName(page, sourceFileName, uploadAsName) {
-  const fileBuffer = fs.readFileSync(fixturePath(sourceFileName));
-
-  await openUploadTab(page);
-  await expectUploadDashboardVisible(page);
-  await chooseAndUpload(page, {
-    name: uploadAsName,
-    mimeType: 'video/mp4',
-    buffer: fileBuffer,
-  });
-
-  await openVideosTab(page);
-  await expectVideosTableVisible(page);
-}
-
-async function uploadFixtureAsNameExpectingFailure(page, sourceFileName, uploadAsName, expectedErrorText) {
+/**
+ * Upload a fixture file under a custom name.
+ *
+ * @param {object} [opts]
+ * @param {string|null} [opts.expectedErrorText] - if set, the upload is expected
+ *   to fail with this text and the Videos tab is NOT opened afterwards.
+ */
+async function uploadFixtureAs(page, sourceFileName, uploadAsName, { expectedErrorText = null } = {}) {
   const fileBuffer = fs.readFileSync(fixturePath(sourceFileName));
 
   await openUploadTab(page);
@@ -75,6 +67,21 @@ async function uploadFixtureAsNameExpectingFailure(page, sourceFileName, uploadA
     mimeType: 'video/mp4',
     buffer: fileBuffer,
   }, { expectedErrorText });
+
+  if (!expectedErrorText) {
+    await openVideosTab(page);
+    await expectVideosTableVisible(page);
+  }
+}
+
+/** @deprecated Use uploadFixtureAs(page, sourceFileName, uploadAsName) */
+async function uploadFixtureAsName(page, sourceFileName, uploadAsName) {
+  return uploadFixtureAs(page, sourceFileName, uploadAsName);
+}
+
+/** @deprecated Use uploadFixtureAs(page, sourceFileName, uploadAsName, { expectedErrorText }) */
+async function uploadFixtureAsNameExpectingFailure(page, sourceFileName, uploadAsName, expectedErrorText) {
+  return uploadFixtureAs(page, sourceFileName, uploadAsName, { expectedErrorText });
 }
 
 module.exports = {
@@ -84,6 +91,7 @@ module.exports = {
   expectUploadHintText,
   expectUploadErrorText,
   uploadFixture,
+  uploadFixtureAs,
   uploadFixtureAsName,
   uploadFixtureAsNameExpectingFailure,
 };
