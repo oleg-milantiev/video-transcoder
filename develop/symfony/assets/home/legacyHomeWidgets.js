@@ -43,6 +43,7 @@ export function initHomeLegacyWidgets(config) {
         })
         .use(window.Uppy.Tus, {
             endpoint: ROUTE_UPLOAD,
+            removeFingerprintOnSuccess: true,
             chunkSize: 5 * 1024 * 1024,
             headers: function () {
                 return authHeader;
