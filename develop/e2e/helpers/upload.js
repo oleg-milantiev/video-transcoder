@@ -50,18 +50,17 @@ async function uploadFixture(page, sourceFileName) {
   await chooseAndUpload(page, fixturePath(sourceFileName));
 }
 
-/**
- * Upload a fixture file under a custom name.
- *
- * @param {object} [opts]
- * @param {string|null} [opts.expectedErrorText] - if set, the upload is expected
- *   to fail with this text and the Videos tab is NOT opened afterwards.
- */
 async function uploadFixtureAs(page, sourceFileName, uploadAsName, { expectedErrorText = null } = {}) {
   const fileBuffer = fs.readFileSync(fixturePath(sourceFileName));
 
   await openUploadTab(page);
   await expectUploadDashboardVisible(page);
+
+  // If Uppy already has files queued (shows "Add more" button), click it first
+  const addMore = page.locator('button.uppy-DashboardContent-addMore');
+  if (await addMore.isVisible({ timeout: 1000 }).catch(() => false)) {
+    await addMore.click({ force: true });
+  }
   await chooseAndUpload(page, {
     name: uploadAsName,
     mimeType: 'video/mp4',

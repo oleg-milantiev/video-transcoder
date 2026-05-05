@@ -61,6 +61,15 @@ function activeVideoRowByTitle(page, fileName) {
 
 // ── Pagination ────────────────────────────────────────────────────────────────
 
+/** Click the "Prev" pagination button in the Videos tab. */
+async function clickVideosPrevPage(page) {
+  const nextBtn = page.getByRole('button', { name: 'Prev', exact: true });
+  await expect(nextBtn).not.toBeDisabled({ timeout: UI_TIMEOUT });
+  await nextBtn.click({ timeout: UI_TIMEOUT });
+  // Brief settle while the new page loads from the API
+  await page.waitForTimeout(800);
+}
+
 /** Click the "Next" pagination button in the Videos tab. */
 async function clickVideosNextPage(page) {
   const nextBtn = page.getByRole('button', { name: 'Next', exact: true });
@@ -85,18 +94,17 @@ async function expectVideosTotalCount(page, expectedCount) {
  * Waits for each row to transition to `td.video-title-deleted` before continuing.
  */
 async function deleteAllVideosOnPage(page) {
-  for (;;) {
-    const rows = page
-      .locator('#videosTable tbody tr')
-      .filter({ has: page.getByRole('button', { name: 'Delete' }) });
-    if (await rows.count() === 0) break;
-    const row = rows.first();
-    await clickAndAcceptConfirm(
-      page,
-      row.getByRole('button', { name: 'Delete' }),
-      'Delete this video?'
-    );
-    await expect(row.locator('td.video-title-deleted')).toBeVisible({ timeout: 15000 });
+  const rows = page.locator('#videosTable tbody tr');
+  const count = await rows.count();
+
+  for (let i = 0; i < count; i++) {
+    const row = rows.nth(i);
+    const deleteBtn = row.getByRole('button', { name: 'Delete' });
+
+    if (await deleteBtn.isVisible().catch(() => false)) {
+      await clickAndAcceptConfirm(page, deleteBtn, 'Delete this video?');
+      await expect(row.locator('td.video-title-deleted')).toBeVisible({ timeout: 5000 });
+    }
   }
 }
 
@@ -125,6 +133,7 @@ module.exports = {
   expectVideoRowHasCoreValues,
   videoRowByTitle,
   activeVideoRowByTitle,
+  clickVideosPrevPage,
   clickVideosNextPage,
   expectVideosTotalCount,
   deleteAllVideosOnPage,

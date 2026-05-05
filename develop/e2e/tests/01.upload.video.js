@@ -31,18 +31,18 @@ test('01 · upload video, verify details and rename', async ({ page }, testInfo)
 
   // Step 2 — Upload tab is shown by default; verify Uppy dashboard is ready
   await expectUploadDashboardVisible(page);
-  await shot(page, testInfo, '01-upload-tab-ready.png');
+  await shot(page, testInfo, 'test01-01-upload-tab-ready.png');
 
   // Step 3 — Upload via Uppy file picker
   await uploadFixture(page, fileName);
-  await shot(page, testInfo, '02-uppy-upload-complete.png');
+  await shot(page, testInfo, 'test01-02-uppy-upload-complete.png');
 
   // Step 4 — Open Videos tab and verify the uploaded row appears
   await openVideosTab(page);
   await expectVideosTableVisible(page);
   const videoRow = videoRowByTitle(page, baseFileName);
   await expectVideoRowHasCoreValues(videoRow, baseFileName);
-  await shot(page, testInfo, '03-video-row-in-table.png');
+  await shot(page, testInfo, 'test01-03-video-row-in-table.png');
 
   // Step 5 — Open video details
   await videoRow.click({ timeout: UI_TIMEOUT });
@@ -51,27 +51,27 @@ test('01 · upload video, verify details and rename', async ({ page }, testInfo)
   await expectDetailsValue(page, 'Title');
   await expectDetailsValue(page, 'Created');
   await expectDetailsValue(page, 'Expires');
-  await waitForPosterAndMeta(page, testInfo, '04-video-details-filled');
+  await waitForPosterAndMeta(page, testInfo, 'test01-04-video-details-filled');
 
   // Step 6 — Rename video via SweetAlert2 modal
   await renameVideoFromDetails(page, renamedFileName);
   await expectVideoDetailsTitle(page, renamedFileName);
-  await shot(page, testInfo, '05-video-renamed-in-details.png');
+  await shot(page, testInfo, 'test01-05-video-renamed-in-details.png');
 
   // Step 7 — Go back to Videos list and confirm the renamed row
   await clickBackButton(page);
   await expectVideosTableVisible(page);
   const renamedVideoRow = videoRowByTitle(page, renamedFileName);
   await expectVideoRowHasCoreValues(renamedVideoRow, renamedFileName);
-  await shot(page, testInfo, '06-video-row-renamed-in-table.png');
+  await shot(page, testInfo, 'test01-06-video-row-renamed-in-table.png');
 
   // Step 8 — Re-open details by clicking the renamed row and confirm title persists
   await renamedVideoRow.click({ timeout: UI_TIMEOUT });
   await waitForVideoDetailsVisible(page);
   await expectVideoDetailsTitle(page, renamedFileName);
-  await shot(page, testInfo, '07-video-details-title-persists.png');
+  await shot(page, testInfo, 'test01-07-video-details-title-persists.png');
 
   // Step 9 — Sign out
   await logoutToPublic(page);
-  await shot(page, testInfo, '08-sign-out.png');
+  await shot(page, testInfo, 'test01-08-sign-out.png');
 });
