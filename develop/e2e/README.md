@@ -57,7 +57,6 @@ This directory contains release smoke tests running against the release Docker C
 - `helpers/screenshot.js` — `shot(page, testInfo, name)` — consistent screenshot capture
 - `helpers/constants.js` — `UI_TIMEOUT=8000`, `NAV_TIMEOUT=15000`, `UPLOAD_TIMEOUT=30000`
 - `helpers/capture.js` — diagnostic helpers:
-  - `attachConsoleCapture(page, testInfo, opts)` — re-exported from `consoleCapture.js`; starts browser console + Mercure probe capture; returns `{ start, flushAndAttach }`
   - `attachSseMessages(page, testInfo)` — attaches `mercure-sse.json` from `window.__mercure_messages`; safe to call in `finally` (swallows all errors)
 
 ### Prod-only helpers (`prod/helpers/`)
@@ -65,9 +64,6 @@ This directory contains release smoke tests running against the release Docker C
 - `prod/helpers/index.js` — re-exports all shared helpers + `loginAsCredentials`, `buildRunContext`
 - `prod/helpers/admin.js` — `filterUsersByEmail`, `setTariffForFilteredUser`, `deleteUserByEmail`, `deleteFilteredUser` (isolated user management with filter panel)
 - `prod/helpers/runContext.js` — `buildRunContext()` generates a per-run isolated user context (date-based email, random password, video name from env or defaults)
-
-> **All `helpers/` exports are available from a single import**: `const { ... } = require('../helpers');`
-> This includes `attachConsoleCapture` and `attachSseMessages` from `helpers/capture.js` — no need to import from `../consoleCapture` directly.
 
 ---
 
@@ -370,8 +366,6 @@ This attribute updates in realtime when the video is renamed (via Mercure SSE `a
 Tests `04`–`08` and `prod/01` do **not reload the page** during status polling. All task status/progress updates are received via Mercure SSE and applied by `applyTaskRealtimeUpdate` directly to `state.dto.value.tasks`. Tests poll `readPresetTaskState` (which reads DOM) to observe realtime changes.
 
 Mercure messages are captured to `mercure-sse.json` attachment via `window.__mercure_messages` for debugging.
-
-Console logs are captured and attached via `attachConsoleCapture` from `consoleCapture.js`.
 
 ---
 

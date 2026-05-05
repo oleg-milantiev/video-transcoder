@@ -1,6 +1,5 @@
 const { test, expect } = require('@playwright/test');
-const { attachConsoleCapture } = require('../consoleCapture');
-    const {
+const {
     UI_TIMEOUT,
     NAV_TIMEOUT,
     loginAsTest,
@@ -25,9 +24,6 @@ const { attachConsoleCapture } = require('../consoleCapture');
 } = require('../helpers');
 
 test('transcode flow from video details to downloadable mp4', async ({ page }, testInfo) => {
-    // start console capture for this test
-    const capture = attachConsoleCapture(page, testInfo, { maxBodyChars: 4000 });
-    await capture.start();
     const sourceVideoFileName = '2022_10_04_Two_Maxes.mp4';
     const uploadedVideoName = '2022_10_04_Two_Maxes-04.mp4';
     const baseFileName = uploadedVideoName.substring(0, uploadedVideoName.lastIndexOf('.'));

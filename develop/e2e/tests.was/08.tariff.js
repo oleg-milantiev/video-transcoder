@@ -1,5 +1,4 @@
 const { test, expect } = require('@playwright/test');
-const { attachConsoleCapture } = require('../consoleCapture');
 const {
   UI_TIMEOUT,
   NAV_TIMEOUT,
@@ -32,9 +31,6 @@ function baseName(fileName) {
 }
 
 test('tariff restrictions: upload limits, invalid metadata deletion and transcode availability', async ({ page }, testInfo) => {
-  const capture = attachConsoleCapture(page, testInfo, { maxBodyChars: 4000 });
-  await capture.start();
-
   const { email: adminEmail } = getAdminCredentials();
   const sourceVideoFileName = '2022_10_04_Two_Maxes.mp4';
   const successfulUploadName = '2022_10_04_Two_Maxes-08-success.mp4';

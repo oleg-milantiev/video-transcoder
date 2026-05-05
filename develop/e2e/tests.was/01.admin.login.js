@@ -46,4 +46,3 @@ test('admin login and empty tabs smoke test', async ({ page }, testInfo) => {
   await logoutToPublic(page);
   await shot(page, testInfo, '07-sign-out-and-sign-in-links.png');
 });
-

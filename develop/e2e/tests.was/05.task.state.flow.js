@@ -1,5 +1,4 @@
 const { test, expect } = require('@playwright/test');
-const { attachConsoleCapture } = require('../consoleCapture');
 const {
   UI_TIMEOUT,
   NAV_TIMEOUT,
@@ -35,10 +34,6 @@ test('task state flow with FHD preset: progress, cancel, restart, complete', asy
   const baseFileName = uploadedVideoName.substring(0, uploadedVideoName.lastIndexOf('.'));
   const presetTitle = 'High video Quality, High Efficiency Audio';
   // h265/opus/mp4 — slower codec ensures we can catch PROCESSING state before COMPLETED
-
-  // Step 2 — start console capture for this test
-  const capture = attachConsoleCapture(page, testInfo, { maxBodyChars: 4000 });
-  await capture.start();
 
   try {
     // Step 3 — Login as admin

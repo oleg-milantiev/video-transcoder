@@ -1,5 +1,4 @@
 const { test, expect } = require('@playwright/test');
-const { attachConsoleCapture } = require('../../consoleCapture');
 const {
   UI_TIMEOUT,
   NAV_TIMEOUT,
@@ -209,9 +208,6 @@ test.describe('prod-safe isolated smoke', () => {
   test('creates isolated user, verifies safe flow, upgrades tariff, downloads outputs, and cleans up', async ({ page }, testInfo) => {
     page.setDefaultTimeout(UI_TIMEOUT);
     page.setDefaultNavigationTimeout(NAV_TIMEOUT);
-
-    const capture = attachConsoleCapture(page, testInfo, { maxBodyChars: 4000 });
-    await capture.start();
 
     const run = buildRunContext();
     const expectedUploadHint = '0 MB / 1 GB';

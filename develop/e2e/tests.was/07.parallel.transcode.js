@@ -1,5 +1,4 @@
 const { test, expect } = require('@playwright/test');
-const { attachConsoleCapture } = require('../consoleCapture');
 const {
   UI_TIMEOUT,
   NAV_TIMEOUT,
@@ -22,9 +21,6 @@ const {
 } = require('../helpers');
 
 test('parallel transcode: 1080p and 720p run simultaneously within Standard preset (Premium, 2 workers)', async ({ page }, testInfo) => {
-  const capture = attachConsoleCapture(page, testInfo, { maxBodyChars: 4000 });
-  await capture.start();
-
   const sourceVideoFileName = '2022_10_04_Two_Maxes.mp4';
   const uploadedVideoName = '2022_10_04_Two_Maxes-07.mp4';
   const baseName = uploadedVideoName.substring(0, uploadedVideoName.lastIndexOf('.'));

@@ -167,26 +167,40 @@ async function isPosterLoaded(page) {
     return Boolean(img.currentSrc) && img.complete && img.naturalWidth > 0 && img.naturalHeight > 0;
   });
 }
-async function hasDurationMeta(page) {
+// Check that a named meta field exists under the Meta heading and has a non-empty value.
+// `field` is matched case-insensitively against the <strong> label text (e.g. 'duration', 'format').
+async function hasMetaField(page, field) {
   const metaHeading = page.getByRole('heading', { name: 'Meta' }).first();
   if ((await metaHeading.count()) === 0) return false;
   const metaList = metaHeading.locator('xpath=following-sibling::ul[1]');
   if ((await metaList.count()) === 0) return false;
-  const durationItem = metaList.locator('li', {
-    has: page.locator('strong', { hasText: /^\s*duration\s*:\s*$/i }),
+  const item = metaList.locator('li', {
+    has: page.locator('strong', { hasText: new RegExp(`^\\s*${field}\\s*:\\s*$`, 'i') }),
   }).first();
-  if ((await durationItem.count()) === 0) return false;
-  const value = (await durationItem.textContent())
-    ?.replace(/^\s*duration\s*:\s*/i, '')
+  if ((await item.count()) === 0) return false;
+  const value = (await item.textContent())
+    ?.replace(new RegExp(`^\\s*${field}\\s*:\\s*`, 'i'), '')
     .trim() || '';
   return value.length > 0 && value !== '-' && !/no\s+meta\s+data/i.test(value);
 }
+async function hasDurationMeta(page) {
+  return hasMetaField(page, 'duration');
+}
+const META_FIELDS = ['duration', 'format', 'codec', 'bitrate', 'frame_rate', 'resolution', 'size'];
+
+async function allMetaFieldsReady(page) {
+  for (const field of META_FIELDS) {
+    if (!(await hasMetaField(page, field))) return false;
+  }
+  return true;
+}
+
 async function waitForPosterAndMeta(page, testInfo, prefix = '07-details-poster-meta-ready-attempt') {
   const maxAttempts = 5;
   for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
     const posterLoaded = await isPosterLoaded(page);
-    const durationReady = await hasDurationMeta(page);
-    if (posterLoaded && durationReady) {
+    const metaReady    = await allMetaFieldsReady(page);
+    if (posterLoaded && metaReady) {
       await shot(page, testInfo, `${prefix}-${attempt}.png`);
       return;
     }
@@ -196,7 +210,9 @@ async function waitForPosterAndMeta(page, testInfo, prefix = '07-details-poster-
       await waitForVideoDetailsVisible(page, { requirePresets: false });
     }
   }
-  throw new Error('Poster is not fully loaded or Meta duration is missing after 5 checks with 5-second delays');
+  throw new Error(
+    `Poster or one of the meta fields [${META_FIELDS.join(', ')}] is missing after ${maxAttempts} checks with 5-second delays`,
+  );
 }
 // ── Preset block helpers ─────────────────────────────────────────────────────
 async function getAllPresetTitles(page) {
@@ -461,4 +477,5 @@ module.exports = {
   waitForPresetTaskStatus,
   pollUntilCompletedWithProgressTracking,
   verifyDeletedVideoInListAndDetails,
+  hasMetaField,
 };

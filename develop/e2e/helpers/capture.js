@@ -1,5 +1,3 @@
-const { attachConsoleCapture } = require('../consoleCapture');
-
 /**
  * Attach collected Mercure SSE messages to the test report.
  * Safe to call in a finally block — all errors are swallowed.
@@ -16,4 +14,4 @@ async function attachSseMessages(page, testInfo) {
   }
 }
 
-module.exports = { attachConsoleCapture, attachSseMessages };
+module.exports = { attachSseMessages };

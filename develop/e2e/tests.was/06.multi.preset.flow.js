@@ -1,5 +1,4 @@
 const { test, expect } = require('@playwright/test');
-const { attachConsoleCapture } = require('../consoleCapture');
 const {
   UI_TIMEOUT,
   NAV_TIMEOUT,
@@ -28,9 +27,6 @@ const {
 } = require('../helpers');
 
 test('multi-preset flow: upload, trigger tasks, admin tariff + new preset, full transcode to download', async ({ page }, testInfo) => {
-  const capture = attachConsoleCapture(page, testInfo, { maxBodyChars: 4000 });
-  await capture.start();
-
   const sourceVideoFileName = '2022_10_04_Two_Maxes.mp4';
   const uploadedVideoName = '2022_10_04_Two_Maxes-06.mp4';
   const baseName = uploadedVideoName.substring(0, uploadedVideoName.lastIndexOf('.'));
