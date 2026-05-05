@@ -2,6 +2,54 @@
 
 This directory contains release smoke tests running against the release Docker Compose stack.
 
+setup:
+- login admin
+- check main tabs are visible
+- check uppy upload widget is visible
+- check no videos
+- check no tasks
+- go to admin
+- check users table is visible
+- create test-01 user with `ROLE_USER` and `Free` tariff
+- create test-02 user with `ROLE_USER` and `Free` tariff
+- logout
+
+01: upload video, check details, rename, check details again
+- login test-01
+- upload 2022_10_04_Two_Maxes.mp4
+- check video details
+- rename video
+- check new video details 
+- logout
+
+Напиши новый 02 тест.
+Активно используй хелперы.
+Для проверки storage значений и заполненности используй старый тест 08 tariff.
+
+02: 15x[Upload video, check storage badge]. Got storage is full.
+- login test-02
+- check storage badge shows zero storage usage
+- in cycle (15 times):
+  - upload 2022_10_04_Two_Maxes.mp4 as test-02-{i}.mp4
+  - check storage badge shows expected remaining storage (decreasing with each upload)
+- try to upload 2022_10_04_Two_Maxes.mp4 as test-02-16.mp4
+- got storage is full error
+- go to videos list
+- check 15 videos in list
+- delete last video
+- check storage badge shows expected remaining storage (increased by video delete)
+- try again to upload 2022_10_04_Two_Maxes.mp4 as test-02-16.mp4
+- check storage badge shows expected remaining storage (decreasing with last upload)
+- go to videos list
+- delete all videos on first page
+- check all videos on page are deleted
+- navigate to next page
+- delete all videos on second page
+- check all videos on page are deleted
+- check storage badge shows zero storage usage
+- logout
+
+
 ## Helpers and test style
 
 - Shared UI interactions and selectors are centralized in `helpers/`.

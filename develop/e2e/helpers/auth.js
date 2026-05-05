@@ -59,12 +59,11 @@ async function logoutToPublic(page) {
 
 module.exports = {
   getAdminCredentials,
-  getTestCredentials,
   openHome,
   openSignIn,
   fillSignInCredentials,
   submitSignIn,
   loginAsAdmin,
-  loginAsTest,
+  loginAs,
   logoutToPublic,
 };

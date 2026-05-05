@@ -1,5 +1,6 @@
 const { expect } = require('@playwright/test');
 const { UI_TIMEOUT } = require('./constants');
+const { clickAndAcceptConfirm } = require('./dialogs');
 
 async function expectTabsVisible(page) {
   await expect(page.getByRole('button', { name: 'Upload' })).toBeVisible({ timeout: UI_TIMEOUT });
@@ -58,6 +59,59 @@ function activeVideoRowByTitle(page, fileName) {
     .first();
 }
 
+// ── Pagination ────────────────────────────────────────────────────────────────
+
+/** Click the "Next" pagination button in the Videos tab. */
+async function clickVideosNextPage(page) {
+  const nextBtn = page.getByRole('button', { name: 'Next', exact: true });
+  await expect(nextBtn).not.toBeDisabled({ timeout: UI_TIMEOUT });
+  await nextBtn.click({ timeout: UI_TIMEOUT });
+  // Brief settle while the new page loads from the API
+  await page.waitForTimeout(800);
+}
+
+/** Assert the pagination info span shows "total {expectedCount}". */
+async function expectVideosTotalCount(page, expectedCount) {
+  await expect(
+    page.locator('span.text-muted.small').filter({ hasText: `total ${expectedCount}` })
+  ).toBeVisible({ timeout: UI_TIMEOUT });
+}
+
+// ── Bulk delete ───────────────────────────────────────────────────────────────
+
+/**
+ * Delete every non-deleted (Delete-button-visible) video row on the current
+ * Videos list page, one by one, confirming each dialog.
+ * Waits for each row to transition to `td.video-title-deleted` before continuing.
+ */
+async function deleteAllVideosOnPage(page) {
+  for (;;) {
+    const rows = page
+      .locator('#videosTable tbody tr')
+      .filter({ has: page.getByRole('button', { name: 'Delete' }) });
+    if (await rows.count() === 0) break;
+    const row = rows.first();
+    await clickAndAcceptConfirm(
+      page,
+      row.getByRole('button', { name: 'Delete' }),
+      'Delete this video?'
+    );
+    await expect(row.locator('td.video-title-deleted')).toBeVisible({ timeout: 15000 });
+  }
+}
+
+/**
+ * Assert that no active (deletable) video rows remain on the current page —
+ * i.e., every visible row has already been soft-deleted.
+ */
+async function expectAllVideosOnPageAreDeleted(page) {
+  await expect(
+    page
+      .locator('#videosTable tbody tr')
+      .filter({ has: page.getByRole('button', { name: 'Delete' }) })
+  ).toHaveCount(0, { timeout: UI_TIMEOUT });
+}
+
 module.exports = {
   expectTabsVisible,
   openUploadTab,
@@ -71,6 +125,10 @@ module.exports = {
   expectVideoRowHasCoreValues,
   videoRowByTitle,
   activeVideoRowByTitle,
+  clickVideosNextPage,
+  expectVideosTotalCount,
+  deleteAllVideosOnPage,
+  expectAllVideosOnPageAreDeleted,
 };
 
 

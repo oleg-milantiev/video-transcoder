@@ -8,6 +8,7 @@ const admin = require('./admin');
 const dialogs = require('./dialogs');
 const download = require('./download');
 const capture = require('./capture');
+const storage = require('./storage');
 
 module.exports = {
   UI_TIMEOUT,
@@ -22,5 +23,6 @@ module.exports = {
   ...dialogs,
   ...download,
   ...capture,
+  ...storage,
 };
 

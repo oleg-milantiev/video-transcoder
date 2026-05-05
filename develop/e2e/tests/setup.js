@@ -15,7 +15,7 @@ const {
   ensureAdminMenuSectionsVisible,
   mainTableBodyForHeading,
   // createOrUpdatePreset,
-  // createOrUpdateTariffByTitle,
+  createOrUpdateTariffByTitle,
   createUserWithTariff,
   // assignTariffToUser,
   shot,
@@ -39,32 +39,20 @@ const {
 //   },
 // ];
 
-// ── Tariffs used across the whole test suite ──────────────────────────────────
-// const FREE_TARIFF = {
-//   delay: 3600,
-//   instance: 1,
-//   videoDuration: 3600,
-//   videoSize: 100,
-//   maxWidth: 1920,
-//   maxHeight: 1080,
-//   storageGb: 1,
-//   storageHour: 24,
-// };
-
-// const PREMIUM_TARIFF = {
-//   delay: 0,
-//   instance: 2,
-//   videoDuration: 86400,
-//   videoSize: 1024,
-//   maxWidth: 3840,
-//   maxHeight: 2160,
-//   storageGb: 100,
-//   storageHour: 720,
-// };
-
-// ── Test users created by setup ───────────────────────────────────────────────
-const TEST_01_EMAIL    = 'test-01@test.com';
-const TEST_01_PASSWORD = 'test-01';
+// ── Tariff for test-02: 0.1 GB storage ───────────────────────────────────────
+// Fixture file = 2022_10_04_Two_Maxes.mp4 ≈ 6.44 MB (6 754 459 bytes)
+//   15 × 6.44 MB ≈  96.6 MB  → fits inside 102.4 MB (0.1 GB)
+//   16 × 6.44 MB ≈ 103.0 MB  → exceeds limit → upload rejected
+const TARIFF_FREE_STORAGE_100M = {
+  delay: 3600,
+  instance: 1,
+  videoDuration: 3600,
+  videoSize: 100,
+  maxWidth: 1920,
+  maxHeight: 1080,
+  storageGb: 0.1,
+  storageHour: 24,
+};
 
 test('setup: prepare users, tariffs and presets for the full test suite', async ({ page }, testInfo) => {
   const { email: adminEmail, password: adminPassword } = getAdminCredentials();
@@ -107,15 +95,15 @@ test('setup: prepare users, tariffs and presets for the full test suite', async 
   // await shot(page, testInfo, '08-presets-ready.png');
 
   // Tariffs
-  // await createOrUpdateTariffByTitle(page, 'Free',    FREE_TARIFF,    testInfo, '09a-tariff-free.png');
+  await createOrUpdateTariffByTitle(page, 'Free-100M', TARIFF_FREE_STORAGE_100M, testInfo, '09-tariff-free-100m.png');
   // await createOrUpdateTariffByTitle(page, 'Premium', PREMIUM_TARIFF, testInfo, '09b-tariff-premium.png');
 
   // ── Phase 3: create test-* users and assign tariffs ─────────────
 
-  await createUserWithTariff(page, TEST_01_EMAIL, TEST_01_PASSWORD, 'Free');
-  await shot(page, testInfo, '10-test-01-user-created.png');
 
-  // await assignTariffToUser(page, adminEmail, 'Free', testInfo, '11-admin-free-tariff.png');
+  await createUserWithTariff(page, 'test-01@test.com', 'test-01', 'Free');
+  await createUserWithTariff(page, 'test-02@test.com', 'test-02', 'Free-100M');
+  await shot(page, testInfo, '10-test-users-created.png');
 
   // ── Phase 4: sign out ─────────────────────────────────────────────────────────
 

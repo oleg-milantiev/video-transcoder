@@ -51,8 +51,7 @@ test('01 · upload video, verify details and rename', async ({ page }, testInfo)
   await expectDetailsValue(page, 'Title');
   await expectDetailsValue(page, 'Created');
   await expectDetailsValue(page, 'Expires');
-  await waitForPosterAndMeta(page, testInfo);
-  await shot(page, testInfo, '04-video-details-filled.png');
+  await waitForPosterAndMeta(page, testInfo, '04-video-details-filled');
 
   // Step 6 — Rename video via SweetAlert2 modal
   await renameVideoFromDetails(page, renamedFileName);
@@ -76,4 +75,3 @@ test('01 · upload video, verify details and rename', async ({ page }, testInfo)
   await logoutToPublic(page);
   await shot(page, testInfo, '08-sign-out.png');
 });
-
