@@ -61,13 +61,6 @@ final readonly class ExtractVideoMetadataHandler
         try {
             $this->eventBus->dispatch(new ExtractVideoMetadataStart($videoId));
 
-            // todo не нравится мне это здесь. Но если удалить кеш в цикле tus->serve, тот в HTTP_410 Gone уходит
-            $meta = $video->meta();
-            if (isset($meta['tus'])) {
-                // Allow upload of the same filename again
-                $this->server->getCache()->delete($meta['tus']);
-            }
-
             $user = $this->userRepository->findById($video->userId());
             if ($user === null) {
                 throw UserNotFound::byId($video->userId()->toRfc4122());
