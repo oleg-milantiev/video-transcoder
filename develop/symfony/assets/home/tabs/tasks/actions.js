@@ -120,6 +120,8 @@ export function createTasksTabActions(params) {
                 createdAt: typeof update.createdAt === 'string' ? update.createdAt : task.createdAt,
                 videoTitle: typeof update.videoTitle === 'string' ? update.videoTitle : task.videoTitle,
                 presetTitle: typeof update.presetTitle === 'string' ? update.presetTitle : task.presetTitle,
+                size: typeof update.size === 'number' ? update.size : task.size,
+                updatedAt: typeof update.updatedAt === 'string' ? update.updatedAt : task.updatedAt,
             };
         });
     }
