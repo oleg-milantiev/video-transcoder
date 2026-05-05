@@ -9,6 +9,12 @@ import { initAuth } from './apiAuth.js';
 import { ROUTE_REFRESH_TOKEN } from './routes.js';
 
 export function mountHomeSpa() {
+    initAuth({
+        accessToken: config.token.access || null,
+        refreshToken: config.token.refresh || null,
+        refreshUrl: ROUTE_REFRESH_TOKEN,
+    });
+
     const rootElement = document.getElementById('home-spa') || document.getElementById('video-details-spa');
     if (!rootElement) {
         return;
@@ -18,11 +24,6 @@ export function mountHomeSpa() {
         return;
     }
 
-    initAuth({
-        accessToken: config.token.access || null,
-        refreshToken: config.token.refresh || null,
-        refreshUrl: ROUTE_REFRESH_TOKEN,
-    });
     connectMercure(config, rootElement);
     const HomeTabsView = createHomeTabsView(config);
     const VideoDetailsView = createVideoDetailsView(config);

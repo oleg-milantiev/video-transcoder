@@ -136,7 +136,9 @@ case "$RESULT" in
         ;;
 esac
 
-#todo chown -R 82:82
+#todo chown -R 82:82 /storage
+#todo rm -Rf /var/www/yc/var/cache/prod
+#todo rm -Rf /var/www/100/var/cache/prod
 
 trap - EXIT
 
