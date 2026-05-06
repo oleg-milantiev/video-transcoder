@@ -50,7 +50,7 @@ class VideoCrudController extends AbstractCrudController
             ->showEntityActionsInlined()
             ->setEntityLabelInSingular('Video')
             ->setEntityLabelInPlural('Videos')
-            ->setDefaultSort(['title' => 'ASC']);
+            ->setDefaultSort(['createdAt' => 'DESC']);
     }
 
     public function configureFilters(Filters $filters): Filters
@@ -106,6 +106,7 @@ class VideoCrudController extends AbstractCrudController
                 ->onlyOnDetail(),
             DateTimeField::new('createdAt')->hideOnForm(),
             DateTimeField::new('updatedAt')->hideOnForm(),
+            // todo пресет и height вывести
             AssociationField::new('tasks')
                 ->setTemplatePath('admin/field/video_tasks_summary.html.twig')
                 ->formatValue(fn($value, ?VideoEntity $entity) => [
