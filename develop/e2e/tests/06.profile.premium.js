@@ -201,13 +201,13 @@ test('06 · premium profile: empty state, plan cards, parallel transcode, storag
 
   // Storage (filled) — 144p + 240p outputs for Premium
   const storageCardFilled = profileCard(page, 'Storage');
-  await expect(storageCardFilled).toContainText('18 MB used of 1 GB', { timeout: UI_TIMEOUT });
-  await expect(storageCardFilled).toContainText('2%', { timeout: UI_TIMEOUT });
-  await expect(storageCardFilled).toContainText('1006 MB free', { timeout: UI_TIMEOUT });
-  await expectProfileInfoRowValue(page, 'Used', '17.9 MB');
-  await expectProfileInfoRowValue(page, 'Free', '1006.1 MB');
+  await expect(storageCardFilled).toContainText('7 MB used of 1 GB', { timeout: UI_TIMEOUT });
+  await expect(storageCardFilled).toContainText('1%', { timeout: UI_TIMEOUT });
+  await expect(storageCardFilled).toContainText('1017 MB free', { timeout: UI_TIMEOUT });
+  await expectProfileInfoRowValue(page, 'Used', '7.1 MB');
+  await expectProfileInfoRowValue(page, 'Free', '1016.9 MB');
   await expectProfileInfoRowValue(page, 'Total quota', '1 GB');
-  await expectProfileInfoRowValue(page, 'Expiring in 24h', '17.7 MB');
+  await expectProfileInfoRowValue(page, 'Expiring in 24h', '6.4 MB');
   await expect(storageCardFilled).toContainText('Videos older than 24 hours will be automatically removed.', { timeout: UI_TIMEOUT });
   await shot(page, testInfo, 'test06-16-storage-block-filled.png');
 

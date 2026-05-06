@@ -79,7 +79,7 @@ const {
   waitForPosterAndMeta,
   expectDetailsValue,
   clickHeightButtonInPreset,
-  pollUntilHeightCompleted,
+  pollUntilHeightsCompleted,
   FREE_INCLUDED,
   FREE_EXCLUDED,
   PREMIUM_INCLUDED,
@@ -201,7 +201,7 @@ test('05 · free profile: empty state, tariff cards, upload + transcode, storage
   await shot(page, testInfo, 'test05-13-240p-started.png');
 
   // ── Wait for 144p COMPLETED (240p will be PENDING — Free: instance=1) ─────────
-  await pollUntilHeight144Completed(page);
+  await pollUntilHeightsCompleted(page, PRESET, [144]);
   await shot(page, testInfo, 'test05-14-144p-completed.png');
 
   // ══ Check profile with filled stats ════════════════════════════════════════
