@@ -48,6 +48,23 @@ const PREMIUM_INCLUDED = [
 
 const PREMIUM_EXCLUDED = ['HLS streaming output'];
 
+const ENTERPRISE_INCLUDED = [
+  'Unlimited video size',
+  'Unlimited duration',
+  'Any resolution',
+  'Custom storage quota',
+  'Dedicated transcoding workers',
+  'All output formats',
+  'Instant transcoding',
+  'Unlimited simultaneous tasks',
+  'Highest priority queue',
+  'Custom presets',
+  'HLS streaming output',
+  'SLA & dedicated support',
+];
+
+const ENTERPRISE_EXCLUDED = [];
+
 // ── Section card helpers ──────────────────────────────────────────────────────
 
 /**
@@ -58,6 +75,25 @@ function profileCard(page, heading) {
   return page.locator('.card', {
     has: page.locator('h2', { hasText: heading }),
   }).first();
+}
+
+/**
+ * Return the plan card on the /tariffs page whose `h2.h4` heading matches
+ * `planName` (Free | Premium | Enterprise).
+ */
+function tariffCard(page, planName) {
+  return page.locator('.card', {
+    has: page.locator('h2.h4', { hasText: planName }),
+  }).first();
+}
+
+/**
+ * Wait for the /tariffs SPA view to fully render (Free card heading visible).
+ */
+async function waitForTariffsLoaded(page) {
+  await expect(
+    page.locator('h2.h4', { hasText: 'Free' }).first()
+  ).toBeVisible({ timeout: UI_TIMEOUT });
 }
 
 /**
@@ -124,7 +160,11 @@ module.exports = {
   FREE_EXCLUDED,
   PREMIUM_INCLUDED,
   PREMIUM_EXCLUDED,
+  ENTERPRISE_INCLUDED,
+  ENTERPRISE_EXCLUDED,
   profileCard,
+  tariffCard,
+  waitForTariffsLoaded,
   profileInfoRowValue,
   expectProfileInfoRowValue,
   waitForProfileLoaded,

@@ -107,6 +107,7 @@ test('setup: prepare users, tariffs and presets for the full test suite', async 
   await createUserWithTariff(page, 'test-04@test.com', 'test-04', 'Free');
   await createUserWithTariff(page, 'test-05@test.com', 'test-05', 'Free');
   await createUserWithTariff(page, 'test-06@test.com', 'test-06', 'Premium');
+  await createUserWithTariff(page, 'test-07@test.com', 'test-07', 'Free');
   await shot(page, testInfo, '10-test-users-created.png');
 
   // ── Phase 4: sign out ─────────────────────────────────────────────────────────
