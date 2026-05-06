@@ -24,7 +24,7 @@ function infoRow(label, value) {
 
 // ─── blocks ───────────────────────────────────────────────────────────────────
 
-function renderUserBlock(user, tariff, dto) {
+function renderUserBlock(user, tariff) {
     const tariffTitle = tariff?.title ?? '—';
     const isFree = !tariff?.title || tariff.title.toLowerCase() === 'free';
 
@@ -253,7 +253,7 @@ export function renderProfile(vm) {
             ]),
             backBtn,
         ]),
-        renderUserBlock(user, tariff, dto),
+        renderUserBlock(user, tariff),
         renderTariffBlock(tariff),
         // Two-column layout for Videos and Storage
         h('div', { class: 'row g-4' }, [
