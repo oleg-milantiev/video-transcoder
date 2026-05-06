@@ -25,6 +25,15 @@ final readonly class GetProfileHandler
     public function __invoke(GetProfileQuery $query): ProfileDTO
     {
         $taskCountByStatus = $this->taskRepository->getActiveCountByStatus($query->userId);
+        $willStartAt = '';
+        if (isset($taskCountByStatus[TaskStatus::PENDING->value])) {
+            $date = $this->taskRepository->getFirstPendingTaskWillStartAt($query->userId)?->format(
+                DateTimeInterface::ATOM
+            );
+            if ($date) {
+                $willStartAt = $date;
+            }
+        }
 
         return ProfileDTO::create(
             storageDelete24: $this->storageRepository->getDeletedIn24hSize($query->userId),
@@ -33,11 +42,7 @@ final readonly class GetProfileHandler
             taskCountActive: $this->taskRepository->getActiveCount($query->userId),
             taskCountTotal: $this->taskRepository->getTotalCount($query->userId),
             taskCountByStatus: $taskCountByStatus,
-            willStartAt: isset($taskCountByStatus[TaskStatus::PENDING->value])
-                ? $this->taskRepository->getFirstPendingTaskWillStartAt($query->userId)?->format(
-                    DateTimeInterface::ATOM
-                )
-                : '',
+            willStartAt: $willStartAt,
         );
     }
 }

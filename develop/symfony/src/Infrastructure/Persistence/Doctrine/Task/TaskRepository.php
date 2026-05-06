@@ -366,11 +366,11 @@ class TaskRepository extends ServiceEntityRepository implements TaskRepositoryIn
         $sql = <<< SQL
             SELECT count(*) AS c
             FROM task t
-            WHERE t.user_id = :userId
+            WHERE t.user_id = :user_id
               AND t.deleted = false
         SQL;
 
-        return (int)$conn->executeQuery($sql, ['userId' => $userId->toRfc4122()])->fetchOne();
+        return (int)$conn->executeQuery($sql, ['user_id' => $userId->toRfc4122()])->fetchOne();
     }
 
     /**
@@ -383,10 +383,10 @@ class TaskRepository extends ServiceEntityRepository implements TaskRepositoryIn
         $sql = <<< SQL
             SELECT count(*) AS c
             FROM task t
-            WHERE t.user_id = :userId
+            WHERE t.user_id = :user_id
         SQL;
 
-        return (int)$conn->executeQuery($sql, ['userId' => $userId->toRfc4122()])->fetchOne();
+        return (int)$conn->executeQuery($sql, ['user_id' => $userId->toRfc4122()])->fetchOne();
     }
 
     /**
@@ -406,7 +406,7 @@ class TaskRepository extends ServiceEntityRepository implements TaskRepositoryIn
                     COUNT(CASE WHEN t.status IN (2, 3) THEN 1 END) AS active_count, -- щас выполняется N
                     MAX(t.started_at) AS last_start_time                            -- последний запуск в хх:хх:хх
                 FROM task t
-                WHERE t.user_id = '123e4567-e89b-42d3-a456-426614174000'
+                WHERE t.user_id = :user_id
                 GROUP BY t.user_id
             ),
             user_metrics_tariff AS (
@@ -422,7 +422,7 @@ class TaskRepository extends ServiceEntityRepository implements TaskRepositoryIn
                 SELECT
                     t.id, t.user_id
                 FROM task t
-                WHERE t.user_id = '123e4567-e89b-42d3-a456-426614174000'
+                WHERE t.user_id = :user_id
                   AND t.deleted = false
                   AND t.status = 1 -- Pending
                 ORDER BY t.id
@@ -439,7 +439,7 @@ class TaskRepository extends ServiceEntityRepository implements TaskRepositoryIn
             JOIN user_metrics_tariff m ON t.user_id = m.user_id
         SQL;
 
-        $date = $conn->executeQuery($sql, ['userId' => $userId->toRfc4122()])->fetchOne();
+        $date = $conn->executeQuery($sql, ['user_id' => $userId->toRfc4122()])->fetchOne();
 
         return $date ? new DateTimeImmutable($date) : null;
     }

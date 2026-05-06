@@ -142,7 +142,7 @@ function renderVideosBlock(dto) {
         infoRow('Currently transcoding', dto?.statistics?.task?.processing ?? '—'),
         infoRow('Tasks in queue', dto?.statistics?.task?.queue ?? '—'),
         infoRow('Completed transcoding', dto?.statistics?.task?.completed ?? '—'),
-        infoRow('Next encoding starts at', dto?.statistics?.task?.willStartAt ?? '—'),
+        infoRow('Next encoding starts at', humanReadableDateTime(dto?.statistics?.task?.willStartAt)),
     ]);
 }
 
