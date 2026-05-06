@@ -3,7 +3,7 @@
  *
  * PHASE 1 — EMPTY STATE
  *   - Guest: "Profile" footer link must NOT be visible.
- *   - Login as test-05-free (Free tariff: 1 GB storage, 24 h retention, 1 parallel task).
+ *   - Login as test-05 (Free tariff: 1 GB storage, 24 h retention, 1 parallel task).
  *   - "Profile" footer link is NOW visible.
  *   - Navigate to /profile and wait for data to load.
  *
@@ -79,79 +79,25 @@ const {
   waitForPosterAndMeta,
   expectDetailsValue,
   clickHeightButtonInPreset,
-  readPresetTaskStateByHeight,
+  pollUntilHeightCompleted,
+  FREE_INCLUDED,
+  FREE_EXCLUDED,
+  PREMIUM_INCLUDED,
+  PREMIUM_EXCLUDED,
   profileCard,
   profileInfoRowValue,
   expectProfileInfoRowValue,
   waitForProfileLoaded,
+  checkFeatureItems,
   shot,
 } = require('../helpers');
 
-const EMAIL    = 'test-05-free@test.com';
-const PASSWORD = 'test-05-free';
+const EMAIL    = 'test-05@test.com';
+const PASSWORD = 'test-05';
 const PRESET   = 'Standard video Quality';
 const SRC      = '2022_10_04_Two_Maxes.mp4';
 const videoName  = (n) => `2022_10_04_Two_Maxes-05-${n}.mp4`;
 const videoTitle = (n) => `2022_10_04_Two_Maxes-05-${n}`;
-
-// ── feature lists (from tariff/planCard.js PLANS array) ──────────────────────
-
-const FREE_INCLUDED = [
-  'Up to 500 MB per video',
-  'Up to 10 minutes duration',
-  'Up to 1080p resolution',
-  '5 GB, 24 Hours storage',
-  'Standard transcoding speed',
-  'MP4 output format',
-];
-const FREE_EXCLUDED = [
-  'Instant transcoding',
-  'Multiple simultaneous tasks',
-  'Priority queue',
-  'Custom presets',
-  'HLS streaming output',
-];
-const PREMIUM_INCLUDED = [
-  'Up to 4 GB per video',
-  'Up to 3 hours duration',
-  'Up to 4K resolution',
-  '50 GB, 7 Days storage',
-  'Fast transcoding speed',
-  'MP4, WebM output formats',
-  'Instant transcoding',
-  'Two simultaneous tasks',
-  'Priority queue',
-  'Custom presets',
-];
-const PREMIUM_EXCLUDED = ['HLS streaming output'];
-
-// ── helpers ───────────────────────────────────────────────────────────────────
-
-async function checkFeatureItems(page, card, included, excluded) {
-  const successItems = card.locator('li.list-group-item', { has: page.locator('span.text-success') });
-  const dangerItems  = card.locator('li.list-group-item', { has: page.locator('span.text-danger') });
-
-  await expect(successItems).toHaveCount(included.length, { timeout: UI_TIMEOUT });
-  await expect(dangerItems).toHaveCount(excluded.length,  { timeout: UI_TIMEOUT });
-
-  for (const f of included) {
-    await expect(successItems.filter({ hasText: f })).toHaveCount(1);
-  }
-  for (const f of excluded) {
-    await expect(dangerItems.filter({ hasText: f })).toHaveCount(1);
-  }
-}
-
-async function pollUntilHeight144Completed(page, maxAttempts = 60, pollMs = 5000) {
-  for (let i = 0; i < maxAttempts; i++) {
-    const { status } = await readPresetTaskStateByHeight(page, PRESET, 144);
-    if (status === 'COMPLETED') return;
-    if (i < maxAttempts - 1) await page.waitForTimeout(pollMs);
-  }
-  throw new Error(`${PRESET} 144p did not reach COMPLETED after ${maxAttempts * pollMs / 1000}s`);
-}
-
-// ── test ──────────────────────────────────────────────────────────────────────
 
 test('05 · free profile: empty state, tariff cards, upload + transcode, storage stats', async ({ page }, testInfo) => {
   // 2 uploads + 144p transcode + buffer = generous 6-minute budget
@@ -276,9 +222,9 @@ test('05 · free profile: empty state, tariff cards, upload + transcode, storage
 
   // ── Storage block (filled) ────────────────────────────────────────────────────
   const storageCardFilled = profileCard(page, 'Storage');
-  await expect(storageCardFilled).toContainText('used of 1 GB', { timeout: UI_TIMEOUT });      // some X MB used
-  await expect(storageCardFilled).toContainText('%', { timeout: UI_TIMEOUT });                  // some usage %
-  await expect(storageCardFilled).toContainText('free', { timeout: UI_TIMEOUT });              // some storage free
+  await expect(storageCardFilled).toContainText('used of 1 GB', { timeout: UI_TIMEOUT });
+  await expect(storageCardFilled).toContainText('%', { timeout: UI_TIMEOUT });
+  await expect(storageCardFilled).toContainText('free', { timeout: UI_TIMEOUT });
   await expect(profileInfoRowValue(page, 'Used')).not.toContainText('0 B', { timeout: UI_TIMEOUT });
   await expect(profileInfoRowValue(page, 'Free')).not.toContainText('1 GB', { timeout: UI_TIMEOUT });
   await expectProfileInfoRowValue(page, 'Total quota', '1 GB');

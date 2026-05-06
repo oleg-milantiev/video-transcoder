@@ -302,6 +302,42 @@ async function waitForDeletedVideoDetailsWithoutPoster(page, expectedTitle, maxA
   }
   throw new Error(`Video ${expectedTitle} did not become deleted without poster after ${maxAttempts} checks`);
 }
+// ── Wait for height-specific tasks ──────────────────────────────────────────
+
+/**
+ * Poll until a single height-specific task for `presetTitle` reaches COMPLETED.
+ * Throws after maxAttempts × pollMs.
+ */
+async function pollUntilHeightCompleted(page, presetTitle, height, maxAttempts = 60, pollMs = 5000) {
+  for (let i = 0; i < maxAttempts; i++) {
+    const { status } = await readPresetTaskStateByHeight(page, presetTitle, height);
+    if (status === 'COMPLETED') return;
+    if (i < maxAttempts - 1) await page.waitForTimeout(pollMs);
+  }
+  throw new Error(
+    `${presetTitle} ${height}p did not reach COMPLETED after ${maxAttempts * pollMs / 1000}s`
+  );
+}
+
+/**
+ * Poll until ALL listed heights for `presetTitle` reach COMPLETED.
+ * Useful for parallel transcoding (e.g. Premium instance=2).
+ */
+async function pollUntilHeightsCompleted(page, presetTitle, heights, maxAttempts = 60, pollMs = 5000) {
+  for (let i = 0; i < maxAttempts; i++) {
+    let allDone = true;
+    for (const h of heights) {
+      const { status } = await readPresetTaskStateByHeight(page, presetTitle, h);
+      if (status !== 'COMPLETED') { allDone = false; break; }
+    }
+    if (allDone) return;
+    if (i < maxAttempts - 1) await page.waitForTimeout(pollMs);
+  }
+  throw new Error(
+    `${presetTitle} ${heights.join('/')}p did not all reach COMPLETED after ${maxAttempts * pollMs / 1000}s`
+  );
+}
+
 async function clickTranscodeForPreset(page, presetTitle) {
   // Preset blocks live in the Transcode tab, Custom goal — switch there first
   await switchToVideoTab(page, 'transcode');
@@ -487,6 +523,8 @@ module.exports = {
   waitForDeletedVideoDetailsWithoutPoster,
   clickTranscodeForPreset,
   clickHeightButtonInPreset,
+  pollUntilHeightCompleted,
+  pollUntilHeightsCompleted,
   expectPresetStatus,
   waitForAllPresetsToComplete,
   waitForAllPresetsProcessingWithProgress,
