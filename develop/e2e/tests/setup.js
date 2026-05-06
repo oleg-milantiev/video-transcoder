@@ -54,6 +54,28 @@ const TARIFF_FREE_STORAGE_100M = {
   storageHour: 24,
 };
 
+// ── Base Free tariff used for limit variants ──────────────────────────────────
+const FREE_BASE = {
+  delay: 3600,
+  instance: 1,
+  videoDuration: 3600,
+  videoSize: 100,
+  maxWidth: 1920,
+  maxHeight: 1080,
+  storageGb: 1,
+  storageHour: 24,
+  presets: ['Standard video Quality'],
+};
+
+// ── Tariff for test-15: video longer than 2s is auto-deleted (duration limit) ─
+const TARIFF_FREE_DURATION = { ...FREE_BASE, videoDuration: 2 };
+
+// ── Tariff for test-16: video wider/taller than 320×180 is auto-deleted ───────
+const TARIFF_FREE_RESOLUTION = { ...FREE_BASE, maxWidth: 320, maxHeight: 180 };
+
+// ── Tariff for test-17: video larger than 3 MB is rejected on upload ──────────
+const TARIFF_FREE_FILESIZE = { ...FREE_BASE, videoSize: 3 };
+
 test('setup: prepare users, tariffs and presets for the full test suite', async ({ page }, testInfo) => {
   const { email: adminEmail, password: adminPassword } = getAdminCredentials();
 
@@ -96,10 +118,11 @@ test('setup: prepare users, tariffs and presets for the full test suite', async 
 
   // Tariffs
   await createOrUpdateTariffByTitle(page, 'Free-100M', TARIFF_FREE_STORAGE_100M, testInfo, '09-tariff-free-100m.png');
-  // await createOrUpdateTariffByTitle(page, 'Premium', PREMIUM_TARIFF, testInfo, '09b-tariff-premium.png');
+  await createOrUpdateTariffByTitle(page, 'Free-duration', TARIFF_FREE_DURATION, testInfo, '09b-tariff-free-duration.png');
+  await createOrUpdateTariffByTitle(page, 'Free-resolution', TARIFF_FREE_RESOLUTION, testInfo, '09c-tariff-free-resolution.png');
+  await createOrUpdateTariffByTitle(page, 'Free-filesize', TARIFF_FREE_FILESIZE, testInfo, '09d-tariff-free-filesize.png');
 
-  // ── Phase 3: create test-* users and assign tariffs ─────────────
-
+  // ── Phase 3: create test-* users and assign tariffs ─────────────────────────
 
   await createUserWithTariff(page, 'test-01@test.com', 'test-01', 'Free');
   await createUserWithTariff(page, 'test-02@test.com', 'test-02', 'Free-100M');
@@ -108,6 +131,15 @@ test('setup: prepare users, tariffs and presets for the full test suite', async 
   await createUserWithTariff(page, 'test-05@test.com', 'test-05', 'Free');
   await createUserWithTariff(page, 'test-06@test.com', 'test-06', 'Premium');
   await createUserWithTariff(page, 'test-07@test.com', 'test-07', 'Free');
+  await createUserWithTariff(page, 'test-09@test.com', 'test-09', 'Premium');
+  await createUserWithTariff(page, 'test-10@test.com', 'test-10', 'Free');
+  await createUserWithTariff(page, 'test-11@test.com', 'test-11', 'Free');
+  await createUserWithTariff(page, 'test-12@test.com', 'test-12', 'Free');
+  await createUserWithTariff(page, 'test-13@test.com', 'test-13', 'Free');
+  await createUserWithTariff(page, 'test-14@test.com', 'test-14', 'Free');
+  await createUserWithTariff(page, 'test-15@test.com', 'test-15', 'Free-duration');
+  await createUserWithTariff(page, 'test-16@test.com', 'test-16', 'Free-resolution');
+  await createUserWithTariff(page, 'test-17@test.com', 'test-17', 'Free-filesize');
   await shot(page, testInfo, '10-test-users-created.png');
 
   // ── Phase 4: sign out ─────────────────────────────────────────────────────────
