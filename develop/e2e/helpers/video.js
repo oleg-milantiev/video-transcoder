@@ -183,9 +183,6 @@ async function hasMetaField(page, field) {
     .trim() || '';
   return value.length > 0 && value !== '-' && !/no\s+meta\s+data/i.test(value);
 }
-async function hasDurationMeta(page) {
-  return hasMetaField(page, 'duration');
-}
 const META_FIELDS = ['duration', 'format', 'codec', 'bitrate', 'frame_rate', 'resolution', 'size'];
 
 async function allMetaFieldsReady(page) {
@@ -312,6 +309,24 @@ async function clickTranscodeForPreset(page, presetTitle) {
   const block = presetBlock(page, presetTitle);
   await expect(block).toBeVisible({ timeout: UI_TIMEOUT });
   const btn = block.locator('button.btn-outline-primary:not([disabled])').first();
+  await expect(btn).toBeVisible({ timeout: UI_TIMEOUT });
+  await btn.click({ timeout: UI_TIMEOUT });
+}
+
+/**
+ * Switch to Transcode → Custom, find the preset block, then click the first
+ * enabled button whose label contains `height` as a whole-word match (e.g. 144
+ * matches "256×144" but not "1440×...").
+ */
+async function clickHeightButtonInPreset(page, presetTitle, height) {
+  await switchToVideoTab(page, 'transcode');
+  await switchToCustomGoal(page);
+  const block = presetBlock(page, presetTitle);
+  await expect(block).toBeVisible({ timeout: UI_TIMEOUT });
+  const btn = block
+    .locator('button.btn-outline-primary:not([disabled])')
+    .filter({ hasText: new RegExp(`\\b${height}\\b`) })
+    .first();
   await expect(btn).toBeVisible({ timeout: UI_TIMEOUT });
   await btn.click({ timeout: UI_TIMEOUT });
 }
@@ -471,6 +486,7 @@ module.exports = {
   expectPresetTranscodeDisabledWithHint,
   waitForDeletedVideoDetailsWithoutPoster,
   clickTranscodeForPreset,
+  clickHeightButtonInPreset,
   expectPresetStatus,
   waitForAllPresetsToComplete,
   waitForAllPresetsProcessingWithProgress,
