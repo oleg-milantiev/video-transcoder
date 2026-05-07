@@ -4,7 +4,7 @@
  * - Login as test-09 (Premium tariff — instance=2, delay=0)
  * - Upload one video
  * - Open video details, wait for poster + meta
- * - Transcode tab → Custom → start 1280×720 (720p)
+ * - Transcode tab → Custom → start 1920×1080 (1080p)
  * - Verify the task enters PROCESSING
  * - Wait until progress reaches 30%+, then cancel
  * - Verify CANCELLED state
@@ -41,10 +41,10 @@ const PRESET   = 'Standard video Quality';
 const SRC      = '2022_10_04_Two_Maxes.mp4';
 const VIDEO_NAME  = '2022_10_04_Two_Maxes-09.mp4';
 const VIDEO_TITLE = '2022_10_04_Two_Maxes-09';
-const HEIGHT = 720;
+const HEIGHT = 1080;
 const DOWNLOAD_FILENAME = `${VIDEO_TITLE}-aac-h264-${HEIGHT}p.mp4`;
 
-test('09 · task.cancel.restart: transcode 720p, cancel at 30%, restart, complete', async ({ page }, testInfo) => {
+test('09 · task.cancel.restart: transcode 1080p, cancel at 30%, restart, complete', async ({ page }, testInfo) => {
   test.setTimeout(12 * 60_000);
 
   // ── Login ────────────────────────────────────────────────────────────────────
@@ -67,9 +67,9 @@ test('09 · task.cancel.restart: transcode 720p, cancel at 30%, restart, complet
   await waitForVideoDetailsVisible(page);
   await waitForPosterAndMeta(page, testInfo, '09-04-poster-meta');
 
-  // ── Start 720p transcode ─────────────────────────────────────────────────────
+  // ── Start 1080p transcode ─────────────────────────────────────────────────────
   await clickHeightButtonInPreset(page, PRESET, HEIGHT);
-  await shot(page, testInfo, '09-05-720p-started.png');
+  await shot(page, testInfo, '09-05-1080p-started.png');
 
   // ── Wait for PROCESSING ──────────────────────────────────────────────────────
   await expect.poll(
