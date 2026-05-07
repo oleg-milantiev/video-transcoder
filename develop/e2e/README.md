@@ -3,12 +3,10 @@
 This directory contains release smoke tests running against the release Docker Compose stack.
 
 Осталось протестировать
-- конструктор пресетов
-  - соответствие выбора для Premium
 - custom
-  - много пресетов для Premium
   - зачёркнутые кнопки транскодера после их запуска
   - нерабочие кнопки в удалённом видео
+Обновить эту доку
 
 ## Helpers and test style
 
