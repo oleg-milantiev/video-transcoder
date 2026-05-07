@@ -7,6 +7,10 @@
  * - Go to video list
  * - Delete the uploaded video
  * - Verify it is deleted (td.video-title-deleted)
+ * - Open video details
+ * - Click to Transcode tab
+ * - Click to Custom tab
+ * - Verify all transcode buttons are disabled
  */
 
 const { test, expect } = require('@playwright/test');
@@ -22,6 +26,8 @@ const {
   videoRowByTitle,
   waitForVideoDetailsVisible,
   waitForPosterAndMeta,
+  switchToVideoTab,
+  switchToCustomGoal,
   clickAndAcceptConfirm,
   shot,
 } = require('../helpers');
@@ -65,6 +71,28 @@ test('12 · delete.without.tasks: upload, open details, delete from list', async
   await clickAndAcceptConfirm(page, listRow.getByRole('button', { name: 'Delete' }), 'Delete this video?');
   await expect(listRow.locator('td.video-title-deleted')).toBeVisible({ timeout: 15000 });
   await shot(page, testInfo, '12-05-video-deleted.png');
+
+  // ── Open video details of the deleted video ───────────────────────────────────
+  await listRow.click({ timeout: UI_TIMEOUT });
+  await waitForVideoDetailsVisible(page);
+  await shot(page, testInfo, '12-06-deleted-details.png');
+
+  // ── Click Transcode tab ───────────────────────────────────────────────────────
+  await switchToVideoTab(page, 'transcode');
+  await shot(page, testInfo, '12-07-transcode-tab.png');
+
+  // ── Click Custom goal (skip if already active) ────────────────────────────────
+  await switchToCustomGoal(page);
+  await shot(page, testInfo, '12-08-custom-tab.png');
+
+  // ── Verify all transcode (resolution) buttons are disabled ────────────────────
+  const allTranscodeButtons = page.locator('button.btn-outline-primary');
+  const count = await allTranscodeButtons.count();
+  expect(count).toBeGreaterThan(0);
+  for (let i = 0; i < count; i++) {
+    await expect(allTranscodeButtons.nth(i)).toBeDisabled({ timeout: UI_TIMEOUT });
+  }
+  await shot(page, testInfo, '12-09-buttons-disabled.png');
 
   // ── Logout ───────────────────────────────────────────────────────────────────
   await logoutToPublic(page);

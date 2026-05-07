@@ -21,7 +21,12 @@ async function switchToVideoTab(page, tabKey) {
 async function switchToCustomGoal(page) {
   const goalCard = page.locator('div.fw-semibold', { hasText: 'Custom' }).first();
   await expect(goalCard).toBeVisible({ timeout: UI_TIMEOUT });
-  await goalCard.click({ timeout: UI_TIMEOUT });
+  // The clickable wrapper div carries an inline style with '2px solid' when active
+  const wrapper = goalCard.locator('..');
+  const style = await wrapper.getAttribute('style');
+  if (!style || !style.includes('2px solid')) {
+    await goalCard.click({ timeout: UI_TIMEOUT });
+  }
 }
 async function expectDetailsValue(page, label) {
   if (label === 'Title') {

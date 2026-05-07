@@ -5,7 +5,6 @@ This directory contains release smoke tests running against the release Docker C
 Осталось протестировать
 - custom
   - зачёркнутые кнопки транскодера после их запуска
-  - нерабочие кнопки в удалённом видео
 Обновить эту доку
 
 ## Helpers and test style

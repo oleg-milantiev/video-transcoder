@@ -11,6 +11,9 @@
  * - Click Transcode on the same row to restart
  * - Watch progress grow until COMPLETED
  * - Download + verify filename
+ * - Click to Transcode tab
+ * - Click to Custom tab
+ * - Verify 1080p task button is disabled
  */
 
 const { test, expect } = require('@playwright/test');
@@ -32,6 +35,8 @@ const {
   waitForPresetTaskStatus,
   expectRowDownloadFilename,
   clickDownloadAndVerifyMp4,
+  switchToVideoTab,
+  switchToCustomGoal,
   shot,
 } = require('../helpers');
 
@@ -133,6 +138,25 @@ test('09 · task.cancel.restart: transcode 1080p, cancel at 30%, restart, comple
   await expectRowDownloadFilename(completedRow, DOWNLOAD_FILENAME);
   await clickDownloadAndVerifyMp4(page, completedRow);
   await shot(page, testInfo, '09-11-download-verified.png');
+
+  // ── Click Transcode tab ───────────────────────────────────────────────────────
+  await switchToVideoTab(page, 'transcode');
+  await shot(page, testInfo, '09-12-transcode-tab.png');
+
+  // ── Click Custom goal (skip if already active) ────────────────────────────────
+  await switchToCustomGoal(page);
+  await shot(page, testInfo, '09-13-custom-tab.png');
+
+  // ── Verify 1080p button is disabled (task already completed for this height) ──
+  const presetBlockEl = page.locator('.mb-3', {
+    has: page.locator('h6', { hasText: PRESET }),
+  }).first();
+  await expect(presetBlockEl).toBeVisible({ timeout: UI_TIMEOUT });
+  const heightBtn = presetBlockEl.locator('button.btn-outline-primary', {
+    hasText: new RegExp(String(HEIGHT) + '$'),
+  }).first();
+  await expect(heightBtn).toBeDisabled({ timeout: UI_TIMEOUT });
+  await shot(page, testInfo, '09-14-1080p-disabled.png');
 
   // ── Logout ───────────────────────────────────────────────────────────────────
   await logoutToPublic(page);
