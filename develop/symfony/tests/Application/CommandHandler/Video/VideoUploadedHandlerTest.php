@@ -121,7 +121,7 @@ class VideoUploadedHandlerTest extends TestCase
         $userRepository = $this->createStub(UserRepositoryInterface::class);
         $userRepository->method('findById')->willReturn($userWithTariff);
 
-        $notifier = new VideoRealtimeNotifier($commandBus, $storage, $this->createStub(TaskRepositoryInterface::class));
+        $notifier = new VideoRealtimeNotifier($commandBus, $storage, $this->createStub(TaskRepositoryInterface::class), $userRepository);
         $flashRealtimeNotifier = new FlashRealtimeNotifier($commandBus);
         $logService = $this->createStub(LogServiceInterface::class);
 
@@ -173,7 +173,7 @@ class VideoUploadedHandlerTest extends TestCase
         $userRepository->method('findById')->willReturn(null);
 
         $storage = $this->createStub(StorageInterface::class);
-        $notifier = new VideoRealtimeNotifier($commandBus, $storage, $this->createStub(TaskRepositoryInterface::class));
+        $notifier = new VideoRealtimeNotifier($commandBus, $storage, $this->createStub(TaskRepositoryInterface::class), $userRepository);
 
         $handler = $this->makeHandler(
             $commandBus, $eventBus, $this->createStub(VideoRepositoryInterface::class),
@@ -228,7 +228,7 @@ class VideoUploadedHandlerTest extends TestCase
         $userRepository->method('findById')->willReturn($userWithoutTariff);
 
         $storage = $this->createStub(StorageInterface::class);
-        $notifier = new VideoRealtimeNotifier($commandBus, $storage, $this->createStub(TaskRepositoryInterface::class));
+        $notifier = new VideoRealtimeNotifier($commandBus, $storage, $this->createStub(TaskRepositoryInterface::class), $userRepository);
 
         $handler = $this->makeHandler(
             $commandBus, $eventBus, $this->createStub(VideoRepositoryInterface::class),
@@ -277,13 +277,14 @@ class VideoUploadedHandlerTest extends TestCase
         $tariff = $this->createStub(Tariff::class);
         $tariff->method('videoSize')->willReturn(new TariffVideoSize(1000.0));
         $tariff->method('storageGb')->willReturn(new TariffStorageGb(5));
+        $tariff->method('storageHour')->willReturn(new TariffStorageHour(24));
         $userWithTariff->method('id')->willReturn($userId);
         $userWithTariff->method('tariff')->willReturn($tariff);
         $userRepository = $this->createStub(UserRepositoryInterface::class);
         $userRepository->method('findById')->willReturn($userWithTariff);
 
         $storage = $this->createStub(StorageInterface::class);
-        $notifier = new VideoRealtimeNotifier($commandBus, $storage, $this->createStub(TaskRepositoryInterface::class));
+        $notifier = new VideoRealtimeNotifier($commandBus, $storage, $this->createStub(TaskRepositoryInterface::class), $userRepository);
 
         $handler = $this->makeHandler(
             $commandBus, $eventBus, $this->createStub(VideoRepositoryInterface::class),
@@ -333,16 +334,17 @@ class VideoUploadedHandlerTest extends TestCase
         $tariff = $this->createStub(Tariff::class);
         $tariff->method('videoSize')->willReturn(new TariffVideoSize(50.0));
         $tariff->method('storageGb')->willReturn(new TariffStorageGb(5));
+        $tariff->method('storageHour')->willReturn(new TariffStorageHour(24));
         $userWithTariff->method('id')->willReturn($userId);
         $userWithTariff->method('tariff')->willReturn($tariff);
 
         $userRepository = $this->createMock(UserRepositoryInterface::class);
-        $userRepository->expects($this->once())->method('findById')->with($userId)->willReturn($userWithTariff);
+        $userRepository->expects($this->exactly(2))->method('findById')->with($userId)->willReturn($userWithTariff);
 
         $storage = $this->createStub(StorageInterface::class);
         $storageRepository = $this->createStub(StorageRepositoryInterface::class);
         $storageRepository->method('getUsedStorageSize')->willReturn(0);
-        $notifier = new VideoRealtimeNotifier($commandBus, $storage, $this->createStub(TaskRepositoryInterface::class));
+        $notifier = new VideoRealtimeNotifier($commandBus, $storage, $this->createStub(TaskRepositoryInterface::class), $userRepository);
 
         $handler = $this->makeHandler(
             $commandBus, $eventBus, $this->createStub(VideoRepositoryInterface::class),
@@ -399,7 +401,7 @@ class VideoUploadedHandlerTest extends TestCase
         $storageRepository = $this->createStub(StorageRepositoryInterface::class);
         $storageRepository->method('getUsedStorageSize')->willReturn(0);
 
-        $notifier = new VideoRealtimeNotifier($commandBus, $storage, $this->createStub(TaskRepositoryInterface::class));
+        $notifier = new VideoRealtimeNotifier($commandBus, $storage, $this->createStub(TaskRepositoryInterface::class), $userRepository);
 
         $storageNotifier = $this->createMock(StorageRealtimeNotifier::class);
         $storageNotifier->expects($this->once())->method('notifyStorageUpdated')->with($userId);

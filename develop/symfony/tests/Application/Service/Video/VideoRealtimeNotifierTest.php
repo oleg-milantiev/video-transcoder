@@ -6,12 +6,19 @@ namespace App\Tests\Application\Service\Video;
 
 use App\Application\Service\Video\VideoRealtimeNotifier;
 use App\Domain\Shared\ValueObject\Uuid;
+use App\Domain\User\Entity\Tariff;
+use App\Domain\User\Entity\User;
+use App\Domain\User\Repository\UserRepositoryInterface;
+use App\Domain\User\ValueObject\TariffStorageGb;
+use App\Domain\User\ValueObject\TariffStorageHour;
+use App\Domain\User\ValueObject\TariffVideoSize;
 use App\Domain\Video\Entity\Video;
 use App\Domain\Video\Repository\TaskRepositoryInterface;
 use App\Domain\Video\Service\Storage\StorageInterface;
 use App\Domain\Video\ValueObject\FileExtension;
 use App\Domain\Video\ValueObject\VideoDates;
 use App\Domain\Video\ValueObject\VideoTitle;
+use App\Infrastructure\Persistence\Doctrine\User\UserEntity;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Messenger\Envelope;
 use Symfony\Component\Messenger\MessageBusInterface;
@@ -54,7 +61,10 @@ final class VideoRealtimeNotifierTest extends TestCase
             ->with($videoId)
             ->willReturn([]);
 
-        $notifier = new VideoRealtimeNotifier($commandBus, $storage, $taskRepository);
+        $userRepository = $this->createStub(UserRepositoryInterface::class);
+        $userRepository->method('findById')->willReturn($this->createStub(User::class));
+
+        $notifier = new VideoRealtimeNotifier($commandBus, $storage, $taskRepository, $userRepository);
         $notifier->notifyVideoUpdated($video, 'updated', ['extra' => 'data']);
     }
 
@@ -85,7 +95,18 @@ final class VideoRealtimeNotifierTest extends TestCase
         $taskRepository = $this->createStub(TaskRepositoryInterface::class);
         $taskRepository->method('findByVideoId')->willReturn([]);
 
-        $notifier = new VideoRealtimeNotifier($commandBus, $storage, $taskRepository);
+        $userWithTariff = $this->createStub(User::class);
+        $tariff = $this->createStub(Tariff::class);
+        $tariff->method('videoSize')->willReturn(new TariffVideoSize(1000.0));
+        $tariff->method('storageGb')->willReturn(new TariffStorageGb(5));
+        $tariff->method('storageHour')->willReturn(new TariffStorageHour(24));
+        $userWithTariff->method('id')->willReturn($userId);
+        $userWithTariff->method('tariff')->willReturn($tariff);
+
+        $userRepository = $this->createStub(UserRepositoryInterface::class);
+        $userRepository->method('findById')->willReturn($userWithTariff);
+
+        $notifier = new VideoRealtimeNotifier($commandBus, $storage, $taskRepository, $userRepository);
         $notifier->notifyVideoUpdated($video);
     }
 
@@ -119,7 +140,18 @@ final class VideoRealtimeNotifierTest extends TestCase
             ->with($videoId)
             ->willReturn([]);
 
-        $notifier = new VideoRealtimeNotifier($commandBus, $storage, $taskRepository);
+        $userWithTariff = $this->createStub(User::class);
+        $tariff = $this->createStub(Tariff::class);
+        $tariff->method('videoSize')->willReturn(new TariffVideoSize(1000.0));
+        $tariff->method('storageGb')->willReturn(new TariffStorageGb(5));
+        $tariff->method('storageHour')->willReturn(new TariffStorageHour(24));
+        $userWithTariff->method('id')->willReturn($userId);
+        $userWithTariff->method('tariff')->willReturn($tariff);
+
+        $userRepository = $this->createStub(UserRepositoryInterface::class);
+        $userRepository->method('findById')->willReturn($userWithTariff);
+
+        $notifier = new VideoRealtimeNotifier($commandBus, $storage, $taskRepository, $userRepository);
         $notifier->notifyVideoUpdated($video, 'deleted');
     }
 }

@@ -26,6 +26,8 @@ use App\Infrastructure\Ffmpeg\VideoPreviewGenerator;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Messenger\Envelope;
 use Symfony\Component\Messenger\MessageBusInterface;
+use App\Domain\User\Entity\User;
+use App\Domain\User\Repository\UserRepositoryInterface;
 use App\Domain\Shared\ValueObject\Uuid;
 
 class CreateVideoPreviewHandlerTest extends TestCase
@@ -92,7 +94,9 @@ class CreateVideoPreviewHandlerTest extends TestCase
             ->method('dispatch')
             ->with($this->isInstanceOf(PublishMercureMessage::class))
             ->willReturnCallback(static fn (object $message): Envelope => new Envelope($message));
-        $notifier = new VideoRealtimeNotifier($notifierCommandBus, $storage, $this->createStub(TaskRepositoryInterface::class));
+        $notifierUserRepo = $this->createStub(UserRepositoryInterface::class);
+        $notifierUserRepo->method('findById')->willReturn($this->createStub(User::class));
+        $notifier = new VideoRealtimeNotifier($notifierCommandBus, $storage, $this->createStub(TaskRepositoryInterface::class), $notifierUserRepo);
 
         $handler = new CreateVideoPreviewHandler($storage, $eventBus, $logService, $videoRepository, $notifier, $generator);
         $handler(new CreateVideoPreview($video));
@@ -138,7 +142,7 @@ class CreateVideoPreviewHandlerTest extends TestCase
 
         $notifierCommandBus = $this->createMock(MessageBusInterface::class);
         $notifierCommandBus->expects($this->never())->method('dispatch');
-        $notifier = new VideoRealtimeNotifier($notifierCommandBus, $storage, $this->createStub(TaskRepositoryInterface::class));
+        $notifier = new VideoRealtimeNotifier($notifierCommandBus, $storage, $this->createStub(TaskRepositoryInterface::class), $this->createStub(UserRepositoryInterface::class));
 
         $handler = new CreateVideoPreviewHandler($storage, $eventBus, $logService, $videoRepository, $notifier, $generator);
 

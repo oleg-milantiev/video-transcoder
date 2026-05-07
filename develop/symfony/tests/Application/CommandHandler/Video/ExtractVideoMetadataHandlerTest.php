@@ -17,6 +17,7 @@ use App\Domain\User\Entity\User;
 use App\Domain\User\Repository\UserRepositoryInterface;
 use App\Domain\User\ValueObject\TariffMaxHeight;
 use App\Domain\User\ValueObject\TariffMaxWidth;
+use App\Domain\User\ValueObject\TariffStorageHour;
 use App\Domain\User\ValueObject\TariffVideoDuration;
 use App\Domain\Video\Entity\Video;
 use App\Domain\Video\Repository\TaskRepositoryInterface;
@@ -65,6 +66,7 @@ class ExtractVideoMetadataHandlerTest extends TestCase
         $tariff->method('videoDuration')->willReturn(new TariffVideoDuration($maxDuration));
         $tariff->method('maxWidth')->willReturn(new TariffMaxWidth($maxWidth));
         $tariff->method('maxHeight')->willReturn(new TariffMaxHeight($maxHeight));
+        $tariff->method('storageHour')->willReturn(new TariffStorageHour(24));
         $user->method('tariff')->willReturn($tariff);
         $user->method('id')->willReturn(Uuid::fromString(self::USER_ID));
 
@@ -132,14 +134,16 @@ class ExtractVideoMetadataHandlerTest extends TestCase
             new VideoRealtimeNotifier(
                 $notifierBus,
                 $storage,
-                $this->createStub(TaskRepositoryInterface::class)
+                $this->createStub(TaskRepositoryInterface::class),
+                $userRepository ?? $this->createStub(UserRepositoryInterface::class)
             ),
             $logService ?? $this->createStub(LogServiceInterface::class),
             new FlashNotificationFactory(),
             new VideoRealtimeNotifier(
                 $notifierBus,
                 $storage,
-                $this->createStub(TaskRepositoryInterface::class)
+                $this->createStub(TaskRepositoryInterface::class),
+                $userRepository ?? $this->createStub(UserRepositoryInterface::class)
             ),
             $this->createStub(Server::class),
         );
@@ -184,14 +188,16 @@ class ExtractVideoMetadataHandlerTest extends TestCase
              new VideoRealtimeNotifier(
                  $notifierBus,
                  $storage,
-                 $this->createStub(TaskRepositoryInterface::class)
+                 $this->createStub(TaskRepositoryInterface::class),
+                 $userRepository
              ),
              $logService,
              new FlashNotificationFactory(),
              new VideoRealtimeNotifier(
                  $notifierBus,
                  $storage,
-                 $this->createStub(TaskRepositoryInterface::class)
+                 $this->createStub(TaskRepositoryInterface::class),
+                 $userRepository
              ),
              $this->createStub(Server::class),
          );
@@ -623,10 +629,10 @@ class ExtractVideoMetadataHandlerTest extends TestCase
             $commandBus,
             $eventBus,
             $extractor,
-            new VideoRealtimeNotifier($notifierBus, $storage, $this->createStub(TaskRepositoryInterface::class)),
+            new VideoRealtimeNotifier($notifierBus, $storage, $this->createStub(TaskRepositoryInterface::class), $userRepository),
             $logService,
             new FlashNotificationFactory(),
-            new VideoRealtimeNotifier($notifierBus, $storage, $this->createStub(TaskRepositoryInterface::class)),
+            new VideoRealtimeNotifier($notifierBus, $storage, $this->createStub(TaskRepositoryInterface::class), $userRepository),
             $this->createStub(Server::class),
         );
 

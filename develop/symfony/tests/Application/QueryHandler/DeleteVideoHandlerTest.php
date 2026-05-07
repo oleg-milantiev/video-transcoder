@@ -18,6 +18,8 @@ use App\Application\QueryHandler\QueryBus;
 use App\Application\Service\Storage\StorageRealtimeNotifier;
 use App\Application\Service\Video\VideoRealtimeNotifier;
 use App\Domain\Shared\ValueObject\Uuid;
+use App\Domain\User\Entity\User;
+use App\Domain\User\Repository\UserRepositoryInterface;
 use App\Domain\Video\Entity\Task;
 use App\Domain\Video\Entity\Video;
 use App\Domain\Video\Exception\VideoHasTranscodingTasks;
@@ -65,7 +67,7 @@ final class DeleteVideoHandlerTest extends TestCase
             $videoRepository,
             $this->createStub(TaskRepositoryInterface::class),
             $this->createStub(LogServiceInterface::class),
-            new VideoRealtimeNotifier($this->createStub(MessageBusInterface::class), $this->createStub(StorageInterface::class), $this->createStub(TaskRepositoryInterface::class)),
+            new VideoRealtimeNotifier($this->createStub(MessageBusInterface::class), $this->createStub(StorageInterface::class), $this->createStub(TaskRepositoryInterface::class), $this->createStub(UserRepositoryInterface::class)),
             $this->createStub(Security::class),
             $this->createStub(QueryBus::class),
             $this->createStub(StorageRealtimeNotifier::class),
@@ -113,7 +115,7 @@ final class DeleteVideoHandlerTest extends TestCase
             $videoRepository,
             $this->createStub(TaskRepositoryInterface::class),
             $this->createStub(LogServiceInterface::class),
-            new VideoRealtimeNotifier($this->createStub(MessageBusInterface::class), $this->createStub(StorageInterface::class), $this->createStub(TaskRepositoryInterface::class)),
+            new VideoRealtimeNotifier($this->createStub(MessageBusInterface::class), $this->createStub(StorageInterface::class), $this->createStub(TaskRepositoryInterface::class), $this->createStub(UserRepositoryInterface::class)),
             $security,
             $this->createStub(QueryBus::class),
             $this->createStub(StorageRealtimeNotifier::class),
@@ -195,7 +197,9 @@ final class DeleteVideoHandlerTest extends TestCase
             ->willReturnCallback(static function (object $message): Envelope {
                 return new Envelope($message);
             });
-        $videoRealtimeNotifier = new VideoRealtimeNotifier($notifierCommandBus, $this->createStub(StorageInterface::class), $this->createStub(TaskRepositoryInterface::class));
+        $notifierUserRepo = $this->createStub(UserRepositoryInterface::class);
+        $notifierUserRepo->method('findById')->willReturn($this->createStub(User::class));
+        $videoRealtimeNotifier = new VideoRealtimeNotifier($notifierCommandBus, $this->createStub(StorageInterface::class), $this->createStub(TaskRepositoryInterface::class), $notifierUserRepo);
 
         $security = $this->createMock(Security::class);
         $security->expects($this->once())
@@ -252,7 +256,7 @@ final class DeleteVideoHandlerTest extends TestCase
             $videoRepository,
             $taskRepository,
             $this->createStub(LogServiceInterface::class),
-            new VideoRealtimeNotifier($this->createStub(MessageBusInterface::class), $this->createStub(StorageInterface::class), $this->createStub(TaskRepositoryInterface::class)),
+            new VideoRealtimeNotifier($this->createStub(MessageBusInterface::class), $this->createStub(StorageInterface::class), $this->createStub(TaskRepositoryInterface::class), $this->createStub(UserRepositoryInterface::class)),
             $security,
             $this->createStub(QueryBus::class),
             $this->createStub(StorageRealtimeNotifier::class),
@@ -314,7 +318,7 @@ final class DeleteVideoHandlerTest extends TestCase
             $videoRepository,
             $taskRepository,
             $logService,
-            new VideoRealtimeNotifier($this->createStub(MessageBusInterface::class), $this->createStub(StorageInterface::class), $this->createStub(TaskRepositoryInterface::class)),
+            new VideoRealtimeNotifier($this->createStub(MessageBusInterface::class), $this->createStub(StorageInterface::class), $this->createStub(TaskRepositoryInterface::class), $this->createStub(UserRepositoryInterface::class)),
             $security,
             $this->createStub(QueryBus::class),
             $this->createStub(StorageRealtimeNotifier::class),
@@ -403,7 +407,9 @@ final class DeleteVideoHandlerTest extends TestCase
             ->willReturnCallback(static function (object $message): Envelope {
                 return new Envelope($message);
             });
-        $videoRealtimeNotifier = new VideoRealtimeNotifier($notifierCommandBus, $this->createStub(StorageInterface::class), $this->createStub(TaskRepositoryInterface::class));
+        $notifierUserRepo = $this->createStub(UserRepositoryInterface::class);
+        $notifierUserRepo->method('findById')->willReturn($this->createStub(User::class));
+        $videoRealtimeNotifier = new VideoRealtimeNotifier($notifierCommandBus, $this->createStub(StorageInterface::class), $this->createStub(TaskRepositoryInterface::class), $notifierUserRepo);
 
         $security = $this->createMock(Security::class);
         $security->expects($this->once())
@@ -483,6 +489,8 @@ final class DeleteVideoHandlerTest extends TestCase
         $notifierCommandBus->expects($this->once())
             ->method('dispatch')
             ->willReturnCallback(static fn (object $m): Envelope => new Envelope($m));
+        $notifierUserRepo = $this->createStub(UserRepositoryInterface::class);
+        $notifierUserRepo->method('findById')->willReturn($this->createStub(User::class));
 
         $handler = new DeleteVideoHandler(
             $cleanupCommandBus,
@@ -490,7 +498,7 @@ final class DeleteVideoHandlerTest extends TestCase
             $videoRepository,
             $taskRepository,
             $this->createStub(LogServiceInterface::class),
-            new VideoRealtimeNotifier($notifierCommandBus, $this->createStub(StorageInterface::class), $this->createStub(TaskRepositoryInterface::class)),
+            new VideoRealtimeNotifier($notifierCommandBus, $this->createStub(StorageInterface::class), $this->createStub(TaskRepositoryInterface::class), $notifierUserRepo),
             $security,
             $queryBus,
             $this->createStub(StorageRealtimeNotifier::class),
@@ -532,7 +540,7 @@ final class DeleteVideoHandlerTest extends TestCase
             $videoRepository,
             $this->createStub(TaskRepositoryInterface::class),
             $this->createStub(LogServiceInterface::class),
-            new VideoRealtimeNotifier($this->createStub(MessageBusInterface::class), $this->createStub(StorageInterface::class), $this->createStub(TaskRepositoryInterface::class)),
+            new VideoRealtimeNotifier($this->createStub(MessageBusInterface::class), $this->createStub(StorageInterface::class), $this->createStub(TaskRepositoryInterface::class), $this->createStub(UserRepositoryInterface::class)),
             $security,
             $this->createStub(QueryBus::class),
             $this->createStub(StorageRealtimeNotifier::class),
@@ -584,7 +592,7 @@ final class DeleteVideoHandlerTest extends TestCase
             $videoRepository,
             $taskRepository,
             $this->createStub(LogServiceInterface::class),
-            new VideoRealtimeNotifier($this->createStub(MessageBusInterface::class), $this->createStub(StorageInterface::class), $this->createStub(TaskRepositoryInterface::class)),
+            new VideoRealtimeNotifier($this->createStub(MessageBusInterface::class), $this->createStub(StorageInterface::class), $this->createStub(TaskRepositoryInterface::class), $this->createStub(UserRepositoryInterface::class)),
             $security,
             $this->createStub(QueryBus::class),
             $this->createStub(StorageRealtimeNotifier::class),
