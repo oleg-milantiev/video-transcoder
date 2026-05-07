@@ -6,6 +6,7 @@ namespace App\Application\Service\Video;
 use App\Application\Command\Mercure\PublishMercureMessage;
 use App\Application\DTO\MercureMessageDTO;
 use App\Application\DTO\VideoItemDTO;
+use App\Domain\User\Repository\UserRepositoryInterface;
 use App\Domain\Video\Entity\Video;
 use App\Domain\Video\Repository\TaskRepositoryInterface;
 use App\Domain\Video\Service\Storage\StorageInterface;
@@ -19,6 +20,7 @@ final readonly class VideoRealtimeNotifier
         private MessageBusInterface $commandBus,
         private StorageInterface $storage,
         private TaskRepositoryInterface $taskRepository,
+        private UserRepositoryInterface $userRepo,
     ) {
     }
 
@@ -31,7 +33,12 @@ final readonly class VideoRealtimeNotifier
             return;
         }
 
-        $dto = VideoItemDTO::fromDomain($video, $this->storage, $this->taskRepository);
+        $user = $this->userRepo->findById($video->userId());
+        if ($user === null) {
+            return;
+        }
+
+        $dto = VideoItemDTO::fromDomain($video, $this->storage, $this->taskRepository, $user->tariff());
 
         $this->commandBus->dispatch(
             new PublishMercureMessage(
