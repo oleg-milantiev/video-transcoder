@@ -3,9 +3,8 @@
 {% block title %}Privacy Policy — Video Transcoder{% endblock %}
 
 {% block body %}
-{% if config is defined and config is not empty %}
 <script>var config = {{ config|json_encode|raw }};</script>
-{% endif %}
+
 <div class="row justify-content-center">
     <div class="col-lg-8">
         <h1 class="fw-bold mb-1">Privacy Policy</h1>

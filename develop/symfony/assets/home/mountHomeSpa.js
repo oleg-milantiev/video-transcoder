@@ -9,9 +9,13 @@ import { initAuth } from './apiAuth.js';
 import { ROUTE_REFRESH_TOKEN } from './routes.js';
 
 export function mountHomeSpa() {
+    if (typeof config === 'undefined' || typeof config.token === 'undefined') {
+        return;
+    }
+
     initAuth({
-        accessToken: config.token.access || null,
-        refreshToken: config.token.refresh || null,
+        accessToken: config.token.access,
+        refreshToken: config.token.refresh,
         refreshUrl: ROUTE_REFRESH_TOKEN,
     });
 
