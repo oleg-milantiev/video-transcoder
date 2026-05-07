@@ -85,7 +85,7 @@ test('09 · task.cancel.restart: transcode 1080p, cancel at 30%, restart, comple
 
   // ── Wait for 30%+ progress then cancel ──────────────────────────────────────
   let cancelledAfterProgress = false;
-  for (let attempt = 0; attempt < 120; attempt++) {
+  for (let attempt = 0; attempt < 100; attempt++) {
     const state = await readPresetTaskState(page, PRESET);
     if (state.status === 'COMPLETED') {
       throw new Error('Task completed before we could cancel at 30% — choose a slower codec or longer video');
@@ -97,7 +97,7 @@ test('09 · task.cancel.restart: transcode 1080p, cancel at 30%, restart, comple
       cancelledAfterProgress = true;
       break;
     }
-    await page.waitForTimeout(2000);
+    await page.waitForTimeout(500);
   }
   expect(cancelledAfterProgress).toBe(true);
   await shot(page, testInfo, '09-07-cancel-sent.png');
