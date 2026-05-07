@@ -59,6 +59,7 @@
         <a
             class="btn btn-lg btn-outline-danger w-100"
             href="{{ path('connect_google_start', targetPath is not empty ? {'_target_path': targetPath} : {}) }}"
+            data-turbo-prefetch="false"
         >
             Sign in with Google
         </a>
