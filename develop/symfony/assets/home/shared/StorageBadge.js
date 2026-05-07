@@ -76,7 +76,7 @@ export function renderStorageBadge(tariff) {
                     // Concurrent tasks
                     h('div', { class: 'col-sm-3' }, [
                         h('span', { class: 'text-secondary small' }, 'Concurrent tasks'),
-                        h('div', { class: 'fw-semibold' }, '1'),
+                        h('div', { class: 'fw-semibold' }, `${tariff.instance}`),
                     ]),
                 ]),
                 // Storage Progress Bar
