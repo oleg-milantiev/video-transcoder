@@ -24,7 +24,7 @@ final class GetUserDataCommandTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->sodiumService = new SodiumEncryptionService();
+        $this->sodiumService = new SodiumEncryptionService(self::TEST_PUBLIC_KEY, self::TEST_PRIVATE_KEY);
     }
 
     private function makeUser(array $profile = []): UserEntity
@@ -40,8 +40,6 @@ final class GetUserDataCommandTest extends TestCase
 
     private function makeCommand(
         ?UserEntity $user,
-        string $cfPublicKey = self::TEST_PUBLIC_KEY,
-        string $cfPrivateKey = self::TEST_PRIVATE_KEY,
     ): GetUserDataCommand {
         /** @var EntityRepository<UserEntity> $repo */
         $repo = $this->createStub(EntityRepository::class);
@@ -50,28 +48,7 @@ final class GetUserDataCommandTest extends TestCase
         $em = $this->createStub(EntityManagerInterface::class);
         $em->method('getRepository')->willReturn($repo);
 
-        return new GetUserDataCommand($this->sodiumService, $em, $cfPublicKey, $cfPrivateKey);
-    }
-
-    public function testReturnsFailureWhenPrivateKeyIsMissing(): void
-    {
-        $command = $this->makeCommand(null, self::TEST_PUBLIC_KEY, '');
-        $tester  = new CommandTester($command);
-
-        $exitCode = $tester->execute(['--email' => 'user@example.com']);
-
-        self::assertSame(Command::FAILURE, $exitCode);
-        self::assertStringContainsString('CF_PRIVATE_KEY is not configured', $tester->getDisplay());
-    }
-
-    public function testReturnsFailureWhenPrivateKeyIsPlaceholder(): void
-    {
-        $command = $this->makeCommand(null, self::TEST_PUBLIC_KEY, 'changeme');
-        $tester  = new CommandTester($command);
-
-        $exitCode = $tester->execute(['--email' => 'user@example.com']);
-
-        self::assertSame(Command::FAILURE, $exitCode);
+        return new GetUserDataCommand($this->sodiumService, $em);
     }
 
     public function testReturnsFailureWhenEmailOptionMissing(): void
@@ -117,7 +94,6 @@ final class GetUserDataCommandTest extends TestCase
         ];
         $encrypted = $this->sodiumService->encrypt(
             json_encode($cfData, JSON_THROW_ON_ERROR),
-            self::TEST_PUBLIC_KEY,
         );
 
         $user = $this->makeUser(['cf' => $encrypted]);
@@ -152,16 +128,13 @@ final class GetUserDataCommandTest extends TestCase
 
     public function testReturnsFailureWhenDecryptionFailsWithWrongKey(): void
     {
-        // Encrypt with the test key pair
-        $encrypted = $this->sodiumService->encrypt('secret', self::TEST_PUBLIC_KEY);
+        // Create data encrypted with a different key pair
+        $wrongKeyPair = SodiumEncryptionService::generateKeyPair();
+        $wrongService = new SodiumEncryptionService($wrongKeyPair['publicKey'], $wrongKeyPair['secretKey']);
+        $wrongEncrypted = $wrongService->encrypt('secret');
 
-        // Generate a different key pair for decryption
-        $wrongKeyPair  = $this->sodiumService->generateKeyPair();
-        $command = $this->makeCommand(
-            $this->makeUser(['cf' => $encrypted]),
-            $wrongKeyPair['publicKey'],
-            $wrongKeyPair['secretKey'],
-        );
+        $user = $this->makeUser(['cf' => $wrongEncrypted]);
+        $command = $this->makeCommand($user);
         $tester = new CommandTester($command);
 
         $exitCode = $tester->execute(['--email' => 'user@example.com']);

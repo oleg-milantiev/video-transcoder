@@ -14,7 +14,7 @@ final class GenerateKeyPairCommandTest extends TestCase
 {
     public function testExecuteOutputsKeyPairEnvLines(): void
     {
-        $command = new GenerateKeyPairCommand(new SodiumEncryptionService());
+        $command = new GenerateKeyPairCommand();
         $tester  = new CommandTester($command);
 
         $exitCode = $tester->execute([]);
@@ -22,20 +22,20 @@ final class GenerateKeyPairCommandTest extends TestCase
         self::assertSame(Command::SUCCESS, $exitCode);
 
         $output = $tester->getDisplay();
-        self::assertStringContainsString('CF_PUBLIC_KEY=', $output);
-        self::assertStringContainsString('CF_PRIVATE_KEY=', $output);
+        self::assertStringContainsString('SODIUM_PUBLIC_KEY=', $output);
+        self::assertStringContainsString('SODIUM_PRIVATE_KEY=', $output);
     }
 
     public function testExecuteOutputsValidBase64Keys(): void
     {
-        $command = new GenerateKeyPairCommand(new SodiumEncryptionService());
+        $command = new GenerateKeyPairCommand();
         $tester  = new CommandTester($command);
         $tester->execute([]);
 
         $output = $tester->getDisplay();
 
-        preg_match('/CF_PUBLIC_KEY=(.+)/', $output, $pubMatch);
-        preg_match('/CF_PRIVATE_KEY=(.+)/', $output, $secMatch);
+        preg_match('/SODIUM_PUBLIC_KEY=(.+)/', $output, $pubMatch);
+        preg_match('/SODIUM_PRIVATE_KEY=(.+)/', $output, $secMatch);
 
         self::assertNotEmpty($pubMatch[1] ?? '');
         self::assertNotEmpty($secMatch[1] ?? '');
@@ -49,7 +49,7 @@ final class GenerateKeyPairCommandTest extends TestCase
 
     public function testExecuteOutputsProductionWarning(): void
     {
-        $command = new GenerateKeyPairCommand(new SodiumEncryptionService());
+        $command = new GenerateKeyPairCommand();
         $tester  = new CommandTester($command);
         $tester->execute([]);
 
@@ -58,22 +58,22 @@ final class GenerateKeyPairCommandTest extends TestCase
 
     public function testGeneratedKeyPairCanEncryptAndDecrypt(): void
     {
-        $sodiumService = new SodiumEncryptionService();
-        $command = new GenerateKeyPairCommand($sodiumService);
+        $command = new GenerateKeyPairCommand();
         $tester  = new CommandTester($command);
         $tester->execute([]);
 
         $output = $tester->getDisplay();
 
-        preg_match('/CF_PUBLIC_KEY=(.+)/', $output, $pubMatch);
-        preg_match('/CF_PRIVATE_KEY=(.+)/', $output, $secMatch);
+        preg_match('/SODIUM_PUBLIC_KEY=(.+)/', $output, $pubMatch);
+        preg_match('/SODIUM_PRIVATE_KEY=(.+)/', $output, $secMatch);
 
         $pub = trim($pubMatch[1]);
         $sec = trim($secMatch[1]);
 
+        $sodiumService = new SodiumEncryptionService($pub, $sec);
         $plaintext  = 'round-trip test';
-        $ciphertext = $sodiumService->encrypt($plaintext, $pub);
-        $decrypted  = $sodiumService->decrypt($ciphertext, $pub, $sec);
+        $ciphertext = $sodiumService->encrypt($plaintext);
+        $decrypted = $sodiumService->decrypt($ciphertext);
 
         self::assertSame($plaintext, $decrypted);
     }

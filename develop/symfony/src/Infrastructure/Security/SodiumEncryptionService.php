@@ -3,48 +3,51 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\Security;
 
+use App\Application\Security\EncryptionServiceInterface;
 use RuntimeException;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
 /**
  * Asymmetric encryption service based on PHP's libsodium extension.
  *
  * Uses `crypto_box_seal` (anonymous sealed box): data is encrypted with the
- * recipient's public key and can only be decrypted with the matching secret key.
+ * configured public key and can only be decrypted with the matching secret key.
  *
- * Key pairs are base64-encoded strings suitable for storage in environment
- * variables.  Only the public key needs to be present in production; the secret
- * key is kept out of prod so that even a full DB dump cannot be read without it.
+ * Keys are base64-encoded strings loaded from environment variables at instantiation.
+ * Only the public key needs to be present in production; the secret key is kept out
+ * of prod so that even a full DB dump cannot be read without it.
+ *
+ * This service acts as a black box for the Application layer via EncryptionServiceInterface.
  */
-final readonly class SodiumEncryptionService
+final readonly class SodiumEncryptionService implements EncryptionServiceInterface
 {
-    /**
-     * Generate a new asymmetric key pair.
-     *
-     * @return array{publicKey: string, secretKey: string} base64-encoded keys
-     */
-    public function generateKeyPair(): array
-    {
-        $keypair = sodium_crypto_box_keypair();
+    private string $publicKey;
+    private string $secretKey;
 
-        return [
-            'publicKey' => base64_encode(sodium_crypto_box_publickey($keypair)),
-            'secretKey' => base64_encode(sodium_crypto_box_secretkey($keypair)),
-        ];
+    public function __construct(
+        #[Autowire('%env(SODIUM_PUBLIC_KEY)%')]
+        string $sodiumPublicKey,
+        #[Autowire('%env(SODIUM_PRIVATE_KEY)%')]
+        string $sodiumPrivateKey,
+    ) {
+        $this->publicKey = $sodiumPublicKey;
+        $this->secretKey = $sodiumPrivateKey;
     }
 
     /**
-     * Encrypt plaintext with the recipient's public key (sealed anonymous box).
+     * Encrypt plaintext with the configured public key (sealed anonymous box).
      *
-     * @param string $plaintext      Data to encrypt
-     * @param string $base64PublicKey Base64-encoded recipient public key
-     *
+     * @param string $plaintext Data to encrypt
      * @return string Base64-encoded ciphertext
-     *
-     * @throws RuntimeException on invalid key encoding
+     * @throws RuntimeException on invalid key encoding or encryption failure
      */
-    public function encrypt(string $plaintext, string $base64PublicKey): string
+    public function encrypt(string $plaintext): string
     {
-        $publicKey = base64_decode($base64PublicKey, true);
+        if ($this->publicKey === 'changeme' || $this->publicKey === '') {
+            throw new RuntimeException('SODIUM_PUBLIC_KEY is not configured.');
+        }
+
+        $publicKey = base64_decode($this->publicKey, true);
         if ($publicKey === false) {
             throw new RuntimeException('Invalid base64-encoded public key.');
         }
@@ -53,30 +56,27 @@ final readonly class SodiumEncryptionService
     }
 
     /**
-     * Decrypt a sealed ciphertext using the recipient's key pair.
+     * Decrypt a sealed ciphertext using the configured key pair.
      *
      * @param string $base64Ciphertext Base64-encoded ciphertext produced by encrypt()
-     * @param string $base64PublicKey  Base64-encoded public key
-     * @param string $base64SecretKey  Base64-encoded secret key (dev/local only)
-     *
      * @return string Decrypted plaintext
-     *
      * @throws RuntimeException when decryption fails (wrong key or corrupted data)
      */
-    public function decrypt(
-        string $base64Ciphertext,
-        string $base64PublicKey,
-        string $base64SecretKey,
-    ): string {
+    public function decrypt(string $base64Ciphertext): string
+    {
+        if ($this->secretKey === 'changeme' || $this->secretKey === '') {
+            throw new RuntimeException('SODIUM_PRIVATE_KEY is not configured.');
+        }
+
         $ciphertext = base64_decode($base64Ciphertext, true);
-        $publicKey  = base64_decode($base64PublicKey, true);
-        $secretKey  = base64_decode($base64SecretKey, true);
+        $publicKey = base64_decode($this->publicKey, true);
+        $secretKey = base64_decode($this->secretKey, true);
 
         if ($ciphertext === false || $publicKey === false || $secretKey === false) {
             throw new RuntimeException('Invalid base64-encoded input.');
         }
 
-        $keypair  = sodium_crypto_box_keypair_from_secretkey_and_publickey($secretKey, $publicKey);
+        $keypair = sodium_crypto_box_keypair_from_secretkey_and_publickey($secretKey, $publicKey);
         $plaintext = sodium_crypto_box_seal_open($ciphertext, $keypair);
 
         if ($plaintext === false) {
@@ -84,5 +84,20 @@ final readonly class SodiumEncryptionService
         }
 
         return $plaintext;
+    }
+
+    /**
+     * Generate a new asymmetric key pair (static utility, not part of interface).
+     *
+     * @return array{publicKey: string, secretKey: string} base64-encoded keys
+     */
+    public static function generateKeyPair(): array
+    {
+        $keypair = sodium_crypto_box_keypair();
+
+        return [
+            'publicKey' => base64_encode(sodium_crypto_box_publickey($keypair)),
+            'secretKey' => base64_encode(sodium_crypto_box_secretkey($keypair)),
+        ];
     }
 }

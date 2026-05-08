@@ -3,8 +3,8 @@ declare(strict_types=1);
 
 namespace App\Presentation\Console;
 
+use App\Application\Security\EncryptionServiceInterface;
 use App\Infrastructure\Persistence\Doctrine\User\UserEntity;
-use App\Infrastructure\Security\SodiumEncryptionService;
 use Doctrine\ORM\EntityManagerInterface;
 use JsonException;
 use Symfony\Component\Console\Attribute\AsCommand;
@@ -12,28 +12,23 @@ use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
-use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Throwable;
 
 /**
- * Dev-only command: decrypts and displays Cloudflare header data for a given user.
+ * Dev-only command: decrypts and displays encrypted data for a given user.
  *
- * Requires CF_PRIVATE_KEY to be set in the environment.  This key is intentionally
+ * Requires SODIUM_PRIVATE_KEY to be set in the environment.  This key is intentionally
  * absent from production deployments, so this command will refuse to run there.
  */
 #[AsCommand(
     name: 'app:user:data',
-    description: 'Decrypt and display detailed CF header data for a user (dev-only)',
+    description: 'Decrypt and display detailed encrypted data for a user (dev-only)',
 )]
 final class GetUserDataCommand extends Command
 {
     public function __construct(
-        private readonly SodiumEncryptionService $sodiumEncryptionService,
+        private readonly EncryptionServiceInterface $encryptionService,
         private readonly EntityManagerInterface $entityManager,
-        #[Autowire('%env(CF_PUBLIC_KEY)%')]
-        private readonly string $cfPublicKey,
-        #[Autowire('%env(CF_PRIVATE_KEY)%')]
-        private readonly string $cfPrivateKey,
     ) {
         parent::__construct();
     }
@@ -45,12 +40,6 @@ final class GetUserDataCommand extends Command
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        if ($this->cfPrivateKey === '' || $this->cfPrivateKey === 'changeme') {
-            $output->writeln('<error>CF_PRIVATE_KEY is not configured. This command is dev-only and must not run in production.</error>');
-
-            return Command::FAILURE;
-        }
-
         $email = $input->getOption('email');
         if (!is_string($email) || $email === '') {
             $output->writeln('<error>Please provide --email option.</error>');
@@ -80,7 +69,7 @@ final class GetUserDataCommand extends Command
         }
 
         try {
-            $decrypted = $this->sodiumEncryptionService->decrypt($cf, $this->cfPublicKey, $this->cfPrivateKey);
+            $decrypted = $this->encryptionService->decrypt($cf);
             /** @var array<string, list<string>> $cfData */
             $cfData = json_decode($decrypted, true, 512, JSON_THROW_ON_ERROR);
 

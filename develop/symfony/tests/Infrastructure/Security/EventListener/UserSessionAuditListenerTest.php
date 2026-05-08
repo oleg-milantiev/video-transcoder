@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\Infrastructure\Security\EventListener;
 
 use App\Application\Logging\LogServiceInterface;
+use App\Application\Security\EncryptionServiceInterface;
 use App\Infrastructure\Persistence\Doctrine\User\UserEntity;
 use App\Infrastructure\Security\EventListener\UserSessionAuditListener;
 use App\Infrastructure\Security\SodiumEncryptionService;
@@ -13,11 +14,11 @@ use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Security\Core\User\InMemoryUser;
-use Symfony\Component\Security\Http\Event\LoginSuccessEvent;
-use Symfony\Component\Security\Http\Event\LogoutEvent;
 use Symfony\Component\Security\Http\Authenticator\AuthenticatorInterface;
 use Symfony\Component\Security\Http\Authenticator\Passport\Passport;
 use Symfony\Component\Security\Http\Authenticator\Token\PostAuthenticationToken;
+use Symfony\Component\Security\Http\Event\LoginSuccessEvent;
+use Symfony\Component\Security\Http\Event\LogoutEvent;
 use Symfony\Component\Uid\UuidV4 as SymfonyUuid;
 
 final class UserSessionAuditListenerTest extends TestCase
@@ -38,14 +39,12 @@ final class UserSessionAuditListenerTest extends TestCase
 
     private function makeListener(
         ?EntityManagerInterface $em = null,
-        ?SodiumEncryptionService $sodium = null,
-        string $cfPublicKey = self::TEST_PUBLIC_KEY,
+        ?EncryptionServiceInterface $encryption = null,
     ): UserSessionAuditListener {
         return new UserSessionAuditListener(
             $this->createStub(LogServiceInterface::class),
             $em ?? $this->createStub(EntityManagerInterface::class),
-            $sodium ?? new SodiumEncryptionService(),
-            $cfPublicKey,
+            $encryption ?? new SodiumEncryptionService(self::TEST_PUBLIC_KEY, self::TEST_PRIVATE_KEY),
         );
     }
 
@@ -89,8 +88,8 @@ final class UserSessionAuditListenerTest extends TestCase
         $request->headers->set('CF-IPCountry', 'US');
         $request->headers->set('CF-Ray', 'abc123');
 
-        $sodiumService = new SodiumEncryptionService();
-        $listener      = $this->makeListener($em, $sodiumService, self::TEST_PUBLIC_KEY);
+        $sodiumService = new SodiumEncryptionService(self::TEST_PUBLIC_KEY, self::TEST_PRIVATE_KEY);
+        $listener = $this->makeListener($em, $sodiumService);
         $event         = $this->makeLoginEvent($user, 'main', $request);
 
         $listener->onLoginSuccess($event);
@@ -99,7 +98,7 @@ final class UserSessionAuditListenerTest extends TestCase
         self::assertIsString($user->profile['cf']);
 
         // Verify the encrypted value is actually decryptable
-        $decrypted = $sodiumService->decrypt($user->profile['cf'], self::TEST_PUBLIC_KEY, self::TEST_PRIVATE_KEY);
+        $decrypted = $sodiumService->decrypt($user->profile['cf']);
         $decoded   = json_decode($decrypted, true);
 
         self::assertArrayHasKey('cf-connecting-ip', $decoded);
@@ -121,7 +120,7 @@ final class UserSessionAuditListenerTest extends TestCase
         self::assertArrayNotHasKey('cf', $user->profile);
     }
 
-    public function testOnLoginSuccessSkipsCfEncryptionWhenKeyIsPlaceholder(): void
+    public function testOnLoginSuccessSkipsCfEncryptionWhenServiceThrows(): void
     {
         $user = $this->makeUser();
         $em   = $this->createStub(EntityManagerInterface::class);
@@ -130,9 +129,12 @@ final class UserSessionAuditListenerTest extends TestCase
         $request->headers->set('CF-Connecting-IP', '203.0.113.42');
         $event = $this->makeLoginEvent($user, 'main', $request);
 
-        $listener = $this->makeListener($em, null, 'changeme');
+        // Service configured with invalid keys - will throw on encrypt
+        $invalidService = new SodiumEncryptionService('changeme', 'changeme');
+        $listener = $this->makeListener($em, $invalidService);
         $listener->onLoginSuccess($event);
 
+        // Should not have encrypted data in profile since service threw, but login still succeeds
         self::assertArrayNotHasKey('cf', $user->profile);
     }
 
@@ -179,8 +181,7 @@ final class UserSessionAuditListenerTest extends TestCase
         $listener  = new UserSessionAuditListener(
             $logService,
             $this->createStub(EntityManagerInterface::class),
-            new SodiumEncryptionService(),
-            self::TEST_PUBLIC_KEY,
+            new SodiumEncryptionService(self::TEST_PUBLIC_KEY, self::TEST_PRIVATE_KEY),
         );
 
         $event = new LogoutEvent(Request::create('/logout'), $token);
@@ -195,8 +196,7 @@ final class UserSessionAuditListenerTest extends TestCase
         $listener = new UserSessionAuditListener(
             $logService,
             $this->createStub(EntityManagerInterface::class),
-            new SodiumEncryptionService(),
-            self::TEST_PUBLIC_KEY,
+            new SodiumEncryptionService(self::TEST_PUBLIC_KEY, self::TEST_PRIVATE_KEY),
         );
 
         $event = new LogoutEvent(Request::create('/logout'), null);

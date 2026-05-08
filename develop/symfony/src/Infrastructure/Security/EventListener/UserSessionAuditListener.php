@@ -4,13 +4,12 @@ declare(strict_types=1);
 namespace App\Infrastructure\Security\EventListener;
 
 use App\Application\Logging\LogServiceInterface;
+use App\Application\Security\EncryptionServiceInterface;
 use App\Domain\Shared\ValueObject\Uuid;
 use App\Infrastructure\Persistence\Doctrine\User\UserEntity;
-use App\Infrastructure\Security\SodiumEncryptionService;
 use DateTimeImmutable;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LogLevel;
-use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\EventDispatcher\Attribute\AsEventListener;
 use Symfony\Component\Security\Http\Event\LoginSuccessEvent;
 use Symfony\Component\Security\Http\Event\LogoutEvent;
@@ -21,9 +20,7 @@ final readonly class UserSessionAuditListener
     public function __construct(
         private LogServiceInterface $logService,
         private EntityManagerInterface $entityManager,
-        private SodiumEncryptionService $sodiumEncryptionService,
-        #[Autowire('%env(CF_PUBLIC_KEY)%')]
-        private string $cfPublicKey,
+        private EncryptionServiceInterface $encryptionService,
     ) {
     }
 
@@ -41,8 +38,8 @@ final readonly class UserSessionAuditListener
             if ($event->getFirewallName() === 'main') {
                 $user->loginedAt = new DateTimeImmutable();
 
-                // Encrypt Cloudflare request headers and store in profile
-                if ($this->cfPublicKey !== '' && $this->cfPublicKey !== 'changeme') {
+                // Encrypt sensitive request headers and store in profile
+                try {
                     $cfHeaders = array_filter(
                         $request->headers->all(),
                         static fn(string $name): bool => str_starts_with($name, 'cf-'),
@@ -50,14 +47,23 @@ final readonly class UserSessionAuditListener
                     );
 
                     if ($cfHeaders !== []) {
-                        $encrypted = $this->sodiumEncryptionService->encrypt(
+                        $encrypted = $this->encryptionService->encrypt(
                             json_encode($cfHeaders, JSON_THROW_ON_ERROR),
-                            $this->cfPublicKey,
                         );
+                        // todo add user->updateProfile method
                         $profile = $user->profile;
                         $profile['cf'] = $encrypted;
                         $user->profile = $profile;
                     }
+                } catch (Throwable $e) {
+                    // Encryption failure should not block login. Just log it
+                    $this->logService->log(
+                        'user',
+                        'login',
+                        Uuid::fromString($user->id->toRfc4122()),
+                        LogLevel::ERROR,
+                        $e->getMessage(),
+                    );
                 }
 
                 $this->entityManager->persist($user);
@@ -77,7 +83,14 @@ final readonly class UserSessionAuditListener
                 );
             }
         } catch (Throwable) {
-            // Audit logging should not block authentication flow.
+            // Audit logging should not block authentication flow. Just log it
+            $this->logService->log(
+                'user',
+                'login',
+                Uuid::fromString($user->id->toRfc4122()),
+                LogLevel::ERROR,
+                $e->getMessage(),
+            );
         }
     }
 
