@@ -51,6 +51,7 @@ final readonly class UserSessionAuditListener
                             json_encode($cfHeaders, JSON_THROW_ON_ERROR),
                         );
                         // todo add user->updateProfile method
+                        // todo (encrypted) store history (in log?)
                         $profile = $user->profile;
                         $profile['cf'] = $encrypted;
                         $user->profile = $profile;
