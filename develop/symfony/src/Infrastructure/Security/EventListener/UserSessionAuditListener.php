@@ -6,9 +6,11 @@ namespace App\Infrastructure\Security\EventListener;
 use App\Application\Logging\LogServiceInterface;
 use App\Domain\Shared\ValueObject\Uuid;
 use App\Infrastructure\Persistence\Doctrine\User\UserEntity;
+use App\Infrastructure\Security\SodiumEncryptionService;
 use DateTimeImmutable;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LogLevel;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\EventDispatcher\Attribute\AsEventListener;
 use Symfony\Component\Security\Http\Event\LoginSuccessEvent;
 use Symfony\Component\Security\Http\Event\LogoutEvent;
@@ -19,6 +21,9 @@ final readonly class UserSessionAuditListener
     public function __construct(
         private LogServiceInterface $logService,
         private EntityManagerInterface $entityManager,
+        private SodiumEncryptionService $sodiumEncryptionService,
+        #[Autowire('%env(CF_PUBLIC_KEY)%')]
+        private string $cfPublicKey,
     ) {
     }
 
@@ -35,6 +40,26 @@ final readonly class UserSessionAuditListener
             // skip api stateless auth log
             if ($event->getFirewallName() === 'main') {
                 $user->loginedAt = new DateTimeImmutable();
+
+                // Encrypt Cloudflare request headers and store in profile
+                if ($this->cfPublicKey !== '' && $this->cfPublicKey !== 'changeme') {
+                    $cfHeaders = array_filter(
+                        $request->headers->all(),
+                        static fn(string $name): bool => str_starts_with($name, 'cf-'),
+                        ARRAY_FILTER_USE_KEY,
+                    );
+
+                    if ($cfHeaders !== []) {
+                        $encrypted = $this->sodiumEncryptionService->encrypt(
+                            json_encode($cfHeaders, JSON_THROW_ON_ERROR),
+                            $this->cfPublicKey,
+                        );
+                        $profile = $user->profile;
+                        $profile['cf'] = $encrypted;
+                        $user->profile = $profile;
+                    }
+                }
+
                 $this->entityManager->persist($user);
                 $this->entityManager->flush();
                 $this->logService->log(

@@ -34,6 +34,8 @@ final readonly class UserProfile
         public ?DateTimeImmutable $paidAt,
         public ?DateTimeImmutable $paidUntil,
         public array $paymentHistory,
+        // ── Security (encrypted) ─────────────────────────────────────────────
+        public ?string $cf = null,
     ) {
         if ($this->videoCountActive < 0 || $this->videoCountTotal < 0) {
             throw new DomainException('Video counts cannot be negative.');
@@ -71,6 +73,7 @@ final readonly class UserProfile
         ?DateTimeImmutable $paidAt = null,
         ?DateTimeImmutable $paidUntil = null,
         array $paymentHistory = [],
+        ?string $cf = null,
     ): self {
         return new self(
             videoCountActive: $videoCountActive,
@@ -84,6 +87,7 @@ final readonly class UserProfile
             paidAt: $paidAt,
             paidUntil: $paidUntil,
             paymentHistory: $paymentHistory,
+            cf: $cf,
         );
     }
 
@@ -126,6 +130,7 @@ final readonly class UserProfile
             paidAt: self::parseDateOrNull($billing['paidAt'] ?? null),
             paidUntil: self::parseDateOrNull($billing['paidUntil'] ?? null),
             paymentHistory: (array)($billing['history'] ?? []),
+            cf: isset($data['cf']) && is_string($data['cf']) ? $data['cf'] : null,
         );
     }
 
@@ -147,7 +152,7 @@ final readonly class UserProfile
     /** @return array<string, mixed> */
     public function toArray(): array
     {
-        return [
+        $data = [
             'statistics' => [
                 'video' => [
                     'active' => $this->videoCountActive,
@@ -170,6 +175,12 @@ final readonly class UserProfile
                 'history' => $this->paymentHistory,
             ],
         ];
+
+        if ($this->cf !== null) {
+            $data['cf'] = $this->cf;
+        }
+
+        return $data;
     }
 
     /** Return a new instance with updated statistics, billing unchanged. */
@@ -195,6 +206,7 @@ final readonly class UserProfile
             paidAt: $this->paidAt,
             paidUntil: $this->paidUntil,
             paymentHistory: $this->paymentHistory,
+            cf: $this->cf,
         );
     }
 
@@ -218,6 +230,26 @@ final readonly class UserProfile
             paidAt: $paidAt,
             paidUntil: $paidUntil,
             paymentHistory: $paymentHistory,
+            cf: $this->cf,
+        );
+    }
+
+    /** Return a new instance with updated encrypted CF blob, all other fields unchanged. */
+    public function withCf(?string $cf): self
+    {
+        return new self(
+            videoCountActive: $this->videoCountActive,
+            videoCountTotal: $this->videoCountTotal,
+            taskCountActive: $this->taskCountActive,
+            taskCountTotal: $this->taskCountTotal,
+            taskCountByStatus: $this->taskCountByStatus,
+            storageUsedBytes: $this->storageUsedBytes,
+            storageDelete24Bytes: $this->storageDelete24Bytes,
+            willStartAt: $this->willStartAt,
+            paidAt: $this->paidAt,
+            paidUntil: $this->paidUntil,
+            paymentHistory: $this->paymentHistory,
+            cf: $cf,
         );
     }
 

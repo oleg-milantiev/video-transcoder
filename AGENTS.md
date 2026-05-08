@@ -8,6 +8,8 @@ Run phpunit and composer stan after every backend change.
 - Find and always fix phpUnit notices by adding --debug to the command. Do not add ignore attributes, fix notices and deprecations.
 - Check and improve code coverage by running phpunit with --coverage-text
 - **stan** - docker exec -i develop-php-1 composer stan
+- do not use -v or --verbose keys with phpunit command. Use --debug instead.
+- do not create mock if no expected behavior is defined. Use stub instead.
 
 ## Coverage:
 
