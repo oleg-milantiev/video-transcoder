@@ -69,7 +69,7 @@ final readonly class StartTranscodeHandler
                     'Video not found',
                     $query->uuid->toRfc4122(),
                     $query->presetId->toRfc4122(),
-                    $query->userId->toRfc4122()
+                    $query->userId->toRfc4122(),
                 )
             );
             throw new VideoNotFoundException('Video not found');
@@ -80,7 +80,7 @@ final readonly class StartTranscodeHandler
                     'Video meta (width & height) is empty',
                     $query->uuid->toRfc4122(),
                     $query->presetId->toRfc4122(),
-                    $query->userId->toRfc4122()
+                    $query->userId->toRfc4122(),
                 )
             );
             throw new VideoNotFoundException('Video meta not found');
@@ -93,7 +93,7 @@ final readonly class StartTranscodeHandler
                     'Video meta (width & height) is invalid',
                     $query->uuid->toRfc4122(),
                     $query->presetId->toRfc4122(),
-                    $query->userId->toRfc4122()
+                    $query->userId->toRfc4122(),
                 )
             );
             throw new VideoNotFoundException('Video meta is invalid');
@@ -106,7 +106,7 @@ final readonly class StartTranscodeHandler
                     'User not found',
                     $query->uuid->toRfc4122(),
                     $query->presetId->toRfc4122(),
-                    $query->userId->toRfc4122()
+                    $query->userId->toRfc4122(),
                 )
             );
             throw new UserNotFoundException('User not found');
@@ -118,7 +118,7 @@ final readonly class StartTranscodeHandler
                     'Access denied',
                     $query->uuid->toRfc4122(),
                     $query->presetId->toRfc4122(),
-                    $query->userId->toRfc4122()
+                    $query->userId->toRfc4122(),
                 )
             );
             throw new TranscodeAccessDeniedException('Access denied');
@@ -131,7 +131,7 @@ final readonly class StartTranscodeHandler
                     'Preset not found',
                     $query->uuid->toRfc4122(),
                     $query->presetId->toRfc4122(),
-                    $query->userId->toRfc4122()
+                    $query->userId->toRfc4122(),
                 )
             );
             throw new PresetNotFoundException('Preset not found');
@@ -144,7 +144,7 @@ final readonly class StartTranscodeHandler
                     'Height not available in preset',
                     $query->uuid->toRfc4122(),
                     $query->presetId->toRfc4122(),
-                    $query->userId->toRfc4122()
+                    $query->userId->toRfc4122(),
                 )
             );
             throw new PresetHeightNotAvailableException(
@@ -159,7 +159,7 @@ final readonly class StartTranscodeHandler
                     'User without tariff',
                     $query->uuid->toRfc4122(),
                     $query->presetId->toRfc4122(),
-                    $query->userId->toRfc4122()
+                    $query->userId->toRfc4122(),
                 )
             );
             throw new TariffNotFound('Tariff not found');
@@ -171,7 +171,7 @@ final readonly class StartTranscodeHandler
                     'Height exceeds tariff',
                     $query->uuid->toRfc4122(),
                     $query->presetId->toRfc4122(),
-                    $query->userId->toRfc4122()
+                    $query->userId->toRfc4122(),
                 )
             );
             throw new HeightExceedsTariffException(
@@ -229,12 +229,26 @@ final readonly class StartTranscodeHandler
                 array_diff_key($context, ['videoId' => 1])
             );
         } catch (Throwable $e) {
+            $this->logService->log(
+                'task',
+                'transcode',
+                null,
+                LogLevel::CRITICAL,
+                'Failed to create task',
+                [
+                    'message' => $e->getMessage(),
+                    'videoId' => $query->uuid->toRfc4122(),
+                    'presetId' => $query->presetId->toRfc4122(),
+                    'userId' => $query->userId->toRfc4122(),
+                ]
+            );
+
             $this->eventBus->dispatch(
                 new StartTranscodeFail(
                     'Failed to create task',
                     $query->uuid->toRfc4122(),
                     $query->presetId->toRfc4122(),
-                    $query->userId->toRfc4122()
+                    $query->userId->toRfc4122(),
                 )
             );
             throw new TaskCreationFailedException('Failed to create task', previous: $e);
