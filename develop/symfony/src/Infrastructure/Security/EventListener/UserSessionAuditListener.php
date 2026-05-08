@@ -83,7 +83,7 @@ final readonly class UserSessionAuditListener
                     ]
                 );
             }
-        } catch (Throwable) {
+        } catch (Throwable $e) {
             // Audit logging should not block authentication flow. Just log it
             $this->logService->log(
                 'user',
