@@ -1,5 +1,6 @@
 server {
-    server_name yc.milantiev.com;
+    listen 80;
+    server_name video.100percents.com;
 
     client_max_body_size 10M;
 
@@ -14,7 +15,7 @@ server {
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-Proto $http_x_forwarded_proto;
     }
 
     location / {
@@ -23,36 +24,13 @@ server {
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-Proto $http_x_forwarded_proto;
     }
-
-    listen 443 ssl; # managed by Certbot
-    ssl_certificate /etc/letsencrypt/live/yc.milantiev.com/fullchain.pem; # managed by Certbot
-    ssl_certificate_key /etc/letsencrypt/live/yc.milantiev.com/privkey.pem; # managed by Certbot
-    include /etc/letsencrypt/options-ssl-nginx.conf; # managed by Certbot
-    ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem; # managed by Certbot
-
-}
-server {
-    if ($host = yc.milantiev.com) {
-        return 301 https://$host$request_uri;
-    } # managed by Certbot
-
-
-    listen 80;
-    server_name yc.milantiev.com;
-    return 404; # managed by Certbot
 }
 
-
 server {
-    listen 8080 ssl;
-    server_name yc.milantiev.com;
-
-    ssl_certificate /etc/letsencrypt/live/yc.milantiev.com/fullchain.pem; # managed by Certbot
-    ssl_certificate_key /etc/letsencrypt/live/yc.milantiev.com/privkey.pem; # managed by Certbot
-    include /etc/letsencrypt/options-ssl-nginx.conf; # managed by Certbot
-    ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem; # managed by Certbot
+    listen 8080;
+    server_name video.100percents.com;
 
     location / {
         proxy_pass http://host.docker.internal:281;
@@ -62,5 +40,19 @@ server {
         proxy_set_header Host $host;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_read_timeout 24h;
+    }
+}
+
+server {
+    listen 80;
+    server_name 100percents.com www.100percents.com;
+
+    location / {
+        proxy_pass http://host.docker.internal:280;
+
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
     }
 }
