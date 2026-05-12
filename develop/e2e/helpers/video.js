@@ -1,7 +1,8 @@
 const { expect } = require('@playwright/test');
 const { UI_TIMEOUT, NAV_TIMEOUT } = require('./constants');
 const { shot } = require('./screenshot');
-const { openVideosTab, expectVideosTableVisible, videoRowByTitle } = require('./mainApp');
+const { openVideosTab, expectVideosTableVisible, videoRowByTitle, activeVideoRowByTitle } = require('./mainApp');
+const { clickAndAcceptConfirm } = require('./dialogs');
 function escapeRegExp(value) {
   return String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
@@ -500,6 +501,158 @@ async function verifyDeletedVideoInListAndDetails(page, testInfo, uploadedFileNa
   await waitForDeletedVideoDetailsWithoutPoster(page, uploadedBaseName, maxAttempts, pollMs);
   await shot(page, testInfo, `${screenshotPrefix}-details.png`);
 }
+// ── Prod-level video helpers ──────────────────────────────────────────────────
+
+/**
+ * Assert that a preset with the given title is available on the video details page.
+ * Switches to Transcode → Custom, then verifies the preset block is visible.
+ */
+async function assertPresetAvailable(page, presetTitle) {
+  const allTitles = await getAllPresetTitles(page);
+  if (!allTitles.includes(presetTitle)) {
+    throw new Error(`Required preset "${presetTitle}" not found. Available: ${allTitles.join(', ')}`);
+  }
+  const block = presetBlock(page, presetTitle);
+  await expect(block).toBeVisible({ timeout: UI_TIMEOUT });
+}
+
+/**
+ * Navigate from the Videos list to the video details page for the given title.
+ */
+async function openVideoDetailsByTitle(page, title) {
+  await openVideosTab(page);
+  await expectVideosTableVisible(page);
+  const row = activeVideoRowByTitle(page, title);
+  await expect(row).toBeVisible({ timeout: UI_TIMEOUT });
+  await row.click({ timeout: UI_TIMEOUT });
+  await waitForVideoDetailsVisible(page);
+}
+
+/**
+ * Start a transcode for the given preset+height.
+ * If a CANCELLED task row with a "Transcode" restart button exists, clicks it.
+ * Otherwise clicks the first available resolution button in the preset block.
+ */
+async function startTaskForHeight(page, presetTitle, height) {
+  const cancelledRow = taskRowByPresetAndHeight(page, presetTitle, height);
+  if ((await cancelledRow.count()) > 0 && await cancelledRow.isVisible().catch(() => false)) {
+    const restartBtn = cancelledRow.getByRole('button', { name: 'Transcode' });
+    if ((await restartBtn.count()) > 0 && await restartBtn.isVisible().catch(() => false)) {
+      await restartBtn.click({ timeout: UI_TIMEOUT });
+      return;
+    }
+  }
+  // No prior task — fall back to the first available button in the preset block
+  const block = presetBlock(page, presetTitle);
+  await block.locator('button.btn-outline-primary:not([disabled])').first().click({ timeout: UI_TIMEOUT });
+}
+
+/**
+ * Click the Cancel button on the active (non-CANCELLED) task row for the given preset+height.
+ */
+async function cancelActiveTaskForHeight(page, presetTitle, height) {
+  const row = activeTaskRowByPresetAndHeight(page, presetTitle, height);
+  await row.getByRole('button', { name: 'Cancel' }).click({ timeout: UI_TIMEOUT });
+}
+
+/**
+ * Read the full UI state (status, progress, action buttons) for a specific preset+height task row.
+ * Returns: { presetTitle, height, status, progress, hasTranscode, hasCancel, hasDownload }
+ */
+async function readPresetUiState(page, presetTitle, height) {
+  const activeRow = activeTaskRowByPresetAndHeight(page, presetTitle, height);
+  const activeVisible = (await activeRow.count()) > 0 && await activeRow.isVisible().catch(() => false);
+
+  const anyRow = taskRowByPresetAndHeight(page, presetTitle, height);
+  const anyVisible = (await anyRow.count()) > 0 && await anyRow.isVisible().catch(() => false);
+
+  let status = 'NO TASK';
+  let progress = -1;
+  let hasCancel = false;
+  let hasDownload = false;
+  let hasTranscode = false;
+
+  if (activeVisible) {
+    const cancelButton = activeRow.getByRole('button', { name: 'Cancel' });
+    const downloadLink = activeRow.getByRole('link', { name: 'Download' });
+    hasCancel = (await cancelButton.count()) > 0 && await cancelButton.first().isVisible().catch(() => false);
+    hasDownload = (await downloadLink.count()) > 0 && await downloadLink.first().isVisible().catch(() => false);
+    const { status: s, progress: p } = await readPresetTaskStateByHeight(page, presetTitle, height, { preferActive: true });
+    status = String(s || '').trim().toUpperCase();
+    progress = p;
+  } else if (anyVisible) {
+    const transcodeButton = anyRow.getByRole('button', { name: 'Transcode' });
+    hasTranscode = (await transcodeButton.count()) > 0 && await transcodeButton.first().isVisible().catch(() => false);
+    const { status: s, progress: p } = await readPresetTaskStateByHeight(page, presetTitle, height);
+    status = String(s || '').trim().toUpperCase();
+    progress = p;
+  } else {
+    const block = presetBlock(page, presetTitle);
+    const btn = block.locator('button.btn-outline-primary:not([disabled])').first();
+    hasTranscode = (await btn.count()) > 0 && await btn.isVisible().catch(() => false);
+  }
+
+  return { presetTitle, height, status, progress, hasTranscode, hasCancel, hasDownload };
+}
+
+/**
+ * Poll until the task state for a given preset+height satisfies `matcher(state)`.
+ * Throws if timeout (ms) is reached before the matcher returns true.
+ */
+async function waitForPresetState(page, presetTitle, height, matcher, description, timeout = 180000, pollMs = 2000) {
+  const startedAt = Date.now();
+  let lastState = null;
+  while (Date.now() - startedAt < timeout) {
+    lastState = await readPresetUiState(page, presetTitle, height);
+    if (matcher(lastState)) return lastState;
+    await page.waitForTimeout(pollMs);
+  }
+  throw new Error(`${description} for "${presetTitle}" ${height}p not reached. Last: ${JSON.stringify(lastState)}`);
+}
+
+/**
+ * Poll until ALL tasks in `tasks` (array of { title, height }) satisfy `matcher(state)`.
+ * Throws if timeout (ms) is reached before all matchers return true.
+ */
+async function waitForAllPresets(page, tasks, matcher, description, timeout = 900000, pollMs = 3000) {
+  const startedAt = Date.now();
+  let states = [];
+  while (Date.now() - startedAt < timeout) {
+    states = [];
+    let allMatched = true;
+    for (const task of tasks) {
+      const state = await readPresetUiState(page, task.title, task.height);
+      states.push(state);
+      if (!matcher(state)) allMatched = false;
+    }
+    if (allMatched) return states;
+    await page.waitForTimeout(pollMs);
+  }
+  throw new Error(`${description} not reached. Last states: ${JSON.stringify(states)}`);
+}
+
+/**
+ * Delete a video from the Videos list by title if it exists.
+ * Opens the Videos tab, finds the row, clicks Delete, accepts confirmation,
+ * waits for soft-delete state, takes a screenshot, and returns true.
+ * Returns false if the video row or Delete button is not found.
+ */
+async function deleteVideoFromListIfPresent(page, videoTitle, testInfo, screenshotName) {
+  await openVideosTab(page);
+  await expectVideosTableVisible(page);
+  const row = videoRowByTitle(page, videoTitle);
+  if ((await row.count()) === 0) return false;
+  await expect(row).toBeVisible({ timeout: UI_TIMEOUT });
+  const deleteButton = row.getByRole('button', { name: 'Delete' });
+  if ((await deleteButton.count()) === 0) return false;
+  await clickAndAcceptConfirm(page, deleteButton, 'Delete this video?');
+  await expect.poll(async () => (await row.locator('td.video-title-deleted').count()) > 0).toBeTruthy();
+  if (testInfo && screenshotName) {
+    await shot(page, testInfo, screenshotName);
+  }
+  return true;
+}
+
 module.exports = {
   switchToVideoTab,
   switchToCustomGoal,
@@ -537,4 +690,13 @@ module.exports = {
   pollUntilCompletedWithProgressTracking,
   verifyDeletedVideoInListAndDetails,
   hasMetaField,
+  // prod-level helpers
+  assertPresetAvailable,
+  openVideoDetailsByTitle,
+  startTaskForHeight,
+  cancelActiveTaskForHeight,
+  readPresetUiState,
+  waitForPresetState,
+  waitForAllPresets,
+  deleteVideoFromListIfPresent,
 };

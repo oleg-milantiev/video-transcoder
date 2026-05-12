@@ -1,5 +1,6 @@
 const { expect } = require('@playwright/test');
 const { UI_TIMEOUT, NAV_TIMEOUT } = require('./constants');
+const { taskRowByPresetAndHeight } = require('./video');
 
 async function clickDownloadAndVerifyMp4(page, row) {
   const downloadLink = row.getByRole('link', { name: 'Download' });
@@ -62,5 +63,36 @@ async function expectRowDownloadFilename(row, expectedFilename) {
   await expect(downloadLink).toHaveAttribute('download', expectedFilename, { timeout: UI_TIMEOUT });
 }
 
-module.exports = { clickDownloadAndVerifyMp4, expectDownloadFilename, expectRowDownloadFilename };
+/**
+ * Find the completed task row for preset+height, click the Download link,
+ * verify the suggested filename contains `{height}p` and ends in `.mp4`,
+ * and confirm the download URL responds with status < 400.
+ */
+async function clickDownloadAndVerifyByHeight(page, presetTitle, height) {
+  const row = taskRowByPresetAndHeight(page, presetTitle, height);
+  await expect(row).toBeVisible({ timeout: UI_TIMEOUT });
+  const downloadLink = row.getByRole('link', { name: 'Download' });
+  await expect(downloadLink).toBeVisible({ timeout: UI_TIMEOUT });
+
+  const href = await downloadLink.getAttribute('href');
+  if (!href) throw new Error('Download link href is empty');
+
+  const downloadPromise = page.waitForEvent('download', { timeout: 20000 });
+  await downloadLink.click({ timeout: UI_TIMEOUT });
+  const download = await downloadPromise;
+
+  const suggested = download.suggestedFilename();
+  expect(suggested).toContain(String(height) + 'p');
+  expect(suggested).toMatch(/\.mp4$/i);
+
+  const downloadUrl = new URL(href, page.url()).toString();
+  const response = await page.request.get(downloadUrl, {
+    failOnStatusCode: false,
+    maxRedirects: 0,
+    timeout: NAV_TIMEOUT,
+  });
+  expect(response.status()).toBeLessThan(400);
+}
+
+module.exports = { clickDownloadAndVerifyMp4, expectDownloadFilename, expectRowDownloadFilename, clickDownloadAndVerifyByHeight };
 

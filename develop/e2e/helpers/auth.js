@@ -50,6 +50,15 @@ async function loginAs(page, email, password) {
   await expect(page.getByRole('button', { name: 'Videos' })).toBeVisible({ timeout: UI_TIMEOUT });
 }
 
+async function ensureLoggedOut(page) {
+  await page.goto('/logout', { waitUntil: 'domcontentloaded', timeout: NAV_TIMEOUT }).catch(() => {});
+  await openHome(page);
+  const signOutLink = page.getByRole('link', { name: 'Sign out' });
+  if ((await signOutLink.count()) > 0 && await signOutLink.first().isVisible().catch(() => false)) {
+    await signOutLink.first().click({ timeout: UI_TIMEOUT });
+  }
+}
+
 async function logoutToPublic(page) {
   await openHome(page);
   await expect(page.getByRole('link', { name: 'Sign out' })).toBeVisible({ timeout: UI_TIMEOUT });
@@ -65,5 +74,6 @@ module.exports = {
   submitSignIn,
   loginAsAdmin,
   loginAs,
+  ensureLoggedOut,
   logoutToPublic,
 };
