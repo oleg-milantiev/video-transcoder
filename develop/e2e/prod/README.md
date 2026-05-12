@@ -80,7 +80,6 @@ docker compose -f docker-compose.prod.yml config >/dev/null
 cd /root/video-transcoder/develop/e2e
 bash -n prod/run.prod.sh
 node --check prod/playwright.config.js
-node --check prod/helpers/runContext.js
 node --check prod/helpers/admin.js
 node --check prod/helpers/index.js
 node --check prod/tests/01.prod.safe.js

@@ -64,9 +64,8 @@ This directory contains release smoke tests running against the release Docker C
 
 ### Prod-only helpers (`prod/helpers/`)
 
-- `prod/helpers/index.js` — re-exports all shared helpers + `loginAsCredentials`, `buildRunContext`
+- `prod/helpers/index.js` — re-exports all shared helpers + `loginAsCredentials`
 - `prod/helpers/admin.js` — `filterUsersByEmail`, `setTariffForFilteredUser`, `deleteUserByEmail`, `deleteFilteredUser`
-- `prod/helpers/runContext.js` — `buildRunContext()` generates a per-run isolated user context (date-based email, random password, video name)
 
 ---
 

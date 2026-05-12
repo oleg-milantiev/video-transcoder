@@ -11,7 +11,6 @@ const capture = require('./capture');
 const storage = require('./storage');
 const contactUs = require('./contactUs');
 const profile = require('./profile');
-const runContext = require('./runContext');
 
 module.exports = {
   UI_TIMEOUT,
@@ -29,6 +28,5 @@ module.exports = {
   ...storage,
   ...contactUs,
   ...profile,
-  ...runContext,
 };
 
