@@ -54,7 +54,6 @@ class VideoUploadedHandlerTest extends TestCase
         StorageRepositoryInterface $storageRepository,
         UserRepositoryInterface $userRepository,
         VideoRealtimeNotifier $notifier,
-        FlashRealtimeNotifier $flashRealtimeNotifier,
         LogServiceInterface $logService,
         StorageInterface $storage,
         StorageRealtimeNotifier $storageNotifier,
@@ -66,11 +65,9 @@ class VideoUploadedHandlerTest extends TestCase
             $storageRepository,
             $userRepository,
             $notifier,
-            $flashRealtimeNotifier,
             $logService,
             $storage,
             new FlashNotificationFactory(),
-            $this->createStub(TaskRepositoryInterface::class),
             $storageNotifier,
         );
     }
@@ -122,12 +119,11 @@ class VideoUploadedHandlerTest extends TestCase
         $userRepository->method('findById')->willReturn($userWithTariff);
 
         $notifier = new VideoRealtimeNotifier($commandBus, $storage, $this->createStub(TaskRepositoryInterface::class), $userRepository);
-        $flashRealtimeNotifier = new FlashRealtimeNotifier($commandBus);
         $logService = $this->createStub(LogServiceInterface::class);
 
         $handler = $this->makeHandler(
             $commandBus, $eventBus, $videoRepository, $storageRepository, $userRepository,
-            $notifier, $flashRealtimeNotifier, $logService, $storage,
+            $notifier, $logService, $storage,
             $this->createStub(StorageRealtimeNotifier::class),
         );
 
@@ -178,8 +174,7 @@ class VideoUploadedHandlerTest extends TestCase
         $handler = $this->makeHandler(
             $commandBus, $eventBus, $this->createStub(VideoRepositoryInterface::class),
             $this->createStub(StorageRepositoryInterface::class), $userRepository,
-            $notifier, new FlashRealtimeNotifier($commandBus),
-            $this->createStub(LogServiceInterface::class), $storage,
+            $notifier, $this->createStub(LogServiceInterface::class), $storage,
             $this->createStub(StorageRealtimeNotifier::class),
         );
 
@@ -233,8 +228,7 @@ class VideoUploadedHandlerTest extends TestCase
         $handler = $this->makeHandler(
             $commandBus, $eventBus, $this->createStub(VideoRepositoryInterface::class),
             $this->createStub(StorageRepositoryInterface::class), $userRepository,
-            $notifier, new FlashRealtimeNotifier($commandBus),
-            $this->createStub(LogServiceInterface::class), $storage,
+            $notifier, $this->createStub(LogServiceInterface::class), $storage,
             $this->createStub(StorageRealtimeNotifier::class),
         );
 
@@ -289,8 +283,7 @@ class VideoUploadedHandlerTest extends TestCase
         $handler = $this->makeHandler(
             $commandBus, $eventBus, $this->createStub(VideoRepositoryInterface::class),
             $this->createStub(StorageRepositoryInterface::class), $userRepository,
-            $notifier, new FlashRealtimeNotifier($commandBus),
-            $this->createStub(LogServiceInterface::class), $storage,
+            $notifier, $this->createStub(LogServiceInterface::class), $storage,
             $this->createStub(StorageRealtimeNotifier::class),
         );
 
@@ -349,8 +342,7 @@ class VideoUploadedHandlerTest extends TestCase
         $handler = $this->makeHandler(
             $commandBus, $eventBus, $this->createStub(VideoRepositoryInterface::class),
             $storageRepository, $userRepository,
-            $notifier, new FlashRealtimeNotifier($commandBus),
-            $this->createStub(LogServiceInterface::class), $storage,
+            $notifier, $this->createStub(LogServiceInterface::class), $storage,
             $this->createStub(StorageRealtimeNotifier::class),
         );
 
@@ -408,8 +400,7 @@ class VideoUploadedHandlerTest extends TestCase
 
         $handler = $this->makeHandler(
             $commandBus, $eventBus, $videoRepository, $storageRepository, $userRepository,
-            $notifier, new FlashRealtimeNotifier($commandBus),
-            $this->createStub(LogServiceInterface::class), $storage,
+            $notifier, $this->createStub(LogServiceInterface::class), $storage,
             $storageNotifier,
         );
 
