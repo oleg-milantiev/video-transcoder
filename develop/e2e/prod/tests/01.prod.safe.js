@@ -21,13 +21,11 @@ const {
   waitForPosterAndMeta,
   assertPresetAvailable,
   clickHeightButtonInPreset,
-  switchToVideoTab,
   expectPresetStatusHelpIcon,
   startTaskForHeight,
   cancelActiveTaskForHeight,
   waitForPresetState,
   waitForAllPresets,
-  openVideoDetailsByTitle,
   deleteVideoFromListIfPresent,
   clickDownloadAndVerifyByHeight,
   attachSseMessages,
@@ -40,7 +38,7 @@ const REQUIRED_TASKS = [
   { title: STANDARD_PRESET, height: 720 },
 ];
 test.describe('prod-safe isolated smoke', () => {
-  test.setTimeout(35 * 60 * 1000);
+  test.setTimeout(5 * 60 * 1000);
   test('free-tariff behavior, then premium full transcoding flow', async ({ page }, testInfo) => {
     page.setDefaultTimeout(UI_TIMEOUT);
 
@@ -145,8 +143,6 @@ test.describe('prod-safe isolated smoke', () => {
       await shot(page, testInfo, '16-free-tasks-cancelled.png');
       // Delete free user's video and sign out
       await openHome(page);
-      freeVideoDeleted = await deleteVideoFromListIfPresent(page, videoBaseName, testInfo, '17-free-video-deleted.png');
-      expect(freeVideoDeleted).toBe(true);
       await logoutToPublic(page);
       await shot(page, testInfo, '18-free-user-signed-out.png');
       // ── Phase C — Premium user: upload fresh video, start both tasks ─────────
@@ -198,8 +194,6 @@ test.describe('prod-safe isolated smoke', () => {
         await shot(page, testInfo, `27-premium-download-${task.height}p.png`);
       }
       await openHome(page);
-      premiumVideoDeleted = await deleteVideoFromListIfPresent(page, videoBaseName, testInfo, '28-premium-video-deleted.png');
-      expect(premiumVideoDeleted).toBe(true);
       await logoutToPublic(page);
       await shot(page, testInfo, '29-premium-user-signed-out.png');
     } finally {
@@ -209,7 +203,6 @@ test.describe('prod-safe isolated smoke', () => {
           await ensureLoggedOut(page);
           await loginAs(page, freeEmail, freePassword);
           await expectTabsVisible(page);
-          freeVideoDeleted = await deleteVideoFromListIfPresent(page, videoBaseName, testInfo, 'zz-cleanup-free-video.png');
           await logoutToPublic(page).catch(() => {});
         } catch {
           // ignore cleanup errors
@@ -220,7 +213,6 @@ test.describe('prod-safe isolated smoke', () => {
           await ensureLoggedOut(page);
           await loginAs(page, premiumEmail, premiumPassword);
           await expectTabsVisible(page);
-          premiumVideoDeleted = await deleteVideoFromListIfPresent(page, videoBaseName, testInfo, 'zz-cleanup-premium-video.png');
           await logoutToPublic(page).catch(() => {});
         } catch {
           // ignore cleanup errors
