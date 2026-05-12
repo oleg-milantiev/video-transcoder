@@ -5,14 +5,12 @@ namespace App\Application\CommandHandler\Video;
 
 use App\Application\Command\Video\ExtractVideoMetadata;
 use App\Application\Command\Video\VideoUploaded;
-use App\Application\DTO\VideoItemDTO;
 use App\Application\Event\VideoUploadedFail;
 use App\Application\Event\VideoUploadedStart;
 use App\Application\Event\VideoUploadedSuccess;
 use App\Application\Exception\StorageSizeExceedsQuota;
 use App\Application\Factory\FlashNotificationFactory;
 use App\Application\Logging\LogServiceInterface;
-use App\Application\Service\Mercure\FlashRealtimeNotifier;
 use App\Application\Service\Storage\StorageRealtimeNotifier;
 use App\Application\Service\Video\VideoRealtimeNotifier;
 use App\Domain\Shared\ValueObject\Uuid;
@@ -24,7 +22,6 @@ use App\Domain\User\Repository\UserRepositoryInterface;
 use App\Domain\Video\Exception\VideoFileNotFound;
 use App\Domain\Video\Exception\VideoSizeExceedsQuota;
 use App\Domain\Video\Repository\StorageRepositoryInterface;
-use App\Domain\Video\Repository\TaskRepositoryInterface;
 use App\Domain\Video\Repository\VideoRepositoryInterface;
 use App\Domain\Video\Service\Storage\StorageInterface;
 use Psr\Log\LogLevel;
@@ -44,11 +41,9 @@ final readonly class VideoUploadedHandler
         private StorageRepositoryInterface $storageRepository,
         private UserRepositoryInterface $userRepository,
         private VideoRealtimeNotifier $videoRealtimeNotifier,
-        private FlashRealtimeNotifier $flashRealtimeNotifier,
         private LogServiceInterface $logService,
         private StorageInterface $storage,
         private FlashNotificationFactory $flashNotificationFactory,
-        private TaskRepositoryInterface $taskRepository,
         private StorageRealtimeNotifier $storageNotifier,
     ) {
     }
@@ -115,8 +110,8 @@ final readonly class VideoUploadedHandler
             $video = $this->videoRepository->save($video);
 
             $this->logService->log('video', 'upload', $video->id(), LogLevel::INFO, 'Video uploaded', [
-                'user' => $user,
-                'video' => VideoItemDTO::fromDomain($video, $this->storage, $this->taskRepository, $tariff),
+                'userId' => $user->id(),
+                'videoId' => $video->id(),
                 'filename' => $command->filename(),
             ]);
             $this->logService->log('user', 'upload', $video->userId(), LogLevel::INFO, 'User uploaded video', [

@@ -45,12 +45,12 @@ TWIG,
             ],
         ],
         'video' => [
-            'create' => [
-                'any' => [
+            'upload' => [
+                LogLevel::INFO => [
                     'template' => <<< TWIG
-✅ Video created: <a href="{{ url('video_details', {uuid: video.uuid}) }}">{{ video.title }}</a>
+✅ Video uploaded: {% if videoAdminUrl is defined %}<a href="{{ videoAdminUrl }}">{{ videoTitle ?? videoId }}</a>{% else %}{{ videoId }}{% endif %}
 
-By {{ user.email }}
+User: {% if userAdminUrl is defined %}<a href="{{ userAdminUrl }}">{{ userEmail ?? userId }}</a>{% else %}{{ userId }}{% endif %}
 TWIG,
                     'userIds' => [self::ADMIN_USER_ID],
                 ],

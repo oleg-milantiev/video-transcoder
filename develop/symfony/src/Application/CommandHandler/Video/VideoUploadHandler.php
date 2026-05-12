@@ -98,7 +98,6 @@ final readonly class VideoUploadHandler
                 $video->changeTitle(new VideoTitle(pathinfo($actualFilename, PATHINFO_FILENAME)));
             }
 
-            // Mark as loaded and persist
             $video->markLoaded();
             $video->updateMeta([
                 'downloadUrl' => $command->url(),
@@ -108,6 +107,12 @@ final readonly class VideoUploadHandler
                     : null,
             ]);
             $this->videoRepository->save($video);
+
+            $this->logService->log('video', 'upload', $video->id(), LogLevel::INFO, 'URL upload success', [
+                'userId' => $user->id(),
+                'videoId' => $video->id(),
+                'url' => $command->url(),
+            ]);
 
             $this->commandBus->dispatch(new VideoUploaded(
                 video: $video,
