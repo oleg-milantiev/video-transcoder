@@ -30,7 +30,7 @@ docker exec -i -e XDEBUG_MODE=coverage develop-php-1 vendor/bin/phpunit tests/ -
     - **API**: Symfony app (`develop/symfony/`) exposes REST endpoints and handles business logic.
   - **Workers**: Symfony Messenger consumers (auto-scaled) process transcoding jobs using ffmpeg.
   - **Persistence**: PostgreSQL (see `postgres.yaml`), Doctrine ORM, entities in `Domain`/`Infrastructure`.
-  - **Messaging**: Symfony Messenger transports are Redis-based (`develop/symfony/.env`, `config/packages/messenger.yaml`). RabbitMQ is deprecated; manifest remains in `k8s/rabbitmq.yaml` but is not used.
+  - **Messaging**: Symfony Messenger uses Redis-based transports (`develop/symfony/.env`, `config/packages/messenger.yaml`). Two separate queues: `async` (general tasks: metadata extraction, previews, emails) and `async_transcode` (transcoding jobs only). Separate dedicated consumers scale independently (see `docker-compose.yml`). RabbitMQ is deprecated; manifest remains in `k8s/rabbitmq.yaml` but is not used.
   - **Cloud/Infra**: Terraform (`tf/`), Kubernetes manifests (`k8s/`), Docker image build contexts (`develop/docker/`).
 
 ## Data & Workflow
@@ -53,13 +53,13 @@ docker exec -i -e XDEBUG_MODE=coverage develop-php-1 vendor/bin/phpunit tests/ -
 ## Project-Specific Patterns & Conventions
 - **DDD Layering**: `Domain` (pure logic), `Application` (commands/handlers, DTOs), `Infrastructure` (Persistence/Doctrine mappers, S3/Local storage, Ffmpeg wrappers), `Presentation` (API Controllers, EasyAdmin).
 - **Domain vs Infrastructure Entities**: Clear separation between pure Domain models and Doctrine-mapped Infrastructure entities, using Mappers for conversion.
-- **Event-Driven & Async**: Extensive use of Symfony Messenger for async tasks like transcoding and metadata extraction (see `TusPostFinishListener`, `CreateVideo`).
+- **Event-Driven & Async**: Extensive use of Symfony Messenger for async tasks like transcoding and metadata extraction (see `TusPostFinishListener`, `CreateVideo`). `TranscodeVideo` command routes to dedicated `async_transcode` queue with scalable consumers; other commands (`ExtractVideoMetadata`, `CreateVideoPreview`, messaging) route to `async` queue.
 - **DTO Mapping**: Data transfer objects (DTOs) in `Application/DTO` map domain entities for API/UI.
 - **Entity Mapping**: Doctrine entities in `Infrastructure/Persistence/Doctrine`, mapped to domain models.
 - **Preset/Task/Video**: Presets define transcoding options; Tasks link Videos and Presets, track status/progress.
 - **Chunked Uploads**: Uppy + tus protocol for large file uploads, handled by `TusPhp` server.
 - **Realtime UI Sync**: `connectMercure.js` dispatches `app:video`, `app:task`, `app:storage` CustomEvents from Mercure SSE messages. `realtime/` parsers (`appVideoMessage.js`, `appTaskMessage.js`, `appStorageMessage.js`) extract the payload. `bindHomeRealtime` / `bindVideoDetailsRealtime` wire these into `applyVideoRealtimeUpdate` / `applyTaskRealtimeUpdate` functions in each module's `actions.js`. The Mercure message format is `{ action, entity, id, payload }` where `payload` matches the same DTO shape as the initial REST response.
-- **Admin UI**: EasyAdmin for CRUD (see `DashboardController`, `UserCrudController`, `VideoCrudController`, `TaskCrudController`, `PresetCrudController`, `TariffCrudController`, `LogCrudController`). All CRUD actions are audited via `AdminCrudAuditListener`.
+- **Admin UI**: EasyAdmin for CRUD (see `DashboardController`, `UserCrudController`, `VideoCrudController`, `TaskCrudController`, `PresetCrudController`, `TariffCrudController`, `PaymentCrudController`, `LogCrudController`). All CRUD actions are audited via `AdminCrudAuditListener`.
 - **Tariff Page**: `TariffController` renders `/tariffs` via `tariff/index.html.twig`; frontend tariff view in `assets/home/tariff/` (render.js, view.js).
 - **Frontend Tabs**: `assets/home/tabs/` contains sub-modules for `videos/`, `upload/`, `tasks/` (each with state/actions/render), plus `TariffHint.js` and reusable `shared.js`. The `task/` module (`actions.js` + `render.js`) provides shared task API actions and action-button rendering reused by both `tabs/tasks/` and `video-details/`.
 - **Realtime DTO parity**: Mercure `app:video` and `app:task` payloads have the same structure as the corresponding API response DTOs. `applyVideoRealtimeUpdate` / `applyTaskRealtimeUpdate` do a direct spread-merge; no separate normalization layer is needed.
@@ -68,6 +68,8 @@ docker exec -i -e XDEBUG_MODE=coverage develop-php-1 vendor/bin/phpunit tests/ -
 - **Cron Commands**: `app:minute` (dispatch `StartTaskScheduler`), `app:hour` (Tus cleanup + expire videos/tasks), `app:day` (delete soft-deleted media files). All use Symfony Lock to prevent overlap.
 - **Task Cancellation**: `TaskCancelHandler` sets a Redis flag via `TaskCancellationTrigger`; `TranscodeVideoHandler` checks the flag before and during ffmpeg execution.
 - **Logging**: `CompositeLogService` fans out to `DoctrineLogService` (DB), `PromtailLogService` (Loki), `TelegramLogService` (alerts), `EnrichContextLogDecorator`.
+- **Storage Management**: `StorageRealtimeNotifier` publishes storage quota updates via Mercure (`app:storage` event). Storage queries and update logic split between `GetStorageQuery` (frontend display) and domain validation (quota enforcement).
+- **Payments**: `PaymentProviderInterface` abstracts payment processing. Payment CRUD and webhooks managed via `PaymentController` and `PaymentCrudController`.
 - **SPAController**: Base controller that injects tokens, Mercure config, route templates, and tariff data into the Twig template as a `config` JSON object consumed by Vue SPA.
 
 ## Integrations & External Dependencies
@@ -81,7 +83,7 @@ docker exec -i -e XDEBUG_MODE=coverage develop-php-1 vendor/bin/phpunit tests/ -
 - **Terraform/Kubernetes**: For cloud provisioning and orchestration.
 
 ## Key Files & Directories
-- `develop/symfony/src/` — Main backend code (DDD structure); API controllers in `Presentation/Controller/Api/` (`VideoApiController`, `TaskApiController`, `AuthApiController`, `ContactApiController`)
+- `develop/symfony/src/` — Main backend code (DDD structure); API controllers in `Presentation/Controller/Api/` (`VideoApiController`, `TaskApiController`, `AuthApiController`, `ContactApiController`, `PresetApiController`, `ProfileApiController`)
 - `develop/symfony/templates/` — Twig templates (UI)
 - `develop/symfony/assets/home/` — Vue SPA modules (state, actions, render logic)
 - `develop/symfony/assets/tests/` — Frontend unit tests (Node.js ESM)
